@@ -1,7 +1,7 @@
 import type React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { FaInstagram } from "react-icons/fa"
+import { FaInstagramSquare , FaTwitterSquare , FaYoutubeSquare , FaFacebookSquare } from "react-icons/fa"
 import { Facebook, Twitter, Youtube } from "lucide-react"
 import { MessageCircle } from "lucide-react"
 
@@ -31,48 +31,48 @@ const Footer: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
-                className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors duration-200"
+                className="rounded flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors duration-200"
               >
-                <Facebook className="w-4 h-4" />
+                <FaFacebookSquare className="w-8 h-8" />
               </a>
               <a
                 href="https://www.instagram.com/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center hover:bg-pink-600 hover:text-white transition-colors duration-200"
+                className=" rounded flex items-center justify-center hover:bg-pink-600 hover:text-white transition-colors duration-200"
               >
-                <FaInstagram className="w-4 h-4" />
+                <FaInstagramSquare className="w-8 h-8" />
               </a>
               <a
                 href="https://twitter.com/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Twitter"
-                className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center hover:bg-blue-400 hover:text-white transition-colors duration-200"
+                className="w-8 h-8  rounded flex items-center justify-center hover:bg-blue-400 hover:text-white transition-colors duration-200"
               >
-                <Twitter className="w-4 h-4" />
+                <FaTwitterSquare className="w-8 h-8" />
               </a>
               <a
                 href="https://www.youtube.com/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="YouTube"
-                className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors duration-200"
+                className="rounded flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors duration-200"
               >
-                <Youtube className="w-4 h-4" />
+                <FaYoutubeSquare className="w-8 h-8" />
               </a>
             </div>
           </div>
 
           {/* Services Column */}
           <div className="lg:col-span-1">
-            <h4 className="text-gray-900 font-semibold mb-4">Services</h4>
+            <h4 className="text-gray-500 font-bold mb-4">Services</h4>
             <ul className="space-y-3">
               <li>
                 <Link
                   href="/events"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Find Events
                 </Link>
@@ -80,7 +80,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/venues"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Book Venues
                 </Link>
@@ -88,7 +88,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/organizers"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Event Organizers
                 </Link>
@@ -96,7 +96,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/speakers"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Find Speakers
                 </Link>
@@ -104,7 +104,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/exhibitors"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Exhibitor Services
                 </Link>
@@ -112,7 +112,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/marketing"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Event Marketing
                 </Link>
@@ -120,7 +120,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/registration"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Event Registration
                 </Link>
@@ -128,7 +128,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/analytics"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Event Analytics
                 </Link>
@@ -136,7 +136,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/partnerships"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black  hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Partner With Us
                 </Link>
@@ -146,12 +146,12 @@ const Footer: React.FC = () => {
 
           {/* Company Column */}
           <div className="lg:col-span-1">
-            <h4 className="text-gray-900 font-semibold mb-4">Company</h4>
+            <h4 className="text-gray-500  font-bold mb-4">Company</h4>
             <ul className="space-y-3">
               <li>
                 <Link
                   href="/about-us"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black  hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   About Us
                 </Link>
@@ -159,20 +159,20 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/careers"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black  hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Careers
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm">
+                <Link href="/blog" className="text-black  hover:text-blue-800 transition-colors duration-200 text-sm">
                   Articles
                 </Link>
               </li>
               <li>
                 <Link
                   href="/press"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black  hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Press Releases
                 </Link>
@@ -180,7 +180,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/partner-program"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black  hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Become Partner
                 </Link>
@@ -188,7 +188,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/organizer-program"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black  hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Become Organizer
                 </Link>
@@ -196,7 +196,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/corporate"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black  hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Corporate Information
                 </Link>
@@ -206,12 +206,12 @@ const Footer: React.FC = () => {
 
           {/* Event Categories Column */}
           <div className="lg:col-span-1">
-            <h4 className="text-gray-900 font-semibold mb-4">Event Categories</h4>
+            <h4 className="text-gray-500  font-bold mb-4">Event Categories</h4>
             <ul className="space-y-3">
               <li>
                 <Link
                   href="/categories/conferences"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black  hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Conferences
                 </Link>
@@ -219,7 +219,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/categories/trade-shows"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black  hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Trade Shows
                 </Link>
@@ -227,7 +227,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/categories/exhibitions"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Exhibitions
                 </Link>
@@ -235,7 +235,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/categories/workshops"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Workshops
                 </Link>
@@ -243,7 +243,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/categories/seminars"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Seminars
                 </Link>
@@ -251,7 +251,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/categories/networking"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Networking Events
                 </Link>
@@ -259,7 +259,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/categories/webinars"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Webinars
                 </Link>
@@ -269,17 +269,17 @@ const Footer: React.FC = () => {
 
           {/* Help & Support Column */}
           <div className="lg:col-span-1">
-            <h4 className="text-gray-900 font-semibold mb-4">Help & Support</h4>
+            <h4 className="text-gray-500 font-bold mb-4">Help & Support</h4>
             <ul className="space-y-3">
               <li>
-                <Link href="/faq" className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm">
+                <Link href="/faq" className="text-black hover:text-blue-800 transition-colors duration-200 text-sm">
                   FAQ
                 </Link>
               </li>
               <li>
                 <Link
                   href="/contact-us"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Contact Us
                 </Link>
@@ -287,7 +287,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/support"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Support Center
                 </Link>
@@ -295,7 +295,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/refund-policy"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Refund Policy
                 </Link>
@@ -305,12 +305,12 @@ const Footer: React.FC = () => {
 
           {/* More Info Column */}
           <div className="lg:col-span-1">
-            <h4 className="text-gray-900 font-semibold mb-4">More Info</h4>
+            <h4 className="text-gray-500 font-bold mb-4">More Info</h4>
             <ul className="space-y-3">
               <li>
                 <Link
                   href="/terms-conditions"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Terms & Conditions
                 </Link>
@@ -318,7 +318,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/privacy-policy"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Privacy Policy
                 </Link>
@@ -326,20 +326,20 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/cookie-policy"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Cookie Policy
                 </Link>
               </li>
               <li>
-                <Link href="/gdpr" className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm">
+                <Link href="/gdpr" className="text-black hover:text-blue-800 transition-colors duration-200 text-sm">
                   GDPR Compliance
                 </Link>
               </li>
               <li>
                 <Link
                   href="/accessibility"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Accessibility
                 </Link>
@@ -347,7 +347,7 @@ const Footer: React.FC = () => {
               <li>
                 <Link
                   href="/safety"
-                  className="text-blue-600 hover:text-blue-800 transition-colors duration-200 text-sm mb-10"
+                  className="text-black hover:text-blue-800 transition-colors duration-200 text-sm mb-10"
                 >
                   Event Safety
                 </Link>
@@ -370,7 +370,7 @@ const Footer: React.FC = () => {
         
 
         {/* Registered Office Section */}
-        <div className="border-t border-gray-200 pt-8">
+        <div className="border-t border-t-1 border-gray-500 pt-8">
           <div className="mb-6">
             <h5 className="text-gray-900 font-semibold mb-2">Registered Office:</h5>
             <p className="text-gray-600 text-sm leading-relaxed">
@@ -389,8 +389,8 @@ const Footer: React.FC = () => {
               brands does not imply endorsement.
             </p>
           </div>
-
-          <div className="border-t border-gray-200 pt-8 text-gray-600 text-sm">Copyright © 2025 BZ Trade Fairs All rights reserved</div>
+         <div className="border-t border-t-1 border-gray-500 pt-10"></div>
+          <div className="text-gray-600 text-sm">Copyright © 2025 BZ Trade Fairs All rights reserved</div>
         </div>
       </div>
     </footer>

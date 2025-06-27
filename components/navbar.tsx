@@ -13,20 +13,21 @@ export default function Navbar() {
 
   return (
     <nav className="bg-white shadow-sm">
-      <div className="max-w-1xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-1xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
         <div className="flex justify-between h-16 items-center">
           {/* Left group: logo + Explore */}
           <div className="flex items-center space-x-6">
-            <Link href="/">
-              <p className="flex items-center">
-                <Image
-                  src="/logo/bizlogo.png"
-                  alt="BizTradeFairs.com"
-                  width={120}
-                  height={40}
-                />
-              </p>
-            </Link>
+            <Link href="/" className="inline-block">
+  <div className="flex items-center">
+    <Image
+      src="/logo/bizlogo.png"
+      alt="BizTradeFairs.com"
+      width={160}  // Increase width
+      height={80}  // Adjust proportionally
+      className="h-auto w-auto" // Optional for responsiveness
+    />
+  </div>
+</Link>
 
             <div className="relative">
               <button
@@ -56,11 +57,11 @@ export default function Navbar() {
           </div>
 
           {/* Center group: search bar */}
-          <div className="w-full max-w-70 flex-1 mx-8">
+          <div className="w-full flex-1 mx-8 bg-gray-200 px-4">
             <div className="relative ">
               <input
                 type="text"
-                placeholder="What are you looking for?"
+                placeholder="Topic, Event or Location"
                 className="w-full text-black py-2 px-4 pl-10 "
               />
               <Search className="w-5 h-5  absolute right-5 top-1/2 transform -translate-y-1/2 " />
