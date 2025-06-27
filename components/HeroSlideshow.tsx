@@ -18,7 +18,7 @@ const EventCard: React.FC<EventCardProps> = ({ imageSrc, date, month, year, titl
     <div className="flex-shrink-0 w-80 h-[480px] bg-[#F2F2F2] relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
       <img src={imageSrc || "/placeholder.svg"} alt={title} className="absolute inset-0 w-full h-full object-cover" />
 
-      <div className="absolute inset-0 bg-gradient-to-t from-blue-950 via-blue-50/5 to-transparent"></div>
+      <div className="absolute inset-0 bg-gradient-to-t from-blue-950 via-blue-20/5 to-transparent"></div>
 
       {/* Date Badge */}
       {/* <div className="absolute top-6 left-6 bg-white/95 backdrop-blur-sm rounded-xl px-5 py-3 shadow-lg">
@@ -102,7 +102,7 @@ export default function Home() {
       location: "Grand Hotel",
     },
     {
-      imageSrc: "/herosection-images/weld.jpg",
+      imageSrc: "/herosection-images/test.jpeg",
       date: "15",
       month: "Mar",
       year: "2025",
