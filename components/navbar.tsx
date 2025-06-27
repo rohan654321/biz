@@ -57,12 +57,12 @@ export default function Navbar() {
           </div>
 
           {/* Center group: search bar */}
-          <div className="w-full max-w-lg flex-1 mx-8 bg-gray-200 px-4">
+          <div className="w-full max-w-md flex-1  bg-gray-200">
             <div className="relative ">
               <input
                 type="text"
                 placeholder="Topic, Event or Location"
-                className="w-full text-black py-2 px-4 pl-10"
+                className="w-full text-black py-2 pl-10 pr-12"
               />
               <Search className="w-5 h-5  absolute right-5 top-1/2 transform -translate-y-1/2 " />
             </div>
