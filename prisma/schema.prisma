@@ -1,0 +1,264 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Event {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String   @unique // URL-friendly identifier like "catering-decor-expo-2025"
+  title       String
+  description String
+  highlights  String[]
+  
+  // Location as embedded document
+  location    EventLocation
+  
+  // Timings as embedded document
+  timings     EventTimings
+  
+  // Pricing as embedded document
+  pricing     EventPricing
+  
+  // Stats as embedded document
+  stats       EventStats
+  
+  // Images as embedded documents
+  images      EventImage[]
+  
+  // Categories and tags
+  categories  String[]
+  tags        String[]
+  
+  // Rating as embedded document
+  rating      EventRating
+  
+  // Event details
+  ageLimit    String
+  dressCode   String
+  status      EventStatus
+  
+  // Exhibit space costs as embedded documents
+  exhibitSpaceCosts ExhibitSpaceCost[]
+  
+  // Featured items as embedded documents
+  featuredItems     FeaturedItem[]
+  
+  // Featured exhibitors as embedded documents
+  featuredExhibitors FeaturedItem[]
+  
+  // Tourist attractions as embedded documents
+  touristAttractions TouristAttraction[]
+  
+  // Relations
+  organizerId String @db.ObjectId
+  organizer   Organizer @relation(fields: [organizerId], references: [id])
+  
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("events")
+}
+
+model Organizer {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String
+  phone       String
+  email       String @unique
+  avatar      String?
+  
+  // Relations
+  events      Event[]
+  
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("organizers")
+}
+
+// Embedded document types
+type EventLocation {
+  city        String
+  venue       String
+  address     String
+  coordinates EventCoordinates
+}
+
+type EventCoordinates {
+  lat Float
+  lng Float
+}
+
+type EventTimings {
+  startDate   DateTime
+  endDate     DateTime
+  dailyStart  String // Time in HH:MM format
+  dailyEnd    String // Time in HH:MM format
+  timezone    String
+}
+
+type EventPricing {
+  general  Int
+  student  Int?
+  vip      Int?
+  currency String
+}
+
+type EventStats {
+  expectedVisitors String
+  exhibitors       String
+  duration         String
+}
+
+type EventImage {
+  id   String
+  url  String
+  alt  String
+  type EventImageType
+}
+
+type EventRating {
+  average Float
+  count   Int
+}
+
+type ExhibitSpaceCost {
+  type         String
+  description  String
+  pricePerSqm  Int
+  minArea      Int
+}
+
+type FeaturedItem {
+  id          String
+  name        String
+  description String
+  image       String
+  rating      Float
+  category    String
+}
+
+type TouristAttraction {
+  id          String
+  name        String
+  description String
+  image       String
+  rating      Float
+  category    String
+}
+
+// Enums
+enum EventStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+}
+
+enum EventImageType {
+  MAIN
+  GALLERY
+}
+
+// Additional models for extended functionality
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  name      String?
+  avatar    String?
+  role      UserRole @default(USER)
+  
+  // Relations
+  registrations EventRegistration[]
+  reviews       EventReview[]
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("users")
+}
+
+model EventRegistration {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Relations
+  userId  String @db.ObjectId
+  user    User   @relation(fields: [userId], references: [id])
+  eventId String @db.ObjectId
+  // Note: We can't create a direct relation to Event here due to MongoDB limitations
+  // Instead, we'll store the eventId and handle the relation in the application layer
+  
+  // Registration details
+  ticketType    String // "general", "student", "vip"
+  quantity      Int    @default(1)
+  totalAmount   Int
+  paymentStatus PaymentStatus @default(PENDING)
+  
+  // Personal information
+  attendeeInfo  AttendeeInfo
+  
+  // Metadata
+  registeredAt DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@unique([userId, eventId])
+  @@map("event_registrations")
+}
+
+model EventReview {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Relations
+  userId  String @db.ObjectId
+  user    User   @relation(fields: [userId], references: [id])
+  eventId String @db.ObjectId
+  // Note: We can't create a direct relation to Event here due to MongoDB limitations
+  
+  // Review details
+  rating  Int    @db.Int // 1-5 stars
+  comment String?
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, eventId])
+  @@map("event_reviews")
+}
+
+// Embedded types for registration
+type AttendeeInfo {
+  name         String
+  email        String
+  phone        String
+  company      String?
+  designation  String?
+  dietaryReqs  String?
+}
+
+// Enums
+enum UserRole {
+  USER
+  ORGANIZER
+  ADMIN
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+// Indexes for better performance
+// Note: These would be created manually in MongoDB or through Prisma migrate
