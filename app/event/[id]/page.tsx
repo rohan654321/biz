@@ -13,13 +13,14 @@ import EventHero from "@/components/event-hero"
 import { useState } from "react"
 
 interface EventPageProps {
-  params: {
+ params: Promise<{
     id: string
-  }
+  }>
 }
 
-export default function EventPage({ params }: EventPageProps) {
-  const event = getEventById(params.id)
+export default async function EventPage({ params }: EventPageProps) {
+   const { id } = await params
+  const event = getEventById(id)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   if (!event) {
