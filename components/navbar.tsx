@@ -18,13 +18,13 @@ export default function Navbar() {
           {/* Left group: logo + Explore */}
           <div className="flex items-center space-x-6">
             <Link href="/" className="inline-block">
-             <div className="flex items-center">
+             <div className="flex items-center ">
              <Image
              src="/logo/bizlogo.png"
              alt="BizTradeFairs.com"
              width={160}  // Increase width
              height={80}  // Adjust proportionally
-             className="h-auto w-auto " // Optional for responsiveness
+             className="h-42 w-auto " // Optional for responsiveness
              />
              </div>
            </Link>
