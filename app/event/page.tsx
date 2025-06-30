@@ -257,6 +257,74 @@ export default function EventsPage() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="space-y-4">
+                  <h3 className="font-medium text-gray-900">Designtion</h3>
+                  <Input type="text" placeholder="Search for Topics" className="w-full" />
+                  <div className="space-y-3">
+                    {categories.map((category, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={category.checked}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded"
+                          />
+                          <span className={`text-sm ${category.checked ? "text-red-600" : "text-gray-700"}`}>
+                            {category.name}
+                          </span>
+                        </div>
+                        <span className="text-sm text-gray-500">{category.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Button variant="outline" className="w-full text-sm">
+                    View All
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+           <div className="w-full max-w-xs border rounded-md shadow-sm">
+      {/* Dropdown Filters */}
+      <div className="border-b px-4 py-3 cursor-pointer flex justify-between items-center">
+        <span className="font-medium">Entry Fee</span>
+        <span>▼</span>
+      </div>
+      <div className="border-b px-4 py-3 cursor-pointer flex justify-between items-center">
+        <span className="font-medium">Rating</span>
+        <span>▼</span>
+      </div>
+      <div className="border-b px-4 py-3 cursor-pointer flex justify-between items-center">
+        <span className="font-medium">Members</span>
+        <span>▼</span>
+      </div>
+
+      {/* Event Categories */}
+      {[
+        'Top 100 Events',
+        'Social Events',
+        'Search by Company',
+        'Explore Speaker',
+        'Filter',
+      ].map((title) => (
+        <div
+          key={title}
+          className="border-b px-4 py-3 cursor-pointer hover:bg-gray-50"
+        >
+          <p className="text-red-500 font-semibold">{title}</p>
+          <p className="text-sm text-gray-500">Discover and track top events</p>
+        </div>
+      ))}
+
+      {/* All Events */}
+      <div className="px-4 py-4">
+        <p className="text-blue-800 font-semibold cursor-pointer hover:underline">
+          All Events
+        </p>
+      </div>
+    </div>
           </div>
 
           {/* Main Content Area */}

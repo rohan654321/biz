@@ -3,10 +3,14 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Calendar, Plus, Bookmark, Share2, Users } from "lucide-react"
 import type { Event } from "@/lib/data/events"
+import Image from "next/image"
+import { Shield, Clock, Ticket } from "lucide-react"
 
 interface EventHeroProps {
   event: Event
 }
+
+
 
 export default function EventHero({ event }: EventHeroProps) {
   const formatDate = (dateString: string) => {
@@ -23,135 +27,60 @@ export default function EventHero({ event }: EventHeroProps) {
   }
 
   return (
-    <div className="relative min-h-[300px] w-full overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0">
-        <img src={getMainImage() || "/placeholder.svg"} alt={event.title} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-black/20" />
+     <div className="">
+      {/* Background Image with Gradient Overlay */}
+      <div className=" relative w-full h-[300px] md:h-[300px]">
+        <img
+          src={getMainImage()}
+          alt={event.title}
+          className="w-full h-full object-cover"
+        />
+        {/* <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-black/20" />   */}
       </div>
 
-      {/* Content Overlay */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-8">
-        <div className="relative top-30 bg-white rounded-md p-6 grid grid-cols-1 lg:grid-cols-12 gap- items-start ">
-          {/* Left Content Card */}
-          <div className="lg:col-span-5">
-            <div className="">
-              <CardContent className="p-6 space-y-4">
-                {/* Badges */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  {event.isVerified && (
-                    <Badge className="bg-[#002c71] text-white hover:bg-blue-700">
-                      <div className="w-3 h-3 bg-white rounded-full mr-1 flex items-center justify-center">
-                        <div className="w-1.5 h-1.5 bg-[#002c71] rounded-full" />
-                      </div>
-                      VERIFIED
-                    </Badge>
-                  )}
-                 
-                </div>
+      {/* Main Image & Floating Card */}
+      <div className="absulate w-full max-w-6xl mx-auto bg-white rounded-lg overflow-hidden shadow-md flex flex-col md:flex-row mt-[-150px] md:mt-[-120px] relative z-10">
+      {/* Left: Event Image */}
+      <div className="relative md:w-2/3 w-full h-[600px] md:h-[300px]">
+        <Image
+          src="/images/gpex.jpg" // Update this to your actual image path
+          alt="Event Image"
+          fill
+          className=""
+        />
+      </div>
 
-                {/* Event Title */}
-                <div>
-                  <h1 className="text-2xl lg:text-3xl font-bold text-[#002c71] mb-2">{event.title}</h1>
-                  <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">{event.categories}</p>
-                </div>
+      {/* Right: Info Section */}
+      <div className="md:w-2/4 w-full bg-blue-50 p-6 flex flex-col justify-center space-y-2">
+        <div className="flex justify-between items-start">
+          <p className="text-md text-gray-600">India’s Largest</p>
+          <Shield className="w-5 h-5 text-gray-500" />
+        </div>
 
-                {/* Date & Time */}
-                <div className="flex items-center gap-2 text-gray-700">
-                  <Calendar className="w-4 h-4 text-red-500" />
-                  <span className="font-medium">
-                    {formatDate(event.timings.startDate)} - {formatDate(event.timings.endDate)}
-                  </span>
-                </div>
+        <h2 className="text-2xl font-semibold text-black leading-snug ">
+          Die & Mould Exhibition
+        </h2>
 
-                {/* Location */}
-                <div className="flex items-start gap-2 text-gray-700">
-                  <MapPin className="w-4 h-4 text-red-500 mt-0.5" />
-                  <div>
-                    <div className="font-medium">{event.location.venue}</div>
-                    {/* <div className="text-sm text-gray-600">{event.location.address}</div> */}
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex items-center gap-3 pt-2">
-                  <Button variant="outline" className="flex items-center gap-2 hover:bg-gray-50">
-                    <Plus className="w-4 h-4" />
-                    Get Directions
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-1 text-gray-600 hover:text-gray-800"
-                  >
-                    <Bookmark className="w-4 h-4" />
-                    Save
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-1 text-gray-600 hover:text-gray-800"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    Share
-                  </Button>
-                </div>
-              </CardContent>
-            </div>
+        <div className="space-y-4 text-sm text-gray-800 py-2">
+          <div className="flex items-center gap-3">
+            <Calendar className="w-5 h-5 text-black" />
+            <span>11 – 13 June, 2025</span>
           </div>
-
-          {/* Center Stats Card */}
-          <div className="lg:col-span-4 hidden lg:block mr-5 ml-10">
-            <img src={getMainImage() || "/placeholder.svg"} alt={event.title} className="w-[500px] h-50 mt-5   rounded-lg" />
+          <div className="flex items-center gap-3">
+            <Clock className="w-5 h-5 text-black" />
+            <span>10:00am – 06:00pm</span>
           </div>
-
-          {/* Right Interest Card */}
-          <div className="lg:col-span-3">
-            <div className="bg-white">
-              <CardContent className="pt-14 text-center space-y-4">
-                <p className="text-gray-700 font-medium">Interested in this Event?</p>
-
-                <div className="flex gap-2">
-                  <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white">Visit</Button>
-                  <Button className="flex-1 bg-[#002c71] hover:bg-blue-700 text-white">Exhibit</Button>
-                </div>
-
-                {/* Organizer Info */}
-                {/* <div className="border-t pt-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <img
-                      src={event.organizer.avatar || "/placeholder.svg"}
-                      alt={event.organizer.name}
-                      className="w-8 h-8 rounded-full"
-                    />
-                    <div className="text-left">
-                      <div className="font-medium text-sm">{event.organizer.name}</div>
-                      <div className="text-xs text-gray-600">{event.organizer.description}</div>
-                    </div>
-                  </div>
-                </div> */}
-
-                {/* Followers */}
-                <div className="flex items-center justify-center gap-2 pt-2">
-                  <div className="flex -space-x-2">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <div
-                        key={i}
-                        className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 border-2 border-white flex items-center justify-center"
-                      >
-                        <Users className="w-3 h-3 text-white" />
-                      </div>
-                    ))}
-                  </div>
-                  <span className="text-[#002c71] font-semibold text-sm">
-                    {event.followers?.toLocaleString() || 0} Followers
-                  </span>
-                </div>
-              </CardContent>
-            </div>
+          <div className="flex items-center gap-3">
+            <Ticket className="w-5 h-5 text-black" />
+            <span>Free Entry</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Users className="w-5 h-5 text-black" />
+            <span>3032 Followers</span>
           </div>
         </div>
       </div>
+    </div>
     </div>
   )
 }

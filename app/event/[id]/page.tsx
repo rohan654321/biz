@@ -9,6 +9,9 @@ import { getEventById } from "@/lib/data/events"
 import { notFound } from "next/navigation"
 import EventHero from "@/components/event-hero"
 import EventImageGallery from "@/components/event-image-gallery"
+import { Plus } from "lucide-react"
+import { Share2 } from "lucide-react"
+import { Bookmark } from "lucide-react"
 
 interface EventPageProps {
   params: Promise<{
@@ -40,57 +43,115 @@ export default async function EventPage({ params }: EventPageProps) {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 py-8">
       <EventHero event={event} />
+       
+       {/* Event Details Section */}
+      <div className="max-w-6xl mx-auto py-4">
+        <div className="bg-white rounded-lg  p-6 mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            {/* Event Title and Info */}
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-blue-900 mb-2">Global Precision Expo 2025</h1>
+              <div className="flex items-center gap-2 text-gray-600 mb-3">
+                <MapPin className="w-4 h-4" />
+                <span>Chennai Trade Centre, Chennai - India</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center gap-4">
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Get Directions
+                </Button>
+                                <div className="flex items-center">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span className="ml-1 font-medium">4.5</span>
+                </div>
+                <Button variant="ghost" size="sm">
+                  <Bookmark className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="sm">
+                  <Share2 className="w-4 h-4" />
+                </Button>
+              </div>
 
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-4 pr-4 lg:pr-4">
+              <p className="text-center text-gray-700 font-medium">Interested in this Event ?</p>
+              <div className="flex gap-3 ">
+                <Button variant="outline" className="flex-1 border-gray-300 bg-transparent">
+                  Visit
+                </Button>
+                <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 ">
+                  Exhibit</Button>
+              </div>
+              {/* <div className="flex items-center justify-center gap-4">
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Get Directions
+                </Button>
+                <Button variant="ghost" size="sm">
+                  <Bookmark className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="sm">
+                  <Share2 className="w-4 h-4" />
+                </Button>
+              </div> */}
+            </div>
+          </div>
+        </div>
+       </div>
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Content */}
           <div className="flex-1">
             <Tabs defaultValue="about" className="w-full">
               {/* Enhanced Tab Navigation */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+              <div className="bg-white rounded-lg mb-6 shadow-sm border border-gray-200">
                 <TabsList className="grid w-full grid-cols-8 h-auto p-0 bg-transparent">
                   <TabsTrigger
                     value="about"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none border-r border-gray-200 py-3 px-4 text-sm font-medium"
+                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none  py-3 px-4 text-sm font-medium"
                   >
                     About
                   </TabsTrigger>
                   <TabsTrigger
                     value="exhibitors"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none border-r border-gray-200 py-3 px-4 text-sm font-medium"
+                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
                   >
                     Exhibitors
                   </TabsTrigger>
                   <TabsTrigger
                     value="space-cost"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none border-r border-gray-200 py-3 px-4 text-sm font-medium"
+                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none py-3 px-4 text-sm font-medium"
                   >
                     Space Cost
                   </TabsTrigger>
                   <TabsTrigger
                     value="layout"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none border-r border-gray-200 py-3 px-4 text-sm font-medium"
+                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none  py-3 px-4 text-sm font-medium"
                   >
                     Layout Plan
                   </TabsTrigger>
                   <TabsTrigger
                     value="venue"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none border-r border-gray-200 py-3 px-4 text-sm font-medium"
+                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none  py-3 px-4 text-sm font-medium"
                   >
                     Venue
                   </TabsTrigger>
                   <TabsTrigger
                     value="speakers"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none border-r border-gray-200 py-3 px-4 text-sm font-medium"
+                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none  py-3 px-4 text-sm font-medium"
                   >
                     Speakers
                   </TabsTrigger>
                   <TabsTrigger
                     value="organizer"
-                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none border-r border-gray-200 py-3 px-4 text-sm font-medium"
+                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none  py-3 px-4 text-sm font-medium"
                   >
                     Organizer
                   </TabsTrigger>
@@ -197,9 +258,9 @@ export default async function EventPage({ params }: EventPageProps) {
                 </Card>
 
                 {/* Enhanced Event Details Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="hover:shadow-md transition-shadow">
-                    <CardHeader className="bg-blue-100 rounded-t-lg">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ">
+                  <div className="hover:shadow-md transition-shadow border-2 rounded-lg">
+                    <CardHeader className="bg-blue-100 rounded-t-lg p-4">
                       <CardTitle className="flex items-center gap-2">
                         <Clock className="w-5 h-5 text-blue-600" />
                         Timings
@@ -221,10 +282,10 @@ export default async function EventPage({ params }: EventPageProps) {
                         <span className="font-semibold text-blue-600">{event.timings.timezone}</span>
                       </div>
                     </CardContent>
-                  </Card>
+                  </div>
 
-                  <Card className="hover:shadow-md transition-shadow">
-                    <CardHeader className="bg-blue-100 rounded-t-lg">
+                  <div className="hover:shadow-md transition-shadow border-2 rounded-lg">
+                    <CardHeader className="bg-blue-100 rounded-t-lg p-4">
                       <CardTitle className="flex items-center gap-2">
                         <IndianRupee className="w-5 h-5 text-blue-600" />
                         Entry Fee
@@ -257,25 +318,25 @@ export default async function EventPage({ params }: EventPageProps) {
                         </div>
                       )}
                     </CardContent>
-                  </Card>
+                  </div>
 
-                  <Card className="hover:shadow-md transition-shadow">
-                    <CardHeader className="bg-blue-100 rounded-t-lg">
+                  <div className="hover:shadow-md transition-shadow border-2 rounded-lg">
+                    <CardHeader className="bg-blue-100 rounded-t-lg p-4">
                       <CardTitle>Dress Code</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-4">
                       <p className="text-gray-700">{event.dressCode}</p>
                     </CardContent>
-                  </Card>
+                  </div>
 
-                  <Card className="hover:shadow-md transition-shadow">
-                    <CardHeader className="bg-blue-100 rounded-t-lg">
+                  <div className="hover:shadow-md transition-shadow border-2 rounded-lg pb-4">
+                    <CardHeader className="bg-blue-100 rounded-t-lg p-4">
                       <CardTitle>Age Limit</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-4">
                       <p className="text-gray-700">{event.ageLimit}</p>
                     </CardContent>
-                  </Card>
+                  </div>
                 </div>
 
                 {/* Organizer Section */}
