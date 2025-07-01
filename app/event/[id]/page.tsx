@@ -47,7 +47,7 @@ export default async function EventPage({ params }: EventPageProps) {
       <EventHero event={event} />
        
        {/* Event Details Section */}
-      <div className="max-w-6xl mx-auto py-4">
+      <div className=" max-w-6xl mx-auto py-4">
         <div className="bg-white rounded-lg  p-6 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             {/* Event Title and Info */}

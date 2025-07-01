@@ -29,7 +29,7 @@ export default function SpeakersPage() {
     events: 49,
     image: "/images/gpex.jpg", // Replace with actual image paths
     followers: 1200 + index * 10,
-    popularity: Math.floor(Math.random() * 100) + 1, // Random popularity for demo
+    popularity: "Popular", // Random popularity for demo
   }))
 
   return (
@@ -82,14 +82,15 @@ export default function SpeakersPage() {
               {/* Speaker Content */}
               <div className="flex items-start space-x-4">
                 {/* Speaker Image */}
-                <div className="flex-shrink-0">
+                <div className="relative flex-shrink-0">
                   <img
                     src={speaker.image || "/placeholder.svg"}
                     alt={speaker.name}
                     className="w-30 h-30 rounded-lg object-cover"
+                    
                   />
-                  <div className="absolute top-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-br-lg">
-                    {speaker.popularity}%   
+                  <div className="absolute bottom-0 right-0  bg-blue-500 text-white text-xs px-2 py-1 rounded-br-lg">
+                    {speaker.popularity}
                     </div>
                 </div>
 

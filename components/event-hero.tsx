@@ -1,16 +1,16 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { MapPin, Calendar, Plus, Bookmark, Share2, Users } from "lucide-react"
-import type { Event } from "@/lib/data/events"
+"use client"
+
+import { Calendar, Clock, Ticket, Users } from "lucide-react"
+import { Shield } from "lucide-react"
+import { useKeenSlider } from "keen-slider/react"
+import "keen-slider/keen-slider.min.css"
 import Image from "next/image"
-import { Shield, Clock, Ticket } from "lucide-react"
+import { useEffect, useRef } from "react"
+import type { Event } from "@/lib/data/events"
 
 interface EventHeroProps {
   event: Event
 }
-
-
 
 export default function EventHero({ event }: EventHeroProps) {
   const formatDate = (dateString: string) => {
@@ -26,61 +26,109 @@ export default function EventHero({ event }: EventHeroProps) {
     return mainImage?.url || "/placeholder.svg?height=400&width=1200&text=Event+Background"
   }
 
+  // Keen slider setup
+   const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
+    loop: true,
+    slides: { perView: 1 },
+  })
+
+  // Autoplay logic using useEffect
+  useEffect(() => {
+    const slider = instanceRef.current
+    if (!slider) return
+
+    const interval = setInterval(() => {
+      slider.next()
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [instanceRef])
+  // Media list
+  const mediaSlides = [
+    { type: "image", src: "/images/gpex.jpg" },
+    { type: "image", src: "/images/yogaslide.jpg" },
+    { type: "video", src: "/video/17564202-hd_1920_1080_30fps.mp4" },
+  ]
+
   return (
-     <div className="">
-      {/* Background Image with Gradient Overlay */}
-      <div className=" relative w-full h-[300px] md:h-[300px]">
+    <div>
+      {/* Background Image */}
+      <div className="relative w-full h-[300px]">
         <img
           src={getMainImage()}
           alt={event.title}
-          className="w-full h-full object-cover"
-        />
-        {/* <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-black/20" />   */}
-      </div>
-
-      {/* Main Image & Floating Card */}
-      <div className="absulate w-full max-w-6xl mx-auto bg-white rounded-lg overflow-hidden shadow-md flex flex-col md:flex-row mt-[-150px] md:mt-[-120px] relative z-10">
-      {/* Left: Event Image */}
-      <div className="relative md:w-2/3 w-full h-[600px] md:h-[300px]">
-        <Image
-          src="/images/gpex.jpg" // Update this to your actual image path
-          alt="Event Image"
-          fill
-          className=""
+          className="w-full h-full"
         />
       </div>
 
-      {/* Right: Info Section */}
-      <div className="md:w-2/4 w-full bg-blue-50 p-6 flex flex-col justify-center space-y-2">
-        <div className="flex justify-between items-start">
-          <p className="text-md text-gray-600">India’s Largest</p>
-          <Shield className="w-5 h-5 text-gray-500" />
+      {/* Main Content Card */}
+      <div className="relative w-full max-w-6xl mx-auto bg-white rounded-lg overflow-hidden shadow-md flex flex-col md:flex-row mt-[-150px] md:mt-[-120px] z-10 left-1/2 lg:left-145 -translate-x-1/2">
+
+        {/* Slider Left */}
+        <div className="md:w-2/3 w-full h-[300px] relative">
+          <div ref={sliderRef} className="keen-slider h-full w-full">
+            {mediaSlides.map((media, index) => (
+              <div key={index} className="keen-slider__slide relative h-full w-full">
+                {media.type === "image" ? (
+                  <Image
+                    src={media.src}
+                    alt={`Slide ${index}`}
+                    fill
+                    className=" w-full h-full"
+                  />
+                ) : (
+                  <video
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                  >
+                    <source src={media.src} type="video/mp4" />
+                  </video>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
-        <h2 className="text-2xl font-semibold text-black leading-snug ">
-          Die & Mould Exhibition
-        </h2>
+        {/* Right Info */}
+        <div className="md:w-1/3 w-full bg-blue-50 p-6 flex flex-col justify-center space-y-2">
+          <div className="flex justify-between items-start">
+            <p className="text-md text-gray-800 font-bold">India’s Largest</p>
+            <Image
+              src="/images/verified.png"
+              alt="Verified"
+              width={40}
+              height={40}
+              className="w-8 h-8"
+            />
+          </div>
 
-        <div className="space-y-4 text-sm text-gray-800 py-2">
-          <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-black" />
-            <span>11 – 13 June, 2025</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 text-black" />
-            <span>10:00am – 06:00pm</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Ticket className="w-5 h-5 text-black" />
-            <span>Free Entry</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Users className="w-5 h-5 text-black" />
-            <span>3032 Followers</span>
+          <h2 className="text-2xl font-semibold text-black leading-snug">
+            Die & Mould Exhibition
+          </h2>
+
+          <div className="space-y-4 text-sm text-gray-800 py-2">
+            <div className="flex items-center gap-3">
+              <Calendar className="w-5 h-5 text-black" />
+              <span>11 – 13 June, 2025</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Clock className="w-5 h-5 text-black" />
+              <span>10:00am – 06:00pm</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Ticket className="w-5 h-5 text-black" />
+              <span>Free Entry</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Users className="w-5 h-5 text-black" />
+              <span>3032 Followers</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </div>
   )
 }
