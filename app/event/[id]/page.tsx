@@ -47,7 +47,7 @@ export default async function EventPage({ params }: EventPageProps) {
       <EventHero event={event} />
        
        {/* Event Details Section */}
-      <div className=" max-w-6xl mx-auto py-4">
+      <div className=" max-w-7xl mx-auto py-4">
         <div className="bg-white rounded-lg  p-6 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             {/* Event Title and Info */}
@@ -88,31 +88,20 @@ export default async function EventPage({ params }: EventPageProps) {
                 <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 ">
                   Exhibit</Button>
               </div>
-              {/* <div className="flex items-center justify-center gap-4">
-                <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                  <Plus className="w-4 h-4" />
-                  Get Directions
-                </Button>
-                <Button variant="ghost" size="sm">
-                  <Bookmark className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="sm">
-                  <Share2 className="w-4 h-4" />
-                </Button>
-              </div> */}
+              
             </div>
           </div>
         </div>
        </div>
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Content */}
           <div className="flex-1">
             <Tabs defaultValue="about" className="w-full">
               {/* Enhanced Tab Navigation */}
               <div className="bg-white rounded-lg mb-6 shadow-sm border border-gray-200">
-                <TabsList className="grid w-full grid-cols-8 h-auto p-0 bg-transparent">
+                <TabsList className="grid w-full grid-cols-9 h-auto p-0 bg-transparent">
                   <TabsTrigger
                     value="about"
                     className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none  py-3 px-4 text-sm font-medium"
@@ -136,6 +125,12 @@ export default async function EventPage({ params }: EventPageProps) {
                     className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none  py-3 px-4 text-sm font-medium"
                   >
                     Layout Plan
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="brochure"
+                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-none  py-3 px-4 text-sm font-medium"
+                  >
+                    Brochure
                   </TabsTrigger>
                   <TabsTrigger
                     value="venue"
@@ -622,6 +617,22 @@ export default async function EventPage({ params }: EventPageProps) {
                       <p className="text-gray-600">Floor plan will be displayed here</p>
                     </div>
                   </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="brochure">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Brochure</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center">
+                      <p className="text-gray-600">Brochure will be displayed here</p>
+                    </div>
+                  </CardContent>
+                  <button className="mx-5 mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition ">
+                    Download Brochure
+                  </button>
                 </Card>
               </TabsContent>
 
