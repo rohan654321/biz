@@ -858,7 +858,7 @@ export default function OrganizerDashboard() {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider >
       <div className="flex min-h-screen w-full">
         <Sidebar className="border-r">
           <SidebarHeader className="border-b p-4">
