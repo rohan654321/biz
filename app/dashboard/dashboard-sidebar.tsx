@@ -85,7 +85,7 @@ export function DashboardSidebar({ activeSection, setActiveSection, userData }: 
               <SidebarMenuItem>
                 <Button
                   onClick={() => signOut({ callbackUrl: "/login" })}
-                  className="w-full bg-red-500 hover:bg-red-600 text-white mt-4"
+                  className="w-full bg-red-500 hover:bg-red-600 text-white mt-20 "
                 >
                   Logout
                 </Button>

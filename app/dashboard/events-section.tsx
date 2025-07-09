@@ -9,7 +9,7 @@ import { upcomingEvents } from "@/lib/mock-data"
 
 export function EventsSection() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto px-4">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">My Events</h1>
         <Button className="flex items-center gap-2">
@@ -21,7 +21,7 @@ export function EventsSection() {
         <TabsList>
           <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
           <TabsTrigger value="past">Past Events</TabsTrigger>
-          <TabsTrigger value="speaking">Speaking</TabsTrigger>
+          {/* <TabsTrigger value="speaking">Speaking</TabsTrigger> */}
         </TabsList>
         <TabsContent value="upcoming" className="space-y-4">
           {upcomingEvents.map((event) => (

@@ -1,7 +1,28 @@
 // lib/auth-options.ts
 import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
 import type { NextAuthOptions } from "next-auth";
+// import NextAuth from "next-auth";
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+      role?: string; // ✅ Add this
+    };
+  }
+
+  interface User {
+    role?: string; // ✅ Add this
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    role?: string; // ✅ Add this
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -12,22 +33,26 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (
-          credentials?.username === "admin" &&
-          credentials?.password === "admin123"
-        ) {
+        if (credentials?.username === "admin" && credentials?.password === "admin123") {
           return {
             id: "1",
             name: "Admin User",
             email: "admin@example.com",
+            role: "admin",
           };
         }
+
+        if (credentials?.username === "organizer" && credentials?.password === "organizer123") {
+          return {
+            id: "2",
+            name: "Organizer User",
+            email: "organizer@example.com",
+            role: "organizer",
+          };
+        }
+
         return null;
       },
-    }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
   pages: {
@@ -35,5 +60,15 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+  },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) token.role = user.role;
+      return token;
+    },
+    async session({ session, token }) {
+      if (token?.role) session.user.role = token.role as string;
+      return session;
+    },
   },
 };

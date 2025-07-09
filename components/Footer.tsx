@@ -7,7 +7,7 @@ import { MessageCircle } from "lucide-react"
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-gray-100 py-12 px-4 md:px-8 lg:px-16">
+    <footer className="absulate bg-gray-100 py-12 px-4 md:px-8 lg:px-16 ">
       <div className="max-w-7xl mx-auto">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 mb-8">

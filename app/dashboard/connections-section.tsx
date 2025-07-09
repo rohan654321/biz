@@ -9,8 +9,8 @@ import { connections } from "@/lib/mock-data"
 
 export function ConnectionsSection() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 mx-w-6xl mx-auto px-4">
+      <div className="flex items-center justify-between max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900">Connections</h1>
         <div className="flex items-center gap-3">
           <div className="relative">

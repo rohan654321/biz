@@ -11,7 +11,7 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ userData }: DashboardHeaderProps) {
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+    <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 m">
       <SidebarTrigger className="-ml-1" />
       <div className="flex items-center gap-2 ml-auto">
         <Button variant="ghost" size="sm">

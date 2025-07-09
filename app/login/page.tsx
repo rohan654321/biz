@@ -1,44 +1,64 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { data: session } = useSession();
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
-    const username = e.target.username.value;
-    const password = e.target.password.value;
+  useEffect(() => {
+    if (session?.user?.role === "admin") {
+      router.push("/dashboard");
+    } else if (session?.user?.role === "organizer") {
+      router.push("/organizer-dashboard");
+    }
+  }, [session]);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     const res = await signIn("credentials", {
       redirect: false,
       username,
       password,
     });
 
-    if (res?.ok) {
-      router.push("/dashboard");
-    } else {
+    if (res?.error) {
       setError("Invalid credentials");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 space-y-4">
-      <input type="text" name="username" placeholder="Username" className="border p-2 w-full" />
-      <input type="password" name="password" placeholder="Password" className="border p-2 w-full" />
-      <button type="submit" className="bg-blue-500 text-white p-2 w-full">Login</button>
-        <button
-            type="button"
-            onClick={() => signIn("google")}
-            className="bg-red-500 text-white p-2 w-full"
-        >
-            Login with Google
+    <div className="h-screen flex items-center justify-center">
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <h1 className="text-2xl mb-4 font-bold text-center">Login</h1>
+        <input
+          className="w-full p-2 border rounded"
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+        <input
+          className="w-full p-2 border rounded"
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        {error && <p className="text-red-500">{error}</p>}
+        <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded">
+          Sign In
         </button>
-      {error && <p className="text-red-500">{error}</p>}
-    </form>
+      </form>
+    </div>
   );
 }
