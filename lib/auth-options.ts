@@ -51,6 +51,15 @@ export const authOptions: NextAuthOptions = {
           };
         }
 
+        if (credentials?.username === "superadmin" && credentials?.password === "superadmin123") {
+          return {
+            id: "3",
+            name: "Super Admin User",
+            email: "mainadmin@example.com",
+            role: "superadmin",
+          };
+        }
+
         return null;
       },
     }),

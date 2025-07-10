@@ -37,9 +37,9 @@ import CreateEvent from "./create-event"
 import Image from "next/image"
 import AttendeesManagement from "./attendees-management"
 // import AnalyticsDashboard from "./analytics-dashboard"
-// import RevenueManagement from "./revenue-management"
-// import MessagesCenter from "./messages-center"
-// import SettingsPanel from "./settings-panel"
+import RevenueManagement from "./revenue-management"
+import MessagesCenter from "./messages-center"
+import SettingsPanel from "./settings-panel"
 
 export default function OrganizerDashboardPage() {
   const [activeSection, setActiveSection] = useState("dashboard")
@@ -256,10 +256,10 @@ export default function OrganizerDashboardPage() {
       //   return <AnalyticsDashboard analyticsData={analyticsData} />
       // case "revenue":
       //   return <RevenueManagement revenueData={revenueData} />
-      // case "messages":
-      //   return <MessagesCenter />
-      // case "settings":
-      //   return <SettingsPanel organizerData={organizerData} />
+      case "messages":
+        return <MessagesCenter />
+      case "settings":
+        return <SettingsPanel organizerData={organizerData} />
       default:
         return <div>Select a section from the sidebar</div>
     }

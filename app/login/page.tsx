@@ -17,6 +17,8 @@ export default function LoginPage() {
       router.push("/dashboard");
     } else if (session?.user?.role === "organizer") {
       router.push("/organizer-dashboard");
+    } else if (session?.user?.role === "superadmin") {
+      router.push("/admin-dashboard");
     }
   }, [session]);
 
@@ -35,7 +37,6 @@ export default function LoginPage() {
 
   return (
     <div className="h-screen flex items-center justify-center">
-      
       <form onSubmit={handleSubmit} className="space-y-4">
         <h1 className="text-2xl mb-4 font-bold text-center">Login</h1>
         <input
