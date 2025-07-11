@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { signOut } from "next-auth/react" 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Sidebar,
@@ -245,12 +246,12 @@ export default function OrganizerDashboardPage() {
         return <CreateEvent />
       case "attendees":
         return <AttendeesManagement attendees={attendeesData} />
-      case "analytics":
-        return <AnalyticsDashboard analyticsData={analyticsData} events={myEvents} />
-      case "promotion":
-        return <EventPromotion events={myEvents} />
-      case "my-plan":
-        return <MyPlan />
+      // case "analytics":
+      //   return <AnalyticsDashboard analyticsData={analyticsData} events={myEvents} />
+      // case "promotion":
+      //   return <EventPromotion events={myEvents} />
+      // case "my-plan":
+      //   return <MyPlan />
       case "messages":
         return <MessagesCenter />
       case "settings":
@@ -293,6 +294,12 @@ export default function OrganizerDashboardPage() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+                  <Button
+                                     onClick={() => signOut({ callbackUrl: "/login" })}
+                                      className="w-full bg-red-500 hover:bg-red-600 text-white mt-20"
+                                    >
+                                      Logout
+                                    </Button>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
