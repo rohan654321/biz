@@ -1,6 +1,5 @@
 "use client"
 
-import { signOut } from "next-auth/react"
 import { useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -24,22 +23,24 @@ import {
   Plus,
   Users,
   BarChart3,
-//   DollarSign,
+  Crown,
   MessageSquare,
   Settings,
   Bell,
+  DollarSign,
+  Megaphone,
 } from "lucide-react"
 
 // Import all section components
 import DashboardOverview from "./dashboard-overview"
 import MyEvents from "./my-events"
 import CreateEvent from "./create-event"
-import Image from "next/image"
 import AttendeesManagement from "./attendees-management"
-// import AnalyticsDashboard from "./analytics-dashboard"
-import RevenueManagement from "./revenue-management"
+import AnalyticsDashboard from "./analytics-dashboard"
+import EventPromotion from "./event-promotion"
 import MessagesCenter from "./messages-center"
 import SettingsPanel from "./settings-panel"
+import MyPlan from "./my-plan"
 
 export default function OrganizerDashboardPage() {
   const [activeSection, setActiveSection] = useState("dashboard")
@@ -83,16 +84,16 @@ export default function OrganizerDashboardPage() {
       trend: "up" as const,
       icon: Users,
     },
-    // {
-    //   title: "Revenue",
-    //   value: "₹28.5L",
-    //   change: "+25%",
-    //   trend: "up" as const,
-    //   icon: DollarSign,
-    // },
+    {
+      title: "Revenue",
+      value: "₹28.5L",
+      change: "+25%",
+      trend: "up" as const,
+      icon: DollarSign,
+    },
   ]
 
-  // Mock events data
+ // Mock events data
   const myEvents = [
     {
       id: 1,
@@ -101,6 +102,7 @@ export default function OrganizerDashboardPage() {
       location: "Chennai Trade Centre",
       status: "Active",
       attendees: 2500,
+      revenue: 850000,
       registrations: 2800,
       type: "Exhibition",
     },
@@ -111,6 +113,7 @@ export default function OrganizerDashboardPage() {
       location: "Mumbai Convention Center",
       status: "Planning",
       attendees: 1200,
+      revenue: 450000,
       registrations: 1500,
       type: "Conference",
     },
@@ -121,11 +124,11 @@ export default function OrganizerDashboardPage() {
       location: "Delhi Exhibition Center",
       status: "Draft",
       attendees: 0,
+      revenue: 0,
       registrations: 0,
       type: "Exhibition",
     },
   ]
-
   // Mock attendees data
   const attendeesData = [
     {
@@ -178,21 +181,6 @@ export default function OrganizerDashboardPage() {
     ],
   }
 
-  // Mock revenue data
-  const revenueData = {
-    revenueData: [
-      { month: "Jan", revenue: 85000 },
-      { month: "Feb", revenue: 125000 },
-      { month: "Mar", revenue: 180000 },
-      { month: "Apr", revenue: 220000 },
-      { month: "May", revenue: 195000 },
-      { month: "Jun", revenue: 285000 },
-    ],
-    totalRevenue: "₹28.5L",
-    monthlyRevenue: "₹4.2L",
-    averagePerEvent: "₹6.3L",
-  }
-
   const sidebarItems = [
     {
       title: "Dashboard",
@@ -219,11 +207,16 @@ export default function OrganizerDashboardPage() {
       icon: BarChart3,
       id: "analytics",
     },
-    // {
-    //   title: "Revenue",
-    //   icon: DollarSign,
-    //   id: "revenue",
-    // },
+    {
+      title: "Promotion",
+      icon: Megaphone,
+      id: "promotion",
+    },
+    {
+      title: "My Plan",
+      icon: Crown,
+      id: "my-plan",
+    },
     {
       title: "Messages",
       icon: MessageSquare,
@@ -252,10 +245,12 @@ export default function OrganizerDashboardPage() {
         return <CreateEvent />
       case "attendees":
         return <AttendeesManagement attendees={attendeesData} />
-      // case "analytics":
-      //   return <AnalyticsDashboard analyticsData={analyticsData} />
-      // case "revenue":
-      //   return <RevenueManagement revenueData={revenueData} />
+      case "analytics":
+        return <AnalyticsDashboard analyticsData={analyticsData} events={myEvents} />
+      case "promotion":
+        return <EventPromotion events={myEvents} />
+      case "my-plan":
+        return <MyPlan />
       case "messages":
         return <MessagesCenter />
       case "settings":
@@ -266,25 +261,18 @@ export default function OrganizerDashboardPage() {
   }
 
   return (
-    <SidebarProvider >
+    <SidebarProvider>
       <div className="flex min-h-screen w-full">
-        <Sidebar className="border-r w-64 shrink-0">
+        <Sidebar className="border-r">
           <SidebarHeader className="border-b p-4">
             <div className="flex items-center gap-3">
-              {/* <Avatar className="w-10 h-10">
+              <Avatar className="w-10 h-10">
                 <AvatarImage src={organizerData.avatar || "/placeholder.svg"} />
                 <AvatarFallback>EC</AvatarFallback>
-              </Avatar> */}
+              </Avatar>
               <div>
-                {/* <div className="font-semibold">{organizerData.name}</div> */}
-                {/* <div className="text-sm text-gray-600">Event Organizer</div> */}
-                <Image
-                  src="/logo/logo.png"
-                  alt="Organizer Avatar"
-                  width={100}
-                  height={100}
-                  className="rounded-full"
-                />
+                <div className="font-semibold">{organizerData.name}</div>
+                <div className="text-sm text-gray-600">Event Organizer</div>
               </div>
             </div>
           </SidebarHeader>
@@ -306,12 +294,6 @@ export default function OrganizerDashboardPage() {
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>
-                <Button
-                    onClick={() => signOut({ callbackUrl: "/login" })}
-                    className="w-full bg-red-500 hover:bg-red-600 text-white mt-20 "
-                >
-                  Logout
-                </Button>
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,7 +39,18 @@ export default function LoginPage() {
   return (
     <div className="h-screen flex items-center justify-center">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <h1 className="text-2xl mb-4 font-bold text-center">Login</h1>
+       <div className="text-2xl mb-4 font-bold text-center">
+      <div className="flex justify-center">
+    <Image 
+      src="/logo/logo.png"
+      alt="logo"
+      width={150}
+      height={150}
+      className="h-auto w-auto"
+        />
+       </div>
+      </div>
+
         <input
           className="w-full p-2 border rounded"
           type="text"

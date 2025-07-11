@@ -137,8 +137,8 @@ export default function AdminDashboard({ adminData }: AdminDashboardProps) {
     //     return <ReportsManagement />
     //   case "content":
     //     return <ContentManagement />
-    //   case "ads":
-    //     return <AdsManagement />
+      // case "ads":
+      //   return <AdsManagement />
     //   case "settings":
     //     return <SystemSettings />
     //   default:
