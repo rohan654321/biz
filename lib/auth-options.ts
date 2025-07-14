@@ -42,7 +42,7 @@ export const authOptions: NextAuthOptions = {
           };
         }
 
-        if (credentials?.username === "organizer" && credentials?.password === "organizer124") {
+        if (credentials?.username === "organizer" && credentials?.password === "organizer123") {
           return {
             id: "2",
             name: "Organizer User",

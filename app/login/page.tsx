@@ -37,10 +37,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-screen flex items-center justify-center">
-      <form onSubmit={handleSubmit} className="space-y-4">
-       <div className="text-2xl mb-4 font-bold text-center">
-      <div className="flex justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-gray-200 px-4">
+      <form onSubmit={handleSubmit} className="space-y-4 bg-white p-10">
+       <div className="text-2xl mb-4 font-bold text-center ">
+      <div className="flex justify-center ">
     <Image 
       src="/logo/logo.png"
       alt="logo"

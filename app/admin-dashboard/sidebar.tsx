@@ -107,11 +107,11 @@ export default function AdminDashboard({ adminData }: AdminDashboardProps) {
     //   icon: Database,
     //   id: "content",
     // },
-    // {
-    //   title: "Ads Management",
-    //   icon: Megaphone,
-    //   id: "ads",
-    // },
+    {
+      title: "Ads Management",
+      icon: Megaphone,
+      id: "ads",
+    },
     {
       title: "System Settings",
       icon: Settings,
@@ -123,8 +123,8 @@ export default function AdminDashboard({ adminData }: AdminDashboardProps) {
     switch (activeSection) {
       case "dashboard":
         return <DashboardOverview />
-    //   case "users":
-    //     return <UserManagement />
+      case "users":
+        return <UserManagement />
     //   case "events":
     //     return <EventManagement />
     //   case "organizers":

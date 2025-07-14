@@ -79,10 +79,10 @@ export default function DashboardOverview({ systemStats }: DashboardOverviewProp
             <Download className="w-4 h-4" />
             Export Report
           </Button>
-          <Button className="flex items-center gap-2">
+          {/* <Button className="flex items-center gap-2">
             <Activity className="w-4 h-4" />
             System Health
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -116,74 +116,70 @@ export default function DashboardOverview({ systemStats }: DashboardOverviewProp
       </div>
 
       {/* Recent Activity & System Health */}
-      {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-3 border rounded-lg">
-                <div className="p-2 bg-green-100 rounded-full">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-3 border rounded-lg">
+                  <div className="p-2 bg-green-100 rounded-full">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium">New event approved</p>
+                    <p className="text-sm text-gray-600">Global Precision Expo 2025 - 2 hours ago</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">New event approved</p>
-                  <p className="text-sm text-gray-600">Global Precision Expo 2025 - 2 hours ago</p>
+                <div className="flex items-center gap-3 p-3 border rounded-lg">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <Users className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium">New organizer registered</p>
+                    <p className="text-sm text-gray-600">TechEvents Ltd - 4 hours ago</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 border rounded-lg">
+                  <div className="p-2 bg-red-100 rounded-full">
+                    <Flag className="w-4 h-4 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Event flagged for review</p>
+                    <p className="text-sm text-gray-600">Suspicious Event - 6 hours ago</p>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 border rounded-lg">
-                <div className="p-2 bg-blue-100 rounded-full">
-                  <Users className="w-4 h-4 text-blue-600" />
-                </div>
-                <div>
-                  <p className="font-medium">New organizer registered</p>
-                  <p className="text-sm text-gray-600">TechEvents Ltd - 4 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 border rounded-lg">
-                <div className="p-2 bg-red-100 rounded-full">
-                  <Flag className="w-4 h-4 text-red-600" />
-                </div>
-                <div>
-                  <p className="font-medium">Event flagged for review</p>
-                  <p className="text-sm text-gray-600">Suspicious Event - 6 hours ago</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>System Health</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Server Status</span>
-                <Badge className="bg-green-100 text-green-800">Online</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Database</span>
-                <Badge className="bg-green-100 text-green-800">Healthy</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Payment Gateway</span>
-                <Badge className="bg-green-100 text-green-800">Connected</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Email Service</span>
-                <Badge className="bg-yellow-100 text-yellow-800">Warning</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Storage Usage</span>
-                <span className="text-sm text-gray-600">68% (2.1TB / 3TB)</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div> */}
+          <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-2">
+            <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
+              <Users className="w-6 h-6" />
+              Manage Users
+            </Button>
+            <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
+              <Calendar className="w-6 h-6" />
+              Review Events
+            </Button>
+            <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
+              <BarChart3 className="w-6 h-6" />
+              View Analytics
+            </Button>
+            <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
+              <Settings className="w-6 h-6" />
+              System Settings
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+        </div>
 
       {/* Quick Actions */}
       {/* <Card>

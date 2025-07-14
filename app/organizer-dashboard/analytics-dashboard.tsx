@@ -245,15 +245,15 @@ export default function AnalyticsDashboard({ analyticsData, events }: AnalyticsD
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="leads">Lead Generation</TabsTrigger>
+          {/* <TabsTrigger value="leads">Lead Generation</TabsTrigger>
           <TabsTrigger value="visitors">Visitor Analytics</TabsTrigger>
           <TabsTrigger value="exhibitors">Exhibitor Data</TabsTrigger>
-          <TabsTrigger value="reports">Download Reports</TabsTrigger>
+          <TabsTrigger value="reports">Download Reports</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           {/* Overview Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -302,7 +302,7 @@ export default function AnalyticsDashboard({ analyticsData, events }: AnalyticsD
                 <p className="text-xs text-green-600 mt-2">+2.3% from last month</p>
               </CardContent>
             </Card>
-          </div>
+          </div> */}
 
           {/* Registration Trends */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
