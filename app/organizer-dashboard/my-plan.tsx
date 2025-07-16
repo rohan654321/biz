@@ -109,7 +109,7 @@ export default function MyPlan() {
           <TabsTrigger value="current">Current Plan</TabsTrigger>
           <TabsTrigger value="upgrade">Upgrade Plan</TabsTrigger>
           {/* <TabsTrigger value="payment">Payment Methods</TabsTrigger> */}
-          {/* <TabsTrigger value="billing">Billing History</TabsTrigger> */}
+          <TabsTrigger value="billing">Billing History</TabsTrigger>
         </TabsList>
 
         <TabsContent value="current" className="space-y-6">
