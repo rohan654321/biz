@@ -6,37 +6,31 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   Megaphone,
-  Play,
-  Pause,
-  Edit,
-  Trash2,
-  Eye,
   Users,
-  MousePointer,
-  DollarSign,
-  Facebook,
-  Instagram,
-  Linkedin,
-  Plus,
-  Share2,
-  ImageIcon,
-  FileText,
+  Target,
+  CreditCard,
+  CheckCircle,
+  Calendar,
+  MapPin,
+  GraduationCap,
+  Briefcase,
+  Music,
+  Car,
+  Home,
+  Utensils,
+  ShoppingBag,
+  Plane,
+  Dumbbell,
   Palette,
-  Mail,
+  Code,
+  Stethoscope,
+  Star,
 } from "lucide-react"
 
 interface Event {
@@ -55,499 +49,547 @@ interface EventPromotionProps {
   events: Event[]
 }
 
-export default function EventPromotion({ events }: EventPromotionProps) {
-  const [selectedTab, setSelectedTab] = useState("campaigns")
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+interface PromotionPackage {
+  id: string
+  name: string
+  description: string
+  price: number
+  features: string[]
+  userCount: number
+  categories: string[]
+  duration: string
+  recommended?: boolean
+}
 
-  // Mock campaign data
-  const campaigns = [
+interface CategoryFilter {
+  id: string
+  name: string
+  icon: any
+  userCount: number
+  avgEngagement: number
+  color: string
+}
+
+export default function EventPromotion({ events }: EventPromotionProps) {
+  const [selectedTab, setSelectedTab] = useState("platform-promotion")
+  const [selectedEvent, setSelectedEvent] = useState("")
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [selectedPackage, setSelectedPackage] = useState("")
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
+
+  // Platform promotion packages
+  const promotionPackages: PromotionPackage[] = [
     {
-      id: 1,
-      name: "Global Precision Expo - Early Bird",
-      event: "Global Precision Expo 2025",
-      type: "Social Media",
-      status: "Active",
-      budget: 50000,
-      spent: 32000,
-      impressions: 125000,
-      clicks: 2800,
-      conversions: 180,
-      ctr: 2.24,
-      platforms: ["Facebook", "Instagram", "LinkedIn"],
-      startDate: "2024-12-01",
-      endDate: "2025-01-15",
+      id: "basic",
+      name: "Basic Promotion",
+      description: "Reach targeted users in your event category",
+      price: 2999,
+      features: [
+        "Email notification to 5,000+ users",
+        "In-app notification banner",
+        "Category-based targeting",
+        "Basic analytics report",
+        "7-day promotion duration",
+      ],
+      userCount: 5000,
+      categories: ["selected"],
+      duration: "7 days",
     },
     {
-      id: 2,
-      name: "Tech Summit - Speaker Announcement",
-      event: "Tech Innovation Summit",
-      type: "Email Marketing",
-      status: "Active",
-      budget: 25000,
-      spent: 18000,
-      impressions: 45000,
-      clicks: 1200,
-      conversions: 95,
-      ctr: 2.67,
-      platforms: ["Email", "LinkedIn"],
-      startDate: "2024-12-10",
-      endDate: "2024-12-31",
+      id: "premium",
+      name: "Premium Promotion",
+      description: "Enhanced visibility with multi-category reach",
+      price: 7999,
+      features: [
+        "Email notification to 15,000+ users",
+        "Featured event placement",
+        "Multi-category targeting",
+        "Push notifications",
+        "Detailed analytics dashboard",
+        "14-day promotion duration",
+        "Social media cross-promotion",
+      ],
+      userCount: 15000,
+      categories: ["multiple"],
+      duration: "14 days",
+      recommended: true,
     },
     {
-      id: 3,
-      name: "Healthcare Expo - Pre-launch",
-      event: "Healthcare Expo 2025",
-      type: "Display Ads",
-      status: "Draft",
-      budget: 75000,
-      spent: 0,
-      impressions: 0,
-      clicks: 0,
-      conversions: 0,
-      ctr: 0,
-      platforms: ["Google Ads", "Facebook"],
-      startDate: "2025-01-01",
-      endDate: "2025-02-28",
+      id: "enterprise",
+      name: "Enterprise Promotion",
+      description: "Maximum reach across all relevant categories",
+      price: 15999,
+      features: [
+        "Email notification to 50,000+ users",
+        "Homepage banner placement",
+        "All relevant category targeting",
+        "SMS notifications (premium users)",
+        "Advanced analytics & insights",
+        "30-day promotion duration",
+        "Dedicated account manager",
+        "Custom promotional content",
+      ],
+      userCount: 50000,
+      categories: ["all"],
+      duration: "30 days",
     },
   ]
 
-  const promotionTools = [
+  // User categories with engagement data
+  const userCategories: CategoryFilter[] = [
     {
-      name: "Social Media Kit",
-      description: "Ready-to-use social media posts and graphics",
-      icon: Share2,
+      id: "technology",
+      name: "Technology & IT",
+      icon: Code,
+      userCount: 12500,
+      avgEngagement: 78,
       color: "bg-blue-500",
     },
     {
-      name: "Email Templates",
-      description: "Professional email marketing designs",
-      icon: Mail,
+      id: "business",
+      name: "Business & Finance",
+      icon: Briefcase,
+      userCount: 8900,
+      avgEngagement: 82,
       color: "bg-green-500",
     },
     {
-      name: "Ad Creator",
-      description: "Design display advertisements",
-      icon: ImageIcon,
+      id: "healthcare",
+      name: "Healthcare & Medical",
+      icon: Stethoscope,
+      userCount: 6700,
+      avgEngagement: 85,
+      color: "bg-red-500",
+    },
+    {
+      id: "education",
+      name: "Education & Training",
+      icon: GraduationCap,
+      userCount: 9200,
+      avgEngagement: 76,
       color: "bg-purple-500",
     },
     {
-      name: "Content Generator",
-      description: "AI-powered marketing content",
-      icon: FileText,
+      id: "arts",
+      name: "Arts & Culture",
+      icon: Palette,
+      userCount: 4300,
+      avgEngagement: 88,
+      color: "bg-pink-500",
+    },
+    {
+      id: "sports",
+      name: "Sports & Fitness",
+      icon: Dumbbell,
+      userCount: 7800,
+      avgEngagement: 79,
       color: "bg-orange-500",
     },
     {
-      name: "Brand Kit",
-      description: "Logos, colors, and brand assets",
-      icon: Palette,
-      color: "bg-pink-500",
+      id: "food",
+      name: "Food & Beverage",
+      icon: Utensils,
+      userCount: 5600,
+      avgEngagement: 83,
+      color: "bg-yellow-500",
+    },
+    {
+      id: "travel",
+      name: "Travel & Tourism",
+      icon: Plane,
+      userCount: 6100,
+      avgEngagement: 81,
+      color: "bg-indigo-500",
+    },
+    {
+      id: "automotive",
+      name: "Automotive",
+      icon: Car,
+      userCount: 3900,
+      avgEngagement: 74,
+      color: "bg-gray-500",
+    },
+    {
+      id: "real-estate",
+      name: "Real Estate",
+      icon: Home,
+      userCount: 4700,
+      avgEngagement: 77,
+      color: "bg-teal-500",
+    },
+    {
+      id: "entertainment",
+      name: "Entertainment",
+      icon: Music,
+      userCount: 8200,
+      avgEngagement: 86,
+      color: "bg-violet-500",
+    },
+    {
+      id: "retail",
+      name: "Retail & Shopping",
+      icon: ShoppingBag,
+      userCount: 7300,
+      avgEngagement: 80,
+      color: "bg-emerald-500",
     },
   ]
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "bg-green-100 text-green-800"
-      case "Paused":
-        return "bg-yellow-100 text-yellow-800"
-      case "Draft":
-        return "bg-gray-100 text-gray-800"
-      case "Completed":
-        return "bg-blue-100 text-blue-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
+  const calculateEstimatedReach = () => {
+    if (selectedCategories.length === 0) return 0
+    return selectedCategories.reduce((total, categoryId) => {
+      const category = userCategories.find((c) => c.id === categoryId)
+      return total + (category?.userCount || 0)
+    }, 0)
   }
 
-  const getPlatformIcon = (platform: string) => {
-    switch (platform) {
-      case "Facebook":
-        return <Facebook className="w-4 h-4" />
-      case "Instagram":
-        return <Instagram className="w-4 h-4" />
-      case "Twitter":
-        return <div className="w-4 h-4">Twitter</div> // Placeholder for Twitter icon
-      case "LinkedIn":
-        return <Linkedin className="w-4 h-4" />
-      case "Email":
-        return <Mail className="w-4 h-4" />
-      default:
-        return <Megaphone className="w-4 h-4" />
-    }
+  const calculateEstimatedEngagement = () => {
+    if (selectedCategories.length === 0) return 0
+    const totalEngagement = selectedCategories.reduce((total, categoryId) => {
+      const category = userCategories.find((c) => c.id === categoryId)
+      return total + (category?.avgEngagement || 0)
+    }, 0)
+    return Math.round(totalEngagement / selectedCategories.length)
   }
+
+  const handleCategoryToggle = (categoryId: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId],
+    )
+  }
+
+  const handlePackageSelect = (packageId: string) => {
+    setSelectedPackage(packageId)
+    setIsPaymentDialogOpen(true)
+  }
+
+  const selectedPackageData = promotionPackages.find((p) => p.id === selectedPackage)
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Event Promotion</h1>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Create Campaign
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Campaign</DialogTitle>
-              <DialogDescription>Set up a new marketing campaign for your event</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="campaign-name">Campaign Name</Label>
-                  <Input id="campaign-name" placeholder="Enter campaign name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="event-select">Select Event</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose event" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {events.map((event) => (
-                        <SelectItem key={event.id} value={event.id.toString()}>
-                          {event.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="campaign-type">Campaign Type</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select campaign type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="social">Social Media</SelectItem>
-                    <SelectItem value="email">Email Marketing</SelectItem>
-                    <SelectItem value="display">Display Ads</SelectItem>
-                    <SelectItem value="search">Search Ads</SelectItem>
-                    <SelectItem value="influencer">Influencer Marketing</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Campaign Description</Label>
-                <Textarea id="description" placeholder="Describe your campaign goals and strategy" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="budget">Budget (₹)</Label>
-                  <Input id="budget" type="number" placeholder="50000" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="duration">Duration (days)</Label>
-                  <Input id="duration" type="number" placeholder="30" />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Label>Platforms</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  {["Facebook", "Instagram", "Twitter", "LinkedIn", "Email", "Google Ads"].map((platform) => (
-                    <div key={platform} className="flex items-center space-x-2">
-                      <Switch id={platform.toLowerCase()} />
-                      <Label htmlFor={platform.toLowerCase()} className="flex items-center gap-2">
-                        {getPlatformIcon(platform)}
-                        {platform}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Label>Target Audience</Label>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="age-range">Age Range</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select age range" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="18-25">18-25</SelectItem>
-                        <SelectItem value="26-35">26-35</SelectItem>
-                        <SelectItem value="36-45">36-45</SelectItem>
-                        <SelectItem value="46-55">46-55</SelectItem>
-                        <SelectItem value="55+">55+</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
-                    <Input id="location" placeholder="Target cities/regions" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={() => setIsCreateDialogOpen(false)}>Create Campaign</Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="bg-blue-50 text-blue-700">
+            <Users className="w-4 h-4 mr-1" />
+            {userCategories.reduce((total, cat) => total + cat.userCount, 0).toLocaleString()} Platform Users
+          </Badge>
+        </div>
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-          <TabsTrigger value="create">Quick Promote</TabsTrigger>
-          <TabsTrigger value="tools">Promotion Tools</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-1">
+          <TabsTrigger value="platform-promotion">Platform Promotion</TabsTrigger>
+          {/* <TabsTrigger value="external-campaigns">External Campaigns</TabsTrigger> */}
         </TabsList>
 
-        <TabsContent value="campaigns" className="space-y-6">
-          {/* Campaign Performance Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Total Impressions</p>
-                    <p className="text-2xl font-bold">170K</p>
-                  </div>
-                  <Eye className="w-8 h-8 text-blue-500" />
-                </div>
-                <p className="text-xs text-green-600 mt-2">+15% from last month</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Total Clicks</p>
-                    <p className="text-2xl font-bold">4.0K</p>
-                  </div>
-                  <MousePointer className="w-8 h-8 text-green-500" />
-                </div>
-                <p className="text-xs text-green-600 mt-2">+22% from last month</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Conversions</p>
-                    <p className="text-2xl font-bold">275</p>
-                  </div>
-                  <Users className="w-8 h-8 text-purple-500" />
-                </div>
-                <p className="text-xs text-green-600 mt-2">+18% from last month</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Total Spent</p>
-                    <p className="text-2xl font-bold">₹50K</p>
-                  </div>
-                  <DollarSign className="w-8 h-8 text-orange-500" />
-                </div>
-                <p className="text-xs text-red-600 mt-2">67% of budget used</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Active Campaigns */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Active Campaigns</h2>
-            {campaigns.map((campaign) => (
-              <Card key={campaign.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="font-semibold text-lg">{campaign.name}</h3>
-                      <p className="text-sm text-gray-600">{campaign.event}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className={getStatusColor(campaign.status)}>{campaign.status}</Badge>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          {campaign.status === "Active" ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4">
-                    <div>
-                      <p className="text-xs text-gray-500">Budget</p>
-                      <p className="font-semibold">₹{(campaign.budget / 1000).toFixed(0)}K</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Spent</p>
-                      <p className="font-semibold">₹{(campaign.spent / 1000).toFixed(0)}K</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Impressions</p>
-                      <p className="font-semibold">{(campaign.impressions / 1000).toFixed(0)}K</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Clicks</p>
-                      <p className="font-semibold">{campaign.clicks.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Conversions</p>
-                      <p className="font-semibold">{campaign.conversions}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">CTR</p>
-                      <p className="font-semibold">{campaign.ctr}%</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">Platforms:</span>
-                      <div className="flex gap-1">
-                        {campaign.platforms.map((platform) => (
-                          <div key={platform} className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-xs">
-                            {getPlatformIcon(platform)}
-                            {platform}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {campaign.startDate} - {campaign.endDate}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="create" className="space-y-6">
+        <TabsContent value="platform-promotion" className="space-y-6">
+          {/* Event Selection */}
           <Card>
             <CardHeader>
-              <CardTitle>Quick Promote Event</CardTitle>
-              <p className="text-sm text-gray-600">Instantly share your event across multiple platforms</p>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="quick-event">Select Event to Promote</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose an event" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {events.map((event) => (
-                      <SelectItem key={event.id} value={event.id.toString()}>
-                        {event.title} - {event.date}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-3">
-                <Label>Share on Platforms</Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
-                    <Facebook className="w-6 h-6 text-blue-600" />
-                    <span>Facebook</span>
-                  </Button>
-                  <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
-                    <Instagram className="w-6 h-6 text-pink-600" />
-                    <span>Instagram</span>
-                  </Button>
-                  <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
-                    <div className="w-6 h-6 text-blue-400">Twitter</div> {/* Placeholder for Twitter icon */}
-                    <span>Twitter</span>
-                  </Button>
-                  <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
-                    <Linkedin className="w-6 h-6 text-blue-700" />
-                    <span>LinkedIn</span>
-                  </Button>
-                  <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
-                    <Mail className="w-6 h-6 text-green-600" />
-                    <span>Email</span>
-                  </Button>
-                  <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
-                    <Share2 className="w-6 h-6 text-gray-600" />
-                    <span>All Platforms</span>
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="promotion-message">Custom Message (Optional)</Label>
-                <Textarea id="promotion-message" placeholder="Add a custom message to your promotion..." rows={3} />
-              </div>
-
-              <Button className="w-full">
-                <Megaphone className="w-4 h-4 mr-2" />
-                Start Promotion
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="tools" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {promotionTools.map((tool, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className={`p-3 rounded-lg ${tool.color}`}>
-                      <tool.icon className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">{tool.name}</h3>
-                      <p className="text-sm text-gray-600">{tool.description}</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" className="w-full bg-transparent">
-                    Open Tool
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Promotion Analytics</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Select Event to Promote
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">2.4M</div>
-                  <div className="text-sm text-gray-600">Total Reach</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">12.5K</div>
-                  <div className="text-sm text-gray-600">Engagements</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-purple-600">3.2%</div>
-                  <div className="text-sm text-gray-600">Avg. CTR</div>
-                </div>
+              <Select value={selectedEvent} onValueChange={setSelectedEvent}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choose an event to promote" />
+                </SelectTrigger>
+                <SelectContent>
+                  {events.map((event) => (
+                    <SelectItem key={event.id} value={event.id.toString()}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{event.title}</span>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <MapPin className="w-4 h-4" />
+                          {event.location}
+                          <Calendar className="w-4 h-4" />
+                          {event.date}
+                        </div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          {selectedEvent && (
+            <>
+              {/* Category Selection */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="w-5 h-5" />
+                    Target User Categories
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Select categories that match your event audience. Each category shows user count and engagement
+                    rate.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {userCategories.map((category) => (
+                      <div
+                        key={category.id}
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                          selectedCategories.includes(category.id)
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                        onClick={() => handleCategoryToggle(category.id)}
+                      >
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={`p-2 rounded-lg ${category.color}`}>
+                            <category.icon className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-sm">{category.name}</h3>
+                          </div>
+                          <Checkbox
+                            checked={selectedCategories.includes(category.id)}
+                            onChange={() => handleCategoryToggle(category.id)}
+                          />
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-600">Users:</span>
+                            <span className="font-medium">{category.userCount.toLocaleString()}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-600">Engagement:</span>
+                            <span className="font-medium">{category.avgEngagement}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {selectedCategories.length > 0 && (
+                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                      <h3 className="font-semibold mb-2">Estimated Reach</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600">Total Users:</span>
+                          <div className="text-2xl font-bold text-blue-600">
+                            {calculateEstimatedReach().toLocaleString()}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Avg. Engagement:</span>
+                          <div className="text-2xl font-bold text-green-600">{calculateEstimatedEngagement()}%</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Expected Registrations:</span>
+                          <div className="text-2xl font-bold text-purple-600">
+                            {Math.round(calculateEstimatedReach() * (calculateEstimatedEngagement() / 100) * 0.15)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Promotion Packages */}
+              {selectedCategories.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Megaphone className="w-5 h-5" />
+                      Choose Promotion Package
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">
+                      Select a package that fits your budget and reach requirements
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {promotionPackages.map((pkg) => (
+                        <div
+                          key={pkg.id}
+                          className={`relative p-6 border-2 rounded-lg ${
+                            pkg.recommended ? "border-blue-500 bg-blue-50" : "border-gray-200"
+                          }`}
+                        >
+                          {pkg.recommended && (
+                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                              <Badge className="bg-blue-500 text-white">
+                                <Star className="w-3 h-3 mr-1" />
+                                Recommended
+                              </Badge>
+                            </div>
+                          )}
+
+                          <div className="text-center mb-4">
+                            <h3 className="text-xl font-bold">{pkg.name}</h3>
+                            <p className="text-sm text-gray-600 mt-1">{pkg.description}</p>
+                            <div className="mt-3">
+                              <span className="text-3xl font-bold text-blue-600">₹{pkg.price.toLocaleString()}</span>
+                              <span className="text-sm text-gray-500">/{pkg.duration}</span>
+                            </div>
+                          </div>
+
+                          <div className="space-y-3 mb-6">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-600">Reach:</span>
+                              <span className="font-medium">{pkg.userCount.toLocaleString()}+ users</span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-600">Duration:</span>
+                              <span className="font-medium">{pkg.duration}</span>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2 mb-6">
+                            {pkg.features.map((feature, index) => (
+                              <div key={index} className="flex items-center gap-2 text-sm">
+                                <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                <span>{feature}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <Button
+                            className="w-full"
+                            variant={pkg.recommended ? "default" : "outline"}
+                            onClick={() => handlePackageSelect(pkg.id)}
+                          >
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            Select Package
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="external-campaigns" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>External Marketing Campaigns</CardTitle>
+              <p className="text-sm text-gray-600">
+                Create campaigns for social media, email marketing, and other external platforms
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <Megaphone className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">External Campaigns</h3>
+                <p className="text-gray-500 mb-4">
+                  This feature allows you to create and manage campaigns for external platforms
+                </p>
+                <Button variant="outline">Coming Soon</Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Payment Dialog */}
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Complete Your Promotion Purchase</DialogTitle>
+            <DialogDescription>
+              Review your selection and complete the payment to start promoting your event
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedPackageData && (
+            <div className="space-y-6">
+              {/* Order Summary */}
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-semibold mb-3">Order Summary</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Package:</span>
+                    <span className="font-medium">{selectedPackageData.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Event:</span>
+                    <span className="font-medium">{events.find((e) => e.id.toString() === selectedEvent)?.title}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Target Categories:</span>
+                    <span className="font-medium">{selectedCategories.length} selected</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Estimated Reach:</span>
+                    <span className="font-medium">{calculateEstimatedReach().toLocaleString()} users</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Duration:</span>
+                    <span className="font-medium">{selectedPackageData.duration}</span>
+                  </div>
+                  <div className="border-t pt-2 mt-2">
+                    <div className="flex justify-between font-semibold">
+                      <span>Total Amount:</span>
+                      <span className="text-blue-600">₹{selectedPackageData.price.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Form */}
+              <div className="space-y-4">
+                <h3 className="font-semibold">Payment Details</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="card-number">Card Number</Label>
+                    <Input id="card-number" placeholder="1234 5678 9012 3456" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="card-name">Cardholder Name</Label>
+                    <Input id="card-name" placeholder="John Doe" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="expiry">Expiry Date</Label>
+                    <Input id="expiry" placeholder="MM/YY" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cvv">CVV</Label>
+                    <Input id="cvv" placeholder="123" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Terms and Conditions */}
+              <div className="flex items-center space-x-2">
+                <Checkbox id="terms" />
+                <Label htmlFor="terms" className="text-sm">
+                  I agree to the{" "}
+                  <a href="#" className="text-blue-600 hover:underline">
+                    Terms and Conditions
+                  </a>{" "}
+                  and{" "}
+                  <a href="#" className="text-blue-600 hover:underline">
+                    Promotion Policy
+                  </a>
+                </Label>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Pay ₹{selectedPackageData.price.toLocaleString()}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

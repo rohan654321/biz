@@ -125,22 +125,22 @@ export default function AdminDashboard({ adminData }: AdminDashboardProps) {
         return <DashboardOverview />
       case "users":
         return <UserManagement />
-    //   case "events":
-    //     return <EventManagement />
-    //   case "organizers":
-    //     return <OrganizerManagement />
-    //   case "analytics":
-    //     return <AnalyticsDashboard />
-    //   case "revenue":
-    //     return <RevenueManagement />
-    //   case "reports":
-    //     return <ReportsManagement />
+      // case "events":
+      //   return <EventManagement />
+      // case "organizers":
+      //   return <OrganizerManagement />
+      // case "analytics":
+      //   return <AnalyticsDashboard />
+      // case "revenue":
+      //   return <RevenueManagement />
+      // case "reports":
+      //   return <ReportsManagement />
     //   case "content":
     //     return <ContentManagement />
       // case "ads":
       //   return <AdsManagement />
-    //   case "settings":
-    //     return <SystemSettings />
+      // case "settings":
+      //   return <SystemSettings />
     //   default:
     //     return <DashboardOverview />
     }

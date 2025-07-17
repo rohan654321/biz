@@ -248,8 +248,8 @@ export default function OrganizerDashboardPage() {
         return <AttendeesManagement attendees={attendeesData} />
       case "analytics":
         return <AnalyticsDashboard analyticsData={analyticsData} events={myEvents} />
-      // case "promotion":
-      //   return <EventPromotion events={myEvents} />
+        case "promotion":
+          return <EventPromotion events={myEvents} />
       case "my-plan":
         return <MyPlan />
       case "messages":
