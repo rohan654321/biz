@@ -125,8 +125,8 @@ export default function AdminDashboard({ adminData }: AdminDashboardProps) {
         return <DashboardOverview />
       case "users":
         return <UserManagement />
-      // case "events":
-      //   return <EventManagement />
+      case "events":
+        return <EventManagement />
       // case "organizers":
       //   return <OrganizerManagement />
       // case "analytics":
