@@ -145,8 +145,8 @@ export default function AdsManagement() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-          <TabsTrigger value="create">Create Ad</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+         <TabsTrigger value="create">Create Ad</TabsTrigger>
+           <TabsTrigger value="analytics">Uploade</TabsTrigger> 
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
@@ -361,15 +361,15 @@ export default function AdsManagement() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Ad Performance Analytics</CardTitle>
+                <CardTitle>Bannars can be added here</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-12">
-                  <BarChart3 className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600">Detailed analytics charts would be implemented here...</p>
-                  <p className="text-sm text-gray-500 mt-2">
+                  {/* <BarChart3 className="w-16 h-16 mx-auto text-gray-400 mb-4" /> */}
+                  <p className="text-gray-600">images implemented here...</p>
+                  {/* <p className="text-sm text-gray-500 mt-2">
                     Including impression trends, click-through rates, and revenue analytics
-                  </p>
+                  </p> */}
                 </div>
               </CardContent>
             </Card>

@@ -11,7 +11,6 @@ export default function SystemSettings() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900">System Settings</h1>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Platform Settings */}
         <Card>
