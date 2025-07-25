@@ -262,7 +262,7 @@ export default function VenuePage() {
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="location">Location</TabsTrigger>
-            <TabsTrigger value="calendar">Event Calendar</TabsTrigger>
+            {/* <TabsTrigger value="calendar">Event Calendar</TabsTrigger> */}
             <TabsTrigger value="spaces">Meeting Spaces</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
           </TabsList>
