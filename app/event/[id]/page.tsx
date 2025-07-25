@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Star, Phone, Mail, MapPin, Clock, IndianRupee } from "lucide-react"
-import { getEventById } from "@/lib/data/events"
+import { exhibitors, getEventById } from "@/lib/data/events"
 import { notFound } from "next/navigation"
 import EventHero from "@/components/event-hero"
 import EventImageGallery from "@/components/event-image-gallery"
@@ -52,10 +52,10 @@ export default async function EventPage({ params }: EventPageProps) {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             {/* Event Title and Info */}
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-blue-900 mb-2">Global Precision Expo 2025</h1>
+              <h1 className="text-3xl font-bold text-blue-900 mb-2">{event.title}</h1>
               <div className="flex items-center gap-2 text-gray-600 mb-3">
                 <MapPin className="w-4 h-4" />
-                <span>Chennai Trade Centre, Chennai - India</span>
+                <span>{event.location.address}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center justify-center gap-4">
@@ -358,7 +358,7 @@ export default async function EventPage({ params }: EventPageProps) {
                           </span>
                         </div>
                         <p className="text-sm text-gray-700">{event.organizer.description}</p>
-                        <p className="text-sm text-blue-900 mt-1">1 Upcoming Events • {event.followers} Followers</p>
+                        <p className="text-sm text-blue-900 mt-1">1 Upcoming Events • {event.followers?.length??0} Followers</p>
                       </div>
                     </div>
                   </CardContent>
@@ -389,16 +389,16 @@ export default async function EventPage({ params }: EventPageProps) {
                 {/* Exhibitor List */}
                 <div className="py-6">
                   <h2 className="text-xl font-semibold text-gray-800 mb-1">Exhibitor List</h2>
-                  <p className="text-sm text-gray-500 mb-6">68 Exhibitor of Current Edition</p>
+                  <p className="text-sm text-gray-500 mb-6">{event.exhibitors?.length ?? 0}</p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    {followers.map((follower, index) => (
+                    {exhibitors.map((Exhibitor, index) => (
                       <Card key={index} className="border">
                         <CardContent className="p-4">
                           <div className="flex gap-4 items-center mb-4">
                             <div className="w-16 h-16 flex justify-center">
                               <Image
-                                src={follower.imageUrl || "/placeholder.svg"}
+                                src={Exhibitor.img || "/placeholder.svg"}
                                 alt="Profile"
                                 width={60}
                                 height={60}
@@ -411,7 +411,7 @@ export default async function EventPage({ params }: EventPageProps) {
                               </button>
                             </div>
                           </div>
-                          <p className="text-lg font-bold text-gray-700 mb-3">{follower.company}</p>
+                          <p className="text-lg font-bold text-gray-700 mb-3">{Exhibitor.company}</p>
                           <button className="w-full border-2 border-red-600 text-white bg-red-600 text-sm py-2 rounded-full font-semibold hover:bg-red-700 transition">
                             Schedule Meeting
                           </button>
@@ -430,16 +430,16 @@ export default async function EventPage({ params }: EventPageProps) {
                 {/* Followers Section */}
                 <div className="py-6">
                   <h2 className="text-xl font-semibold text-gray-800 mb-1">Followers</h2>
-                  <p className="text-sm text-gray-500 mb-6">{event.followers} Followers</p>
+                  <p className="text-sm text-gray-500 mb-6">{event.followers?.length??0} Followers</p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    {followers.map((follower, index) => (
+                    {event.followers?.map((User, index) => (
                       <Card key={index} className="border">
                         <CardContent className="p-4">
                           <div className="flex gap-4 items-center mb-4">
                             <div className="w-16 h-16 flex justify-center">
                               <Image
-                                src={follower.imageUrl || "/placeholder.svg"}
+                                src={User.img || "/placeholder.svg"}
                                 alt="Profile"
                                 width={60}
                                 height={60}
@@ -447,9 +447,9 @@ export default async function EventPage({ params }: EventPageProps) {
                               />
                             </div>
                             <div className="flex-1">
-                              <h3 className="font-semibold text-blue-900 text-sm">{follower.name}</h3>
-                              <p className="text-xs text-gray-700">{follower.company}</p>
-                              <p className="text-xs text-gray-700">{follower.location}</p>
+                              <h3 className="font-semibold text-blue-900 text-sm">{User.name}</h3>
+                              <p className="text-xs text-gray-700">{User.company}</p>
+                              <p className="text-xs text-gray-700">{User.location}</p>
                             </div>
                           </div>
                           <button className="w-full border-2 border-red-600 text-red-600 text-sm py-1 rounded-full font-semibold hover:bg-red-50 transition">

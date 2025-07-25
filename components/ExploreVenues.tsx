@@ -1,9 +1,12 @@
+"use client"
+
 import { Star, MapPin } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 const venues = [
   {
     id: 1,
-    name: "Chennai Trade Centre",
+    name: "Innovation Hub",
     location: "Chennai - India",
     rating: 4.5,
     image: "/herosection-images/land.jpg",
@@ -46,6 +49,18 @@ const venues = [
 ]
 
 export default function ExploreVenues() {
+   const router = useRouter()
+
+  const handleVenueClick = (venue: (typeof venues)[0]) => {
+    // Navigate to events page filtered by venue
+    router.push(`/event?venue=${encodeURIComponent(venue.name)}`)
+  }
+
+  const handleViewAllClick = () => {
+    // Navigate to all events
+    router.push("/event")
+  }
+
   return (
     <div className="w-full max-w-6xl mx-auto mb-12">
       <div className="">
@@ -60,6 +75,7 @@ export default function ExploreVenues() {
   {venues.map((venue) => (
     <button
       key={venue.id}
+      onClick={()=>{handleVenueClick(venue)}}
       className="group bg-blue-100 rounded-md p-3 text-white hover:from-blue-700 hover:to-blue-800 transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg"
     >
       <div className="space-y-1">
@@ -95,7 +111,9 @@ export default function ExploreVenues() {
 
           {/* View All Button */}
           <div className="text-center">
-            <button className="px-8 py-3 bg-[#002C71] text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium shadow-md hover:shadow-lg">
+            <button
+            onClick={handleViewAllClick}
+             className="px-8 py-3 bg-[#002C71] text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium shadow-md hover:shadow-lg">
               View All
             </button>
           </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { signOut } from "next-auth/react" 
+import { signOut } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Sidebar,
@@ -42,10 +42,11 @@ import EventPromotion from "./event-promotion"
 import MessagesCenter from "./messages-center"
 import SettingsPanel from "./settings-panel"
 import MyPlan from "./my-plan"
+import { useRouter } from "next/navigation"
 
 export default function OrganizerDashboardPage() {
   const [activeSection, setActiveSection] = useState("dashboard")
-
+  const router = useRouter();
   // Mock organizer data
   const organizerData = {
     name: "EventCorp India",
@@ -94,7 +95,7 @@ export default function OrganizerDashboardPage() {
     },
   ]
 
- // Mock events data
+  // Mock events data
   const myEvents = [
     {
       id: 1,
@@ -248,8 +249,8 @@ export default function OrganizerDashboardPage() {
         return <AttendeesManagement attendees={attendeesData} />
       case "analytics":
         return <AnalyticsDashboard analyticsData={analyticsData} events={myEvents} />
-        case "promotion":
-          return <EventPromotion events={myEvents} />
+      case "promotion":
+        return <EventPromotion events={myEvents} />
       case "my-plan":
         return <MyPlan />
       case "messages":
@@ -295,11 +296,18 @@ export default function OrganizerDashboardPage() {
                     </SidebarMenuItem>
                   ))}
                   <Button
-                                     onClick={() => signOut({ callbackUrl: "/login" })}
-                                      className="w-full bg-red-500 hover:bg-red-600 text-white mt-20"
-                                    >
-                                      Logout
-                                    </Button>
+                    onClick={() => router.push("/")}
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                  >
+                    ← back to home
+                  </Button>
+                  <Button
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white mt-10"
+                  >
+                    Logout
+                  </Button>
+
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

@@ -1,4 +1,7 @@
+"use client"
+
 import { MoreHorizontal } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 const cities = [
   {
@@ -29,6 +32,17 @@ const cities = [
 ]
 
 export default function BrowseByCity() {
+  const router = useRouter()
+
+  const handleCityClick = (city: (typeof cities)[0]) => {
+    // Navigate to events page filtered by city
+    router.push(`/event?location=${encodeURIComponent(city.name )}`)
+  }
+
+  const handleViewAllClick = () => {
+    // Navigate to all events
+    router.push("/event")
+  }
   return (
     <div className="w-full max-w-6xl mx-auto mb-12">
       <div className="overflow-hidden">
@@ -44,6 +58,7 @@ export default function BrowseByCity() {
             {cities.map((city) => (
               <button
                 key={city.id}
+                onClick={() => handleCityClick(city)}
                 className="group relative overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
               >
                 <div className="aspect-[4/3] relative">
@@ -60,33 +75,11 @@ export default function BrowseByCity() {
                   </div>
                 </div>
               </button>
+              
             ))}
-          </div>
-
-          {/* Second Row */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {cities.slice(0, 4).map((city) => (
-              <button
-                key={`second-${city.id}`}
-                className="group relative overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-              >
-                <div className="aspect-[4/3] relative">
-                  <img
-                    src={city.image || "/placeholder.svg"}
-                    alt={city.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-blue-950 via-blue-80/10 to-transparent"></div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                  <div className="absolute bottom-2 left-2 right-2">
-                    <h3 className="text-white font-semibold text-sm text-center">{city.name}</h3>
-                  </div>
-                </div>
-              </button>
-            ))}
-
-            {/* View All Button */}
-            <button className="aspect-[4/3] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 flex flex-col items-center justify-center group">
+            <button
+             onClick={handleViewAllClick}
+             className="aspect-[4/3] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 flex flex-col items-center justify-center group">
               <MoreHorizontal className="w-8 h-8 text-gray-400 group-hover:text-blue-500 mb-2" />
               <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600">View All</span>
             </button>

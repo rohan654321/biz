@@ -13,7 +13,7 @@ export default function Home() {
     <div className="bg-white min-h-screen">
        <HeroSlideshow />
        <CategoryBrowse />
-       <FeaturedEvents />
+       <FeaturedEvents />                               
        <BrowseEventsByCity />
        <BrowseByCountry />
        <ExploreVenues />

@@ -1,0 +1,723 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// User Model
+model User {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  email       String   @unique
+  username    String   @unique
+  firstName   String
+  lastName    String
+  avatar      String?
+  bio         String?
+  phone       String?
+  dateOfBirth DateTime?
+  location    String?
+  website     String?
+  
+  // Social Links
+  socialLinks Json? // { linkedin, twitter, facebook, instagram }
+  
+  // User preferences and settings
+  preferences Json? // { notifications, privacy, etc. }
+  
+  // Account status
+  isVerified  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  role        UserRole @default(USER)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastLoginAt DateTime?
+  
+  // Relations
+  // Events organized by this user
+  organizedEvents Event[] @relation("EventOrganizer")
+  
+  // Speaker and Exhibitor profiles
+  speakerProfile   Speaker?
+  exhibitorProfile Exhibitor?
+  
+  // Likes given by this user
+  eventLikes     EventLike[]
+  speakerLikes   SpeakerLike[]
+  venueLikes     VenueLike[]
+  exhibitorLikes ExhibitorLike[]
+  
+  // Follows
+  following Follow[] @relation("Follower")
+  followers Follow[] @relation("Following")
+  
+  // Messages
+  sentMessages     Message[] @relation("MessageSender")
+  receivedMessages Message[] @relation("MessageReceiver")
+  
+  // Reviews written by this user
+  eventReviews     EventReview[]
+  speakerReviews   SpeakerReview[]
+  venueReviews     VenueReview[]
+  exhibitorReviews ExhibitorReview[]
+  
+  // Bookmarks/Saved items
+  savedEvents     SavedEvent[]
+  savedSpeakers   SavedSpeaker[]
+  savedVenues     SavedVenue[]
+  savedExhibitors SavedExhibitor[]
+  
+  // Event registrations/attendance
+  eventRegistrations EventRegistration[]
+  
+  // Notifications
+  notifications Notification[]
+  
+  // Many-to-many relations with Events (using explicit junction tables)
+  eventSpeakers   EventSpeaker[]
+  eventExhibitors EventExhibitor[]
+  
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  ORGANIZER
+  SPEAKER
+  EXHIBITOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+// Event Model
+model Event {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  highlights  String[]
+  
+  // Location
+  location Json // { city, venue, address, country, coordinates: { lat, lng } }
+  
+  // Timing
+  timings Json // { startDate, endDate, dailyStart, dailyEnd, timezone, originalStartDate?, originalEndDate? }
+  
+  // Pricing
+  pricing Json // { general, student?, vip?, currency }
+  
+  // Stats
+  stats Json // { expectedVisitors, exhibitors, duration }
+  
+  // Organizer
+  organizerId String @db.ObjectId
+  organizer   User   @relation("EventOrganizer", fields: [organizerId], references: [id])
+  
+  // Images
+  images Json[] // [{ id, url, alt, type }]
+  
+  // Categories and tags
+  categories String[]
+  tags       String[]
+  
+  // Rating (calculated from reviews)
+  averageRating Float   @default(0)
+  totalRatings  Int     @default(0)
+  
+  // Event details
+  ageLimit    String
+  dressCode   String
+  
+  // Costs
+  exhibitSpaceCosts Json[] // [{ type, description, pricePerSqm, minArea }]
+  
+  // Featured items
+  featuredItems      Json[] // [{ id, name, description, image, rating, category }]
+  featuredExhibitors Json[] // [{ id, name, description, image, rating, category }]
+  touristAttractions Json[] // [{ id, name, description, image, rating, category }]
+  
+  // Status and flags
+  status    EventStatus @default(UPCOMING)
+  followers Int         @default(0)
+  isVerified Boolean    @default(false)
+  featured   Boolean    @default(false)
+  vip        Boolean    @default(false)
+  
+  // Postponed event fields
+  postponed       Boolean @default(false)
+  postponedReason String?
+  
+  // Logo
+  logo String?
+  
+  // Relations - using explicit junction tables for many-to-many
+  eventSpeakers   EventSpeaker[]
+  eventExhibitors EventExhibitor[]
+  
+  // Likes and interactions
+  likes         EventLike[]
+  reviews       EventReview[]
+  savedBy       SavedEvent[]
+  registrations EventRegistration[]
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("events")
+}
+
+enum EventStatus {
+  UPCOMING
+  LIVE
+  COMPLETED
+  CANCELLED
+  POSTPONED
+}
+
+// Junction table for Event-Speaker many-to-many relationship
+model EventSpeaker {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  eventId   String @db.ObjectId
+  speakerId String @db.ObjectId
+  
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  speaker User  @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+  
+  // Additional fields for the relationship
+  role        String? // "keynote", "panelist", "workshop_leader", etc.
+  sessionTime String? // Time slot for the speaker
+  topic       String? // Topic they're speaking about
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([eventId, speakerId])
+  @@map("event_speakers")
+}
+
+// Junction table for Event-Exhibitor many-to-many relationship
+model EventExhibitor {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  eventId     String @db.ObjectId
+  exhibitorId String @db.ObjectId
+  
+  event     Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  exhibitor User  @relation(fields: [exhibitorId], references: [id], onDelete: Cascade)
+  
+  // Additional fields for the relationship
+  boothNumber String? // Booth/stall number
+  category    String? // Category of exhibition
+  products    String[] // Products being exhibited
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([eventId, exhibitorId])
+  @@map("event_exhibitors")
+}
+
+// Speaker Model (now linked to User)
+model Speaker {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String @db.ObjectId
+  user        User   @relation(fields: [userId], references: [id])
+  
+  // Speaker-specific fields
+  title        String
+  company      String?
+  expertise    String[]
+  achievements String[]
+  
+  // Rating (calculated from reviews)
+  averageRating Float @default(0)
+  totalRatings  Int   @default(0)
+  followers     Int   @default(0)
+  
+  // Relations
+  likes   SpeakerLike[]
+  reviews SpeakerReview[]
+  savedBy SavedSpeaker[]
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId])
+  @@map("speakers")
+}
+
+// Exhibitor Model (now linked to User)
+model Exhibitor {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String @db.ObjectId
+  user        User   @relation(fields: [userId], references: [id])
+  
+  // Exhibitor-specific fields
+  company       String
+  logo          String
+  category      String
+  products      String[]
+  website       String?
+  booth         String?
+  specialOffers String[]
+  
+  // Rating (calculated from reviews)
+  averageRating Float   @default(0)
+  totalRatings  Int     @default(0)
+  isPremium     Boolean @default(false)
+  
+  // Relations
+  likes   ExhibitorLike[]
+  reviews ExhibitorReview[]
+  savedBy SavedExhibitor[]
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId])
+  @@map("exhibitors")
+}
+
+// Venue Model
+model Venue {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String
+  images      String[]
+  
+  // Location
+  location Json // { address, city, state, country, zipCode, coordinates: { lat, lng } }
+  
+  // Contact
+  contact Json // { phone, email, website? }
+  
+  // Capacity
+  capacity Json // { total, theater, banquet, cocktail, classroom }
+  
+  // Amenities and spaces
+  amenities      String[]
+  meetingSpaces  Json[] // [{ id, name, capacity, area, features, hourlyRate, images }]
+  
+  // Pricing
+  pricing Json // { baseRate, currency, packages: [{ name, price, includes }] }
+  
+  // Availability
+  availability Json // { [date]: boolean }
+  
+  // Rating (calculated from reviews)
+  averageRating Float @default(0)
+  totalRatings  Int   @default(0)
+  
+  // Rating breakdown
+  ratingBreakdown Json? // { service, facilities, location, value }
+  
+  // Policies
+  policies Json // { cancellation, catering, parking, accessibility }
+  
+  // Status
+  isVerified Boolean @default(false)
+  isPremium  Boolean @default(false)
+  
+  // Relations
+  likes   VenueLike[]
+  reviews VenueReview[]
+  savedBy SavedVenue[]
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("venues")
+}
+
+// Like Models
+model EventLike {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String @db.ObjectId
+  eventId String @db.ObjectId
+  
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, eventId])
+  @@map("event_likes")
+}
+
+model SpeakerLike {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String @db.ObjectId
+  speakerId String @db.ObjectId
+  
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  speaker Speaker @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, speakerId])
+  @@map("speaker_likes")
+}
+
+model VenueLike {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String @db.ObjectId
+  venueId String @db.ObjectId
+  
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, venueId])
+  @@map("venue_likes")
+}
+
+model ExhibitorLike {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String @db.ObjectId
+  exhibitorId String @db.ObjectId
+  
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exhibitor Exhibitor @relation(fields: [exhibitorId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, exhibitorId])
+  @@map("exhibitor_likes")
+}
+
+// Follow Model
+model Follow {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  followerId  String @db.ObjectId
+  followingId String @db.ObjectId
+  
+  follower  User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+// Message Model
+model Message {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String @db.ObjectId
+  receiverId String @db.ObjectId
+  
+  sender   User @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  
+  content   String
+  isRead    Boolean @default(false)
+  messageType MessageType @default(TEXT)
+  
+  // Optional fields for different message types
+  attachments Json? // [{ type, url, name, size }]
+  metadata    Json? // Additional data based on message type
+  
+  // Reply functionality
+  replyToId String?  @db.ObjectId
+  replyTo   Message? @relation("MessageReply", fields: [replyToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies   Message[] @relation("MessageReply")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("messages")
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  AUDIO
+  VIDEO
+  SYSTEM
+}
+
+// Review Models
+model EventReview {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String @db.ObjectId
+  eventId String @db.ObjectId
+  
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  rating  Int    // 1-5 stars
+  title   String?
+  comment String
+  
+  // Review breakdown (optional)
+  breakdown Json? // { organization, content, venue, networking, value }
+  
+  // Moderation
+  isApproved Boolean @default(true)
+  isReported Boolean @default(false)
+  
+  // Helpful votes
+  helpfulVotes Int @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, eventId])
+  @@map("event_reviews")
+}
+
+model SpeakerReview {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String @db.ObjectId
+  speakerId String @db.ObjectId
+  
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  speaker Speaker @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+  
+  rating  Int    // 1-5 stars
+  title   String?
+  comment String
+  
+  // Review breakdown (optional)
+  breakdown Json? // { knowledge, presentation, engagement, clarity }
+  
+  // Moderation
+  isApproved Boolean @default(true)
+  isReported Boolean @default(false)
+  
+  // Helpful votes
+  helpfulVotes Int @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, speakerId])
+  @@map("speaker_reviews")
+}
+
+model VenueReview {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String @db.ObjectId
+  venueId String @db.ObjectId
+  
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  
+  rating  Int    // 1-5 stars
+  title   String?
+  comment String
+  
+  // Review breakdown (optional)
+  breakdown Json? // { service, facilities, location, value, cleanliness }
+  
+  // Event context
+  eventType String? // What type of event was held
+  
+  // Moderation
+  isApproved Boolean @default(true)
+  isReported Boolean @default(false)
+  
+  // Helpful votes
+  helpfulVotes Int @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, venueId])
+  @@map("venue_reviews")
+}
+
+model ExhibitorReview {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String @db.ObjectId
+  exhibitorId String @db.ObjectId
+  
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exhibitor Exhibitor @relation(fields: [exhibitorId], references: [id], onDelete: Cascade)
+  
+  rating  Int    // 1-5 stars
+  title   String?
+  comment String
+  
+  // Review breakdown (optional)
+  breakdown Json? // { products, service, booth, knowledge, professionalism }
+  
+  // Moderation
+  isApproved Boolean @default(true)
+  isReported Boolean @default(false)
+  
+  // Helpful votes
+  helpfulVotes Int @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, exhibitorId])
+  @@map("exhibitor_reviews")
+}
+
+// Saved/Bookmark Models
+model SavedEvent {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String @db.ObjectId
+  eventId String @db.ObjectId
+  
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, eventId])
+  @@map("saved_events")
+}
+
+model SavedSpeaker {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String @db.ObjectId
+  speakerId String @db.ObjectId
+  
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  speaker Speaker @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, speakerId])
+  @@map("saved_speakers")
+}
+
+model SavedVenue {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String @db.ObjectId
+  venueId String @db.ObjectId
+  
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, venueId])
+  @@map("saved_venues")
+}
+
+model SavedExhibitor {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String @db.ObjectId
+  exhibitorId String @db.ObjectId
+  
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exhibitor Exhibitor @relation(fields: [exhibitorId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, exhibitorId])
+  @@map("saved_exhibitors")
+}
+
+// Event Registration Model
+model EventRegistration {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String @db.ObjectId
+  eventId String @db.ObjectId
+  
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  registrationType RegistrationType
+  ticketType       String // "general", "student", "vip", etc.
+  status           RegistrationStatus @default(PENDING)
+  
+  // Payment information
+  paymentAmount Float?
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentId     String?
+  
+  // Registration details
+  attendeeInfo Json? // Additional attendee information
+  
+  // QR Code for entry
+  qrCode String?
+  
+  // Check-in information
+  checkedIn   Boolean   @default(false)
+  checkedInAt DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, eventId])
+  @@map("event_registrations")
+}
+
+enum RegistrationType {
+  VISITOR
+  EXHIBITOR
+  SPEAKER
+  SPONSOR
+  MEDIA
+  VIP
+}
+
+enum RegistrationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  WAITLISTED
+  CHECKED_IN
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+// Notification Model
+model Notification {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type    NotificationType
+  title   String
+  message String
+  
+  // Related entity information
+  entityType String? // "event", "speaker", "venue", "user", etc.
+  entityId   String? @db.ObjectId
+  
+  // Notification data
+  data Json? // Additional data for the notification
+  
+  // Status
+  isRead Boolean @default(false)
+  
+  createdAt DateTime @default(now())
+  
+  @@map("notifications")
+}
+
+enum NotificationType {
+  EVENT_REMINDER
+  EVENT_UPDATE
+  EVENT_CANCELLED
+  EVENT_POSTPONED
+  NEW_FOLLOWER
+  NEW_MESSAGE
+  NEW_REVIEW
+  LIKE_RECEIVED
+  REGISTRATION_CONFIRMED
+  PAYMENT_SUCCESSFUL
+  SYSTEM_ANNOUNCEMENT
+}

@@ -1,4 +1,8 @@
+"use client"
+
 import { MoreHorizontal } from "lucide-react"
+import { useRouter } from "next/navigation"
+
 
 const countries = [
   {
@@ -58,6 +62,17 @@ const countries = [
 ]
 
 export default function BrowseByCountry() {
+  const router = useRouter()
+
+  const handleCountryClick = (country: (typeof countries)[0]) => {
+    // Navigate to events page filtered by country
+    router.push(`/event?country=${encodeURIComponent(country.name)}`)
+  }
+
+  const handleViewAllClick = () => {
+    // Navigate to all events
+    router.push("/event")
+  }
   return (
     <div className="w-full max-w-6xl mx-auto mb-12">
       <div className="overflow-hidden">
@@ -73,6 +88,7 @@ export default function BrowseByCountry() {
             {countries.slice(0, 5).map((country) => (
               <button
                 key={country.id}
+                onClick={() => handleCountryClick(country)}
                 className="group bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-blue-300 transition-all duration-200 hover:scale-105"
               >
                 <div className="aspect-[5/2] flex items-center justify-center">
@@ -88,7 +104,7 @@ export default function BrowseByCountry() {
 
           {/* Second Row */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {countries.slice(5, 9).map((country) => (
+            {/* {countries.slice(5, 9).map((country) => (
               <button
                 key={country.id}
                 className="group bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-blue-300 transition-all duration-200 hover:scale-105"
@@ -101,10 +117,12 @@ export default function BrowseByCountry() {
                   />
                 </div>
               </button>
-            ))}
+            ))} */}
 
             {/* View All Button */}
-            <button className="aspect-[3/2] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 flex flex-col items-center justify-center group p-4">
+            <button 
+              onClick={handleViewAllClick}
+            className="aspect-[3/2] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 flex flex-col items-center justify-center group p-4">
               <MoreHorizontal className="w-8 h-8 text-gray-400 group-hover:text-blue-500 mb-2" />
               <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600">View All</span>
             </button>
