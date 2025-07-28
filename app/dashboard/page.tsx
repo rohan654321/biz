@@ -4,11 +4,9 @@ import { redirect } from "next/navigation"
 import { DashboardLayout } from "@/app/dashboard/dashboard-layout"
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
-
+  const session = await getServerSession(authOptions)
   if (!session || session.user.role !== "admin") {
-    redirect("/login");
+    redirect("/login")
   }
-
   return <DashboardLayout />
 }
