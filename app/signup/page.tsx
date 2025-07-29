@@ -169,20 +169,16 @@ export default function SignupPage() {
     <div className="min-h-screen bg-gray-50">
      
       {/* Main Content */}
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)] py-12 px-4">
-        <div className="w-full max-w-6xl">
-         <div className="flex grid-cols-2 justify-center" >
-            <div className="flex justify-center w-full max-w-2xl ">
-             <Image src={"/images/signupimg.png"} alt="logo" height={1000} width={500} className="m-50" />
-            </div>
+      <div className="flex items-center justify-center min-h-[calc(60vh-54px)] py-12 px-4">
+        <div className="w-full">
           <div>
-          <Card className="w-full max-w-md mx-auto shadow-lg mb-8">
+          <Card className="w-full max-w-md mx-auto shadow-lg ">
             <CardHeader className="text-center pb-4">
               <h1 className="text-2xl font-semibold text-gray-900">Welcome</h1>
-              <p className="text-sm text-gray-600 mt-2">Create your account to get started</p>
+              {/* <p className="text-sm text-gray-600 mt-2">Create your account to get started</p> */}
             </CardHeader>
 
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-3">
               {/* User Type Selector */}
               <Tabs value={userType} onValueChange={setUserType} className="w-full">
                 <TabsList className="grid w-full grid-cols-5 h-auto p-1">
@@ -206,6 +202,7 @@ export default function SignupPage() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Full Name */}
+                <div className="flex grid-cols-2 gap-1">
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
@@ -220,6 +217,7 @@ export default function SignupPage() {
                 </div>
 
                 {/* Email Field */}
+                
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
@@ -232,8 +230,9 @@ export default function SignupPage() {
                     required
                   />
                 </div>
-
+                </div>
                 {/* Phone Number */}
+                <div className="flex grid-cols-2 gap-1">
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
@@ -246,7 +245,7 @@ export default function SignupPage() {
                     required
                   />
                 </div>
-
+                
                 {/* Company/Organization Name */}
                 <div className="relative">
                   <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -260,7 +259,7 @@ export default function SignupPage() {
                     required={isCompanyRequired()}
                   />
                 </div>
-
+                </div>
                 {/* Designation (for business users) */}
                 {userType !== "visitor" && (
                   <div className="relative">
@@ -365,7 +364,8 @@ export default function SignupPage() {
               </div>
 
               {/* Social Signup Buttons */}
-              <div className="space-y-3">
+              <div className="flex grid-cols-2 gap-4 justify-center">
+                <div>
                 <Button
                   type="button"
                   variant="outline"
@@ -392,7 +392,8 @@ export default function SignupPage() {
                   </svg>
                   <span>Google</span>
                 </Button>
-
+                </div>
+                <div>
                 <Button
                   type="button"
                   variant="outline"
@@ -404,6 +405,8 @@ export default function SignupPage() {
                   </svg>
                   <span>LinkedIn</span>
                 </Button>
+                </div>
+              
               </div>
 
               {/* Login Link */}
@@ -418,7 +421,7 @@ export default function SignupPage() {
             </CardContent>
           </Card>
           </div>
-         </div>
+         
             {userType == "organiser" && (
         <div className="py-16">
           <div className="max-w-7xl mx-auto px-4">
