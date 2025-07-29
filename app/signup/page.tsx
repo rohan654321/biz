@@ -173,7 +173,7 @@ export default function SignupPage() {
         <div className="w-full max-w-6xl">
          <div className="flex grid-cols-2 justify-center" >
             <div className="flex justify-center w-full max-w-2xl ">
-             <Image src={"/logo/logo.png"} alt="logo" height={1000} width={500} className="m-50" />
+             <Image src={"/images/signupimg.png"} alt="logo" height={1000} width={500} className="m-50" />
             </div>
           <div>
           <Card className="w-full max-w-md mx-auto shadow-lg mb-8">
