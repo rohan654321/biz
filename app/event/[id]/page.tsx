@@ -63,7 +63,7 @@ export default async function EventPage({ params }: EventPageProps) {
                   <Plus className="w-4 h-4" />
                   Get Directions
                 </Button>
-                                <div className="flex items-center">
+                  <div className="flex items-center">
                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                   <span className="ml-1 font-medium">4.5</span>
                 </div>
@@ -747,7 +747,7 @@ export default async function EventPage({ params }: EventPageProps) {
           {/* Enhanced Sidebar */}
           <div className="lg:w-80 space-y-6">
             {/* Featured Items */}
-            <Card className="hover:shadow-md transition-shadow border-r-2 border-b-4 border-blue-800 rounded-lg">
+            <Card className="hover:shadow-md transition-shadow border-r-2  rounded-lg">
               <CardHeader>
                 <CardTitle className="text-lg">Featured Hotels</CardTitle>
               </CardHeader>
@@ -779,7 +779,7 @@ export default async function EventPage({ params }: EventPageProps) {
             </Card>
 
             {/* Featured Travel Partners */}
-            <Card className="hover:shadow-md transition-shadow border-r-2 border-b-4 border-blue-800 rounded-lg">
+            <Card className="hover:shadow-md transition-shadow border-r-2 rounded-lg">
               <CardHeader>
                 <CardTitle className="text-lg">Featured Travel Partners</CardTitle>
               </CardHeader>
@@ -812,7 +812,7 @@ export default async function EventPage({ params }: EventPageProps) {
             </Card>
 
             {/* Places to Visit */}
-            <Card className="hover:shadow-md transition-shadow border-r-2 border-b-4 border-blue-800 rounded-lg">
+            <Card className="hover:shadow-md transition-shadow border-r-2 rounded-lg">
               <CardHeader>
                 <CardTitle className="text-lg">Places to Visit in {event.location.city}</CardTitle>
               </CardHeader>

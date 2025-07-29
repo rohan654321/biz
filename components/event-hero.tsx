@@ -71,7 +71,7 @@ export default function EventHero({ event }: EventHeroProps) {
       </div>
 
       {/* Main Content Card */}
-      <div className="relative w-full max-w-6xl mx-auto bg-white rounded-lg overflow-hidden shadow-md flex flex-col md:flex-row mt-[-150px] md:mt-[-120px] z-10 left-1/2 lg:left-145 -translate-x-1/2">
+      <div className="relative w-full max-w-7xl  mx-auto bg-white rounded-lg overflow-hidden shadow-md flex flex-col md:flex-row mt-[-150px] md:mt-[-120px] z-10 left-1/2 lg:left-160 -translate-x-1/2">
         {/* Slider Left */}
         <div className="md:w-2/3 w-full h-[300px] relative">
           <div ref={sliderRef} className="keen-slider h-full w-full">

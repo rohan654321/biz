@@ -106,7 +106,7 @@ export default function OrganizerPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white">
+      <div className="bg-[#002C71] text-white">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             {/* Organizer Avatar */}
@@ -194,7 +194,7 @@ export default function OrganizerPage() {
               <div className="text-sm text-gray-600">Upcoming</div>
             </div>
             <div className="text-center">
-              {/* <div className="text-2xl font-bold text-gray-900">{stats.totalFollowers.toLocaleString()}</div> */}
+              <div className="text-2xl font-bold text-gray-900">2</div>
               <div className="text-sm text-gray-600">Total Followers</div>
             </div>
             <div className="text-center">

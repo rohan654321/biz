@@ -59,6 +59,24 @@ const countries = [
     flag: "/flags/flag9.png",
     code: "ES",
   },
+  {
+    id: 10,
+    name: "India",
+    flag: "/flags/flag7.png",
+    code: "IN",
+  },
+  {
+    id: 11,
+    name: "France",
+    flag: "/flags/flag8.png",
+    code: "FR",
+  },
+  // {
+  //   id: 9,
+  //   name: "Spain",
+  //   flag: "/flags/flag9.png",
+  //   code: "ES",
+  // },
 ]
 
 export default function BrowseByCountry() {
@@ -84,8 +102,8 @@ export default function BrowseByCountry() {
         {/* Countries Grid */}
         <div className="p-6">
           {/* First Row */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-            {countries.slice(0, 5).map((country) => (
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4">
+            {countries.map((country) => (
               <button
                 key={country.id}
                 onClick={() => handleCountryClick(country)}
@@ -100,6 +118,12 @@ export default function BrowseByCountry() {
                 </div>
               </button>
             ))}
+            <button 
+              onClick={handleViewAllClick}
+            className="aspect-[3/2] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 flex flex-col items-center justify-center group p-4">
+              <MoreHorizontal className="w-8 h-8 text-gray-400 group-hover:text-blue-500 mb-2" />
+              <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600">View All</span>
+            </button>
           </div>
 
           {/* Second Row */}
@@ -120,12 +144,7 @@ export default function BrowseByCountry() {
             ))} */}
 
             {/* View All Button */}
-            <button 
-              onClick={handleViewAllClick}
-            className="aspect-[3/2] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 flex flex-col items-center justify-center group p-4">
-              <MoreHorizontal className="w-8 h-8 text-gray-400 group-hover:text-blue-500 mb-2" />
-              <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600">View All</span>
-            </button>
+            
           </div>
         </div>
       </div>

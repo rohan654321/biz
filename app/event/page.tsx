@@ -121,7 +121,7 @@ export default function EventsPage() {
 
   return (
     <>
-      <Navbar />
+      {/* <Navbar /> */}
       <div className="min-h-screen bg-gray-50">
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 py-6">

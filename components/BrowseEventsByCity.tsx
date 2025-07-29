@@ -29,6 +29,41 @@ const cities = [
     name: "Punjab",
     image: "/city/c1.jpg",
   },
+  {
+    id: 6,
+    name: "Bangalore",
+    image: "/city/c5.jpg",
+  },
+  {
+    id: 7,
+    name: "New Delhi",
+    image: "/city/c4.jpg",
+  },
+  {
+    id: 8,
+    name: "Kolkata",
+    image: "/city/c3.jpg",
+  },
+  {
+    id: 9,
+    name: "Mumbai",
+    image: "/city/c2.jpg",
+  },
+  {
+    id: 10,
+    name: "Punjab",
+    image: "/city/c1.jpg",
+  },
+   {
+    id: 11,
+    name: "Mumbai",
+    image: "/city/c2.jpg",
+  },
+  // {
+  //   id: 12,
+  //   name: "Punjab",
+  //   image: "/city/c1.jpg",
+  // },
 ]
 
 export default function BrowseByCity() {
@@ -54,7 +89,7 @@ export default function BrowseByCity() {
         {/* Cities Grid */}
         <div className="p-2">
           {/* First Row */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4">
             {cities.map((city) => (
               <button
                 key={city.id}

@@ -32,6 +32,13 @@ const categories = [
     color: "bg-yellow-50 text-yellow-700 border-yellow-200",
     filterValue: "Finance", // Maps to actual category in events data
   },
+   {
+    id: "finance",
+    title: "Banking & Finance",
+    icon: DollarSign,
+    color: "bg-yellow-50 text-yellow-700 border-yellow-200",
+    filterValue: "Finance", // Maps to actual category in events data
+  },
   {
     id: "all",
     title: "View All",
@@ -65,7 +72,7 @@ export default function CategoryBrowser() {
 
         {/* Categories */}
         <div className="px-6 py-8">
-          <div className="w-full max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="w-full max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-6 gap-4">
             {categories.map((category) => {
               const IconComponent = category.icon
               return (
