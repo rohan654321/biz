@@ -44,6 +44,7 @@ import ReportsManagement from "./reports-management"
 import ContentManagement from "./content-management"
 import AdsManagement from "./ads-management"
 import SystemSettings from "./system-settings"
+import PromotionsManagement from "./promotions-management"
 
 interface AdminDashboardProps {
   adminData?: {
@@ -102,11 +103,11 @@ export default function AdminDashboard({ adminData }: AdminDashboardProps) {
       icon: FileText,
       id: "reports",
     },
-    // {
-    //   title: "Content Management",
-    //   icon: Database,
-    //   id: "content",
-    // },
+    {
+      title: "Promoction Management",
+      icon: Database,
+      id: "promoctions",
+    },
     {
       title: "Ads Management",
       icon: Megaphone,
@@ -137,6 +138,8 @@ export default function AdminDashboard({ adminData }: AdminDashboardProps) {
         return <ReportsManagement />
       // case "content":
       //   return <ContentManagement />
+      case "promoctions":
+        return <PromotionsManagement />
       case "ads":
         return <AdsManagement />
       case "settings":
