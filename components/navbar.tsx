@@ -47,7 +47,7 @@ export default function Navbar() {
     if (role === "organizer") {
       router.push("/organizer-dashboard");
     } else if (role === "superadmin") {
-      router.push("/superadmin-dashboard");
+      router.push("/admin-dashboard");
     } else {
       router.push("/dashboard"); // fallback route
     }

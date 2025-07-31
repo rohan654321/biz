@@ -40,6 +40,8 @@ import {
   LayoutTemplateIcon as Template,
   Sparkles,
   Copy,
+  Globe,
+  ChevronDown,
 } from "lucide-react"
 
 interface Promotion {
@@ -395,23 +397,488 @@ The Events Team`,
   },
 ]
 
-const userCategories = [
-  { id: "all", name: "All Users", count: 95000, icon: Users, color: "bg-blue-100 text-blue-800" },
-  { id: "attendees", name: "Event Attendees", count: 67000, icon: Users, color: "bg-green-100 text-green-800" },
-  { id: "organizers", name: "Event Organizers", count: 8900, icon: Users, color: "bg-purple-100 text-purple-800" },
-  { id: "technology", name: "Technology", count: 12500, icon: Users, color: "bg-indigo-100 text-indigo-800" },
-  { id: "business", name: "Business", count: 8900, icon: Users, color: "bg-orange-100 text-orange-800" },
-  { id: "healthcare", name: "Healthcare", count: 6700, icon: Users, color: "bg-red-100 text-red-800" },
-  { id: "education", name: "Education", count: 5400, icon: Users, color: "bg-yellow-100 text-yellow-800" },
-  { id: "arts", name: "Arts & Culture", count: 4200, icon: Users, color: "bg-pink-100 text-pink-800" },
-  { id: "sports", name: "Sports & Fitness", count: 3800, icon: Users, color: "bg-emerald-100 text-emerald-800" },
-  { id: "food", name: "Food & Beverage", count: 3200, icon: Users, color: "bg-amber-100 text-amber-800" },
-  { id: "travel", name: "Travel & Tourism", count: 2900, icon: Users, color: "bg-cyan-100 text-cyan-800" },
-  { id: "automotive", name: "Automotive", count: 2100, icon: Users, color: "bg-slate-100 text-slate-800" },
-  { id: "realestate", name: "Real Estate", count: 1800, icon: Users, color: "bg-teal-100 text-teal-800" },
-  { id: "entertainment", name: "Entertainment", count: 1500, icon: Users, color: "bg-violet-100 text-violet-800" },
-  { id: "retail", name: "Retail & Fashion", count: 1200, icon: Users, color: "bg-rose-100 text-rose-800" },
+const targetAudiences = [
+  {
+    id: "all",
+    name: "All Users",
+    count: 95000,
+    icon: Users,
+    color: "bg-blue-100 text-blue-800",
+    type: "audience",
+    categories: [],
+    countries: [],
+  },
+  {
+    id: "attendees",
+    name: "Event Attendees",
+    count: 67000,
+    icon: Users,
+    color: "bg-green-100 text-green-800",
+    type: "audience",
+    categories: [
+      { id: "technology", name: "Technology", count: 12500, color: "bg-indigo-100 text-indigo-800" },
+      { id: "business", name: "Business", count: 8900, color: "bg-orange-100 text-orange-800" },
+      { id: "healthcare", name: "Healthcare", count: 6700, color: "bg-red-100 text-red-800" },
+      { id: "education", name: "Education", count: 5400, color: "bg-yellow-100 text-yellow-800" },
+      { id: "arts", name: "Arts & Culture", count: 4200, color: "bg-pink-100 text-pink-800" },
+      { id: "sports", name: "Sports & Fitness", count: 3800, color: "bg-emerald-100 text-emerald-800" },
+      { id: "food", name: "Food & Beverage", count: 3200, color: "bg-amber-100 text-amber-800" },
+      { id: "travel", name: "Travel & Tourism", count: 2900, color: "bg-cyan-100 text-cyan-800" },
+      { id: "automotive", name: "Automotive", count: 2100, color: "bg-slate-100 text-slate-800" },
+      { id: "realestate", name: "Real Estate", count: 1800, color: "bg-teal-100 text-teal-800" },
+      { id: "entertainment", name: "Entertainment", count: 1500, color: "bg-violet-100 text-violet-800" },
+      { id: "retail", name: "Retail & Fashion", count: 1200, color: "bg-rose-100 text-rose-800" },
+    ],
+    countries: [
+      {
+        id: "india",
+        name: "India",
+        count: 25000,
+        color: "bg-orange-100 text-orange-800",
+        cities: [
+          { id: "mumbai", name: "Mumbai", count: 4500 },
+          { id: "delhi", name: "Delhi", count: 4200 },
+          { id: "bangalore", name: "Bangalore", count: 3800 },
+          { id: "hyderabad", name: "Hyderabad", count: 2800 },
+          { id: "chennai", name: "Chennai", count: 2500 },
+          { id: "pune", name: "Pune", count: 2200 },
+          { id: "kolkata", name: "Kolkata", count: 1800 },
+          { id: "ahmedabad", name: "Ahmedabad", count: 1400 },
+        ],
+      },
+      {
+        id: "usa",
+        name: "United States",
+        count: 18000,
+        color: "bg-blue-100 text-blue-800",
+        cities: [
+          { id: "newyork", name: "New York", count: 3800 },
+          { id: "losangeles", name: "Los Angeles", count: 3200 },
+          { id: "chicago", name: "Chicago", count: 2400 },
+          { id: "houston", name: "Houston", count: 2000 },
+          { id: "phoenix", name: "Phoenix", count: 1800 },
+          { id: "philadelphia", name: "Philadelphia", count: 1600 },
+          { id: "sanantonio", name: "San Antonio", count: 1400 },
+          { id: "sandiego", name: "San Diego", count: 1200 },
+        ],
+      },
+      {
+        id: "uk",
+        name: "United Kingdom",
+        count: 8000,
+        color: "bg-green-100 text-green-800",
+        cities: [
+          { id: "london", name: "London", count: 3000 },
+          { id: "manchester", name: "Manchester", count: 1500 },
+          { id: "birmingham", name: "Birmingham", count: 1200 },
+          { id: "glasgow", name: "Glasgow", count: 800 },
+          { id: "liverpool", name: "Liverpool", count: 700 },
+          { id: "leeds", name: "Leeds", count: 500 },
+          { id: "sheffield", name: "Sheffield", count: 300 },
+        ],
+      },
+      {
+        id: "germany",
+        name: "Germany",
+        count: 6000,
+        color: "bg-red-100 text-red-800",
+        cities: [
+          { id: "berlin", name: "Berlin", count: 1800 },
+          { id: "munich", name: "Munich", count: 1400 },
+          { id: "hamburg", name: "Hamburg", count: 1000 },
+          { id: "cologne", name: "Cologne", count: 800 },
+          { id: "frankfurt", name: "Frankfurt", count: 600 },
+          { id: "stuttgart", name: "Stuttgart", count: 400 },
+        ],
+      },
+      {
+        id: "canada",
+        name: "Canada",
+        count: 4000,
+        color: "bg-purple-100 text-purple-800",
+        cities: [
+          { id: "toronto", name: "Toronto", count: 1500 },
+          { id: "vancouver", name: "Vancouver", count: 1000 },
+          { id: "montreal", name: "Montreal", count: 800 },
+          { id: "calgary", name: "Calgary", count: 400 },
+          { id: "ottawa", name: "Ottawa", count: 300 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "exhibitors",
+    name: "Exhibitors",
+    count: 8900,
+    icon: Users,
+    color: "bg-purple-100 text-purple-800",
+    type: "audience",
+    categories: [
+      { id: "technology", name: "Technology", count: 2200, color: "bg-indigo-100 text-indigo-800" },
+      { id: "business", name: "Business", count: 1800, color: "bg-orange-100 text-orange-800" },
+      { id: "healthcare", name: "Healthcare", count: 1500, color: "bg-red-100 text-red-800" },
+      { id: "manufacturing", name: "Manufacturing", count: 1200, color: "bg-gray-100 text-gray-800" },
+      { id: "automotive", name: "Automotive", count: 900, color: "bg-slate-100 text-slate-800" },
+      { id: "food", name: "Food & Beverage", count: 700, color: "bg-amber-100 text-amber-800" },
+      { id: "retail", name: "Retail & Fashion", count: 500, color: "bg-rose-100 text-rose-800" },
+    ],
+    countries: [
+      {
+        id: "india",
+        name: "India",
+        count: 3500,
+        color: "bg-orange-100 text-orange-800",
+        cities: [
+          { id: "mumbai", name: "Mumbai", count: 800 },
+          { id: "delhi", name: "Delhi", count: 700 },
+          { id: "bangalore", name: "Bangalore", count: 600 },
+          { id: "chennai", name: "Chennai", count: 400 },
+          { id: "pune", name: "Pune", count: 350 },
+          { id: "hyderabad", name: "Hyderabad", count: 300 },
+          { id: "kolkata", name: "Kolkata", count: 250 },
+          { id: "ahmedabad", name: "Ahmedabad", count: 100 },
+        ],
+      },
+      {
+        id: "usa",
+        name: "United States",
+        count: 2800,
+        color: "bg-blue-100 text-blue-800",
+        cities: [
+          { id: "newyork", name: "New York", count: 600 },
+          { id: "losangeles", name: "Los Angeles", count: 500 },
+          { id: "chicago", name: "Chicago", count: 400 },
+          { id: "houston", name: "Houston", count: 300 },
+          { id: "phoenix", name: "Phoenix", count: 250 },
+          { id: "philadelphia", name: "Philadelphia", count: 200 },
+          { id: "sanantonio", name: "San Antonio", count: 150 },
+          { id: "sandiego", name: "San Diego", count: 100 },
+        ],
+      },
+      {
+        id: "germany",
+        name: "Germany",
+        count: 1200,
+        color: "bg-red-100 text-red-800",
+        cities: [
+          { id: "berlin", name: "Berlin", count: 300 },
+          { id: "munich", name: "Munich", count: 250 },
+          { id: "hamburg", name: "Hamburg", count: 200 },
+          { id: "cologne", name: "Cologne", count: 150 },
+          { id: "frankfurt", name: "Frankfurt", count: 200 },
+          { id: "stuttgart", name: "Stuttgart", count: 100 },
+        ],
+      },
+      {
+        id: "uk",
+        name: "United Kingdom",
+        count: 800,
+        color: "bg-green-100 text-green-800",
+        cities: [
+          { id: "london", name: "London", count: 400 },
+          { id: "manchester", name: "Manchester", count: 150 },
+          { id: "birmingham", name: "Birmingham", count: 100 },
+          { id: "glasgow", name: "Glasgow", count: 80 },
+          { id: "liverpool", name: "Liverpool", count: 70 },
+        ],
+      },
+      {
+        id: "canada",
+        name: "Canada",
+        count: 600,
+        color: "bg-purple-100 text-purple-800",
+        cities: [
+          { id: "toronto", name: "Toronto", count: 250 },
+          { id: "vancouver", name: "Vancouver", count: 150 },
+          { id: "montreal", name: "Montreal", count: 100 },
+          { id: "calgary", name: "Calgary", count: 60 },
+          { id: "ottawa", name: "Ottawa", count: 40 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "organizers",
+    name: "Event Organizers",
+    count: 4500,
+    icon: Users,
+    color: "bg-indigo-100 text-indigo-800",
+    type: "audience",
+    categories: [
+      { id: "corporate", name: "Corporate Events", count: 1200, color: "bg-blue-100 text-blue-800" },
+      { id: "conferences", name: "Conferences", count: 1000, color: "bg-green-100 text-green-800" },
+      { id: "exhibitions", name: "Exhibitions", count: 800, color: "bg-purple-100 text-purple-800" },
+      { id: "tradeshows", name: "Trade Shows", count: 600, color: "bg-orange-100 text-orange-800" },
+      { id: "seminars", name: "Seminars", count: 500, color: "bg-red-100 text-red-800" },
+      { id: "workshops", name: "Workshops", count: 400, color: "bg-yellow-100 text-yellow-800" },
+    ],
+    countries: [
+      {
+        id: "india",
+        name: "India",
+        count: 1800,
+        color: "bg-orange-100 text-orange-800",
+        cities: [
+          { id: "mumbai", name: "Mumbai", count: 400 },
+          { id: "delhi", name: "Delhi", count: 350 },
+          { id: "bangalore", name: "Bangalore", count: 300 },
+          { id: "chennai", name: "Chennai", count: 200 },
+          { id: "pune", name: "Pune", count: 180 },
+          { id: "hyderabad", name: "Hyderabad", count: 150 },
+          { id: "kolkata", name: "Kolkata", count: 120 },
+          { id: "ahmedabad", name: "Ahmedabad", count: 100 },
+        ],
+      },
+      {
+        id: "usa",
+        name: "United States",
+        count: 1500,
+        color: "bg-blue-100 text-blue-800",
+        cities: [
+          { id: "newyork", name: "New York", count: 350 },
+          { id: "losangeles", name: "Los Angeles", count: 280 },
+          { id: "chicago", name: "Chicago", count: 220 },
+          { id: "houston", name: "Houston", count: 180 },
+          { id: "phoenix", name: "Phoenix", count: 150 },
+          { id: "philadelphia", name: "Philadelphia", count: 120 },
+          { id: "sanantonio", name: "San Antonio", count: 100 },
+          { id: "sandiego", name: "San Diego", count: 100 },
+        ],
+      },
+      {
+        id: "uk",
+        name: "United Kingdom",
+        count: 600,
+        color: "bg-green-100 text-green-800",
+        cities: [
+          { id: "london", name: "London", count: 300 },
+          { id: "manchester", name: "Manchester", count: 100 },
+          { id: "birmingham", name: "Birmingham", count: 80 },
+          { id: "glasgow", name: "Glasgow", count: 50 },
+          { id: "liverpool", name: "Liverpool", count: 40 },
+          { id: "leeds", name: "Leeds", count: 30 },
+        ],
+      },
+      {
+        id: "germany",
+        name: "Germany",
+        count: 400,
+        color: "bg-red-100 text-red-800",
+        cities: [
+          { id: "berlin", name: "Berlin", count: 120 },
+          { id: "munich", name: "Munich", count: 100 },
+          { id: "hamburg", name: "Hamburg", count: 70 },
+          { id: "cologne", name: "Cologne", count: 50 },
+          { id: "frankfurt", name: "Frankfurt", count: 40 },
+          { id: "stuttgart", name: "Stuttgart", count: 20 },
+        ],
+      },
+      {
+        id: "canada",
+        name: "Canada",
+        count: 200,
+        color: "bg-purple-100 text-purple-800",
+        cities: [
+          { id: "toronto", name: "Toronto", count: 80 },
+          { id: "vancouver", name: "Vancouver", count: 50 },
+          { id: "montreal", name: "Montreal", count: 40 },
+          { id: "calgary", name: "Calgary", count: 20 },
+          { id: "ottawa", name: "Ottawa", count: 10 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "speakers",
+    name: "Speakers",
+    count: 3200,
+    icon: Users,
+    color: "bg-yellow-100 text-yellow-800",
+    type: "audience",
+    categories: [
+      { id: "keynote", name: "Keynote Speakers", count: 800, color: "bg-red-100 text-red-800" },
+      { id: "industry", name: "Industry Experts", count: 700, color: "bg-blue-100 text-blue-800" },
+      { id: "academic", name: "Academic Speakers", count: 600, color: "bg-green-100 text-green-800" },
+      { id: "motivational", name: "Motivational Speakers", count: 500, color: "bg-purple-100 text-purple-800" },
+      { id: "technical", name: "Technical Speakers", count: 400, color: "bg-indigo-100 text-indigo-800" },
+      { id: "panel", name: "Panel Speakers", count: 200, color: "bg-orange-100 text-orange-800" },
+    ],
+    countries: [
+      {
+        id: "india",
+        name: "India",
+        count: 1200,
+        color: "bg-orange-100 text-orange-800",
+        cities: [
+          { id: "mumbai", name: "Mumbai", count: 280 },
+          { id: "delhi", name: "Delhi", count: 250 },
+          { id: "bangalore", name: "Bangalore", count: 220 },
+          { id: "chennai", name: "Chennai", count: 150 },
+          { id: "pune", name: "Pune", count: 120 },
+          { id: "hyderabad", name: "Hyderabad", count: 100 },
+          { id: "kolkata", name: "Kolkata", count: 50 },
+          { id: "ahmedabad", name: "Ahmedabad", count: 30 },
+        ],
+      },
+      {
+        id: "usa",
+        name: "United States",
+        count: 1000,
+        color: "bg-blue-100 text-blue-800",
+        cities: [
+          { id: "newyork", name: "New York", count: 250 },
+          { id: "losangeles", name: "Los Angeles", count: 200 },
+          { id: "chicago", name: "Chicago", count: 150 },
+          { id: "houston", name: "Houston", count: 120 },
+          { id: "phoenix", name: "Phoenix", count: 100 },
+          { id: "philadelphia", name: "Philadelphia", count: 80 },
+          { id: "sanantonio", name: "San Antonio", count: 60 },
+          { id: "sandiego", name: "San Diego", count: 40 },
+        ],
+      },
+      {
+        id: "uk",
+        name: "United Kingdom",
+        count: 500,
+        color: "bg-green-100 text-green-800",
+        cities: [
+          { id: "london", name: "London", count: 250 },
+          { id: "manchester", name: "Manchester", count: 80 },
+          { id: "birmingham", name: "Birmingham", count: 60 },
+          { id: "glasgow", name: "Glasgow", count: 40 },
+          { id: "liverpool", name: "Liverpool", count: 35 },
+          { id: "leeds", name: "Leeds", count: 25 },
+          { id: "sheffield", name: "Sheffield", count: 10 },
+        ],
+      },
+      {
+        id: "germany",
+        name: "Germany",
+        count: 300,
+        color: "bg-red-100 text-red-800",
+        cities: [
+          { id: "berlin", name: "Berlin", count: 100 },
+          { id: "munich", name: "Munich", count: 80 },
+          { id: "hamburg", name: "Hamburg", count: 50 },
+          { id: "cologne", name: "Cologne", count: 30 },
+          { id: "frankfurt", name: "Frankfurt", count: 25 },
+          { id: "stuttgart", name: "Stuttgart", count: 15 },
+        ],
+      },
+      {
+        id: "canada",
+        name: "Canada",
+        count: 200,
+        color: "bg-purple-100 text-purple-800",
+        cities: [
+          { id: "toronto", name: "Toronto", count: 80 },
+          { id: "vancouver", name: "Vancouver", count: 50 },
+          { id: "montreal", name: "Montreal", count: 40 },
+          { id: "calgary", name: "Calgary", count: 20 },
+          { id: "ottawa", name: "Ottawa", count: 10 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "venues",
+    name: "Venues",
+    count: 1800,
+    icon: Users,
+    color: "bg-teal-100 text-teal-800",
+    type: "audience",
+    categories: [
+      { id: "convention", name: "Convention Centers", count: 500, color: "bg-blue-100 text-blue-800" },
+      { id: "hotels", name: "Hotels", count: 400, color: "bg-green-100 text-green-800" },
+      { id: "conference", name: "Conference Halls", count: 300, color: "bg-purple-100 text-purple-800" },
+      { id: "outdoor", name: "Outdoor Venues", count: 250, color: "bg-orange-100 text-orange-800" },
+      { id: "exhibition", name: "Exhibition Centers", count: 200, color: "bg-red-100 text-red-800" },
+      { id: "auditoriums", name: "Auditoriums", count: 150, color: "bg-yellow-100 text-yellow-800" },
+    ],
+    countries: [
+      {
+        id: "india",
+        name: "India",
+        count: 700,
+        color: "bg-orange-100 text-orange-800",
+        cities: [
+          { id: "mumbai", name: "Mumbai", count: 150 },
+          { id: "delhi", name: "Delhi", count: 140 },
+          { id: "bangalore", name: "Bangalore", count: 120 },
+          { id: "chennai", name: "Chennai", count: 80 },
+          { id: "pune", name: "Pune", count: 70 },
+          { id: "hyderabad", name: "Hyderabad", count: 60 },
+          { id: "kolkata", name: "Kolkata", count: 50 },
+          { id: "ahmedabad", name: "Ahmedabad", count: 30 },
+        ],
+      },
+      {
+        id: "usa",
+        name: "United States",
+        count: 600,
+        color: "bg-blue-100 text-blue-800",
+        cities: [
+          { id: "newyork", name: "New York", count: 150 },
+          { id: "losangeles", name: "Los Angeles", count: 120 },
+          { id: "chicago", name: "Chicago", count: 100 },
+          { id: "houston", name: "Houston", count: 80 },
+          { id: "phoenix", name: "Phoenix", count: 60 },
+          { id: "philadelphia", name: "Philadelphia", count: 40 },
+          { id: "sanantonio", name: "San Antonio", count: 30 },
+          { id: "sandiego", name: "San Diego", count: 20 },
+        ],
+      },
+      {
+        id: "uk",
+        name: "United Kingdom",
+        count: 250,
+        color: "bg-green-100 text-green-800",
+        cities: [
+          { id: "london", name: "London", count: 120 },
+          { id: "manchester", name: "Manchester", count: 40 },
+          { id: "birmingham", name: "Birmingham", count: 30 },
+          { id: "glasgow", name: "Glasgow", count: 20 },
+          { id: "liverpool", name: "Liverpool", count: 20 },
+          { id: "leeds", name: "Leeds", count: 15 },
+          { id: "sheffield", name: "Sheffield", count: 5 },
+        ],
+      },
+      {
+        id: "germany",
+        name: "Germany",
+        count: 150,
+        color: "bg-red-100 text-red-800",
+        cities: [
+          { id: "berlin", name: "Berlin", count: 50 },
+          { id: "munich", name: "Munich", count: 40 },
+          { id: "hamburg", name: "Hamburg", count: 25 },
+          { id: "cologne", name: "Cologne", count: 15 },
+          { id: "frankfurt", name: "Frankfurt", count: 15 },
+          { id: "stuttgart", name: "Stuttgart", count: 5 },
+        ],
+      },
+      {
+        id: "canada",
+        name: "Canada",
+        count: 100,
+        color: "bg-purple-100 text-purple-800",
+        cities: [
+          { id: "toronto", name: "Toronto", count: 40 },
+          { id: "vancouver", name: "Vancouver", count: 25 },
+          { id: "montreal", name: "Montreal", count: 20 },
+          { id: "calgary", name: "Calgary", count: 10 },
+          { id: "ottawa", name: "Ottawa", count: 5 },
+        ],
+      },
+    ],
+  },
 ]
+
+// Add new state variables for the hierarchical structure
+
+// Add handler functions
+
+// Update the calculateTargetAudience function
 
 const mockPromotions: Promotion[] = [
   {
@@ -499,26 +966,9 @@ export default function PromotionsManagement() {
     sendImmediately: true,
   })
 
-  const handleCategoryToggle = (categoryId: string) => {
-    if (categoryId === "all") {
-      setSelectedCategories(["all"])
-    } else {
-      setSelectedCategories((prev) => {
-        const filtered = prev.filter((id) => id !== "all")
-        return prev.includes(categoryId) ? filtered.filter((id) => id !== categoryId) : [...filtered, categoryId]
-      })
-    }
-  }
-
-  const calculateTargetAudience = () => {
-    if (selectedCategories.includes("all")) {
-      return userCategories.find((cat) => cat.id === "all")?.count || 0
-    }
-    return selectedCategories.reduce((total, catId) => {
-      const category = userCategories.find((cat) => cat.id === catId)
-      return total + (category?.count || 0)
-    }, 0)
-  }
+  // Add new state variables for the hierarchical structure
+  const [expandedAudiences, setExpandedAudiences] = useState<string[]>([])
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([])
 
   const handleUseTemplate = (template: CampaignTemplate) => {
     setSelectedPromotionType(template.type)
@@ -628,6 +1078,63 @@ export default function PromotionsManagement() {
   const pushTemplates = campaignTemplates.filter((t) => t.type === "push")
   const emailTemplates = campaignTemplates.filter((t) => t.type === "email")
 
+  // Add handler functions
+  const handleAudienceToggle = (audienceId: string) => {
+    setExpandedAudiences((prev) =>
+      prev.includes(audienceId) ? prev.filter((id) => id !== audienceId) : [...prev, audienceId],
+    )
+  }
+
+  const handleCategoryToggle = (categoryId: string) => {
+    setExpandedCategories((prev) =>
+      prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId],
+    )
+  }
+
+  // Update the calculateTargetAudience function
+  const calculateTargetAudience = () => {
+    if (selectedCategories.includes("all")) {
+      return targetAudiences.find((aud) => aud.id === "all")?.count || 0
+    }
+
+    let total = 0
+
+    selectedCategories.forEach((catId) => {
+      // Check if it's a main audience
+      const audience = targetAudiences.find((aud) => aud.id === catId)
+      if (audience) {
+        total += audience.count
+        return
+      }
+
+      // Check if it's a category within an audience
+      targetAudiences.forEach((audience) => {
+        const category = audience.categories?.find((cat) => cat.id === catId)
+        if (category) {
+          total += category.count
+          return
+        }
+
+        // Check if it's a country within an audience
+        const country = audience.countries?.find((c) => c.id === catId)
+        if (country) {
+          total += country.count
+          return
+        }
+
+        // Check if it's a city within a country
+        audience.countries?.forEach((country) => {
+          const city = country.cities?.find((c) => c.id === catId)
+          if (city) {
+            total += city.count
+          }
+        })
+      })
+    })
+
+    return total
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -638,11 +1145,11 @@ export default function PromotionsManagement() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {/* <Button variant="outline" className="gap-2 bg-transparent">
+          <Button variant="outline" className="gap-2 bg-transparent">
             <Download className="w-4 h-4" />
             Export Data
-          </Button> */}
-          {/* <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
+          </Button>
+          <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
             <DialogTrigger asChild>
               <Button
                 variant="outline"
@@ -652,7 +1159,7 @@ export default function PromotionsManagement() {
                 Use Template
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-2xl flex items-center gap-2">
                   <Sparkles className="w-6 h-6 text-purple-600" />
@@ -676,11 +1183,11 @@ export default function PromotionsManagement() {
                 </TabsList>
 
                 <TabsContent value="push" className="space-y-4 mt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                     {pushTemplates.map((template) => (
                       <Card
                         key={template.id}
-                        className="hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-blue-500"
+                        className="hover:shadow-lg transition-all cursor-pointer border-l-4"
                       >
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between mb-4">
@@ -726,7 +1233,7 @@ export default function PromotionsManagement() {
                     {emailTemplates.map((template) => (
                       <Card
                         key={template.id}
-                        className="hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-green-500"
+                        className="hover:shadow-lg transition-all cursor-pointer border-l-4"
                       >
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between mb-4">
@@ -770,25 +1277,25 @@ export default function PromotionsManagement() {
                 </TabsContent>
               </Tabs>
             </DialogContent>
-          </Dialog> */}
+          </Dialog>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              {/* <Button className="bg-blue-600 hover:bg-blue-700 gap-2">
+              <Button className="bg-blue-600 hover:bg-blue-700 gap-2">
                 <Plus className="w-4 h-4" />
                 Create Campaign
-              </Button> */}
+              </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              {/* <DialogHeader>
+              <DialogHeader>
                 <DialogTitle className="text-2xl">Create New Campaign</DialogTitle>
                 <DialogDescription>
                   Create targeted promotions for specific user categories with advanced options
                 </DialogDescription>
-              </DialogHeader> */}
+              </DialogHeader>
 
               <div className="space-y-6">
                 {/* Campaign Type Selection */}
-                {/* <div className="space-y-4">
+                <div className="space-y-4">
                   <Label className="text-base font-semibold">Campaign Type</Label>
                   <div className="grid grid-cols-2 gap-4">
                     <Card
@@ -826,10 +1333,10 @@ export default function PromotionsManagement() {
                       </CardContent>
                     </Card>
                   </div>
-                </div> */}
+                </div>
 
                 {/* Campaign Details */}
-                {/* <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 gap-6">
                   <div className="space-y-4">
                     <Label htmlFor="title" className="text-base font-semibold">
                       Campaign Title
@@ -868,7 +1375,7 @@ export default function PromotionsManagement() {
                         : "Email content can be longer and more detailed with formatting options"}
                     </div>
                   </div>
-                </div> */}
+                </div>
 
                 {/* Priority and Scheduling */}
                 {/* <div className="grid grid-cols-2 gap-6">
@@ -912,32 +1419,228 @@ export default function PromotionsManagement() {
                   </div>
                 </div> */}
 
-                {/* Target Categories */}
-                {/* <div className="space-y-4">
-                  <Label className="text-base font-semibold">Target Audience</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-80 overflow-y-auto p-4 border rounded-lg bg-gray-50">
-                    {userCategories.map((category) => (
-                      <div
-                        key={category.id}
-                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white transition-colors"
-                      >
-                        <Checkbox
-                          id={category.id}
-                          checked={selectedCategories.includes(category.id)}
-                          onCheckedChange={() => handleCategoryToggle(category.id)}
-                        />
-                        <Label htmlFor={category.id} className="flex-1 cursor-pointer">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">{category.name}</span>
-                            <Badge variant="secondary" className={`text-xs ${category.color}`}>
-                              {category.count.toLocaleString()}
-                            </Badge>
+                {/* Target Audience */}
+                <div className="space-y-4">
+                  {/* <Label className="text-base font-semibold">Target Audience</Label> */}
+                  <div className="max-h-96 overflow-y-auto border rounded-lg bg-gray-50">
+                    <div className="space-y-2 p-4">
+                      {targetAudiences.map((audience) => (
+                        <div key={audience.id} className="border rounded-lg bg-white">
+                          {/* Audience Header */}
+                          <div className="flex items-center justify-between p-3">
+                            <div className="flex items-center space-x-3 flex-1">
+                              <Checkbox
+                                id={audience.id}
+                                checked={selectedCategories.includes(audience.id)}
+                                onCheckedChange={() => {
+                                  if (selectedCategories.includes(audience.id)) {
+                                    setSelectedCategories(selectedCategories.filter((cat) => cat !== audience.id))
+                                  } else {
+                                    setSelectedCategories([...selectedCategories, audience.id])
+                                  }
+                                }}
+                              />
+                              <Label htmlFor={audience.id} className="flex-1 cursor-pointer">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-semibold">{audience.name}</span>
+                                  <Badge variant="secondary" className={`text-xs ${audience.color}`}>
+                                    {audience.count.toLocaleString()}
+                                  </Badge>
+                                </div>
+                              </Label>
+                            </div>
+                            {(audience.categories.length > 0 || audience.countries.length > 0) && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleAudienceToggle(audience.id)}
+                                className="p-1 h-8 w-8"
+                              >
+                                <ChevronDown
+                                  className={`w-4 h-4 transition-transform ${
+                                    expandedAudiences.includes(audience.id) ? "rotate-180" : ""
+                                  }`}
+                                />
+                              </Button>
+                            )}
                           </div>
-                        </Label>
-                      </div>
-                    ))}
+
+                          {/* Expanded Content */}
+                          {expandedAudiences.includes(audience.id) && (
+                            <div className="px-3 pb-3 border-t bg-gray-50 space-y-4">
+                              {/* Categories Section */}
+                              {/* {audience.categories.length > 0 && (
+                                <div>
+                                  <h5 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                    <Users className="w-3 h-3" />
+                                    Categories
+                                  </h5>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {audience.categories.map((category) => (
+                                      <div
+                                        key={category.id}
+                                        className="flex items-center space-x-2 p-2 rounded hover:bg-white transition-colors"
+                                      >
+                                        <Checkbox
+                                          id={`${audience.id}-${category.id}`}
+                                          checked={selectedCategories.includes(`${audience.id}-${category.id}`)}
+                                          onCheckedChange={() => {
+                                            if (selectedCategories.includes(`${audience.id}-${category.id}`)) {
+                                              setSelectedCategories(
+                                                selectedCategories.filter(
+                                                  (cat) => cat !== `${audience.id}-${category.id}`,
+                                                ),
+                                              )
+                                            } else {
+                                              setSelectedCategories([
+                                                ...selectedCategories,
+                                                `${audience.id}-${category.id}`,
+                                              ])
+                                            }
+                                          }}
+                                        />
+                                        <Label
+                                          htmlFor={`${audience.id}-${category.id}`}
+                                          className="flex-1 cursor-pointer"
+                                        >
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-xs font-medium">{category.name}</span>
+                                            <Badge variant="outline" className={`text-xs ${category.color}`}>
+                                              {category.count.toLocaleString()}
+                                            </Badge>
+                                          </div>
+                                        </Label>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )} */}
+
+                              {/* Countries Section */}
+                              {audience.countries.length > 0 && (
+                                <div>
+                                  {/* <h5 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                    <Globe className="w-3 h-3" />
+                                    Countries & Cities
+                                  </h5> */}
+                                  <div className="space-y-2">
+                                    {audience.countries.map((country) => (
+                                      <div key={`${audience.id}-${country.id}`} className="border rounded bg-white">
+                                        {/* Country Header */}
+                                        {/* <div className="flex items-center justify-between p-2">
+                                          <div className="flex items-center space-x-2 flex-1">
+                                            <Checkbox
+                                              id={`${audience.id}-${country.id}`}
+                                              checked={selectedCategories.includes(`${audience.id}-${country.id}`)}
+                                              onCheckedChange={() => {
+                                                if (selectedCategories.includes(`${audience.id}-${country.id}`)) {
+                                                  setSelectedCategories(
+                                                    selectedCategories.filter(
+                                                      (cat) => cat !== `${audience.id}-${country.id}`,
+                                                    ),
+                                                  )
+                                                } else {
+                                                  setSelectedCategories([
+                                                    ...selectedCategories,
+                                                    `${audience.id}-${country.id}`,
+                                                  ])
+                                                }
+                                              }}
+                                            />
+                                            <Label
+                                              htmlFor={`${audience.id}-${country.id}`}
+                                              className="flex-1 cursor-pointer"
+                                            >
+                                              <div className="flex items-center justify-between">
+                                                <span className="text-xs font-medium">{country.name}</span>
+                                                <Badge variant="outline" className={`text-xs ${country.color}`}>
+                                                  {country.count.toLocaleString()}
+                                                </Badge>
+                                              </div>
+                                            </Label>
+                                          </div>
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() =>
+                                              handleCategoryToggle(`${audience.id}-${country.id}-expanded`)
+                                            }
+                                            className="p-1 h-6 w-6"
+                                          >
+                                            <ChevronDown
+                                              className={`w-3 h-3 transition-transform ${
+                                                expandedCategories.includes(`${audience.id}-${country.id}-expanded`)
+                                                  ? "rotate-180"
+                                                  : ""
+                                              }`}
+                                            />
+                                          </Button>
+                                        </div> */}
+
+                                        {/* Cities List */}
+                                        {/* {expandedCategories.includes(`${audience.id}-${country.id}-expanded`) && (
+                                          <div className="px-2 pb-2 border-t bg-gray-50">
+                                            <div className="grid grid-cols-2 gap-1 mt-2">
+                                              {country.cities.map((city) => (
+                                                <div
+                                                  key={`${audience.id}-${country.id}-${city.id}`}
+                                                  className="flex items-center space-x-1 p-1 rounded hover:bg-white transition-colors"
+                                                >
+                                                  <Checkbox
+                                                    id={`${audience.id}-${country.id}-${city.id}`}
+                                                    checked={selectedCategories.includes(
+                                                      `${audience.id}-${country.id}-${city.id}`,
+                                                    )}
+                                                    onCheckedChange={() => {
+                                                      if (
+                                                        selectedCategories.includes(
+                                                          `${audience.id}-${country.id}-${city.id}`,
+                                                        )
+                                                      ) {
+                                                        setSelectedCategories(
+                                                          selectedCategories.filter(
+                                                            (cat) => cat !== `${audience.id}-${country.id}-${city.id}`,
+                                                          ),
+                                                        )
+                                                      } else {
+                                                        setSelectedCategories([
+                                                          ...selectedCategories,
+                                                          `${audience.id}-${country.id}-${city.id}`,
+                                                        ])
+                                                      }
+                                                    }}
+                                                  />
+                                                  <Label
+                                                    htmlFor={`${audience.id}-${country.id}-${city.id}`}
+                                                    className="flex-1 cursor-pointer"
+                                                  >
+                                                    <div className="flex items-center justify-between">
+                                                      <span className="text-xs">{city.name}</span>
+                                                      <Badge variant="outline" className="text-xs">
+                                                        {city.count.toLocaleString()}
+                                                      </Badge>
+                                                    </div>
+                                                  </Label>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )} */}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  {selectedCategories.length > 0 && (
+
+                  {/* {selectedCategories.length > 0 && (
                     <Card className="bg-blue-50 border-blue-200">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-3">
@@ -947,17 +1650,17 @@ export default function PromotionsManagement() {
                               Target Audience: {calculateTargetAudience().toLocaleString()} users
                             </div>
                             <div className="text-sm text-blue-600">
-                              Selected categories: {selectedCategories.join(", ")}
+                              Selected: {selectedCategories.length} target{selectedCategories.length !== 1 ? "s" : ""}
                             </div>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
-                  )}
-                </div> */}
+                  )} */}
+                </div>
               </div>
 
-              {/* <DialogFooter className="gap-3">
+              <DialogFooter className="gap-3">
                 <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                   Cancel
                 </Button>
@@ -968,7 +1671,7 @@ export default function PromotionsManagement() {
                 >
                   {newPromotion.sendImmediately ? "Create & Send" : "Create & Schedule"}
                 </Button>
-              </DialogFooter> */}
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
@@ -976,7 +1679,7 @@ export default function PromotionsManagement() {
 
       {/* Enhanced Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-l-4">
+        <Card className="border-l-4 ">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -984,7 +1687,7 @@ export default function PromotionsManagement() {
                 <p className="text-3xl font-bold text-gray-900">{promotions.length}</p>
                 <p className="text-xs text-gray-500 mt-1">Active campaigns</p>
               </div>
-              <MessageSquare className="w-8 h-8 " />
+              <MessageSquare className="w-8 h-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
@@ -994,9 +1697,9 @@ export default function PromotionsManagement() {
               <div>
                 <p className="text-sm font-medium text-gray-600">Messages Sent</p>
                 <p className="text-3xl font-bold text-gray-900">{totalStats.sent.toLocaleString()}</p>
-                <p className="text-xs mt-1">↗ {avgEngagement.deliveryRate.toFixed(1)}% delivery rate</p>
+                <p className="text-xs text-green-600 mt-1">↗ {avgEngagement.deliveryRate.toFixed(1)}% delivery rate</p>
               </div>
-              <Send className="w-8 h-8" />
+              <Send className="w-8 h-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
@@ -1006,21 +1709,21 @@ export default function PromotionsManagement() {
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Opens</p>
                 <p className="text-3xl font-bold text-gray-900">{totalStats.opened.toLocaleString()}</p>
-                <p className="text-xs mt-1">↗ {avgEngagement.openRate.toFixed(1)}% open rate</p>
+                <p className="text-xs text-purple-600 mt-1">↗ {avgEngagement.openRate.toFixed(1)}% open rate</p>
               </div>
-              <Eye className="w-8 h-8" />
+              <Eye className="w-8 h-8 text-purple-600" />
             </div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 ">
+        <Card className="border-l-4">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Clicks</p>
                 <p className="text-3xl font-bold text-gray-900">{totalStats.clicked.toLocaleString()}</p>
-                <p className="text-xs mt-1">↗ {avgEngagement.clickRate.toFixed(1)}% click rate</p>
+                <p className="text-xs text-orange-600 mt-1">↗ {avgEngagement.clickRate.toFixed(1)}% click rate</p>
               </div>
-              <TrendingUp className="w-8 h-8" />
+              <TrendingUp className="w-8 h-8 text-orange-600" />
             </div>
           </CardContent>
         </Card>
@@ -1165,7 +1868,7 @@ export default function PromotionsManagement() {
             {filteredPromotions
               .filter((p) => p.type === "push")
               .map((promotion) => (
-                <Card key={promotion.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-blue-500">
+                <Card key={promotion.id} className="hover:shadow-lg transition-shadow border-l-4">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
@@ -1217,7 +1920,7 @@ export default function PromotionsManagement() {
             {filteredPromotions
               .filter((p) => p.type === "email")
               .map((promotion) => (
-                <Card key={promotion.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-green-500">
+                <Card key={promotion.id} className="hover:shadow-lg transition-shadow border-l-4">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
