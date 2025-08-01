@@ -1470,7 +1470,7 @@ export default function PromotionsManagement() {
                           {expandedAudiences.includes(audience.id) && (
                             <div className="px-3 pb-3 border-t bg-gray-50 space-y-4">
                               {/* Categories Section */}
-                              {/* {audience.categories.length > 0 && (
+                              {audience.categories.length > 0 && (
                                 <div>
                                   <h5 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
                                     <Users className="w-3 h-3" />
@@ -1515,20 +1515,20 @@ export default function PromotionsManagement() {
                                     ))}
                                   </div>
                                 </div>
-                              )} */}
+                              )}
 
                               {/* Countries Section */}
                               {audience.countries.length > 0 && (
                                 <div>
-                                  {/* <h5 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                  <h5 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
                                     <Globe className="w-3 h-3" />
                                     Countries & Cities
-                                  </h5> */}
+                                  </h5>
                                   <div className="space-y-2">
                                     {audience.countries.map((country) => (
                                       <div key={`${audience.id}-${country.id}`} className="border rounded bg-white">
                                         {/* Country Header */}
-                                        {/* <div className="flex items-center justify-between p-2">
+                                        <div className="flex items-center justify-between p-2">
                                           <div className="flex items-center space-x-2 flex-1">
                                             <Checkbox
                                               id={`${audience.id}-${country.id}`}
@@ -1577,10 +1577,10 @@ export default function PromotionsManagement() {
                                               }`}
                                             />
                                           </Button>
-                                        </div> */}
+                                        </div>
 
                                         {/* Cities List */}
-                                        {/* {expandedCategories.includes(`${audience.id}-${country.id}-expanded`) && (
+                                        {expandedCategories.includes(`${audience.id}-${country.id}-expanded`) && (
                                           <div className="px-2 pb-2 border-t bg-gray-50">
                                             <div className="grid grid-cols-2 gap-1 mt-2">
                                               {country.cities.map((city) => (
@@ -1627,7 +1627,7 @@ export default function PromotionsManagement() {
                                               ))}
                                             </div>
                                           </div>
-                                        )} */}
+                                        )}
                                       </div>
                                     ))}
                                   </div>
