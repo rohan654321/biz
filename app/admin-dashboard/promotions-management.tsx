@@ -1092,47 +1092,112 @@ export default function PromotionsManagement() {
   }
 
   // Update the calculateTargetAudience function
+  // Enhanced target audience calculation with detailed breakdown
   const calculateTargetAudience = () => {
+    // If "All Users" is selected, return the total count
     if (selectedCategories.includes("all")) {
-      return targetAudiences.find((aud) => aud.id === "all")?.count || 0
+      return { total: targetAudiences.find((aud) => aud.id === "all")?.count || 0, breakdown: ["All Users: 95,000"] }
     }
 
-    let total = 0
+    let totalUsers = 0
+    const processedIds = new Set() // Prevent double counting
+    const breakdown:any = [] // Store breakdown details
 
-    selectedCategories.forEach((catId) => {
-      // Check if it's a main audience
-      const audience = targetAudiences.find((aud) => aud.id === catId)
-      if (audience) {
-        total += audience.count
+    selectedCategories.forEach((selectedId) => {
+      // Skip if already processed to avoid double counting
+      if (processedIds.has(selectedId)) return
+
+      // Check if it's a main audience (like "attendees", "exhibitors", etc.)
+      const mainAudience = targetAudiences.find((aud) => aud.id === selectedId)
+      if (mainAudience) {
+        totalUsers += mainAudience.count
+        processedIds.add(selectedId)
+        breakdown.push(`${mainAudience.name}: ${mainAudience.count.toLocaleString()}`)
         return
       }
 
-      // Check if it's a category within an audience
-      targetAudiences.forEach((audience) => {
-        const category = audience.categories?.find((cat) => cat.id === catId)
-        if (category) {
-          total += category.count
+      // Parse the selectedId to understand the hierarchy
+      const idParts = selectedId.split("-")
+
+      if (idParts.length >= 2) {
+        const [audienceId, secondPart, thirdPart, fourthPart] = idParts
+
+        const audience = targetAudiences.find((aud) => aud.id === audienceId)
+        if (!audience) return
+
+        // Handle "all-categories" and "all-countries" selections
+        if (secondPart === "all" && thirdPart === "categories") {
+          const categoryTotal = audience.categories?.reduce((sum, cat) => sum + cat.count, 0) || 0
+          totalUsers += categoryTotal
+          processedIds.add(selectedId)
+          breakdown.push(`All ${audience.name} Categories: ${categoryTotal.toLocaleString()}`)
           return
         }
 
-        // Check if it's a country within an audience
-        const country = audience.countries?.find((c) => c.id === catId)
-        if (country) {
-          total += country.count
+        if (secondPart === "all" && thirdPart === "countries") {
+          const countryTotal = audience.countries?.reduce((sum, country) => sum + country.count, 0) || 0
+          totalUsers += countryTotal
+          processedIds.add(selectedId)
+          breakdown.push(`All ${audience.name} Countries: ${countryTotal.toLocaleString()}`)
           return
         }
 
-        // Check if it's a city within a country
-        audience.countries?.forEach((country) => {
-          const city = country.cities?.find((c) => c.id === catId)
-          if (city) {
-            total += city.count
+        // Handle individual city selections: audienceId-countryId-cityId
+        if (thirdPart && fourthPart === undefined && !thirdPart.includes("all")) {
+          // Check if it's a city selection
+          const country = audience.countries?.find((c) => c.id === secondPart)
+          const city = country?.cities?.find((c) => c.id === thirdPart)
+          if (city && !processedIds.has(selectedId)) {
+            totalUsers += city.count
+            processedIds.add(selectedId)
+            breakdown.push(`${city.name}, ${country?.name}: ${city.count.toLocaleString()}`)
+            return
           }
-        })
-      })
+        }
+
+        // Handle "all cities" selection: audienceId-countryId-all-cities
+        if (thirdPart === "all" && fourthPart === "cities") {
+          const country = audience.countries?.find((c) => c.id === secondPart)
+          if (country && !processedIds.has(selectedId)) {
+            const cityTotal = country.cities?.reduce((sum, city) => sum + city.count, 0) || 0
+            totalUsers += cityTotal
+            processedIds.add(selectedId)
+            breakdown.push(`All cities in ${country.name}: ${cityTotal.toLocaleString()}`)
+          }
+          return
+        }
+
+        // Handle individual category or country selections: audienceId-categoryId or audienceId-countryId
+        if (secondPart && !thirdPart) {
+          const category = audience.categories?.find((cat) => cat.id === secondPart)
+          const country = audience.countries?.find((c) => c.id === secondPart)
+
+          if (category && !processedIds.has(selectedId)) {
+            totalUsers += category.count
+            processedIds.add(selectedId)
+            breakdown.push(`${category.name} (${audience.name}): ${category.count.toLocaleString()}`)
+          } else if (country && !processedIds.has(selectedId)) {
+            totalUsers += country.count
+            processedIds.add(selectedId)
+            breakdown.push(`${country.name} (${audience.name}): ${country.count.toLocaleString()}`)
+          }
+        }
+      }
     })
 
-    return total
+    return { total: totalUsers, breakdown }
+  }
+
+  // Add a helper function to get the breakdown details
+  const getTargetAudienceBreakdown = () => {
+    const result = calculateTargetAudience()
+    return typeof result === "object" ? result : { total: result, breakdown: [] }
+  }
+
+  // Update the function call to handle both old and new return formats
+  const getTargetAudienceTotal = () => {
+    const result = calculateTargetAudience()
+    return typeof result === "object" ? result.total : result
   }
 
   return (
@@ -1183,11 +1248,11 @@ export default function PromotionsManagement() {
                 </TabsList>
 
                 <TabsContent value="push" className="space-y-4 mt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {pushTemplates.map((template) => (
                       <Card
                         key={template.id}
-                        className="hover:shadow-lg transition-all cursor-pointer border-l-4"
+                        className="hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-blue-500"
                       >
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between mb-4">
@@ -1233,7 +1298,7 @@ export default function PromotionsManagement() {
                     {emailTemplates.map((template) => (
                       <Card
                         key={template.id}
-                        className="hover:shadow-lg transition-all cursor-pointer border-l-4"
+                        className="hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-green-500"
                       >
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between mb-4">
@@ -1296,8 +1361,10 @@ export default function PromotionsManagement() {
               <div className="space-y-6">
                 {/* Campaign Type Selection */}
                 <div className="space-y-4">
-                  <Label className="text-base font-semibold">Campaign Type</Label>
-                  <div className="grid grid-cols-2 gap-4">
+                  <Label className="text-base font-semibold">Choose Your Campaign Type</Label>
+                  <p className="text-sm text-gray-600">Select the best way to reach your audience:</p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card
                       className={`cursor-pointer transition-all hover:shadow-md ${
                         selectedPromotionType === "push"
@@ -1308,13 +1375,19 @@ export default function PromotionsManagement() {
                     >
                       <CardContent className="p-6 text-center">
                         <Bell className="w-12 h-12 mx-auto mb-3 text-blue-600" />
-                        <h3 className="font-semibold text-lg mb-2">Push Notification</h3>
-                        <p className="text-sm text-gray-600">Instant mobile alerts with high visibility</p>
-                        <div className="mt-3 text-xs text-gray-500">
-                          • Immediate delivery • High open rates • Mobile-first experience
+                        <h3 className="font-semibold text-lg mb-2">📱 Push Notification</h3>
+                        <p className="text-sm text-gray-600 mb-3">Perfect for urgent announcements and quick updates</p>
+                        <div className="text-xs text-gray-500 space-y-1">
+                          <div>✅ Instant delivery to mobile devices</div>
+                          <div>✅ High visibility and open rates</div>
+                          <div>✅ Great for time-sensitive messages</div>
+                        </div>
+                        <div className="mt-3 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                          Best for: Event reminders, flash sales, breaking news
                         </div>
                       </CardContent>
                     </Card>
+
                     <Card
                       className={`cursor-pointer transition-all hover:shadow-md ${
                         selectedPromotionType === "email"
@@ -1325,10 +1398,15 @@ export default function PromotionsManagement() {
                     >
                       <CardContent className="p-6 text-center">
                         <Mail className="w-12 h-12 mx-auto mb-3 text-green-600" />
-                        <h3 className="font-semibold text-lg mb-2">Email Campaign</h3>
-                        <p className="text-sm text-gray-600">Rich content emails with detailed analytics</p>
-                        <div className="mt-3 text-xs text-gray-500">
-                          • Rich HTML content • Detailed analytics • Professional templates
+                        <h3 className="font-semibold text-lg mb-2">📧 Email Campaign</h3>
+                        <p className="text-sm text-gray-600 mb-3">Ideal for detailed information and storytelling</p>
+                        <div className="text-xs text-gray-500 space-y-1">
+                          <div>✅ Rich content with images and formatting</div>
+                          <div>✅ Detailed analytics and tracking</div>
+                          <div>✅ Professional appearance</div>
+                        </div>
+                        <div className="mt-3 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                          Best for: Newsletters, detailed announcements, promotions
                         </div>
                       </CardContent>
                     </Card>
@@ -1338,9 +1416,16 @@ export default function PromotionsManagement() {
                 {/* Campaign Details */}
                 <div className="grid grid-cols-1 gap-6">
                   <div className="space-y-4">
-                    <Label htmlFor="title" className="text-base font-semibold">
-                      Campaign Title
-                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="title" className="text-base font-semibold">
+                        Campaign Title
+                      </Label>
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        {selectedPromotionType === "push"
+                          ? "Keep it short & catchy"
+                          : "This becomes your email subject"}
+                      </span>
+                    </div>
                     <Input
                       id="title"
                       value={newPromotion.title}
@@ -1352,11 +1437,24 @@ export default function PromotionsManagement() {
                       }
                       className="text-lg"
                     />
+                    <div className="text-xs text-gray-500">
+                      {selectedPromotionType === "push"
+                        ? "💡 Good examples: '🎉 Flash Sale - 50% Off!', '⏰ Event starts in 1 hour'"
+                        : "💡 Good examples: 'Weekly Event Digest', 'Exclusive Invitation: Tech Summit 2024'"}
+                    </div>
                   </div>
+
                   <div className="space-y-4">
-                    <Label htmlFor="content" className="text-base font-semibold">
-                      Campaign Content
-                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="content" className="text-base font-semibold">
+                        Campaign Content
+                      </Label>
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        {selectedPromotionType === "push"
+                          ? "Max 100 characters recommended"
+                          : "Be detailed and engaging"}
+                      </span>
+                    </div>
                     <Textarea
                       id="content"
                       value={newPromotion.content}
@@ -1366,19 +1464,22 @@ export default function PromotionsManagement() {
                           ? "Write a compelling message that will grab attention on mobile devices..."
                           : "Create engaging email content with rich formatting and clear call-to-action..."
                       }
-                      rows={6}
+                      rows={selectedPromotionType === "push" ? 3 : 6}
                       className="resize-none"
                     />
-                    <div className="text-sm text-gray-500">
-                      {selectedPromotionType === "push"
-                        ? "Keep it concise - push notifications work best with 50-100 characters"
-                        : "Email content can be longer and more detailed with formatting options"}
+                    <div className="flex justify-between text-sm">
+                      <div className="text-gray-500">
+                        {selectedPromotionType === "push"
+                          ? "📱 Push notifications work best with 50-100 characters"
+                          : "📧 Email content can be longer and more detailed with formatting options"}
+                      </div>
+                      <div className="text-gray-400">{newPromotion.content.length} characters</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Priority and Scheduling */}
-                {/* <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <Label className="text-base font-semibold">Campaign Priority</Label>
                     <Select
@@ -1417,11 +1518,36 @@ export default function PromotionsManagement() {
                       />
                     )}
                   </div>
-                </div> */}
+                </div>
 
                 {/* Target Audience */}
                 <div className="space-y-4">
-                  {/* <Label className="text-base font-semibold">Target Audience</Label> */}
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-semibold">Target Audience</Label>
+                    <div className="text-sm text-gray-500 flex items-center gap-2">
+                      <span>💡 Tip: Select specific groups to target your campaign</span>
+                    </div>
+                  </div>
+
+                  {/* User Instructions */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="font-medium text-blue-900 mb-2">How to Select Your Audience:</h4>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      <li>
+                        • <strong>Main Groups:</strong> Select entire user types (All Users, Attendees, Exhibitors,
+                        etc.)
+                      </li>
+                      <li>
+                        • <strong>Categories:</strong> Click the arrow to expand and choose specific interests
+                      </li>
+                      <li>
+                        • <strong>Locations:</strong> Target users by country or specific cities
+                      </li>
+                      <li>
+                        • <strong>Mix & Match:</strong> Combine different selections for precise targeting
+                      </li>
+                    </ul>
+                  </div>
                   <div className="max-h-96 overflow-y-auto border rounded-lg bg-gray-50">
                     <div className="space-y-2 p-4">
                       {targetAudiences.map((audience) => (
@@ -1476,25 +1602,85 @@ export default function PromotionsManagement() {
                                     <Users className="w-3 h-3" />
                                     Categories
                                   </h5>
+
+                                  {/* All Categories Option */}
+                                  <div className="mb-2 p-2 rounded bg-white border">
+                                    <div className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id={`${audience.id}-all-categories`}
+                                        checked={selectedCategories.includes(`${audience.id}-all-categories`)}
+                                        onCheckedChange={() => {
+                                          if (selectedCategories.includes(`${audience.id}-all-categories`)) {
+                                            // Remove all category selections for this audience
+                                            setSelectedCategories(
+                                              selectedCategories.filter(
+                                                (cat) =>
+                                                  !audience.categories.some(
+                                                    (category) => cat === `${audience.id}-${category.id}`,
+                                                  ) && cat !== `${audience.id}-all-categories`,
+                                              ),
+                                            )
+                                          } else {
+                                            // Add all categories for this audience
+                                            const allCategoryIds = audience.categories.map(
+                                              (category) => `${audience.id}-${category.id}`,
+                                            )
+                                            setSelectedCategories([
+                                              ...selectedCategories.filter(
+                                                (cat) =>
+                                                  !audience.categories.some(
+                                                    (category) => cat === `${audience.id}-${category.id}`,
+                                                  ),
+                                              ),
+                                              `${audience.id}-all-categories`,
+                                              ...allCategoryIds,
+                                            ])
+                                          }
+                                        }}
+                                      />
+                                      <Label
+                                        htmlFor={`${audience.id}-all-categories`}
+                                        className="flex-1 cursor-pointer"
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-sm font-semibold">All Categories</span>
+                                          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-800">
+                                            {audience.categories
+                                              .reduce((total, category) => total + category.count, 0)
+                                              .toLocaleString()}
+                                          </Badge>
+                                        </div>
+                                      </Label>
+                                    </div>
+                                  </div>
+
+                                  {/* Individual Categories */}
                                   <div className="grid grid-cols-2 gap-2">
                                     {audience.categories.map((category) => (
                                       <div
                                         key={category.id}
-                                        className="flex items-center space-x-2 p-2 rounded hover:bg-white transition-colors"
+                                        className="flex items-center space-x-2 p-2 rounded hover:bg-white transition-colors border"
                                       >
                                         <Checkbox
                                           id={`${audience.id}-${category.id}`}
-                                          checked={selectedCategories.includes(`${audience.id}-${category.id}`)}
+                                          checked={
+                                            selectedCategories.includes(`${audience.id}-${category.id}`) ||
+                                            selectedCategories.includes(`${audience.id}-all-categories`)
+                                          }
                                           onCheckedChange={() => {
                                             if (selectedCategories.includes(`${audience.id}-${category.id}`)) {
                                               setSelectedCategories(
                                                 selectedCategories.filter(
-                                                  (cat) => cat !== `${audience.id}-${category.id}`,
+                                                  (cat) =>
+                                                    cat !== `${audience.id}-${category.id}` &&
+                                                    cat !== `${audience.id}-all-categories`,
                                                 ),
                                               )
                                             } else {
                                               setSelectedCategories([
-                                                ...selectedCategories,
+                                                ...selectedCategories.filter(
+                                                  (cat) => cat !== `${audience.id}-all-categories`,
+                                                ),
                                                 `${audience.id}-${category.id}`,
                                               ])
                                             }
@@ -1525,6 +1711,65 @@ export default function PromotionsManagement() {
                                     Countries & Cities
                                   </h5>
                                   <div className="space-y-2">
+                                    {/* All Countries Option */}
+                                    <div className="border rounded bg-white p-2">
+                                      <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                          id={`${audience.id}-all-countries`}
+                                          checked={selectedCategories.includes(`${audience.id}-all-countries`)}
+                                          onCheckedChange={() => {
+                                            if (selectedCategories.includes(`${audience.id}-all-countries`)) {
+                                              // Remove all country selections for this audience
+                                              setSelectedCategories(
+                                                selectedCategories.filter(
+                                                  (cat) =>
+                                                    !cat.startsWith(`${audience.id}-`) ||
+                                                    (!cat.includes("-india") &&
+                                                      !cat.includes("-usa") &&
+                                                      !cat.includes("-uk") &&
+                                                      !cat.includes("-germany") &&
+                                                      !cat.includes("-canada") &&
+                                                      cat !== `${audience.id}-all-countries`),
+                                                ),
+                                              )
+                                            } else {
+                                              // Add all countries for this audience
+                                              const allCountryIds = audience.countries.map(
+                                                (country) => `${audience.id}-${country.id}`,
+                                              )
+                                              setSelectedCategories([
+                                                ...selectedCategories.filter(
+                                                  (cat) =>
+                                                    !cat.startsWith(`${audience.id}-`) ||
+                                                    (!cat.includes("-india") &&
+                                                      !cat.includes("-usa") &&
+                                                      !cat.includes("-uk") &&
+                                                      !cat.includes("-germany") &&
+                                                      !cat.includes("-canada")),
+                                                ),
+                                                `${audience.id}-all-countries`,
+                                                ...allCountryIds,
+                                              ])
+                                            }
+                                          }}
+                                        />
+                                        <Label
+                                          htmlFor={`${audience.id}-all-countries`}
+                                          className="flex-1 cursor-pointer"
+                                        >
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-xs font-semibold">All Countries</span>
+                                            <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800">
+                                              {audience.countries
+                                                .reduce((total, country) => total + country.count, 0)
+                                                .toLocaleString()}
+                                            </Badge>
+                                          </div>
+                                        </Label>
+                                      </div>
+                                    </div>
+
+                                    {/* Individual Countries */}
                                     {audience.countries.map((country) => (
                                       <div key={`${audience.id}-${country.id}`} className="border rounded bg-white">
                                         {/* Country Header */}
@@ -1532,17 +1777,27 @@ export default function PromotionsManagement() {
                                           <div className="flex items-center space-x-2 flex-1">
                                             <Checkbox
                                               id={`${audience.id}-${country.id}`}
-                                              checked={selectedCategories.includes(`${audience.id}-${country.id}`)}
+                                              checked={
+                                                selectedCategories.includes(`${audience.id}-${country.id}`) ||
+                                                selectedCategories.includes(`${audience.id}-all-countries`)
+                                              }
                                               onCheckedChange={() => {
                                                 if (selectedCategories.includes(`${audience.id}-${country.id}`)) {
+                                                  // Remove this country and all its cities
                                                   setSelectedCategories(
                                                     selectedCategories.filter(
-                                                      (cat) => cat !== `${audience.id}-${country.id}`,
+                                                      (cat) =>
+                                                        cat !== `${audience.id}-${country.id}` &&
+                                                        !cat.startsWith(`${audience.id}-${country.id}-`) &&
+                                                        cat !== `${audience.id}-all-countries`,
                                                     ),
                                                   )
                                                 } else {
+                                                  // Add this country
                                                   setSelectedCategories([
-                                                    ...selectedCategories,
+                                                    ...selectedCategories.filter(
+                                                      (cat) => cat !== `${audience.id}-all-countries`,
+                                                    ),
                                                     `${audience.id}-${country.id}`,
                                                   ])
                                                 }
@@ -1582,7 +1837,70 @@ export default function PromotionsManagement() {
                                         {/* Cities List */}
                                         {expandedCategories.includes(`${audience.id}-${country.id}-expanded`) && (
                                           <div className="px-2 pb-2 border-t bg-gray-50">
-                                            <div className="grid grid-cols-2 gap-1 mt-2">
+                                            {/* All Cities Option */}
+                                            <div className="mt-2 mb-2 p-1 rounded bg-white">
+                                              <div className="flex items-center space-x-1">
+                                                <Checkbox
+                                                  id={`${audience.id}-${country.id}-all-cities`}
+                                                  checked={
+                                                    selectedCategories.includes(
+                                                      `${audience.id}-${country.id}-all-cities`,
+                                                    ) ||
+                                                    selectedCategories.includes(`${audience.id}-${country.id}`) ||
+                                                    selectedCategories.includes(`${audience.id}-all-countries`)
+                                                  }
+                                                  onCheckedChange={() => {
+                                                    if (
+                                                      selectedCategories.includes(
+                                                        `${audience.id}-${country.id}-all-cities`,
+                                                      )
+                                                    ) {
+                                                      // Remove all cities for this country
+                                                      setSelectedCategories(
+                                                        selectedCategories.filter(
+                                                          (cat) =>
+                                                            !cat.startsWith(`${audience.id}-${country.id}-`) ||
+                                                            cat === `${audience.id}-${country.id}-expanded`,
+                                                        ),
+                                                      )
+                                                    } else {
+                                                      // Add all cities for this country
+                                                      const allCityIds = country.cities.map(
+                                                        (city) => `${audience.id}-${country.id}-${city.id}`,
+                                                      )
+                                                      setSelectedCategories([
+                                                        ...selectedCategories.filter(
+                                                          (cat) =>
+                                                            !cat.startsWith(`${audience.id}-${country.id}-`) ||
+                                                            cat === `${audience.id}-${country.id}-expanded`,
+                                                        ),
+                                                        `${audience.id}-${country.id}-all-cities`,
+                                                        ...allCityIds,
+                                                      ])
+                                                    }
+                                                  }}
+                                                />
+                                                <Label
+                                                  htmlFor={`${audience.id}-${country.id}-all-cities`}
+                                                  className="flex-1 cursor-pointer"
+                                                >
+                                                  <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-semibold">All Cities</span>
+                                                    <Badge
+                                                      variant="outline"
+                                                      className="text-xs bg-green-100 text-green-800"
+                                                    >
+                                                      {country.cities
+                                                        .reduce((total, city) => total + city.count, 0)
+                                                        .toLocaleString()}
+                                                    </Badge>
+                                                  </div>
+                                                </Label>
+                                              </div>
+                                            </div>
+
+                                            {/* Individual Cities */}
+                                            <div className="grid grid-cols-2 gap-1">
                                               {country.cities.map((city) => (
                                                 <div
                                                   key={`${audience.id}-${country.id}-${city.id}`}
@@ -1590,9 +1908,16 @@ export default function PromotionsManagement() {
                                                 >
                                                   <Checkbox
                                                     id={`${audience.id}-${country.id}-${city.id}`}
-                                                    checked={selectedCategories.includes(
-                                                      `${audience.id}-${country.id}-${city.id}`,
-                                                    )}
+                                                    checked={
+                                                      selectedCategories.includes(
+                                                        `${audience.id}-${country.id}-${city.id}`,
+                                                      ) ||
+                                                      selectedCategories.includes(
+                                                        `${audience.id}-${country.id}-all-cities`,
+                                                      ) ||
+                                                      selectedCategories.includes(`${audience.id}-${country.id}`) ||
+                                                      selectedCategories.includes(`${audience.id}-all-countries`)
+                                                    }
                                                     onCheckedChange={() => {
                                                       if (
                                                         selectedCategories.includes(
@@ -1601,12 +1926,21 @@ export default function PromotionsManagement() {
                                                       ) {
                                                         setSelectedCategories(
                                                           selectedCategories.filter(
-                                                            (cat) => cat !== `${audience.id}-${country.id}-${city.id}`,
+                                                            (cat) =>
+                                                              cat !== `${audience.id}-${country.id}-${city.id}` &&
+                                                              cat !== `${audience.id}-${country.id}-all-cities` &&
+                                                              cat !== `${audience.id}-${country.id}` &&
+                                                              cat !== `${audience.id}-all-countries`,
                                                           ),
                                                         )
                                                       } else {
                                                         setSelectedCategories([
-                                                          ...selectedCategories,
+                                                          ...selectedCategories.filter(
+                                                            (cat) =>
+                                                              cat !== `${audience.id}-${country.id}-all-cities` &&
+                                                              cat !== `${audience.id}-${country.id}` &&
+                                                              cat !== `${audience.id}-all-countries`,
+                                                          ),
                                                           `${audience.id}-${country.id}-${city.id}`,
                                                         ])
                                                       }
@@ -1640,23 +1974,44 @@ export default function PromotionsManagement() {
                     </div>
                   </div>
 
-                  {/* {selectedCategories.length > 0 && (
+                  {selectedCategories.length > 0 && (
                     <Card className="bg-blue-50 border-blue-200">
                       <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <Target className="w-5 h-5 text-blue-600" />
-                          <div>
-                            <div className="font-semibold text-blue-800">
-                              Target Audience: {calculateTargetAudience().toLocaleString()} users
+                        <div className="flex items-start gap-3">
+                          <Target className="w-5 h-5 text-blue-600 mt-1" />
+                          <div className="flex-1">
+                            <div className="font-semibold text-blue-800 mb-2">
+                              Target Audience: {(() => {
+                                const result = getTargetAudienceBreakdown()
+                                return result.total.toLocaleString()
+                              })()} users
                             </div>
-                            <div className="text-sm text-blue-600">
+                            <div className="text-sm text-blue-600 mb-3">
                               Selected: {selectedCategories.length} target{selectedCategories.length !== 1 ? "s" : ""}
+                            </div>
+
+                            {/* Detailed Breakdown */}
+                            <div className="space-y-2">
+                              <div className="text-xs font-medium text-blue-700 mb-1">Breakdown:</div>
+                              <div className="grid grid-cols-1 gap-1 max-h-32 overflow-y-auto">
+                                {(() => {
+                                  const result = getTargetAudienceBreakdown()
+                                  return result.breakdown.map((item:any, index:any) => (
+                                    <div
+                                      key={index}
+                                      className="text-xs text-blue-600 bg-white px-2 py-1 rounded border"
+                                    >
+                                      {item}
+                                    </div>
+                                  ))
+                                })()}
+                              </div>
                             </div>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
-                  )} */}
+                  )}
                 </div>
               </div>
 
@@ -1679,7 +2034,7 @@ export default function PromotionsManagement() {
 
       {/* Enhanced Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-l-4 ">
+        <Card className="border-l-4 border-l-blue-500">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -1691,7 +2046,7 @@ export default function PromotionsManagement() {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-l-4">
+        <Card className="border-l-4 border-l-green-500">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -1703,7 +2058,7 @@ export default function PromotionsManagement() {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-l-4">
+        <Card className="border-l-4 border-l-purple-500">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -1715,7 +2070,7 @@ export default function PromotionsManagement() {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-l-4">
+        <Card className="border-l-4 border-l-orange-500">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -1729,7 +2084,54 @@ export default function PromotionsManagement() {
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Filter Instructions */}
+      <Card className="bg-yellow-50 border-yellow-200">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="text-yellow-600 mt-1">
+              <Filter className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="font-medium text-yellow-900 mb-2">How to Use Filters:</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-yellow-800">
+                <div>
+                  <strong>Status Filter:</strong>
+                  <ul className="mt-1 space-y-1">
+                    <li>
+                      • <strong>Draft:</strong> Campaigns being created
+                    </li>
+                    <li>
+                      • <strong>Scheduled:</strong> Set to send later
+                    </li>
+                    <li>
+                      • <strong>Sending:</strong> Currently being delivered
+                    </li>
+                    <li>
+                      • <strong>Sent:</strong> Successfully delivered
+                    </li>
+                  </ul>
+                </div>
+                <div>
+                  <strong>Type Filter:</strong>
+                  <ul className="mt-1 space-y-1">
+                    <li>
+                      • <strong>Push Notifications:</strong> Mobile alerts
+                    </li>
+                    <li>
+                      • <strong>Email Campaigns:</strong> Email messages
+                    </li>
+                    <li>
+                      • <strong>All Types:</strong> Show everything
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Existing Filters */}
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-4">
@@ -1868,7 +2270,7 @@ export default function PromotionsManagement() {
             {filteredPromotions
               .filter((p) => p.type === "push")
               .map((promotion) => (
-                <Card key={promotion.id} className="hover:shadow-lg transition-shadow border-l-4">
+                <Card key={promotion.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-blue-500">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
@@ -1920,7 +2322,7 @@ export default function PromotionsManagement() {
             {filteredPromotions
               .filter((p) => p.type === "email")
               .map((promotion) => (
-                <Card key={promotion.id} className="hover:shadow-lg transition-shadow border-l-4">
+                <Card key={promotion.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-green-500">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
