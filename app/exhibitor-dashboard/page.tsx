@@ -21,12 +21,12 @@ import { Building2, Calendar, Package, Users, Clock, Megaphone, BarChart3, Bell 
 
 // Import all section components
 import CompanyInfo from "./company-info"
-// import EventParticipation from "@/components/exhibitor-dashboard/event-participation"
-// import ProductListing from "@/components/exhibitor-dashboard/product-listing"
+import EventParticipation from "./event-participation"
+import ProductListing from "./product-listing"
 // import LeadManagement from "@/components/exhibitor-dashboard/lead-management"
 // import AppointmentScheduling from "@/components/exhibitor-dashboard/appointment-scheduling"
 import PromotionsMarketing from "./promotions-marketing"
-import AnalyticsReports from "./analytics-reports"
+// import AnalyticsReports from "./analytics-reports"
 // import DashboardSettings from "@/components/exhibitor-dashboard/settings"
 
 export default function ExhibitorDashboardPage() {
@@ -96,10 +96,10 @@ export default function ExhibitorDashboardPage() {
     switch (activeSection) {
       case "company-info":
         return <CompanyInfo exhibitorData={exhibitorData} />
-    //   case "event-participation":
-    //     return <EventParticipation />
-    //   case "product-listing":
-    //     return <ProductListing />
+      case "event-participation":
+        return <EventParticipation />
+      case "product-listing":
+        return <ProductListing />
     //   case "lead-management":
     //     return <LeadManagement />
     //   case "appointments":
