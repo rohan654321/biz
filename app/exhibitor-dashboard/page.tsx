@@ -26,7 +26,7 @@ import ProductListing from "./product-listing"
 import AppointmentScheduling from "./appointment-scheduling"
 import PromotionsMarketing from "./promotions-marketing"
 import LeadManagement from "./lead-management"
-// import AnalyticsReports from "./analytics-reports"
+import AnalyticsReports from "./analytics-reports"
 import DashboardSettings from "./settings"
 
 export default function ExhibitorDashboardPage() {
@@ -106,8 +106,8 @@ export default function ExhibitorDashboardPage() {
         return <AppointmentScheduling />
       case "promotions":
         return <PromotionsMarketing />
-    //   case "analytics":
-    //     return <AnalyticsReports />
+      case "analytics":
+        return <AnalyticsReports />
       case "settings":
         return <DashboardSettings exhibitorData={exhibitorData} />
       default:
