@@ -23,11 +23,11 @@ import { Building2, Calendar, Package, Users, Clock, Megaphone, BarChart3, Bell 
 import CompanyInfo from "./company-info"
 import EventParticipation from "./event-participation"
 import ProductListing from "./product-listing"
-// import LeadManagement from "@/components/exhibitor-dashboard/lead-management"
 // import AppointmentScheduling from "@/components/exhibitor-dashboard/appointment-scheduling"
 import PromotionsMarketing from "./promotions-marketing"
+import LeadManagement from "./lead-management"
 // import AnalyticsReports from "./analytics-reports"
-// import DashboardSettings from "@/components/exhibitor-dashboard/settings"
+import DashboardSettings from "./settings"
 
 export default function ExhibitorDashboardPage() {
   const [activeSection, setActiveSection] = useState("company-info")
@@ -100,16 +100,16 @@ export default function ExhibitorDashboardPage() {
         return <EventParticipation />
       case "product-listing":
         return <ProductListing />
-    //   case "lead-management":
-    //     return <LeadManagement />
+      case "lead-management":
+        return <LeadManagement />
     //   case "appointments":
     //     return <AppointmentScheduling />
       case "promotions":
         return <PromotionsMarketing />
     //   case "analytics":
     //     return <AnalyticsReports />
-    //   case "settings":
-    //     return <DashboardSettings exhibitorData={exhibitorData} />
+      case "settings":
+        return <DashboardSettings exhibitorData={exhibitorData} />
       default:
         return <div>Select a section from the sidebar</div>
     }

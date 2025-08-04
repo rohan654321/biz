@@ -1,6 +1,6 @@
 "use client"
 
-import { GraduationCap, Cross, TrendingUp, DollarSign, MoreHorizontal } from "lucide-react"
+import { GraduationCap, Cross, TrendingUp, DollarSign, MoreHorizontal ,Briefcase } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 const categories = [
@@ -33,9 +33,9 @@ const categories = [
     filterValue: "Finance", // Maps to actual category in events data
   },
    {
-    id: "finance",
-    title: "Banking & Finance",
-    icon: DollarSign,
+    id: "business",
+    title: "Business services",
+    icon: Briefcase,
     color: "bg-yellow-50 text-yellow-700 border-yellow-200",
     filterValue: "Finance", // Maps to actual category in events data
   },
