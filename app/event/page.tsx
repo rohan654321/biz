@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ChevronDown, Share2, Star, MapPin, Calendar, Heart, Bookmark } from "lucide-react"
 import Navbar from "@/components/navbar"
+import { getAllEvents, getEventsByCategory } from "@/lib/data/events"
 
 export default function EventsPage() {
   const [activeTab, setActiveTab] = useState("HR, Jobs & Career")
@@ -17,111 +18,40 @@ export default function EventsPage() {
   const [currentPage, setCurrentPage] = useState(2)
   const [viewMode, setViewMode] = useState("Trending")
 
-  const tabs = ["HR, Jobs & Career", "Jobs Fair", "Pedagogy", "Top Events"]
+  // Get real events data
+  const allEvents = getAllEvents()
+
+  const tabs = ["All Events", "Business Events", "Expo", "Education"]
 
   const categories = [
-    { name: "Education & Training", count: "33.8k", checked: true },
-    { name: "Medical & Pharma", count: "33.8k", checked: false },
-    { name: "Medical & Pharma", count: "33.8k", checked: false },
-    { name: "Medical & Pharma", count: "33.8k", checked: false },
-    { name: "Medical & Pharma", count: "33.8k", checked: false },
-    { name: "Medical & Pharma", count: "33.8k", checked: false },
-    { name: "Medical & Pharma", count: "33.8k", checked: false },
-    { name: "Medical & Pharma", count: "33.8k", checked: false },
+    { name: "Business Event", count: "12", checked: true },
+    { name: "Expo", count: "8", checked: false },
+    { name: "Education", count: "5", checked: false },
+    { name: "Technology", count: "15", checked: false },
+    { name: "Healthcare", count: "10", checked: false },
+    { name: "Food & Beverage", count: "7", checked: false },
+    { name: "Fashion", count: "6", checked: false },
+    { name: "Sports", count: "9", checked: false },
   ]
 
   const relatedTopics = [
-    { name: "Education & Training", count: "33.8k" },
-    { name: "Medical & Pharma", count: "33.8k" },
+    { name: "Catering & Decor", count: "25" },
+    { name: "Event Management", count: "18" },
   ]
 
-  const events = [
-    {
-      id: 1,
-      title: "Fitness Fest 2025",
-      date: "Thu 04 - Sat 06 June 2025",
-      location: "Bangalore, India",
-      description:
-        "Asian University is a unique two-day celebration with Brain-loving hands from around the world. Packed with thought-provoking presentations on the intellectual foundations of a free society.",
-      category: "Education",
-      image: "/placeholder.svg?height=120&width=180&text=Fitness+Event",
-      interested: 858,
-      rating: 4.5,
-    },
-    {
-      id: 2,
-      title: "Fitness Fest 2025",
-      date: "Thu 04 - Sat 06 June 2025",
-      location: "Bangalore, India",
-      description:
-        "Asian University is a unique two-day celebration with Brain-loving hands from around the world. Packed with thought-provoking presentations on the intellectual foundations of a free society.",
-      category: "Education",
-      image: "/placeholder.svg?height=120&width=180&text=Fitness+Event",
-      interested: 858,
-      rating: 4.5,
-    },
-    {
-      id: 3,
-      title: "Fitness Fest 2025",
-      date: "Thu 04 - Sat 06 June 2025",
-      location: "Bangalore, India",
-      description:
-        "Asian University is a unique two-day celebration with Brain-loving hands from around the world. Packed with thought-provoking presentations on the intellectual foundations of a free society.",
-      category: "Education",
-      image: "/placeholder.svg?height=120&width=180&text=Fitness+Event",
-      interested: 858,
-      rating: 4.5,
-    },
-  ]
+  // Filter events based on active tab
+  const getFilteredEvents = () => {
+    if (activeTab === "All Events") return allEvents
+    return getEventsByCategory(activeTab)
+  }
 
-  const featuredEvents = [
-    {
-      id: 1,
-      title: "Fitness Fest 2025",
-      image: "/placeholder.svg?height=200&width=300&text=Featured+Event+1",
-    },
-    {
-      id: 2,
-      title: "Fitness Fest 2025",
-      image: "/placeholder.svg?height=200&width=300&text=Featured+Event+2",
-    },
-    {
-      id: 3,
-      title: "Fitness Fest 2025",
-      image: "/placeholder.svg?height=200&width=300&text=Featured+Event+3",
-    },
-  ]
-
-  const sidebarEvents = [
-    {
-      id: 1,
-      title: "Fitness Fest 2025",
-      date: "Thu 04 - Sat 06 June 2025",
-      location: "Bangalore, India",
-      members: "765 Members",
-      image: "/placeholder.svg?height=60&width=60&text=FF",
-    },
-    {
-      id: 2,
-      title: "Fitness Fest 2025",
-      date: "Thu 04 - Sat 06 June 2025",
-      location: "Bangalore, India",
-      members: "765 Members",
-      image: "/placeholder.svg?height=60&width=60&text=FF",
-    },
-    {
-      id: 3,
-      title: "Fitness Fest 2025",
-      date: "Thu 04 - Sat 06 June 2025",
-      location: "Bangalore, India",
-      members: "765 Members",
-      image: "/placeholder.svg?height=60&width=60&text=FF",
-    },
-  ]
+  const events = getFilteredEvents()
+  const featuredEvents = allEvents.slice(0, 3) // Show first 3 as featured
+  const sidebarEvents = allEvents.slice(0, 3) // Show first 3 in sidebar
 
   return (
     <>
-      {/* <Navbar /> */}
+      
       <div className="min-h-screen bg-gray-50">
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 py-6">
@@ -167,8 +97,8 @@ export default function EventsPage() {
           </div>
 
           <div className="flex gap-6">
-            {/* Left Sidebar - Filters */}
-            <div className="w-80 space-y-6">
+            {/* Left Sidebar - Sticky (Fixed when scrolled) */}
+            <div className="w-80 sticky top-6 self-start max-h-auto overflow-y-auto space-y-6">
               {/* Calendar Filter */}
               <Card>
                 <CardContent className="p-4">
@@ -257,182 +187,196 @@ export default function EventsPage() {
               </Card>
             </div>
 
-            {/* Main Content Area */}
-            <div className="flex-1 space-y-6">
-              {/* View Toggle and Pagination */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
+            {/* Main Content Area + Right Sidebar - Both Scrollable */}
+            <div className="flex-1 flex gap-6">
+              {/* Main Content Area - Scrollable */}
+              <div className="flex-1 space-y-6">
+                {/* View Toggle and Pagination */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => setViewMode("Trending")}
+                        className={`px-3 py-1 text-sm rounded ${
+                          viewMode === "Trending"
+                            ? "bg-orange-100 text-orange-600"
+                            : "text-gray-600 hover:text-gray-800"
+                        }`}
+                      >
+                        Trending 🔥
+                      </button>
+                      <button
+                        onClick={() => setViewMode("Date")}
+                        className={`px-3 py-1 text-sm rounded ${
+                          viewMode === "Date" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:text-gray-800"
+                        }`}
+                      >
+                        Date
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Pagination */}
                   <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => setViewMode("Trending")}
-                      className={`px-3 py-1 text-sm rounded ${
-                        viewMode === "Trending" ? "bg-orange-100 text-orange-600" : "text-gray-600 hover:text-gray-800"
-                      }`}
-                    >
-                      Trending 🔥
-                    </button>
-                    <button
-                      onClick={() => setViewMode("Date")}
-                      className={`px-3 py-1 text-sm rounded ${
-                        viewMode === "Date" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:text-gray-800"
-                      }`}
-                    >
-                      Date
-                    </button>
+                    {[1, 2, 3, 4, 5, 6].map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-8 h-8 rounded text-sm ${
+                          currentPage === page ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Pagination */}
-                <div className="flex items-center space-x-2">
-                  {[1, 2, 3, 4, 5, 6].map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`w-8 h-8 rounded text-sm ${
-                        currentPage === page ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Event Listings */}
-              <div className="space-y-4">
-                {events.map((event) => (
-                  <Card key={event.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex gap-4">
-                        <img
-                          src={event.image || "/placeholder.svg"}
-                          alt={event.title}
-                          className="w-44 h-28 object-cover rounded-lg"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h3 className="text-lg font-semibold text-gray-900 mb-1">{event.title}</h3>
-                              <div className="flex items-center text-sm text-gray-600 mb-1">
-                                <Calendar className="w-4 h-4 mr-1" />
-                                {event.date}
+                {/* Event Listings */}
+                <div className="space-y-4">
+                  {events.map((event) => (
+                    <Card key={event.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex gap-4">
+                          <img
+                            src={event.images[0]?.url || "/placeholder.svg"}
+                            alt={event.images[0]?.alt || event.title}
+                            className="w-44 h-28 object-cover rounded-lg"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-1">{event.title}</h3>
+                                <div className="flex items-center text-sm text-gray-600 mb-1">
+                                  <Calendar className="w-4 h-4 mr-1" />
+                                  {new Date(event.timings.startDate).toLocaleDateString()} -{" "}
+                                  {new Date(event.timings.endDate).toLocaleDateString()}
+                                </div>
+                                <div className="flex items-center text-sm text-gray-600">
+                                  <MapPin className="w-4 h-4 mr-1" />
+                                  {event.location.city}, {event.location.venue}
+                                </div>
                               </div>
-                              <div className="flex items-center text-sm text-gray-600">
-                                <MapPin className="w-4 h-4 mr-1" />
-                                {event.location}
+                              <div className="flex items-center space-x-2">
+                                <Button variant="ghost" size="sm">
+                                  <Heart className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Share2 className="w-4 h-4" />
+                                </Button>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <Button variant="ghost" size="sm">
-                                <Heart className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm">
-                                <Share2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-3 line-clamp-2">{event.description}</p>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                              <Badge variant="secondary">{event.category}</Badge>
-                              <div className="flex items-center text-sm text-gray-600">
-                                <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                                Interested ({event.interested})
+                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">{event.description}</p>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-4">
+                                <Badge variant="secondary">{event.categories[0]}</Badge>
+                                <div className="flex items-center text-sm text-gray-600">
+                                  <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                                  {/* Interested ({event.followers}) */}
+                                </div>
                               </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">4.5</span>
-                              <Button variant="ghost" size="sm">
-                                <Share2 className="w-4 h-4" />
-                              </Button>
+                              <div className="flex items-center space-x-2">
+                                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                                  {event.rating.average}
+                                </span>
+                                <Button variant="ghost" size="sm">
+                                  <Share2 className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              {/* Featured Events */}
-              <div className="mt-8">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Featured Events</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {featuredEvents.map((event) => (
-                    <Card key={event.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                      <div className="relative">
-                        <img
-                          src={event.image || "/placeholder.svg"}
-                          alt={event.title}
-                          className="w-full h-40 object-cover"
-                        />
-                        <div className="absolute top-2 right-2">
-                          <Button variant="ghost" size="sm" className="bg-white/80 hover:bg-white">
-                            <Bookmark className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <div className="absolute bottom-2 left-2">
-                          <Badge className="bg-white text-gray-900">{event.title}</Badge>
-                        </div>
-                      </div>
+                      </CardContent>
                     </Card>
                   ))}
                 </div>
-              </div>
-            </div>
 
-            {/* Right Sidebar */}
-            <div className="w-80 space-y-6">
-              {/* Large Featured Event */}
-              <Card className="overflow-hidden">
-                <div className="relative">
-                  <img
-                    src="/placeholder.svg?height=300&width=320&text=Fitness+Fest+2025"
-                    alt="Fitness Fest 2025"
-                    className="w-full h-60 object-cover"
-                  />
-                  <div className="absolute bottom-4 left-4 text-white">
-                    <h3 className="text-xl font-bold">Fitness Fest 2025</h3>
-                    <p className="text-sm">Thu 04 - Sat 06 June 2025</p>
-                    <p className="text-sm">Bangalore, India</p>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Event List */}
-              <div className="space-y-4">
-                {sidebarEvents.map((event) => (
-                  <Card key={event.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex gap-3">
-                        <img
-                          src={event.image || "/placeholder.svg"}
-                          alt={event.title}
-                          className="w-12 h-12 object-cover rounded"
-                        />
-                        <div className="flex-1">
-                          <h4 className="font-medium text-sm text-gray-900 mb-1">{event.title}</h4>
-                          <p className="text-xs text-gray-600 mb-1">{event.date}</p>
-                          <p className="text-xs text-gray-600 mb-2">{event.location}</p>
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-500">{event.members}</span>
-                            <div className="flex space-x-1">
-                              <Button size="sm" className="h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700">
-                                Fitness
-                              </Button>
-                              <Button size="sm" variant="outline" className="h-6 px-2 text-xs bg-transparent">
-                                Health
-                              </Button>
-                            </div>
+                {/* Featured Events */}
+                <div className="mt-8">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Featured Events</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {featuredEvents.map((event) => (
+                      <Card key={event.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="relative">
+                          <img
+                            src={event.images[0]?.url || "/placeholder.svg"}
+                            alt={event.images[0]?.alt || event.title}
+                            className="w-full h-40 object-cover"
+                          />
+                          <div className="absolute top-2 right-2">
+                            <Button variant="ghost" size="sm" className="bg-white/80 hover:bg-white">
+                              <Bookmark className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <div className="absolute bottom-2 left-2">
+                            <Badge className="bg-white text-gray-900">{event.title}</Badge>
                           </div>
                         </div>
-                        <Button variant="ghost" size="sm" className="p-1">
-                          <Bookmark className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Sidebar - Scrollable (moves with content) */}
+              <div className="w-80 space-y-6">
+                {/* Large Featured Event */}
+                <Card className="overflow-hidden">
+                  <div className="relative">
+                    <img
+                      src="/placeholder.svg?height=300&width=320&text=Fitness+Fest+2025"
+                      alt="Fitness Fest 2025"
+                      className="w-full h-60 object-cover"
+                    />
+                    <div className="absolute bottom-4 left-4 text-white">
+                      <h3 className="text-xl font-bold">Fitness Fest 2025</h3>
+                      <p className="text-sm">Thu 04 - Sat 06 June 2025</p>
+                      <p className="text-sm">Bangalore, India</p>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Event List */}
+                <div className="space-y-4">
+                  {sidebarEvents.map((event) => (
+                    <Card key={event.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex gap-3">
+                          <img
+                            src={event.images[0]?.url || "/placeholder.svg"}
+                            alt={event.images[0]?.alt || event.title}
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                          <div className="flex-1">
+                            <h4 className="font-medium text-sm text-gray-900 mb-1">{event.title}</h4>
+                            <p className="text-xs text-gray-600 mb-1">
+                              {new Date(event.timings.startDate).toLocaleDateString()} -{" "}
+                              {new Date(event.timings.endDate).toLocaleDateString()}
+                            </p>
+                            <p className="text-xs text-gray-600 mb-2">{event.location.city}</p>
+                            <div className="flex items-center justify-between">
+                              {/* <span className="text-xs text-gray-500">{event.followers} Followers</span> */}
+                              <div className="flex space-x-1">
+                                {event.categories.slice(0, 2).map((category, index) => (
+                                  <Button
+                                    key={index}
+                                    size="sm"
+                                    className="h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700"
+                                  >
+                                    {category}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm" className="p-1">
+                            <Bookmark className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

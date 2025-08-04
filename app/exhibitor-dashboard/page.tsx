@@ -23,7 +23,7 @@ import { Building2, Calendar, Package, Users, Clock, Megaphone, BarChart3, Bell 
 import CompanyInfo from "./company-info"
 import EventParticipation from "./event-participation"
 import ProductListing from "./product-listing"
-// import AppointmentScheduling from "@/components/exhibitor-dashboard/appointment-scheduling"
+import AppointmentScheduling from "./appointment-scheduling"
 import PromotionsMarketing from "./promotions-marketing"
 import LeadManagement from "./lead-management"
 // import AnalyticsReports from "./analytics-reports"
@@ -102,8 +102,8 @@ export default function ExhibitorDashboardPage() {
         return <ProductListing />
       case "lead-management":
         return <LeadManagement />
-    //   case "appointments":
-    //     return <AppointmentScheduling />
+      case "appointments":
+        return <AppointmentScheduling />
       case "promotions":
         return <PromotionsMarketing />
     //   case "analytics":
