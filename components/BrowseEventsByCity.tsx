@@ -8,56 +8,67 @@ const cities = [
     id: 1,
     name: "Bangalore",
     image: "/city/c5.jpg",
+    events:"44"
   },
   {
     id: 2,
     name: "New Delhi",
     image: "/city/c4.jpg",
+     events:"44"
   },
   {
     id: 3,
     name: "Kolkata",
     image: "/city/c3.jpg",
+     events:"44"
   },
   {
     id: 4,
     name: "Mumbai",
     image: "/city/c2.jpg",
+     events:"44"
   },
   {
     id: 5,
     name: "Punjab",
     image: "/city/c1.jpg",
+     events:"44"
   },
   {
     id: 6,
     name: "Bangalore",
     image: "/city/c5.jpg",
+     events:"44"
   },
   {
     id: 7,
     name: "New Delhi",
     image: "/city/c4.jpg",
+     events:"44"
   },
   {
     id: 8,
     name: "Kolkata",
     image: "/city/c3.jpg",
+     events:"44"
   },
   {
     id: 9,
     name: "Mumbai",
     image: "/city/c2.jpg",
+     events:"44"
   },
   {
     id: 10,
     name: "Punjab",
     image: "/city/c1.jpg",
+     events:"44"
   },
    {
     id: 11,
     name: "Mumbai",
     image: "/city/c2.jpg",
+     events:"44"
   },
   // {
   //   id: 12,
@@ -107,6 +118,7 @@ export default function BrowseByCity() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   <div className="absolute bottom-2 left-2 right-2">
                     <h3 className="text-white font-semibold text-sm text-center">{city.name}</h3>
+                    <p className="text-white font-semibold text-sm text-center">{city.events} events</p>
                   </div>
                 </div>
               </button>

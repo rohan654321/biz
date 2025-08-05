@@ -9,66 +9,77 @@ const countries = [
     id: 1,
     name: "United States",
     flag: "/flags/flag1.png",
+    events:"22",
     code: "US",
   },
   {
     id: 2,
     name: "Canada",
     flag: "/flags/flag2.png",
+    events:"22",
     code: "CA",
   },
   {
     id: 3,
     name: "Germany",
     flag: "/flags/flag3.png",
+    events:"22",
     code: "DE",
   },
   {
     id: 4,
     name: "UAE",
     flag: "/flags/flag4.png",
+    events:"22",
     code: "AE",
   },
   {
     id: 5,
     name: "United Kingdom",
     flag: "/flags/flag5.png",
+    events:"22",
     code: "GB",
   },
   {
     id: 6,
     name: "Australia",
     flag: "/flags/flag6.png",
+    events:"22",
     code: "AU",
   },
   {
     id: 7,
     name: "India",
     flag: "/flags/flag7.png",
+    events:"22",
     code: "IN",
   },
   {
     id: 8,
     name: "France",
     flag: "/flags/flag8.png",
+    events:"22",
     code: "FR",
   },
   {
     id: 9,
     name: "Spain",
     flag: "/flags/flag9.png",
+    events:"22",
     code: "ES",
   },
   {
     id: 10,
     name: "India",
     flag: "/flags/flag7.png",
+    events:"22",
     code: "IN",
   },
   {
     id: 11,
     name: "France",
     flag: "/flags/flag8.png",
+    events:"22",
     code: "FR",
   },
   // {
@@ -115,7 +126,9 @@ export default function BrowseByCountry() {
                     alt={`${country.name} flag`}
                     className="max-w-full max-h-full object-contain rounded"
                   />
+                
                 </div>
+                <p>{country.events} events</p>
               </button>
             ))}
             <button 

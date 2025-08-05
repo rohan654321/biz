@@ -8,6 +8,7 @@ const categories = [
     id: "education",
     title: "Education Training",
     icon: GraduationCap,
+    event:"22",
     color: "bg-blue-50 text-blue-700 border-blue-200",
     filterValue: "Education", // Maps to actual category in events data
   },
@@ -15,6 +16,7 @@ const categories = [
     id: "medical",
     title: "Medical & Pharma",
     icon: Cross,
+    event:"22",
     color: "bg-blue-50 text-blue-700 border-blue-200",
     filterValue: "Medical", // Maps to actual category in events data
   },
@@ -22,6 +24,7 @@ const categories = [
     id: "technology",
     title: "IT & Technology",
     icon: TrendingUp,
+    event:"22",
     color: "bg-blue-50 text-blue-700 border-blue-200",
     filterValue: "Technology", // Maps to actual category in events data
   },
@@ -29,6 +32,7 @@ const categories = [
     id: "finance",
     title: "Banking & Finance",
     icon: DollarSign,
+    event:"22",
     color: "bg-blue-50 text-blue-700 border-blue-200",
     filterValue: "Finance", // Maps to actual category in events data
   },
@@ -36,6 +40,7 @@ const categories = [
     id: "business",
     title: "Business services",
     icon: Briefcase,
+    event:"22",
     color: "bg-blue-50 text-blue-700 border-blue-200",
     filterValue: "Finance", // Maps to actual category in events data
   },
@@ -91,6 +96,7 @@ export default function CategoryBrowser() {
                     <span className="text-sm font-medium text-gray-900 text-center leading-tight">
                       {category.title}
                     </span>
+                    <p>{category.id !== "all" && `${category.event} event`}</p>
                   </div>
                 </button>
               )
