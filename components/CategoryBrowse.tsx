@@ -15,28 +15,28 @@ const categories = [
     id: "medical",
     title: "Medical & Pharma",
     icon: Cross,
-    color: "bg-red-50 text-red-700 border-red-200",
+    color: "bg-blue-50 text-blue-700 border-blue-200",
     filterValue: "Medical", // Maps to actual category in events data
   },
   {
     id: "technology",
     title: "IT & Technology",
     icon: TrendingUp,
-    color: "bg-green-50 text-green-700 border-green-200",
+    color: "bg-blue-50 text-blue-700 border-blue-200",
     filterValue: "Technology", // Maps to actual category in events data
   },
   {
     id: "finance",
     title: "Banking & Finance",
     icon: DollarSign,
-    color: "bg-yellow-50 text-yellow-700 border-yellow-200",
+    color: "bg-blue-50 text-blue-700 border-blue-200",
     filterValue: "Finance", // Maps to actual category in events data
   },
    {
     id: "business",
     title: "Business services",
     icon: Briefcase,
-    color: "bg-yellow-50 text-yellow-700 border-yellow-200",
+    color: "bg-blue-50 text-blue-700 border-blue-200",
     filterValue: "Finance", // Maps to actual category in events data
   },
   {
@@ -99,7 +99,7 @@ export default function CategoryBrowser() {
         </div>
 
         {/* Optional: Add category stats */}
-        <div className="px-6 pb-8">
+        {/* <div className="px-6 pb-8">
           <div className="w-full max-w-6xl mx-auto">
             <div className="bg-gray-50 rounded-lg p-4 text-center">
               <p className="text-sm text-gray-600">
@@ -107,7 +107,7 @@ export default function CategoryBrowser() {
               </p>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   )

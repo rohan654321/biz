@@ -103,12 +103,13 @@ export default function FeaturedEvents() {
                         key={event.id}
                         className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-blue-300 group"
                       >
+                        <div className="grid grid-cols-2">
                         {/* Event Logo */}
                         <div className="rounded-lg p-4 mb-4 flex items-center justify-center h-20">
                           <img
                             src={event.logo || "/placeholder.svg?height=48&width=120&query=event logo"}
                             alt={event.title}
-                            className="max-h-12 max-w-full object-contain"
+                            className="max-h-12 max-w-50px"
                           />
                         </div>
 
@@ -130,14 +131,14 @@ export default function FeaturedEvents() {
                               </span>
                             </div>
 
-                            <div className="flex items-center">
+                            {/* <div className="flex items-center">
                               <MapPin className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
                               <span className="truncate">{event.location.venue}</span>
-                            </div>
+                            </div> */}
                           </div>
 
                           {/* Footer */}
-                          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                          {/* <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 truncate max-w-[120px]">
                               {event.categories || "General"}
                             </span>
@@ -147,8 +148,21 @@ export default function FeaturedEvents() {
                             >
                               <Share2 className="w-4 h-4" />
                             </button>
-                          </div>
+                          </div> */}
                         </div>
+                        </div>
+                        <div className="flex justify-between">
+                          <button
+                              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors flex-shrink-0"
+                              aria-label="Share event"
+                            >
+                              <Share2 className="w-4 h-4" />
+                            </button>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium  ">
+                              {event.categories || "General"}
+                            </span>
+                            
+                            </div>
                       </div>
                     ))}
 

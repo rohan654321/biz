@@ -396,6 +396,7 @@ export const events: Record<string, Event> = {
   },
   "london-fintech-expo": {
     id: "london-fintech-expo",
+     logo: "/logo/logo.png",
     title: "London FinTech Expo",
     description: "Europe's largest financial technology exhibition and conference.",
     highlights: ["Blockchain", "Digital Banking", "Cryptocurrency"],
@@ -477,17 +478,19 @@ export const events: Record<string, Event> = {
     featuredItems: [],
     featuredExhibitors: [],
     touristAttractions: [],
-    tags: ["fintech", "blockchain", "banking", "cryptocurrency"],
+    tags: ["education", "blockchain", "banking", "cryptocurrency"],
     status: "upcoming",
     
     isVerified: true,
     speakers:["sp1","sp2"],
     postponed: true,
     postponedReason: "Due to venue availability issues",
-    featured:true
+    featured:true,
+    vip: true,
   },
     "India-fintech-expo": {
     id: "london-fintech-expo",
+     logo: "/logo/logo.png",
     title: "London FinTech Expo",
     description: "Europe's largest financial technology exhibition and conference.",
     highlights: ["Blockchain", "Digital Banking", "Cryptocurrency"],
@@ -576,10 +579,13 @@ export const events: Record<string, Event> = {
     speakers:["sp1","sp2"],
     postponed: true,
     postponedReason: "Due to venue availability issues",
-    featured:true
+    featured:true,
+    vip: true,
+
   },
     "goa-fintech-expo": {
     id: "london-fintech-expo",
+     logo: "/logo/logo.png",
     title: "London FinTech Expo",
     description: "Europe's largest financial technology exhibition and conference.",
     highlights: ["Blockchain", "Digital Banking", "Cryptocurrency"],
@@ -668,10 +674,12 @@ export const events: Record<string, Event> = {
     speakers:["sp1","sp2"],
     postponed: true,
     postponedReason: "Due to venue availability issues",
-    featured:true
+    featured:true,
+    vip: true,
   },
   "deli-fintech-expo": {
     id: "london-fintech-expo",
+     logo: "/logo/logo.png",
     title: "London FinTech Expo",
     description: "Europe's largest financial technology exhibition and conference.",
     highlights: ["Blockchain", "Digital Banking", "Cryptocurrency"],
@@ -760,10 +768,12 @@ export const events: Record<string, Event> = {
     speakers:["sp1","sp2"],
     postponed: true,
     postponedReason: "Due to venue availability issues",
-    featured:true
+    featured:true,
+    vip: true,  
   },
   "channai-fintech-expo": {
     id: "london-fintech-expo",
+     logo: "/logo/logo.png",
     title: "London FinTech Expo",
     description: "Europe's largest financial technology exhibition and conference.",
     highlights: ["Blockchain", "Digital Banking", "Cryptocurrency"],
@@ -856,6 +866,7 @@ export const events: Record<string, Event> = {
   },
    "fintech-expo": {
     id: "london-fintech-expo",
+     logo: "/logo/logo.png",
     title: "London FinTech Expo",
     description: "Europe's largest financial technology exhibition and conference.",
     highlights: ["Blockchain", "Digital Banking", "Cryptocurrency"],
@@ -948,6 +959,7 @@ export const events: Record<string, Event> = {
   },
    "fintech": {
     id: "london-fintech-expo",
+     logo: "/logo/logo.png",
     title: "London FinTech Expo",
     description: "Europe's largest financial technology exhibition and conference.",
     highlights: ["Blockchain", "Digital Banking", "Cryptocurrency"],
@@ -1040,6 +1052,7 @@ export const events: Record<string, Event> = {
   },
    "expo": {
     id: "london-fintech-expo",
+     logo: "/logo/logo.png",
     title: "London FinTech Expo",
     description: "Europe's largest financial technology exhibition and conference.",
     highlights: ["Blockchain", "Digital Banking", "Cryptocurrency"],
@@ -1132,6 +1145,7 @@ export const events: Record<string, Event> = {
   },
   "event": {
     id: "london-fintech-expo",
+     logo: "/logo/logo.png",
     title: "London FinTech Expo",
     description: "Europe's largest financial technology exhibition and conference.",
     highlights: ["Blockchain", "Digital Banking", "Cryptocurrency"],

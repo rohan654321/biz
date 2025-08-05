@@ -140,15 +140,15 @@ export default function HeroSlideshow() {
           >
             {events.map((event, index) => (
               <Link href={`/event/${event.id}`} key={event.id}>
-    <EventCard
-      imageSrc={event.images.find((img) => img.url === "main")?.url || "/placeholder.svg"}
-      date={new Date(event.timings.startDate).getDate().toString()}
-      month={new Date(event.timings.startDate).toLocaleString("default", { month: "short" })}
-      year={new Date(event.timings.startDate).getFullYear().toString()}
-      title={event.title}
-      location={event.location.venue}
-    />
-  </Link>
+                <EventCard
+                  imageSrc={event.images.find((img) => img.type === "main")?.url || "/placeholder.svg"}
+                  date={new Date(event.timings.startDate).getDate().toString()}
+                  month={new Date(event.timings.startDate).toLocaleString("default", { month: "short" })}
+                  year={new Date(event.timings.startDate).getFullYear().toString()}
+                  title={event.title}
+                  location={event.location.venue}
+                />
+              </Link>
             ))}
           </div>
         </div>
