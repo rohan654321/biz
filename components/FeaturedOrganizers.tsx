@@ -6,14 +6,14 @@ import { MoreHorizontal } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 const organizers = [
-  { id: 1, name: "Max Events Pvt Ltd", logo: "/Organizers/maxx.png", description: "Leading event organizer" },
-  { id: 2, name: "Max Exhibitions", logo: "/Organizers/maxx.png", description: "Exhibition specialists" },
-  { id: 3, name: "Max Conferences", logo: "/Organizers/maxx.png", description: "Conference organizers" },
-  { id: 4, name: "Max Trade Shows", logo: "/Organizers/maxx.png", description: "Trade show experts" },
-  { id: 5, name: "Max Corporate Events", logo: "/Organizers/maxx.png", description: "Corporate event planners" },
-  { id: 6, name: "Max Entertainment", logo: "/Organizers/maxx.png", description: "Entertainment events" },
-  { id: 7, name: "Max Sports Events", logo: "/Organizers/maxx.png", description: "Sports event organizers" },
-  { id: 8, name: "Max Cultural Events", logo: "/Organizers/maxx.png", description: "Cultural event specialists" },
+  { id: 1, name: "Max Events Pvt Ltd", logo: "/Organizers/maxx.png", description: "Leading event organizer", events:"5" },
+  { id: 2, name: "Max Exhibitions", logo: "/Organizers/maxx.png", description: "Exhibition specialists", events:"5" },
+  { id: 3, name: "Max Conferences", logo: "/Organizers/maxx.png", description: "Conference organizers", events:"5" },
+  { id: 4, name: "Max Trade Shows", logo: "/Organizers/maxx.png", description: "Trade show experts", events:"5" },
+  { id: 5, name: "Max Corporate Events", logo: "/Organizers/maxx.png", description: "Corporate event planners", events:"5" },
+  { id: 6, name: "Max Entertainment", logo: "/Organizers/maxx.png", description: "Entertainment events", events:"5" },
+  { id: 7, name: "Max Sports Events", logo: "/Organizers/maxx.png", description: "Sports event organizers", events:"5" },
+  { id: 8, name: "Max Cultural Events", logo: "/Organizers/maxx.png", description: "Cultural event specialists", events:"5" },
 ]
 
 export default function FeaturedOrganizers() {
@@ -108,6 +108,7 @@ export default function FeaturedOrganizers() {
               <div className="text-center">
                 <h3 className="font-semibold text-gray-900 text-sm mb-1">{organizer.name}</h3>
                 <p className="text-xs text-gray-500">{organizer.description}</p>
+                <p className="text-xs text-gray-500">{organizer.events} events</p>
               </div>
             </div>
           ))}
