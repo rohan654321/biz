@@ -1,12 +1,11 @@
 "use client"
-
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Search, Share2, MapPin, Calendar, Heart, Bookmark, ChevronDown } from "lucide-react"
+import { Search, Share2, MapPin, Calendar, Heart, Bookmark, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from "next/image"
 import { getAllEvents, isEventPostponed, getOriginalEventDates } from "@/lib/data/events"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -36,6 +35,11 @@ export default function EventsPageContent() {
   const [categorySearch, setCategorySearch] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedRelatedTopics, setSelectedRelatedTopics] = useState<string[]>([])
+
+  // Auto-scroll state for featured events
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [isHovered, setIsHovered] = useState(false)
+  const [isTransitioning, setIsTransitioning] = useState(false)
 
   const router = useRouter()
 
@@ -251,6 +255,29 @@ export default function EventsPageContent() {
   // Featured events (events with featured flag)
   const featuredEvents = allEvents.filter((event) => event.featured)
 
+  // Auto-scroll effect for featured events
+  useEffect(() => {
+    if (featuredEvents.length === 0 || isHovered || isTransitioning) return
+
+    const totalSlides = Math.ceil(featuredEvents.length / 3)
+    const interval = setInterval(() => {
+      setIsTransitioning(true)
+      setCurrentSlide((prev) => (prev + 1) % totalSlides)
+    }, 3000) // Change slide every 3 seconds
+
+    return () => clearInterval(interval)
+  }, [featuredEvents.length, isHovered, isTransitioning])
+
+  // Handle transition end
+  useEffect(() => {
+    if (isTransitioning) {
+      const timer = setTimeout(() => {
+        setIsTransitioning(false)
+      }, 500) // Match the CSS transition duration
+      return () => clearTimeout(timer)
+    }
+  }, [isTransitioning])
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       weekday: "short",
@@ -288,6 +315,27 @@ export default function EventsPageContent() {
     setSelectedDateRange("")
     setActiveTab("All Events")
     setCurrentPage(1)
+  }
+
+  // Navigation functions for featured events
+  const goToPrevSlide = () => {
+    if (isTransitioning) return
+    setIsTransitioning(true)
+    const totalSlides = Math.ceil(featuredEvents.length / 3)
+    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides)
+  }
+
+  const goToNextSlide = () => {
+    if (isTransitioning) return
+    setIsTransitioning(true)
+    const totalSlides = Math.ceil(featuredEvents.length / 3)
+    setCurrentSlide((prev) => (prev + 1) % totalSlides)
+  }
+
+  const goToSlide = (index: number) => {
+    if (isTransitioning || index === currentSlide) return
+    setIsTransitioning(true)
+    setCurrentSlide(index)
   }
 
   // Reset page when filters change
@@ -350,104 +398,104 @@ export default function EventsPageContent() {
           priceRange ||
           rating ||
           searchQuery) && (
-          <div className="mb-4 flex items-center space-x-2 flex-wrap">
-            <span className="text-sm text-gray-500">Active filters:</span>
-            <div className="flex items-center space-x-2 flex-wrap">
-              {categoryFromUrl && (
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  Category: {categoryFromUrl}
-                </Badge>
-              )}
-              {selectedCategories.map((cat) => (
-                <Badge key={cat} variant="secondary" className="bg-green-100 text-green-800">
-                  {cat}
-                  <button
-                    onClick={() => handleCategoryToggle(cat)}
-                    className="ml-1 text-green-600 hover:text-green-800"
-                  >
-                    ×
-                  </button>
-                </Badge>
-              ))}
-              {selectedRelatedTopics.map((topic) => (
-                <Badge key={topic} variant="secondary" className="bg-purple-100 text-purple-800">
-                  {topic.replace(" Related", "")}
-                  <button
-                    onClick={() => handleRelatedTopicToggle(topic)}
-                    className="ml-1 text-purple-600 hover:text-purple-800"
-                  >
-                    ×
-                  </button>
-                </Badge>
-              ))}
-              {selectedLocation && (
-                <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-                  Location: {selectedLocation}
-                  <button
-                    onClick={() => setSelectedLocation("")}
-                    className="ml-1 text-orange-600 hover:text-orange-800"
-                  >
-                    ×
-                  </button>
-                </Badge>
-              )}
-              {selectedFormat !== "All Formats" && (
-                <Badge variant="secondary" className="bg-pink-100 text-pink-800">
-                  Format: {selectedFormat}
-                  <button
-                    onClick={() => setSelectedFormat("All Formats")}
-                    className="ml-1 text-pink-600 hover:text-pink-800"
-                  >
-                    ×
-                  </button>
-                </Badge>
-              )}
-              {selectedDateRange && (
-                <Badge variant="secondary" className="bg-indigo-100 text-indigo-800">
-                  Date: {selectedDateRange}
-                  <button
-                    onClick={() => setSelectedDateRange("")}
-                    className="ml-1 text-indigo-600 hover:text-indigo-800"
-                  >
-                    ×
-                  </button>
-                </Badge>
-              )}
-              {priceRange && (
-                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                  Price: {priceRange}
-                  <button onClick={() => setPriceRange("")} className="ml-1 text-yellow-600 hover:text-yellow-800">
-                    ×
-                  </button>
-                </Badge>
-              )}
-              {rating && (
-                <Badge variant="secondary" className="bg-red-100 text-red-800">
-                  Rating: {rating}+
-                  <button onClick={() => setRating("")} className="ml-1 text-red-600 hover:text-red-800">
-                    ×
-                  </button>
-                </Badge>
-              )}
-              {searchQuery && (
-                <Badge variant="secondary" className="bg-gray-100 text-gray-800">
-                  Search: "{searchQuery}"
-                  <button onClick={() => setSearchQuery("")} className="ml-1 text-gray-600 hover:text-gray-800">
-                    ×
-                  </button>
-                </Badge>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAllFilters}
-                className="text-xs text-gray-500 hover:text-gray-700"
-              >
-                Clear all filters
-              </Button>
+            <div className="mb-4 flex items-center space-x-2 flex-wrap">
+              <span className="text-sm text-gray-500">Active filters:</span>
+              <div className="flex items-center space-x-2 flex-wrap">
+                {categoryFromUrl && (
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                    Category: {categoryFromUrl}
+                  </Badge>
+                )}
+                {selectedCategories.map((cat) => (
+                  <Badge key={cat} variant="secondary" className="bg-green-100 text-green-800">
+                    {cat}
+                    <button
+                      onClick={() => handleCategoryToggle(cat)}
+                      className="ml-1 text-green-600 hover:text-green-800"
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                ))}
+                {selectedRelatedTopics.map((topic) => (
+                  <Badge key={topic} variant="secondary" className="bg-purple-100 text-purple-800">
+                    {topic.replace(" Related", "")}
+                    <button
+                      onClick={() => handleRelatedTopicToggle(topic)}
+                      className="ml-1 text-purple-600 hover:text-purple-800"
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                ))}
+                {selectedLocation && (
+                  <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                    Location: {selectedLocation}
+                    <button
+                      onClick={() => setSelectedLocation("")}
+                      className="ml-1 text-orange-600 hover:text-orange-800"
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                )}
+                {selectedFormat !== "All Formats" && (
+                  <Badge variant="secondary" className="bg-pink-100 text-pink-800">
+                    Format: {selectedFormat}
+                    <button
+                      onClick={() => setSelectedFormat("All Formats")}
+                      className="ml-1 text-pink-600 hover:text-pink-800"
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                )}
+                {selectedDateRange && (
+                  <Badge variant="secondary" className="bg-indigo-100 text-indigo-800">
+                    Date: {selectedDateRange}
+                    <button
+                      onClick={() => setSelectedDateRange("")}
+                      className="ml-1 text-indigo-600 hover:text-indigo-800"
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                )}
+                {priceRange && (
+                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                    Price: {priceRange}
+                    <button onClick={() => setPriceRange("")} className="ml-1 text-yellow-600 hover:text-yellow-800">
+                      ×
+                    </button>
+                  </Badge>
+                )}
+                {rating && (
+                  <Badge variant="secondary" className="bg-red-100 text-red-800">
+                    Rating: {rating}+
+                    <button onClick={() => setRating("")} className="ml-1 text-red-600 hover:text-red-800">
+                      ×
+                    </button>
+                  </Badge>
+                )}
+                {searchQuery && (
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+                    Search: "{searchQuery}"
+                    <button onClick={() => setSearchQuery("")} className="ml-1 text-gray-600 hover:text-gray-800">
+                      ×
+                    </button>
+                  </Badge>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="text-xs text-gray-500 hover:text-gray-700"
+                >
+                  Clear all filters
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Filter Tabs */}
         <div className="flex space-x-1 mb-6 border-b border-gray-200">
@@ -455,11 +503,10 @@ export default function EventsPageContent() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab
                   ? "border-blue-600 text-blue-600"
                   : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
+                }`}
             >
               {tab}
             </button>
@@ -468,7 +515,7 @@ export default function EventsPageContent() {
 
         <div className="flex gap-6">
           {/* Left Sidebar - Enhanced Design */}
-          <div className="w-80">
+          <div className="w-80 sticky top-6 self-start">
             <Card className="border border-gray-200">
               <CardContent className="p-0">
                 {/* Calendar Section */}
@@ -695,28 +742,24 @@ export default function EventsPageContent() {
                     <p className="text-sm text-gray-500">Discover and track top events</p>
                   </div>
                 </Link>
-
                 <Link href="/event?filter=social" className="block border-b border-gray-200 hover:bg-gray-50">
                   <div className="p-4">
                     <h3 className="text-red-500 font-medium mb-1">Social Events</h3>
                     <p className="text-sm text-gray-500">Discover and track top events</p>
                   </div>
                 </Link>
-
                 <Link href="/event?filter=company" className="block border-b border-gray-200 hover:bg-gray-50">
                   <div className="p-4">
                     <h3 className="text-red-500 font-medium mb-1">Search by Company</h3>
                     <p className="text-sm text-gray-500">Discover and track top events</p>
                   </div>
                 </Link>
-
                 <Link href="/speakers" className="block border-b border-gray-200 hover:bg-gray-50">
                   <div className="p-4">
                     <h3 className="text-red-500 font-medium mb-1">Explore Speaker</h3>
                     <p className="text-sm text-gray-500">Discover and track top events</p>
                   </div>
                 </Link>
-
                 <button
                   onClick={clearAllFilters}
                   className="w-full text-left border-b border-gray-200 hover:bg-gray-50"
@@ -726,7 +769,6 @@ export default function EventsPageContent() {
                     <p className="text-sm text-gray-500">Discover and track top events</p>
                   </div>
                 </button>
-
                 <Link href="/events" className="block hover:bg-gray-50">
                   <div className="p-4">
                     <h3 className="text-blue-600 font-medium">All Events</h3>
@@ -747,17 +789,15 @@ export default function EventsPageContent() {
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => setViewMode("Trending")}
-                    className={`px-3 py-1 text-sm rounded ${
-                      viewMode === "Trending" ? "bg-orange-100 text-orange-600" : "text-gray-600 hover:text-gray-800"
-                    }`}
+                    className={`px-3 py-1 text-sm rounded ${viewMode === "Trending" ? "bg-orange-100 text-orange-600" : "text-gray-600 hover:text-gray-800"
+                      }`}
                   >
                     Trending 🔥
                   </button>
                   <button
                     onClick={() => setViewMode("Date")}
-                    className={`px-3 py-1 text-sm rounded ${
-                      viewMode === "Date" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:text-gray-800"
-                    }`}
+                    className={`px-3 py-1 text-sm rounded ${viewMode === "Date" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:text-gray-800"
+                      }`}
                   >
                     Date
                   </button>
@@ -779,9 +819,8 @@ export default function EventsPageContent() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`w-8 h-8 rounded text-sm ${
-                        currentPage === page ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100"
-                      }`}
+                      className={`w-8 h-8 rounded text-sm ${currentPage === page ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100"
+                        }`}
                     >
                       {page}
                     </button>
@@ -855,25 +894,25 @@ export default function EventsPageContent() {
                                   </Button>
                                 </div>
                               </div>
-                              <p className="text-sm text-gray-600 mb-3 line-clamp-2">{event.description}</p>
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
-                                  {event.categories.slice(0, 2).map((category, idx) => (
-                                    <Badge key={idx} variant="secondary">
-                                      {category}
-                                    </Badge>
-                                  ))}
-                                  <div className="flex items-center text-sm text-gray-600"></div>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <div className="flex items-center">
-                                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                                      {event.rating.average}
-                                    </span>
-                                  </div>
-                                  <span className="text-sm font-medium text-blue-600"></span>
-                                </div>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-3 line-clamp-2 mt-5">{event.description}</p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              {event.categories.slice(0, 2).map((category, idx) => (
+                                <Badge key={idx} variant="secondary">
+                                  {category}
+                                </Badge>
+                              ))}
+                              <div className="flex items-center text-sm text-gray-600"></div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <div className="flex items-center">
+                                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                                  {event.rating.average}
+                                </span>
                               </div>
+                              <span className="text-sm font-medium text-blue-600"></span>
                             </div>
                           </div>
                         </CardContent>
@@ -884,44 +923,149 @@ export default function EventsPageContent() {
               )}
             </div>
 
-            {/* Featured Events */}
+            {/* Auto-Scrolling Featured Events */}
             {featuredEvents.length > 0 && (
-              <section className="py-8">
-                <h2 className="text-xl font-semibold text-black underline mb-6">Featured Events</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                  {featuredEvents.map((event) => {
-                    const isPostponed = isEventPostponed(event.id)
-                    const originalDates = getOriginalEventDates(event.id)
-                    return (
-                      <Link href={`/event/${event.id}`} key={event.id} className="block">
-                        <div key={event.id} className="relative bg-white rounded-xl shadow-md overflow-hidden">
-                          <div className="relative h-32 w-full">
-                            <Image
-                              src={event.images[0]?.url || "/placeholder.svg?height=128&width=320"}
-                              alt={event.title}
-                              fill
-                              className="object-cover"
-                            />
-                            <div className="absolute top-2 right-2 bg-white rounded-full p-1 shadow">
-                              <Heart className="w-4 h-4 text-gray-600" />
-                            </div>
-                          </div>
-                          <div className="pt-6 pb-4 px-4 text-center">
-                            <h3 className="font-semibold text-base text-gray-800">{event.title}</h3>
-                            <p className="text-sm text-gray-500">{event.location.city}</p>
-                            <p
-                              className={`text-sm font-medium mt-2 ${isPostponed ? "text-gray-400 line-through" : "text-blue-600"}`}
+              <section className="w-auto max-w-xl py-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-black underline">Featured Events</h2>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToPrevSlide}
+                      className="p-2"
+                      disabled={isTransitioning}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToNextSlide}
+                      className="p-2"
+                      disabled={isTransitioning}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div
+                  className="relative overflow-hidden"
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
+                >
+                  {/* Carousel Container */}
+                  <div
+                    className="flex transition-transform duration-500 ease-in-out"
+                    style={{
+                      transform: `translateX(-${currentSlide * 100}%)`,
+                    }}
+                  >
+                    {/* Group events into sets of 3 */}
+                    {Array.from({ length: Math.ceil(featuredEvents.length / 3) }, (_, slideIndex) => (
+                      <div key={slideIndex} className="w-full flex-shrink-0 flex gap-6">
+                        {featuredEvents.slice(slideIndex * 3, (slideIndex + 1) * 3).map((event, index) => {
+                          const isPostponed = isEventPostponed(event.id)
+                          const originalDates = getOriginalEventDates(event.id)
+                          return (
+                            <div
+                              key={event.id}
+                              className="flex-1 min-w-0"
                             >
-                              {isPostponed && originalDates.startDate
-                                ? formatDate(originalDates.startDate)
-                                : formatDate(event.timings.startDate)}
-                            </p>
-                            {isPostponed && <p className="text-xs text-orange-600 mt-1">Postponed</p>}
-                          </div>
-                        </div>
-                      </Link>
-                    )
-                  })}
+                              <Link href={`/event/${event.id}`} className="block h-full">
+                                <div className="relative bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow h-full">
+                                  <div className="relative h-30 w-full">
+                                    <Image
+                                      src={event.images[0]?.url || "/placeholder.svg?height=192&width=320"}
+                                      alt={event.title}
+                                      fill
+                                      className="object-cover"
+                                    />
+                                    <div className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md">
+                                      <Heart className="w-4 h-4 text-gray-600 hover:text-red-500 transition-colors" />
+                                    </div>
+                                    <div className="absolute bottom-2 left-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                      Featured ✨
+                                    </div>
+                                  </div>
+                                  <div className="p-4">
+                                    <h3 className="text-sm text-gray-800 mb-2 line-clamp-1 leading-tight">
+                                      {event.title}
+                                    </h3>
+                                    {/* <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+                                      {event.description}
+                                    </p> */}
+                                    <div className="space-y-2 mb-3">
+                                      <div className="flex items-center text-xs text-gray-600">
+                                        <MapPin className="w-3 h-3 mr-1 text-blue-500" />
+                                        <span className="font-medium truncate">{event.location.city}</span>
+                                      </div>
+                                      <div className="flex items-center text-xs">
+                                        <Calendar className="w-3 h-3 mr-1 text-green-500" />
+                                        <span className={`font-medium ${isPostponed ? "text-gray-400 line-through" : "text-blue-600"}`}>
+                                          {isPostponed && originalDates.startDate
+                                            ? formatDate(originalDates.startDate)
+                                            : formatDate(event.timings.startDate)}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex flex-wrap gap-1">
+                                        {event.categories.slice(0, 1).map((category, idx) => (
+                                          <Badge
+                                            key={idx}
+                                            variant="secondary"
+                                            className="text-xs bg-gray-100 text-gray-700"
+                                          >
+                                            {category}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-medium">
+                                          {event.rating.average}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </Link>
+                            </div>
+                          )
+                        })}
+                        {/* Fill empty slots if less than 3 cards in the last group */}
+                        {featuredEvents.slice(slideIndex * 3, (slideIndex + 1) * 3).length < 3 &&
+                          Array.from({ length: 3 - featuredEvents.slice(slideIndex * 3, (slideIndex + 1) * 3).length }, (_, emptyIndex) => (
+                            <div key={`empty-${emptyIndex}`} className="flex-1 min-w-0" />
+                          ))
+                        }
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Navigation Dots */}
+                  <div className="flex justify-center mt-4 space-x-2">
+                    {Array.from({ length: Math.ceil(featuredEvents.length / 3) }, (_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => goToSlide(index)}
+                        disabled={isTransitioning}
+                        className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentSlide
+                            ? 'bg-blue-600 scale-110'
+                            : 'bg-gray-300 hover:bg-gray-400'
+                          }`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Slide Counter */}
+                  <div className="text-center mt-2">
+                    <span className="text-xs text-gray-500">
+                      {currentSlide + 1} of {Math.ceil(featuredEvents.length / 3)}
+                    </span>
+                  </div>
                 </div>
               </section>
             )}
@@ -938,7 +1082,7 @@ export default function EventsPageContent() {
                     alt={featuredEvents[0].title}
                     width={320}
                     height={240}
-                    className="w-full h-85 object-cover"
+                    className="w-full h-85 object-cover rounded-md"
                   />
                 </div>
               </div>
@@ -955,7 +1099,7 @@ export default function EventsPageContent() {
                         alt={event.title}
                         width={48}
                         height={48}
-                        className="w-20 h-20 rounded-4xl"
+                        className="w-15 h-15 rounded-4xl"
                       />
                       <div className="flex-1">
                         <h4 className="font-medium text-sm text-gray-900 mb-1">{event.title}</h4>
