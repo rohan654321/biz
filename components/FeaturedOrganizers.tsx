@@ -96,7 +96,7 @@ export default function FeaturedOrganizers() {
           {organizers.map((organizer) => (
             <div
               key={organizer.id}
-              className="min-w-[250px] bg-white border border-gray-200 rounded-lg p-5 flex-shrink-0 hover:shadow-md hover:border-gray-300 transition duration-200"
+              className="min-w-[250px] bg-white border border-gray-200 rounded-sm p-5 flex-shrink-0 hover:shadow-md hover:border-gray-300 transition duration-200"
             >
               <div className="flex items-center justify-center h-10 mb-4">
                 <img

@@ -118,7 +118,7 @@ export default function BrowseByCountry() {
               <button
                 key={country.id}
                 onClick={() => handleCountryClick(country)}
-                className="group bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-blue-300 transition-all duration-200 hover:scale-105"
+                className="group bg-white border border-gray-200 rounded-sm p-4 hover:shadow-md hover:border-blue-300 transition-all duration-200 hover:scale-105"
               >
                 <div className="aspect-[5/2] flex items-center justify-center">
                   <img

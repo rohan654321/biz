@@ -101,7 +101,7 @@ export default function FeaturedEvents() {
                     {slideEvents.map((event, eventIndex) => (
                       <div
                         key={event.id}
-                        className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-blue-300 group"
+                        className="bg-white border border-gray-200 rounded-sm p-4 hover:shadow-md transition-all duration-200 hover:border-blue-300 group"
                       >
                         <div className="grid grid-cols-2">
                         {/* Event Logo */}

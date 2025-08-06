@@ -48,7 +48,7 @@ export default async function EventPage({ params }: EventPageProps) {
        
        {/* Event Details Section */}
       <div className=" max-w-7xl mx-auto py-4">
-        <div className="bg-white rounded-lg  p-6 mb-8">
+        <div className="bg-white rounded-sm  p-6 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             {/* Event Title and Info */}
             <div className="flex-1">

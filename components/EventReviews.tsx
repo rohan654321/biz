@@ -60,7 +60,7 @@ export default function EventReviews() {
         {reviews.map((review, index) => (
           <div
             key={index}
-            className="bg-white shadow-md rounded-lg overflow-hidden"
+            className="bg-white shadow-md rounded-sm overflow-hidden"
           >
             {/* Top gray section */}
             <div className="bg-gray-300 h-28"></div>

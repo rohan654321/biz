@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+// import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Search, ChevronDown, Heart, User, Star, MapPin, Calendar, CheckCircle } from "lucide-react"
@@ -124,28 +124,28 @@ export default function SpeakersPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold mb-4">Top Speakers</h1>
-            <p className="text-xl text-blue-100 mb-8">
-              Discover industry experts and thought leaders from around the world
-            </p>
+        {/* <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white">
+          <div className="max-w-7xl mx-auto px-4 py-12">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold mb-4">Top Speakers</h1>
+              <p className="text-xl text-blue-100 mb-8">
+                Discover industry experts and thought leaders from around the world
+              </p>
 
-            {/* Search Bar */}
-            <div className="max-w-2xl mx-auto relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                type="text"
-                placeholder="Search speakers by name, expertise, or company..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 py-3 text-lg bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder-white/70"
-              />
+              Search Bar
+              <div className="max-w-2xl mx-auto relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Input
+                  type="text"
+                  placeholder="Search speakers by name, expertise, or company..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-12 py-3 text-lg bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder-white/70"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </div> */}
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">

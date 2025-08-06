@@ -84,7 +84,7 @@ export default function CategoryBrowser() {
                 <button
                   key={category.id}
                   onClick={() => handleCategoryClick(category)}
-                  className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 hover:scale-105 group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  className="bg-white rounded-sm p-4 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 hover:scale-105 group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   aria-label={`Browse ${category.title} events`}
                 >
                   <div className="flex flex-col items-center space-y-2">

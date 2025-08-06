@@ -105,7 +105,7 @@ export default function BrowseByCity() {
               <button
                 key={city.id}
                 onClick={() => handleCityClick(city)}
-                className="group relative overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                className="group relative overflow-hidden rounded-sm shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
               >
                 <div className="aspect-[4/3] relative">
                   <img

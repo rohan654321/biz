@@ -34,7 +34,7 @@ const EventCard: React.FC<EventCardProps> = ({
       <div className="absolute inset-0 bg-gradient-to-t from-blue-950 via-blue-20/5 to-transparent"></div>
 
       <div className="absolute bottom-0 left-0 right-0 p-6">
-        <div className="max-w-20 bg-white/95 backdrop-blur-sm rounded-xl py-3 shadow-lg mb-4">
+        <div className="max-w-20 bg-white/95 backdrop-blur-sm rounded-sm py-3 shadow-lg mb-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-900">{date}</div>
             <div className="text-sm font-medium text-gray-600 uppercase tracking-wide">{month}</div>

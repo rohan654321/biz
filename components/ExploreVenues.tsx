@@ -82,11 +82,11 @@ export default function ExploreVenues() {
               <button
                 key={venue.id}
                 onClick={() => { handleVenueClick(venue) }}
-                className="group rounded-md p-3 text-white hover:from-blue-700 hover:to-blue-800 transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg"
+                className="group rounded-sm p-3 text-white hover:from-blue-700 hover:to-blue-800 transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg"
               >
                 <div className="space-y-1">
                   {/* Venue Image - fixed height */}
-                  <div className="h-[200px] rounded-md overflow-hidden">
+                  <div className="h-[200px] rounded-sm overflow-hidden">
                     <img
                       src={venue.image || "/placeholder.svg"}
                       alt={venue.name}
