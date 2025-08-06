@@ -13,7 +13,7 @@ export default function FeaturedEvents() {
   const [isHovering, setIsHovering] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const eventsPerSlide = 9
+  const eventsPerSlide = 6
   const totalSlides = Math.ceil(featuredEvents.length / eventsPerSlide)
 
   useEffect(() => {
