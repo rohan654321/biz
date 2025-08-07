@@ -92,10 +92,56 @@ export default function EventsPageContent() {
     return categories.filter((category) => category.name.toLowerCase().includes(categorySearch.toLowerCase()))
   }, [categories, categorySearch])
 
-  // Related topics (using same data as categories for demo)
+  // Create a mapping of categories to their related topics
+  const categoryRelatedTopics = useMemo(() => {
+    const mapping: Record<string, string[]> = {
+      'Technology': ['AI & Machine Learning', 'Blockchain', 'Cloud Computing', 'Cybersecurity', 'IoT', 'Data Science'],
+      'Healthcare': ['Medical Devices', 'Telemedicine', 'Pharmaceuticals', 'Digital Health', 'Biotechnology', 'Mental Health'],
+      'Marketing': ['Content Marketing', 'Social Media', 'Email Marketing', 'Influencer Marketing', 'Brand Strategy', 'Analytics'],
+      'Business Event': ['Entrepreneurship', 'Leadership', 'Finance', 'Strategy', 'Operations', 'HR Management'],
+      'Conference': ['Networking', 'Keynote Speakers', 'Panel Discussions', 'Workshops', 'Industry Insights', 'Professional Development'],
+      'Expo': ['Product Launches', 'Trade Shows', 'B2B Networking', 'Industry Trends', 'Innovation Showcase', 'Market Research'],
+      'Workshop': ['Hands-on Training', 'Skill Development', 'Certification', 'Interactive Learning', 'Best Practices', 'Tools & Techniques'],
+      'Startup': ['Funding', 'Pitch Competitions', 'Accelerators', 'Venture Capital', 'Product Development', 'Market Validation'],
+      'Environment': ['Climate Change', 'Renewable Energy', 'Sustainability', 'Green Technology', 'Conservation', 'Environmental Policy'],
+      'Education': ['E-learning', 'EdTech', 'Curriculum Development', 'Student Engagement', 'Online Education', 'Educational Research']
+    }
+    return mapping
+  }, [])
+
+  // Get related topics based on selected categories
   const relatedTopics = useMemo(() => {
-    return categories.map((cat) => ({ ...cat, name: `${cat.name} Related` }))
-  }, [categories])
+    const activeCategories = selectedCategories.length > 0 
+      ? selectedCategories 
+      : categoryFromUrl 
+        ? [categoryFromUrl]
+        : []
+    
+    if (activeCategories.length === 0) {
+      // If no categories selected, show general related topics
+      return [
+        { name: 'Networking', count: 150 },
+        { name: 'Professional Development', count: 120 },
+        { name: 'Industry Insights', count: 100 },
+        { name: 'Innovation', count: 90 },
+        { name: 'Best Practices', count: 80 },
+        { name: 'Market Trends', count: 75 }
+      ]
+    }
+    
+    // Get related topics for selected categories
+    const relatedSet = new Set<string>()
+    activeCategories.forEach(category => {
+      const related = categoryRelatedTopics[category] || []
+      related.forEach(topic => relatedSet.add(topic))
+    })
+    
+    // Convert to array with mock counts
+    return Array.from(relatedSet).map(topic => ({
+      name: topic,
+      count: Math.floor(Math.random() * 100) + 50 // Mock count between 50-150
+    })).sort((a, b) => b.count - a.count) // Sort by count descending
+  }, [selectedCategories, categoryFromUrl, categoryRelatedTopics])
 
   // Helper function to check if event is in date range
   const isEventInDateRange = (event: any, dateRange: string) => {
@@ -153,13 +199,18 @@ export default function EventsPageContent() {
     // Tab filter
     filtered = filtered.filter((event) => isEventInTab(event, activeTab))
 
-    // Search filter
+    // Search filter - enhanced
     if (searchQuery) {
+      const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
         (event) =>
-          event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          event.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase())),
+          event.title.toLowerCase().includes(query) ||
+          event.description.toLowerCase().includes(query) ||
+          event.tags.some((tag) => tag.toLowerCase().includes(query)) ||
+          event.categories.some((cat) => cat.toLowerCase().includes(query)) ||
+          event.location.city.toLowerCase().includes(query) ||
+          event.location.venue.toLowerCase().includes(query) ||
+          event.location.country?.toLowerCase().includes(query)
       )
     }
 
@@ -172,10 +223,20 @@ export default function EventsPageContent() {
       )
     }
 
-    // Related topics filter
+    // Related topics filter - updated logic
     if (selectedRelatedTopics.length > 0) {
-      const relatedCats = selectedRelatedTopics.map((topic) => topic.replace(" Related", ""))
-      filtered = filtered.filter((event) => event.categories.some((cat) => relatedCats.includes(cat)))
+      // Filter events that have tags or categories matching the selected related topics
+      filtered = filtered.filter((event) => 
+        selectedRelatedTopics.some(topic => 
+          event.tags.some(tag => tag.toLowerCase().includes(topic.toLowerCase())) ||
+          event.categories.some(cat => {
+            const relatedForCat = categoryRelatedTopics[cat] || []
+            return relatedForCat.some(related => related.toLowerCase().includes(topic.toLowerCase()))
+          }) ||
+          event.description.toLowerCase().includes(topic.toLowerCase()) ||
+          event.title.toLowerCase().includes(topic.toLowerCase())
+        )
+      )
     }
 
     // Location filter (works for cities, countries, and venues)
@@ -188,11 +249,18 @@ export default function EventsPageContent() {
       )
     }
 
-    // Format filter
+    // Format filter - improved logic
     if (selectedFormat && selectedFormat !== "All Formats") {
-      filtered = filtered.filter((event) =>
-        event.categories.some((cat) => cat.toLowerCase().includes(selectedFormat.toLowerCase())),
-      )
+      filtered = filtered.filter((event) => {
+        // Direct category match
+        if (event.categories.some((cat) => cat.toLowerCase() === selectedFormat.toLowerCase())) {
+          return true
+        }
+        // Partial match for compound formats
+        return event.categories.some((cat) => 
+          cat.toLowerCase().includes(selectedFormat.toLowerCase().replace(' ', '').toLowerCase())
+        )
+      })
     }
 
     // Date range filter
@@ -246,6 +314,7 @@ export default function EventsPageContent() {
     priceRange,
     rating,
     viewMode,
+    categoryRelatedTopics,
   ])
 
   // Pagination
@@ -442,7 +511,7 @@ export default function EventsPageContent() {
               ))}
               {selectedRelatedTopics.map((topic) => (
                 <Badge key={topic} variant="secondary" className="bg-purple-100 text-purple-800">
-                  {topic.replace(" Related", "")}
+                  Related: {topic}
                   <button
                     onClick={() => handleRelatedTopicToggle(topic)}
                     className="ml-1 text-purple-600 hover:text-purple-800"
@@ -706,7 +775,7 @@ export default function EventsPageContent() {
                                 onChange={() => handleRelatedTopicToggle(topic.name)}
                                 className="w-4 h-4 text-blue-600 border-gray-300 rounded"
                               />
-                              <span className="text-sm text-gray-700">{topic.name.replace(" Related", "")}</span>
+                              <span className="text-sm text-gray-700">{topic.name}</span>
                             </div>
                             <span className="text-xs text-gray-500">{(topic.count / 1000).toFixed(1)}k</span>
                           </div>
@@ -952,7 +1021,7 @@ export default function EventsPageContent() {
 
             {/* Auto-Scrolling Featured Events */}
             {featuredEvents.length > 0 && (
-              <section className="w-aut max-w-xl py-8">
+              <section className="w-auto max-w-xl py-8">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-semibold text-black underline">Featured Events</h2>
                   <div className="flex items-center space-x-2">
@@ -1037,13 +1106,13 @@ export default function EventsPageContent() {
                                         </span>
                                       </div>
                                     </div>
-                                    {isPostponed && (
+                                    {/* {isPostponed && (
                                       <div className="mb-3">
                                         <span className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full font-medium">
                                           Postponed
                                         </span>
                                       </div>
-                                    )}
+                                    )} */}
                                     <div className="flex items-center justify-between">
                                       <div className="flex flex-wrap gap-1">
                                         {event.categories.slice(0, 1).map((category, idx) => (
@@ -1154,7 +1223,7 @@ export default function EventsPageContent() {
                       </Button>
                     </div>
                   </CardContent>
-                </Card>
+                </Card> 
               ))}
             </div>
           </div>
