@@ -124,7 +124,7 @@ export default function SpeakersPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-        {/* <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white">
+      {/* <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white">
           <div className="max-w-7xl mx-auto px-4 py-12">
             <div className="text-center">
               <h1 className="text-4xl font-bold mb-4">Top Speakers</h1>
@@ -271,8 +271,8 @@ export default function SpeakersPage() {
             {filteredSpeakers.map((speaker) => (
               <div
                 key={speaker.id}
-                className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-all duration-200 relative cursor-pointer group"
-                // onClick={() => handleSpeakerClick(speaker.id)}
+                className="bg-white rounded-lg border border-gray-200 p-4 flex hover:shadow-md transition-all duration-200 relative cursor-pointer group"
+                onClick={() => handleSpeakerClick(speaker.id)}
               >
                 {/* Favorite Button */}
                 <button
@@ -280,101 +280,77 @@ export default function SpeakersPage() {
                     e.stopPropagation()
                     toggleFavorite(speaker.id)
                   }}
-                  className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 z-10"
+                  className="absolute top-2 right-2 p-1 hover:bg-gray-100 rounded-full z-10"
                 >
                   <Heart
-                    className={`w-5 h-5 ${
-                      favorites.has(speaker.id) ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-500"
-                    }`}
+                    className={`w-4 h-4 ${favorites.has(speaker.id)
+                      ? "fill-red-500 text-red-500"
+                      : "text-gray-400 hover:text-red-500"
+                      }`}
                   />
                 </button>
 
-                {/* Speaker Content */}
-                <div className="text-center">
-                  {/* Speaker Image */}
-                  <div className="relative mb-4">
-                    <Avatar className="w-24 h-24 mx-auto border-4 border-blue-100 group-hover:border-blue-200 transition-colors">
-                      <AvatarImage src={speaker.image || "/placeholder.svg"} alt={speaker.name} />
-                      <AvatarFallback className="text-xl font-bold bg-blue-100 text-blue-600">
-                        {speaker.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    {speaker.isVerified && (
-                      <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1">
-                        <CheckCircle className="w-4 h-4 text-white" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Speaker Info */}
-                  <h3 className="text-lg font-semibold text-blue-600 mb-1 group-hover:text-blue-700 transition-colors">
-                    {speaker.name}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-1">{speaker.title}</p>
-                  {speaker.company && <p className="text-sm text-blue-500 font-medium mb-3">{speaker.company}</p>}
-
-                  {/* Stats */}
-                  <div className="flex justify-center items-center space-x-4 mb-4">
-                    <div className="text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm font-medium">{speaker.rating.average}</span>
-                      </div>
-                      <span className="text-xs text-gray-500">Rating</span>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-sm font-medium">{speaker.totalEvents}</div>
-                      <span className="text-xs text-gray-500">Events</span>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-sm font-medium">{speaker.followers}</div>
-                      <span className="text-xs text-gray-500">Followers</span>
-                    </div>
-                  </div>
-
-                  {/* Expertise Tags */}
-                  <div className="flex flex-wrap justify-center gap-1 mb-4">
-                    {speaker.expertise.slice(0, 3).map((skill, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs bg-gray-100 text-gray-700">
-                        {skill}
-                      </Badge>
-                    ))}
-                    {speaker.expertise.length > 3 && (
-                      <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-700">
-                        +{speaker.expertise.length - 3}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Next Event */}
-                  {speaker.nextEvent && (
-                    <div className="bg-blue-50 rounded-lg p-3 text-left">
-                      <div className="text-xs text-blue-600 font-medium mb-1">Next Event</div>
-                      <div className="text-sm font-medium text-gray-900 mb-1">{speaker.nextEvent.title}</div>
-                      <div className="flex items-center text-xs text-gray-600">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        {formatDate(speaker.nextEvent.timings.startDate)}
-                        <MapPin className="w-3 h-3 ml-2 mr-1" />
-                        {speaker.nextEvent.location.city}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Upcoming Events Count */}
-                  {speaker.upcomingEvents > 0 && (
-                    <div className="mt-3">
-                      <Badge className="bg-green-100 text-green-800">
-                        {speaker.upcomingEvents} upcoming event{speaker.upcomingEvents > 1 ? "s" : ""}
-                      </Badge>
+                {/* Left: Image */}
+                <div className="relative w-20 h-20 shrink-0">
+                  <Avatar className="w-20 h-20 border-2 border-blue-100">
+                    <AvatarImage src={speaker.image || "/placeholder.svg"} alt={speaker.name} />
+                    <AvatarFallback className="text-sm font-semibold bg-blue-100 text-blue-600">
+                      {speaker.name.split(" ").map((n) => n[0]).join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                  {speaker.isVerified && (
+                    <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5 shadow">
+                      <CheckCircle className="w-3 h-3 text-white" />
                     </div>
                   )}
                 </div>
+
+                {/* Right: Content */}
+                <div className="ml-4 flex flex-col justify-between flex-1">
+                  {/* Top Info */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-blue-600">{speaker.name}</h3>
+                    <p className="text-xs text-gray-500">{speaker.title}</p>
+                    {speaker.company && (
+                      <p className="text-xs text-blue-500">{speaker.company}</p>
+                    )}
+                  </div>
+
+                  {/* Stats */}
+                  <div className="flex gap-4 text-xs text-gray-600 mt-2">
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3 h-3 text-yellow-400" />
+                      <span>{speaker.rating.average}</span>
+                    </div>
+                    <div>{speaker.totalEvents} Events</div>
+                    <div>{speaker.followers} Follows</div>
+                  </div>
+
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {speaker.expertise.slice(0, 2).map((skill, index) => (
+                      <Badge
+                        key={index}
+                        className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700"
+                      >
+                        {skill}
+                      </Badge>
+                    ))}
+                    {speaker.expertise.length > 2 && (
+                      <Badge className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700">
+                        +{speaker.expertise.length - 2}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                <div>
+                 
               </div>
+            </div>
             ))}
+           
           </div>
+          
         )}
 
         {/* Load More Button - Future Enhancement */}

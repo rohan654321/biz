@@ -609,7 +609,7 @@ export default function EventsPageContent() {
         <div className="flex gap-6">
           {/* Left Sidebar - Enhanced Design */}
           <div className="w-80 sticky top-6 self-start">
-            <Card className="border border-gray-200">
+            <Card className="border border-gray-200 rounded-sm">
               <CardContent className="p-0">
                 {/* Calendar Section */}
                 <div className="border-b border-gray-200">
@@ -625,7 +625,7 @@ export default function EventsPageContent() {
                   {calendarOpen && (
                     <div className="px-4 pb-4">
                       <select
-                        className="w-full p-2 border border-gray-300 rounded-md bg-white text-sm"
+                        className="w-full p-2 border border-gray-300 rounded-sm bg-white text-sm"
                         value={selectedDateRange}
                         onChange={(e) => setSelectedDateRange(e.target.value)}
                       >
@@ -654,7 +654,7 @@ export default function EventsPageContent() {
                   {formatOpen && (
                     <div className="px-4 pb-4">
                       <select
-                        className="w-full p-2 border border-gray-300 rounded-md bg-white text-sm"
+                        className="w-full p-2 border border-gray-300 rounded-sm bg-white text-sm"
                         value={selectedFormat}
                         onChange={(e) => setSelectedFormat(e.target.value)}
                       >
@@ -684,7 +684,7 @@ export default function EventsPageContent() {
                   {locationOpen && (
                     <div className="px-4 pb-4">
                       <select
-                        className="w-full p-2 border border-gray-300 rounded-md bg-white text-sm"
+                        className="w-full p-2 border border-gray-300 rounded-sm bg-white text-sm"
                         value={selectedLocation}
                         onChange={(e) => setSelectedLocation(e.target.value)}
                       >
@@ -948,7 +948,7 @@ export default function EventsPageContent() {
                   const originalDates = getOriginalEventDates(event.id)
                   return (
                     <Link href={`/event/${event.id}`} key={event.id} className="block">
-                      <Card key={event.id} className="hover:shadow-md transition-shadow">
+                      <Card key={event.id} className="hover:shadow-md transition-shadow rounded-sm">
                         <CardContent className="p-4">
                           <div className="flex gap-4">
                             <div className="relative">
@@ -957,7 +957,7 @@ export default function EventsPageContent() {
                                 alt={event.title}
                                 width={176}
                                 height={112}
-                                className="w-48 h-full rounded-lg"
+                                className="w-48 h-full rounded-sm"
                               />
                             </div>
                             <div className="flex-1">
@@ -1070,7 +1070,7 @@ export default function EventsPageContent() {
                               className="flex-1 min-w-0"
                             >
                               <Link href={`/event/${event.id}`} className="block h-full">
-                                <div className="relative bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow h-full">
+                                <div className="relative bg-white rounded-sm shadow-md overflow-hidden hover:shadow-lg transition-shadow h-full">
                                   <div className="relative h-48 w-full">
                                     <Image
                                       src={event.images[0]?.url || "/placeholder.svg?height=192&width=320"}
@@ -1185,7 +1185,7 @@ export default function EventsPageContent() {
                     alt={featuredEvents[0].title}
                     width={320}
                     height={240}
-                    className="w-full h-85 object-cover rounded-md"
+                    className="w-full h-85 object-cover rounded-sm"
                   />
                 </div>
               </div>
