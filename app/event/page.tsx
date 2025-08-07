@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import EventsPageContent from "./events-page-content"
+import EventsPageContent from "./events-pages"
 
 // Loading component for the suspense boundary
 function EventsPageSkeleton() {
