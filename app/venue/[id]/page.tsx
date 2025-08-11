@@ -315,7 +315,7 @@ export default function VenuePage() {
                 </Card>
 
                 {/* Pricing Packages */}
-                <Card>
+                {/* <Card>
                   <CardHeader>
                     <CardTitle>Pricing Packages</CardTitle>
                   </CardHeader>
@@ -343,7 +343,7 @@ export default function VenuePage() {
                       ))}
                     </div>
                   </CardContent>
-                </Card>
+                </Card> */}
 
                 {/* Events at This Venue */}
                 {venueEvents.length > 0 && (
