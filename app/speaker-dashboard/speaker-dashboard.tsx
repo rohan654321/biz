@@ -10,9 +10,9 @@ import { PresentationMaterials } from "./presentation-materials"
 // import { SessionPromotion } from "./speaker-dashboard/session-promotion"
 // import { AudienceInteraction } from "./speaker-dashboard/audience-interaction"
 // import { NetworkingLeads } from "./speaker-dashboard/networking-leads"
-// import { OrganizerCommunication } from "./speaker-dashboard/organizer-communication"
-// import { FeedbackRatings } from "./speaker-dashboard/feedback-ratings"
-// import { SpeakerSettings } from "./speaker-dashboard/speaker-settings"
+import { OrganizerCommunication } from "./organizer-communication"
+import { FeedbackRatings } from "./feedback-ratings"
+import { SpeakerSettings } from "./speaker-settings"
 import { User, Calendar, Upload, Share2, Users, Network, MessageSquare, Star, Bell, Settings, LogOut, Menu, X } from 'lucide-react'
 
 export function SpeakerDashboard() {
@@ -26,9 +26,9 @@ export function SpeakerDashboard() {
     // { id: "promotion", label: "Session Promotion", icon: Share2 },
     // { id: "interaction", label: "Audience Interaction", icon: Users },
     // { id: "networking", label: "Networking & Leads", icon: Network, badge: "89" },
-    // { id: "communication", label: "Messages", icon: MessageSquare, badge: "5" },
-    // { id: "feedback", label: "Feedback & Ratings", icon: Star },
-    // { id: "settings", label: "Settings", icon: Settings },
+    { id: "communication", label: "Messages", icon: MessageSquare, badge: "5" },
+    { id: "feedback", label: "Feedback & Ratings", icon: Star },
+    { id: "settings", label: "Settings", icon: Settings },
   ]
 
   const stats = [
@@ -52,12 +52,12 @@ export function SpeakerDashboard() {
     //     return <AudienceInteraction />
     //   case "networking":
     //     return <NetworkingLeads />
-    //   case "communication":
-    //     return <OrganizerCommunication />
-    //   case "feedback":
-    //     return <FeedbackRatings />
-    //   case "settings":
-    //     return <SpeakerSettings />
+      case "communication":
+        return <OrganizerCommunication />
+      case "feedback":
+        return <FeedbackRatings />
+      case "settings":
+        return <SpeakerSettings />
       default:
         return <MyProfile />
     }
