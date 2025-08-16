@@ -95,14 +95,14 @@ export default function VenueDashboardPage() {
         return <EventManagement />
       case "booking-system":
         return <BookingSystem />
-    //   case "communication":
-    //     return <CommunicationCenter />
-    //   case "ratings-reviews":
-    //     return <RatingsReviews />
-    //   case "legal-documentation":
-    //     return <LegalDocumentation />
-    //   case "settings":
-    //     return <VenueSettings venueData={venueData} />
+      case "communication":
+        return <CommunicationCenter />
+      case "ratings-reviews":
+        return <RatingsReviews />
+      case "legal-documentation":
+        return <LegalDocumentation />
+      case "settings":
+        return <VenueSettings venueData={venueData} />
       default:
         return <div>Select a section from the sidebar</div>
     }
