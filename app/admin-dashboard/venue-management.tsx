@@ -294,7 +294,7 @@ export default function VenueManagement() {
           </CardContent>
         </Card>
 
-        <Card>
+        {/* <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -304,7 +304,7 @@ export default function VenueManagement() {
               <Star className="w-8 h-8 text-blue-600" />
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       {/* Filters and Search */}
