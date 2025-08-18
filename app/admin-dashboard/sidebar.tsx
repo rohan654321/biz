@@ -1,43 +1,27 @@
 "use client"
 
 import { useState } from "react"
-import { signOut } from "next-auth/react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
-import { Bell } from "lucide-react"
-import {
-  Shield,
+  LayoutDashboard,
   Users,
   Calendar,
   Building2,
   BarChart3,
   DollarSign,
   FileText,
+  ImageIcon,
   Settings,
-  Database,
   Megaphone,
+  MapPin,
 } from "lucide-react"
-// import { Button } from "@/components/ui/button"
 
-// Import all dashboard components
+// Import dashboard components
 import DashboardOverview from "./dashboard-overview"
 import UserManagement from "./user-management"
 import EventManagement from "./event-management"
 import OrganizerManagement from "./organizer-management"
+import VenueManagement from "./venue-management"
 import AnalyticsDashboard from "./analytics-dashboard"
 import RevenueManagement from "./revenue-management"
 import ReportsManagement from "./reports-management"
@@ -45,84 +29,30 @@ import ContentManagement from "./content-management"
 import AdsManagement from "./ads-management"
 import SystemSettings from "./system-settings"
 import PromotionsManagement from "./promotions-management"
+import { Button } from "@/components/ui/button"
+import { signOut } from "next-auth/react"
 
-interface AdminDashboardProps {
-  adminData?: {
-    name: string
-    email: string
-    role: string
-    avatar?: string
-  }
-}
+const sidebarItems = [
+  { id: "overview", label: "Dashboard", icon: LayoutDashboard },
+  { id: "users", label: "User Management", icon: Users },
+  { id: "events", label: "Event Management", icon: Calendar },
+  { id: "organizers", label: "Organizer Management", icon: Building2 },
+  { id: "venues", label: "Venue Management", icon: MapPin },
+  { id: "promotions", label: "Promotions", icon: Megaphone },
+  { id: "analytics", label: "Analytics", icon: BarChart3 },
+  { id: "revenue", label: "Revenue", icon: DollarSign },
+  { id: "reports", label: "Reports", icon: FileText },
+  { id: "content", label: "Content Management", icon: ImageIcon },
+  { id: "ads", label: "Ads Management", icon: ImageIcon },
+  { id: "settings", label: "System Settings", icon: Settings },
+]
 
-export default function AdminDashboard({ adminData }: AdminDashboardProps) {
-  const [activeSection, setActiveSection] = useState("dashboard")
-
-  const defaultAdminData = {
-    name: "Admin User",
-    email: "admin@bztradefairs.com",
-    role: "Super Administrator",
-    avatar: "/placeholder.svg?height=120&width=120&text=Admin",
-  }
-
-  const admin = adminData || defaultAdminData
-
-  const sidebarItems = [
-    {
-      title: "Dashboard",
-      icon: Shield,
-      id: "dashboard",
-    },
-    {
-      title: "User Management",
-      icon: Users,
-      id: "users",
-    },
-    {
-      title: "Event Management",
-      icon: Calendar,
-      id: "events",
-    },
-    {
-      title: "Organizers",
-      icon: Building2,
-      id: "organizers",
-    },
-    {
-      title: "Analytics",
-      icon: BarChart3,
-      id: "analytics",
-    },
-    {
-      title: "Revenue",
-      icon: DollarSign,
-      id: "revenue",
-    },
-    {
-      title: "Reports",
-      icon: FileText,
-      id: "reports",
-    },
-    {
-      title: "Promoction Management",
-      icon: Database,
-      id: "promoctions",
-    },
-    {
-      title: "Ads Management",
-      icon: Megaphone,
-      id: "ads",
-    },
-    {
-      title: "System Settings",
-      icon: Settings,
-      id: "settings",
-    },
-  ]
+export default function AdminDashboard() {
+  const [activeSection, setActiveSection] = useState("overview")
 
   const renderContent = () => {
     switch (activeSection) {
-      case "dashboard":
+      case "overview":
         return <DashboardOverview />
       case "users":
         return <UserManagement />
@@ -130,16 +60,18 @@ export default function AdminDashboard({ adminData }: AdminDashboardProps) {
         return <EventManagement />
       case "organizers":
         return <OrganizerManagement />
+      case "venues":
+        return <VenueManagement />
+      case "promotions":
+        return <PromotionsManagement />
       case "analytics":
         return <AnalyticsDashboard />
       case "revenue":
         return <RevenueManagement />
       case "reports":
         return <ReportsManagement />
-      // case "content":
-      //   return <ContentManagement />
-      case "promoctions":
-        return <PromotionsManagement />
+      case "content":
+        return <ContentManagement />
       case "ads":
         return <AdsManagement />
       case "settings":
@@ -150,66 +82,46 @@ export default function AdminDashboard({ adminData }: AdminDashboardProps) {
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <Sidebar className="border-r">
-          <SidebarHeader className="border-b p-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={admin.avatar || "/placeholder.svg"} />
-                <AvatarFallback className="bg-red-600 text-white">SA</AvatarFallback>
-              </Avatar>
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
+      <div className="w-64 bg-white shadow-lg">
+        <div className="p-6">
+          <h2 className="text-2xl font-bold text-gray-800">Admin Panel</h2>
+          <p className="text-gray-600 text-sm">Event Management System</p>
+        </div>
+        <nav className="mt-6">
+          {sidebarItems.map((item) => {
+            const Icon = item.icon
+            return (
               <div>
-                <div className="font-semibold">{admin.name}</div>
-                <div className="text-sm text-gray-600">{admin.role}</div>
-              </div>
-            </div>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Super Admin Panel</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {sidebarItems.map((item) => (
-                    <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton
-                        onClick={() => setActiveSection(item.id)}
-                        isActive={activeSection === item.id}
-                        className="w-full justify-start"
-                      >
-                        <item.icon className="w-4 h-4" />
-                        <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                  <Button
-                   onClick={() => signOut({ callbackUrl: "/login" })}
-                    className="w-full bg-red-500 hover:bg-red-600 text-white mt-20"
-                  >
-                    Logout
-                  </Button>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
+                <button
+                  key={item.id}
+                  onClick={() => setActiveSection(item.id)}
+                  className={`w-full flex items-center px-6 py-3 text-left hover:bg-gray-50 transition-colors ${activeSection === item.id ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600" : "text-gray-700"
+                    }`}
+                >
+                  <Icon className="w-5 h-5 mr-3" />
+                  {item.label}
+                  {item.id === "promotions" && <Badge className="ml-auto bg-green-100 text-green-800">New</Badge>}
+                  {item.id === "venues" && <Badge className="ml-auto bg-blue-100 text-blue-800">Updated</Badge>}
+                </button>
 
-        <SidebarInset className="flex-1">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="flex items-center gap-2 ml-auto">
-              <Button variant="ghost" size="sm">
-                <Bell className="w-4 h-4" />
-              </Button>
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={admin.avatar || "/placeholder.svg"} />
-                <AvatarFallback className="bg-red-600 text-white">SA</AvatarFallback>
-              </Avatar>
-            </div>
-          </header>
-          <div className="flex-1 p-6">{renderContent()}</div>
-        </SidebarInset>
+              </div>
+            )
+          })}
+          <Button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="w-full bg-red-500 hover:bg-red-600 text-white my-10"
+          >
+            Logout
+          </Button>
+        </nav>
       </div>
-    </SidebarProvider>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        <div className="p-8">{renderContent()}</div>
+      </div>
+    </div>
   )
 }

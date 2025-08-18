@@ -1,30 +1,15 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Building2,
-  MapPin,
-  Upload,
-  Edit,
-  Save,
-  Wifi,
-  Car,
-  Shield,
-  Snowflake,
-  Users,
-  Camera,
-  FileText,
-  ExternalLink,
-  AlertTriangle,
-} from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Building2, Star, Users, Camera, Plus, Edit, Trash2, CheckCircle, Upload, Save, MapPin } from "lucide-react"
 
 interface VenueData {
   venueName: string
@@ -37,6 +22,10 @@ interface VenueData {
   description: string
   maxCapacity: number
   totalHalls: number
+  totalEvents: number
+  activeBookings: number
+  averageRating: number
+  totalReviews: number
 }
 
 interface VenueProfileProps {
@@ -45,344 +34,820 @@ interface VenueProfileProps {
 
 export default function VenueProfile({ venueData }: VenueProfileProps) {
   const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState({
-    ...venueData,
-    detailedDescription:
-      "Grand Convention Center is Mumbai's premier event destination, featuring 8 versatile halls with capacities ranging from 50 to 2000 guests. Our state-of-the-art facilities include advanced AV systems, high-speed WiFi, ample parking, and 24/7 security. Located in the heart of the business district, we're easily accessible by public transport and offer comprehensive event management services.",
-    googleMapLink: "https://maps.google.com/venue-location",
+  const [profileData, setProfileData] = useState({
+    venueName: venueData.venueName,
+    description: venueData.description,
+    contactPerson: venueData.contactPerson,
+    email: venueData.email,
+    mobile: venueData.mobile,
+    address: venueData.address,
+    website: venueData.website,
   })
 
-  const [facilities, setFacilities] = useState([
-    { id: "ac", name: "Air Conditioning", icon: Snowflake, checked: true },
-    { id: "wifi", name: "High-Speed WiFi", icon: Wifi, checked: true },
-    { id: "parking", name: "Parking Available", icon: Car, checked: true },
-    { id: "security", name: "24/7 Security", icon: Shield, checked: true },
-    { id: "catering", name: "In-house Catering", icon: Users, checked: true },
-    { id: "av", name: "AV Equipment", icon: Camera, checked: true },
+  const [images, setImages] = useState([
+    "/placeholder.svg?height=300&width=400&text=Main+Hall",
+    "/placeholder.svg?height=300&width=400&text=Conference+Room",
+    "/placeholder.svg?height=300&width=400&text=Banquet+Hall",
+    "/placeholder.svg?height=300&width=400&text=Reception+Area",
   ])
 
-  const [spaces, setSpaces] = useState([
-    { id: 1, name: "Grand Ballroom", capacity: 2000, type: "Main Hall" },
-    { id: 2, name: "Executive Hall A", capacity: 500, type: "Conference Hall" },
-    { id: 3, name: "Executive Hall B", capacity: 500, type: "Conference Hall" },
-    { id: 4, name: "Meeting Room 1", capacity: 50, type: "Meeting Room" },
-    { id: 5, name: "Meeting Room 2", capacity: 50, type: "Meeting Room" },
-    { id: 6, name: "Meeting Room 3", capacity: 50, type: "Meeting Room" },
-    { id: 7, name: "Outdoor Terrace", capacity: 300, type: "Outdoor Space" },
-    { id: 8, name: "Exhibition Hall", capacity: 1500, type: "Exhibition Space" },
+  const [amenities, setAmenities] = useState([
+    "Free WiFi",
+    "Parking Available",
+    "Air Conditioning",
+    "Audio/Visual Equipment",
+    "Catering Services",
+    "Security",
+    "Wheelchair Accessible",
+    "Stage/Platform",
   ])
+
+  const [meetingSpaces, setMeetingSpaces] = useState([
+    {
+      id: "1",
+      name: "Grand Ballroom",
+      capacity: 500,
+      area: 5000,
+      hourlyRate: 15000,
+      features: ["Stage", "A/V Equipment", "Dance Floor", "Bar Area"],
+    },
+    {
+      id: "2",
+      name: "Conference Hall A",
+      capacity: 100,
+      area: 1200,
+      hourlyRate: 5000,
+      features: ["Projector", "Whiteboard", "Conference Table", "WiFi"],
+    },
+    {
+      id: "3",
+      name: "Meeting Room B",
+      capacity: 25,
+      area: 400,
+      hourlyRate: 2000,
+      features: ["TV Screen", "Conference Phone", "Whiteboard"],
+    },
+  ])
+
+  const [newAmenity, setNewAmenity] = useState("")
+  const [newSpace, setNewSpace] = useState({
+    name: "",
+    capacity: "",
+    area: "",
+    hourlyRate: "",
+    features: "",
+  })
 
   const handleSave = () => {
-    // Save logic here
+    // Handle save logic here
+    console.log("Saving profile data:", profileData)
     setIsEditing(false)
   }
 
-  const handleFacilityChange = (facilityId: string, checked: boolean) => {
-    setFacilities(facilities.map((f) => (f.id === facilityId ? { ...f, checked } : f)))
+  const handleAddAmenity = () => {
+    if (newAmenity.trim()) {
+      setAmenities([...amenities, newAmenity.trim()])
+      setNewAmenity("")
+    }
+  }
+
+  const handleRemoveAmenity = (index: number) => {
+    setAmenities(amenities.filter((_, i) => i !== index))
+  }
+
+  const handleAddSpace = () => {
+    if (newSpace.name && newSpace.capacity && newSpace.area && newSpace.hourlyRate) {
+      const space = {
+        id: Date.now().toString(),
+        name: newSpace.name,
+        capacity: Number.parseInt(newSpace.capacity),
+        area: Number.parseInt(newSpace.area),
+        hourlyRate: Number.parseInt(newSpace.hourlyRate),
+        features: newSpace.features
+          .split(",")
+          .map((f) => f.trim())
+          .filter(Boolean),
+      }
+      setMeetingSpaces([...meetingSpaces, space])
+      setNewSpace({ name: "", capacity: "", area: "", hourlyRate: "", features: "" })
+    }
+  }
+
+  const handleRemoveSpace = (id: string) => {
+    setMeetingSpaces(meetingSpaces.filter((space) => space.id !== id))
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Venue Profile</h1>
-        <Button onClick={() => (isEditing ? handleSave() : setIsEditing(true))} className="flex items-center gap-2">
-          {isEditing ? <Save className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
-          {isEditing ? "Save Changes" : "Edit Profile"}
-        </Button>
+        <div className="flex items-center gap-2">
+          {isEditing ? (
+            <>
+              <Button variant="outline" onClick={() => setIsEditing(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} className="flex items-center gap-2">
+                <Save className="w-4 h-4" />
+                Save Changes
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => setIsEditing(true)} className="flex items-center gap-2">
+              <Edit className="w-4 h-4" />
+              Edit Profile
+            </Button>
+          )}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Venue Logo & Basic Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="w-5 h-5" />
-              Venue Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center">
-              <Avatar className="w-32 h-32 mx-auto mb-4">
-                <AvatarImage src={formData.logo || "/placeholder.svg"} />
-                <AvatarFallback className="text-2xl">
-                  {formData.venueName
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </AvatarFallback>
-              </Avatar>
-              {isEditing && (
-                <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
-                  <Upload className="w-4 h-4" />
-                  Upload Logo
-                </Button>
-              )}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="images">Images</TabsTrigger>
+          <TabsTrigger value="amenities">Amenities</TabsTrigger>
+          <TabsTrigger value="spaces">Meeting Spaces</TabsTrigger>
+          <TabsTrigger value="floorplan">Floor Plan</TabsTrigger>
+          <TabsTrigger value="location">Location & Maps</TabsTrigger>
+        </TabsList>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Profile Info */}
+            <div className="lg:col-span-2 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building2 className="w-5 h-5" />
+                    Basic Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="venue-name">Venue Name</Label>
+                      {isEditing ? (
+                        <Input
+                          id="venue-name"
+                          value={profileData.venueName}
+                          onChange={(e) => setProfileData({ ...profileData, venueName: e.target.value })}
+                        />
+                      ) : (
+                        <div className="p-2 bg-gray-50 rounded">{profileData.venueName}</div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="contact-person">Contact Person</Label>
+                      {isEditing ? (
+                        <Input
+                          id="contact-person"
+                          value={profileData.contactPerson}
+                          onChange={(e) => setProfileData({ ...profileData, contactPerson: e.target.value })}
+                        />
+                      ) : (
+                        <div className="p-2 bg-gray-50 rounded">{profileData.contactPerson}</div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      {isEditing ? (
+                        <Input
+                          id="email"
+                          type="email"
+                          value={profileData.email}
+                          onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                        />
+                      ) : (
+                        <div className="p-2 bg-gray-50 rounded">{profileData.email}</div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="mobile">Mobile</Label>
+                      {isEditing ? (
+                        <Input
+                          id="mobile"
+                          value={profileData.mobile}
+                          onChange={(e) => setProfileData({ ...profileData, mobile: e.target.value })}
+                        />
+                      ) : (
+                        <div className="p-2 bg-gray-50 rounded">{profileData.mobile}</div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="website">Website</Label>
+                      {isEditing ? (
+                        <Input
+                          id="website"
+                          value={profileData.website}
+                          onChange={(e) => setProfileData({ ...profileData, website: e.target.value })}
+                        />
+                      ) : (
+                        <div className="p-2 bg-gray-50 rounded">{profileData.website}</div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="address">Address</Label>
+                      {isEditing ? (
+                        <Input
+                          id="address"
+                          value={profileData.address}
+                          onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
+                        />
+                      ) : (
+                        <div className="p-2 bg-gray-50 rounded">{profileData.address}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    {isEditing ? (
+                      <Textarea
+                        id="description"
+                        rows={4}
+                        value={profileData.description}
+                        onChange={(e) => setProfileData({ ...profileData, description: e.target.value })}
+                        placeholder="Describe your venue, its unique features, and what makes it special..."
+                      />
+                    ) : (
+                      <div className="p-2 bg-gray-50 rounded min-h-[100px]">{profileData.description}</div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Capacity Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    Capacity Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">500</div>
+                      <div className="text-sm text-gray-600">Theater Style</div>
+                    </div>
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">300</div>
+                      <div className="text-sm text-gray-600">Banquet Style</div>
+                    </div>
+                    <div className="text-center p-4 bg-purple-50 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600">400</div>
+                      <div className="text-sm text-gray-600">Cocktail Style</div>
+                    </div>
+                    <div className="text-center p-4 bg-orange-50 rounded-lg">
+                      <div className="text-2xl font-bold text-orange-600">150</div>
+                      <div className="text-sm text-gray-600">Classroom Style</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="venue-name">Venue Name</Label>
-              <Input
-                id="venue-name"
-                value={formData.venueName}
-                onChange={(e) => setFormData({ ...formData, venueName: e.target.value })}
-                disabled={!isEditing}
-              />
-            </div>
+            {/* Sidebar Stats */}
+            <div className="space-y-6">
+              {/* Venue Stats */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Venue Statistics</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Total Events</span>
+                    <span className="font-semibold">{venueData.totalEvents}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Active Bookings</span>
+                    <span className="font-semibold">{venueData.activeBookings}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Total Halls</span>
+                    <span className="font-semibold">{venueData.totalHalls}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Max Capacity</span>
+                    <span className="font-semibold">{venueData.maxCapacity.toLocaleString()}</span>
+                  </div>
+                </CardContent>
+              </Card>
 
-            <div className="space-y-2">
-              <Label htmlFor="contact-person">Contact Person</Label>
-              <Input
-                id="contact-person"
-                value={formData.contactPerson}
-                onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
-                disabled={!isEditing}
-              />
-            </div>
+              {/* Rating */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Customer Rating</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <div className="text-3xl font-bold text-blue-600 mb-2">{venueData.averageRating}</div>
+                  <div className="flex items-center justify-center gap-1 mb-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-5 h-5 ${
+                          i < Math.floor(venueData.averageRating) ? "text-yellow-400 fill-current" : "text-gray-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-gray-600">{venueData.totalReviews} reviews</p>
+                </CardContent>
+              </Card>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                disabled={!isEditing}
-              />
+              {/* Verification Status */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Verification Status</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <span className="text-sm">Identity Verified</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <span className="text-sm">Business License</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <span className="text-sm">Safety Compliance</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <span className="text-sm">Insurance Coverage</span>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+          </div>
+        </TabsContent>
 
-            <div className="space-y-2">
-              <Label htmlFor="mobile">Mobile</Label>
-              <Input
-                id="mobile"
-                value={formData.mobile}
-                onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                disabled={!isEditing}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
-              <Input
-                id="website"
-                value={formData.website}
-                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                disabled={!isEditing}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Address & Location */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              Location & Address
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="address">Full Address</Label>
-              <Textarea
-                id="address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                disabled={!isEditing}
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="google-map">Google Map Link</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="google-map"
-                  value={formData.googleMapLink}
-                  onChange={(e) => setFormData({ ...formData, googleMapLink: e.target.value })}
-                  disabled={!isEditing}
-                />
-                {!isEditing && (
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={formData.googleMapLink} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Venue Photos</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Camera className="w-8 h-8 text-gray-400" />
+        {/* Images Tab */}
+        <TabsContent value="images" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Camera className="w-5 h-5" />
+                Venue Images
+              </CardTitle>
+              <p className="text-sm text-gray-600">Upload high-quality images to showcase your venue</p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {images.map((image, index) => (
+                  <div key={index} className="relative group">
+                    <Image
+                      src={image || "/placeholder.svg"}
+                      alt={`Venue image ${index + 1}`}
+                      width={300}
+                      height={200}
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setImages(images.filter((_, i) => i !== index))}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
-              {isEditing && (
-                <Button variant="outline" size="sm" className="w-full flex items-center gap-2 bg-transparent">
-                  <Upload className="w-4 h-4" />
-                  Upload Photos
+
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Images</h3>
+                <p className="text-gray-600 mb-4">Drag and drop images here, or click to select files</p>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Images
                 </Button>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Floor Plans</Label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-600">Floor plans uploaded</p>
-                {isEditing && (
-                  <Button variant="outline" size="sm" className="mt-2 bg-transparent">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Update Floor Plans
-                  </Button>
-                )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-        {/* Facilities Checklist */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Venue Facilities</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 gap-3">
-              {facilities.map((facility) => (
-                <div key={facility.id} className="flex items-center space-x-3">
-                  <Checkbox
-                    id={facility.id}
-                    checked={facility.checked}
-                    onCheckedChange={(checked) => handleFacilityChange(facility.id, checked as boolean)}
-                    disabled={!isEditing}
+        {/* Amenities Tab */}
+        <TabsContent value="amenities" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Venue Amenities</CardTitle>
+              <p className="text-sm text-gray-600">Manage the amenities and features available at your venue</p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+                {amenities.map((amenity, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm">{amenity}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveAmenity(index)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add new amenity..."
+                  value={newAmenity}
+                  onChange={(e) => setNewAmenity(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleAddAmenity()}
+                />
+                <Button onClick={handleAddAmenity}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Meeting Spaces Tab */}
+        <TabsContent value="spaces" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Meeting Spaces</CardTitle>
+              <p className="text-sm text-gray-600">Manage individual spaces within your venue</p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                {meetingSpaces.map((space) => (
+                  <div key={space.id} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-lg">{space.name}</h3>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveSpace(space.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Capacity:</span>
+                        <span className="font-medium">{space.capacity} people</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Area:</span>
+                        <span className="font-medium">{space.area} sq ft</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Hourly Rate:</span>
+                        <span className="font-medium text-blue-600">₹{space.hourlyRate.toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-medium text-sm mb-2">Features:</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {space.features.map((feature, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {feature}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Add New Space Form */}
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                <h3 className="font-semibold mb-4">Add New Meeting Space</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <Input
+                    placeholder="Space name"
+                    value={newSpace.name}
+                    onChange={(e) => setNewSpace({ ...newSpace, name: e.target.value })}
                   />
-                  <facility.icon className="w-4 h-4 text-gray-500" />
-                  <Label htmlFor={facility.id} className="flex-1">
-                    {facility.name}
-                  </Label>
+                  <Input
+                    placeholder="Capacity (people)"
+                    type="number"
+                    value={newSpace.capacity}
+                    onChange={(e) => setNewSpace({ ...newSpace, capacity: e.target.value })}
+                  />
+                  <Input
+                    placeholder="Area (sq ft)"
+                    type="number"
+                    value={newSpace.area}
+                    onChange={(e) => setNewSpace({ ...newSpace, area: e.target.value })}
+                  />
+                  <Input
+                    placeholder="Hourly rate (₹)"
+                    type="number"
+                    value={newSpace.hourlyRate}
+                    onChange={(e) => setNewSpace({ ...newSpace, hourlyRate: e.target.value })}
+                  />
                 </div>
-              ))}
-            </div>
-
-            <div className="pt-4 border-t">
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{formData.maxCapacity}</div>
-                  <div className="text-sm text-gray-600">Max Capacity</div>
-                </div>
-                <div className="p-3 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{formData.totalHalls}</div>
-                  <div className="text-sm text-gray-600">Total Halls</div>
-                </div>
+                <Input
+                  placeholder="Features (comma separated)"
+                  value={newSpace.features}
+                  onChange={(e) => setNewSpace({ ...newSpace, features: e.target.value })}
+                  className="mb-4"
+                />
+                <Button onClick={handleAddSpace}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Space
+                </Button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Description */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Short Description</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              disabled={!isEditing}
-              rows={3}
-              placeholder="Brief description of your venue..."
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Detailed Description</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Textarea
-              value={formData.detailedDescription}
-              onChange={(e) => setFormData({ ...formData, detailedDescription: e.target.value })}
-              disabled={!isEditing}
-              rows={3}
-              placeholder="Detailed description with facilities and services..."
-            />
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Halls & Spaces */}
-      {/* <Card>
-        <CardHeader>
-          <CardTitle>Halls & Meeting Spaces</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {spaces.map((space) => (
-              <div key={space.id} className="border rounded-lg p-4">
-                <h4 className="font-semibold mb-2">{space.name}</h4>
-                <div className="space-y-1 text-sm text-gray-600">
-                  <div>Type: {space.type}</div>
-                  <div>Capacity: {space.capacity} people</div>
+        {/* Location & Maps Tab */}
+        <TabsContent value="location" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Google Maps Integration */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5" />
+                  Google Maps Location
+                </CardTitle>
+                <p className="text-sm text-gray-600">Manage your venue's location and map visibility</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="google-maps-url">Google Maps Embed URL</Label>
+                  {isEditing ? (
+                    <Input
+                      id="google-maps-url"
+                      placeholder="https://www.google.com/maps/embed?pb=..."
+                      defaultValue="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3769.8!2d72.8406!3d19.1796!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1"
+                    />
+                  ) : (
+                    <div className="aspect-video rounded-lg overflow-hidden border">
+                      <iframe
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3769.8!2d72.8406!3d19.1796!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTnCsDEwJzQ4LjAiTiA3MsKwNTAnMjQuMCJF!5e0!3m2!1sen!2sin!4v1234567890123"
+                        width="100%"
+                        height="100%"
+                        style={{ border: 0 }}
+                        allowFullScreen
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        title="Venue Location"
+                      />
+                    </div>
+                  )}
                 </div>
-                <Badge variant="outline" className="mt-2">
-                  {space.type}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card> */}
 
-      {/* Emergency & Safety */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-orange-500" />
-            Emergency & Safety Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label>Emergency Exit Plans</Label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-600">Emergency exit plans uploaded</p>
-                {isEditing && (
-                  <Button variant="outline" size="sm" className="mt-2 bg-transparent">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Update Plans
-                  </Button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="latitude">Latitude</Label>
+                    {isEditing ? (
+                      <Input id="latitude" placeholder="19.1796" defaultValue="19.1796" />
+                    ) : (
+                      <div className="p-2 bg-gray-50 rounded">19.1796</div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="longitude">Longitude</Label>
+                    {isEditing ? (
+                      <Input id="longitude" placeholder="72.8406" defaultValue="72.8406" />
+                    ) : (
+                      <div className="p-2 bg-gray-50 rounded">72.8406</div>
+                    )}
+                  </div>
+                </div>
+
+                {!isEditing && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 bg-transparent"
+                      onClick={() =>
+                        window.open("https://www.google.com/maps/dir/?api=1&destination=19.1796,72.8406", "_blank")
+                      }
+                    >
+                      Get Directions
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 bg-transparent"
+                      onClick={() => window.open("https://maps.google.com/?q=19.1796,72.8406", "_blank")}
+                    >
+                      View in Maps
+                    </Button>
+                  </div>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
-            <div className="space-y-2">
-              <Label>Safety Information</Label>
-              <Textarea
-                placeholder="Fire safety measures, emergency contacts, evacuation procedures..."
-                disabled={!isEditing}
-                rows={4}
-              />
-            </div>
+            {/* Address Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Address Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="full-address">Full Address</Label>
+                  {isEditing ? (
+                    <Textarea id="full-address" rows={3} defaultValue={profileData.address} />
+                  ) : (
+                    <div className="p-2 bg-gray-50 rounded min-h-[80px]">{profileData.address}</div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    {isEditing ? (
+                      <Input id="city" defaultValue="Mumbai" />
+                    ) : (
+                      <div className="p-2 bg-gray-50 rounded">Mumbai</div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="state">State</Label>
+                    {isEditing ? (
+                      <Input id="state" defaultValue="Maharashtra" />
+                    ) : (
+                      <div className="p-2 bg-gray-50 rounded">Maharashtra</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="zipcode">ZIP Code</Label>
+                    {isEditing ? (
+                      <Input id="zipcode" defaultValue="400001" />
+                    ) : (
+                      <div className="p-2 bg-gray-50 rounded">400001</div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="country">Country</Label>
+                    {isEditing ? (
+                      <Input id="country" defaultValue="India" />
+                    ) : (
+                      <div className="p-2 bg-gray-50 rounded">India</div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
 
-      {isEditing && (
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => setIsEditing(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave}>Save Changes</Button>
-        </div>
-      )}
+         
+        </TabsContent>
+
+
+        {/* Floor Plans Management */}
+        <TabsContent value="floorplan" className="space-y-6">
+         <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="w-5 h-5" />
+                Floor Plans Management
+              </CardTitle>
+              <p className="text-sm text-gray-600">Upload and manage floor plans for different levels of your venue</p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Ground Floor Plan */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">Ground Floor</h3>
+                    <Badge variant="secondary">Active</Badge>
+                  </div>
+                  <div className="relative aspect-square bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 overflow-hidden group">
+                    <Image
+                      src="/placeholder.svg?height=300&width=300&text=Ground+Floor+Plan"
+                      alt="Ground Floor Plan"
+                      fill
+                      className="object-contain p-4"
+                    />
+                    {isEditing && (
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="secondary">
+                            <Upload className="w-4 h-4 mr-2" />
+                            Replace
+                          </Button>
+                          <Button size="sm" variant="destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Main Hall:</span>
+                      <span className="font-medium">500 capacity</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Reception:</span>
+                      <span className="font-medium">100 capacity</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Total Area:</span>
+                      <span className="font-medium">5,000 sq ft</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* First Floor Plan */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">First Floor</h3>
+                    <Badge variant="secondary">Active</Badge>
+                  </div>
+                  <div className="relative aspect-square bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 overflow-hidden group">
+                    <Image
+                      src="/placeholder.svg?height=300&width=300&text=First+Floor+Plan"
+                      alt="First Floor Plan"
+                      fill
+                      className="object-contain p-4"
+                    />
+                    {isEditing && (
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="secondary">
+                            <Upload className="w-4 h-4 mr-2" />
+                            Replace
+                          </Button>
+                          <Button size="sm" variant="destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Conference Halls:</span>
+                      <span className="font-medium">200 capacity</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Meeting Rooms:</span>
+                      <span className="font-medium">75 capacity</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Total Area:</span>
+                      <span className="font-medium">3,000 sq ft</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Add New Floor Plan */}
+              {isEditing && (
+                <div className="mt-6 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Add New Floor Plan</h3>
+                  <p className="text-gray-600 mb-4">Upload floor plans for additional levels or outdoor spaces</p>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Upload Floor Plan
+                  </Button>
+                </div>
+              )}
+
+              {/* Floor Plan Legend */}
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-medium mb-3">Floor Plan Legend</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-green-500 rounded"></div>
+                    <span>Available Spaces</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-red-500 rounded"></div>
+                    <span>Booked Areas</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                    <span>Common Areas</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                    <span>Emergency Exits</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
