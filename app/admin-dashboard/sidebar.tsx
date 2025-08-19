@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Badge } from "@/components/ui/badge"
+// import { Badge } from "@/components/ui/badge"
 import {
   LayoutDashboard,
   Users,
@@ -32,6 +32,7 @@ import PromotionsManagement from "./promotions-management"
 import { Button } from "@/components/ui/button"
 import { signOut } from "next-auth/react"
 import SpeakerManagement from "./speaker-management"
+import ExhibitorManagement from "./exhibitor-management"
 
 const sidebarItems = [
   { id: "overview", label: "Dashboard", icon: LayoutDashboard },
@@ -40,6 +41,7 @@ const sidebarItems = [
   { id: "organizers", label: "Organizer Management", icon: Building2 },
   { id: "venues", label: "Venue Management", icon: MapPin },
   { id: "speaker", label: "speaker Management", icon: Users },
+  { id:"exhibitor", label: "Exhibitor Management", icon: Building2},
   { id: "promotions", label: "Promotions", icon: Megaphone },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "revenue", label: "Revenue", icon: DollarSign },
@@ -76,6 +78,8 @@ export default function AdminDashboard() {
         return <ContentManagement />
       case "speaker":
         return <SpeakerManagement />
+      case "exhibitor":
+        return <ExhibitorManagement />
       case "ads":
         return <AdsManagement />
       case "settings":
@@ -106,8 +110,8 @@ export default function AdminDashboard() {
                 >
                   <Icon className="w-5 h-5 mr-3" />
                   {item.label}
-                  {item.id === "promotions" && <Badge className="ml-auto bg-green-100 text-green-800">New</Badge>}
-                  {item.id === "venues" && <Badge className="ml-auto bg-blue-100 text-blue-800">Updated</Badge>}
+                  {/* {item.id === "promotions" && <Badge className="ml-auto bg-green-100 text-green-800">New</Badge>}
+                  {item.id === "venues" && <Badge className="ml-auto bg-blue-100 text-blue-800">Updated</Badge>} */}
                 </button>
 
               </div>
