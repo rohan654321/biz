@@ -31,6 +31,7 @@ import SystemSettings from "./system-settings"
 import PromotionsManagement from "./promotions-management"
 import { Button } from "@/components/ui/button"
 import { signOut } from "next-auth/react"
+import SpeakerManagement from "./speaker-management"
 
 const sidebarItems = [
   { id: "overview", label: "Dashboard", icon: LayoutDashboard },
@@ -38,11 +39,12 @@ const sidebarItems = [
   { id: "events", label: "Event Management", icon: Calendar },
   { id: "organizers", label: "Organizer Management", icon: Building2 },
   { id: "venues", label: "Venue Management", icon: MapPin },
+  { id: "speaker", label: "speaker Management", icon: Users },
   { id: "promotions", label: "Promotions", icon: Megaphone },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "revenue", label: "Revenue", icon: DollarSign },
   { id: "reports", label: "Reports", icon: FileText },
-  { id: "content", label: "Content Management", icon: ImageIcon },
+  // { id: "content", label: "Content Management", icon: ImageIcon },
   { id: "ads", label: "Ads Management", icon: ImageIcon },
   { id: "settings", label: "System Settings", icon: Settings },
 ]
@@ -72,6 +74,8 @@ export default function AdminDashboard() {
         return <ReportsManagement />
       case "content":
         return <ContentManagement />
+      case "speaker":
+        return <SpeakerManagement />
       case "ads":
         return <AdsManagement />
       case "settings":

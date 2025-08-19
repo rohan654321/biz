@@ -3,7 +3,6 @@ import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from "react-icons/fa"
-// import Navbar from "@/components/navbar"
 
 interface SpeakerPageProps {
   params: Promise<{
@@ -23,6 +22,8 @@ export default async function SpeakerPage({ params }: SpeakerPageProps) {
     bio: "Texworld Apparel Sourcing Paris is a prominent tradeshow taking place at the Paris Le Bourget Exhibition Centre in Paris, France. Organized by Messe Frankfurt France S.A.S, this event attracts a diverse audience from countries such as the USA and Pakistan, showcasing the global reach of the fashion and apparel industry.Texworld Apparel Sourcing Paris is a prominent tradeshow taking place at the Paris Le Bourget Exhibition Centre in Paris, France. Organized by Messe Frankfurt France S.A.S, this event attracts a diverse audience from countries such as the USA and Pakistan, showcasing the global reach of the fashion and apparel industry. Texworld Apparel Sourcing Paris is a prominent tradeshow taking place at the Paris Le Bourget Exhibition Centre in Paris, France. Organized by Messe Frankfurt France S.A.S.",
     dateOfBirth: "September 10 1980",
     mobileNumber: "+91 9999787865",
+    location : "city,country",
+    website : "link",
     socialLinks: {
       facebook: "https://facebook.com",
       twitter: "https://twitter.com",
@@ -163,16 +164,16 @@ export default async function SpeakerPage({ params }: SpeakerPageProps) {
                 {/* Personal Details Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <h3 className="font-semibold text-blue-900 mb-2">Date of Birth</h3>
-                    <p className="text-gray-600 text-sm">{speaker.dateOfBirth}</p>
+                    <h3 className="font-semibold text-blue-900 mb-2">Location</h3>
+                    <p className="text-gray-600 text-sm">{speaker.location}</p>
                   </div>
                   <div>
                     <h3 className="font-semibold text-blue-900 mb-2">Mobile Number</h3>
                     <p className="text-gray-600 text-sm">{speaker.mobileNumber}</p>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-blue-900 mb-2">Date of Birth</h3>
-                    <p className="text-gray-600 text-sm">{speaker.dateOfBirth}</p>
+                    <h3 className="font-semibold text-blue-900 mb-2">Site link</h3>
+                    <p className="text-gray-600 text-sm">{speaker.website}</p>
                   </div>
                 </div>
               </div>
