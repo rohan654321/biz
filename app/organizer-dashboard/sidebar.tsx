@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { signOut } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Sidebar,
@@ -30,6 +29,7 @@ import {
   Bell,
   DollarSign,
   Megaphone,
+  User,
 } from "lucide-react"
 
 // Import all section components
@@ -41,12 +41,12 @@ import AnalyticsDashboard from "./analytics-dashboard"
 import EventPromotion from "./event-promotion"
 import MessagesCenter from "./messages-center"
 import SettingsPanel from "./settings-panel"
-import MyPlan from "./my-plan"
-import { useRouter } from "next/navigation"
+import MyPlan from "./my-plan"  
+import OrganizerInfo from "./organizer-info"
 
 export default function OrganizerDashboardPage() {
   const [activeSection, setActiveSection] = useState("dashboard")
-  const router = useRouter();
+
   // Mock organizer data
   const organizerData = {
     name: "EventCorp India",
@@ -131,6 +131,7 @@ export default function OrganizerDashboardPage() {
       type: "Exhibition",
     },
   ]
+
   // Mock attendees data
   const attendeesData = [
     {
@@ -190,6 +191,11 @@ export default function OrganizerDashboardPage() {
       id: "dashboard",
     },
     {
+      title: "My Info",
+      icon: User,
+      id: "info",
+    },
+    {
       title: "My Events",
       icon: Calendar,
       id: "events",
@@ -241,6 +247,8 @@ export default function OrganizerDashboardPage() {
             recentEvents={myEvents}
           />
         )
+      case "info":
+        return <OrganizerInfo organizerData={organizerData} dashboardStats={dashboardStats} myEvents={myEvents} />
       case "events":
         return <MyEvents events={myEvents} />
       case "create-event":
@@ -295,19 +303,6 @@ export default function OrganizerDashboardPage() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
-                  <Button
-                    onClick={() => router.push("/")}
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-                  >
-                    ← back to home
-                  </Button>
-                  <Button
-                    onClick={() => signOut({ callbackUrl: "/login" })}
-                    className="w-full bg-red-500 hover:bg-red-600 text-white mt-10"
-                  >
-                    Logout
-                  </Button>
-
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

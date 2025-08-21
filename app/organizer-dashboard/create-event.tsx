@@ -189,12 +189,12 @@ export default function CreateEvent() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="details">Event Details</TabsTrigger>
           <TabsTrigger value="pricing">Pricing & Space</TabsTrigger>
           <TabsTrigger value="media">Media & Content</TabsTrigger>
-          <TabsTrigger value="features">Features</TabsTrigger>
+          {/* <TabsTrigger value="features">Features</TabsTrigger> */}
           <TabsTrigger value="preview">Preview</TabsTrigger>
         </TabsList>
 
@@ -218,24 +218,24 @@ export default function CreateEvent() {
                     onChange={(e) => setEventData((prev) => ({ ...prev, title: e.target.value }))}
                   />
                 </div>
-                {/* <div className="space-y-2">
-                  <Label htmlFor="event-type">Event Type *</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="event-type">Event  Categories *</Label>
                   <Select
                     value={eventData.eventType}
                     onValueChange={(value) => setEventData((prev) => ({ ...prev, eventType: value }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select event type" />
+                      <SelectValue placeholder="Select event Categories" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="exhibition">Exhibition</SelectItem>
-                      <SelectItem value="conference">Conference</SelectItem>
-                      <SelectItem value="workshop">Workshop</SelectItem>
-                      <SelectItem value="seminar">Seminar</SelectItem>
-                      <SelectItem value="trade-show">Trade Show</SelectItem>
+                      <SelectItem value="exhibition">Education</SelectItem>
+                      <SelectItem value="conference">Finance</SelectItem>
+                      <SelectItem value="workshop">blockchain</SelectItem>
+                      <SelectItem value="seminar">etc</SelectItem>
+                      {/* <SelectItem value="trade-show">Trade Show</SelectItem> */}
                     </SelectContent>
                   </Select>
-                </div> */}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -250,7 +250,7 @@ export default function CreateEvent() {
               </div>
 
               <div className="space-y-3">
-                <Label>Event Categories</Label>
+                <Label>Event Type</Label>
                 <div className="flex flex-wrap gap-2">
                   {availableCategories.map((category) => (
                     <div key={category} className="flex items-center space-x-2">
@@ -722,115 +722,115 @@ export default function CreateEvent() {
         </TabsContent>
 
         {/* Features Tab */}
-        <TabsContent value="features" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Hotel className="w-5 h-5" />
-                Featured Hotels
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-gray-600">Add recommended hotels for attendees</p>
-              <div className="space-y-3">
-                {eventData.featuredHotels.map((hotel, index) => (
-                  <div key={index} className="flex items-center gap-4 p-3 border rounded">
-                    <Input placeholder="Hotel name" value={hotel.name} className="flex-1" />
-                    <Input placeholder="Category" value={hotel.category} className="w-32" />
-                    <Input
-                      placeholder="Rating"
-                      type="number"
-                      step="0.1"
-                      max="5"
-                      value={hotel.rating}
-                      className="w-20"
-                    />
-                    <Button variant="ghost" size="sm">
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button variant="outline" size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Hotel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Plane className="w-5 h-5" />
-                Travel Partners
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-gray-600">Add travel and transportation partners</p>
-              <div className="space-y-3">
-                {eventData.travelPartners.map((partner, index) => (
-                  <div key={index} className="flex items-center gap-4 p-3 border rounded">
-                    <Input placeholder="Partner name" value={partner.name} className="flex-1" />
-                    <Input placeholder="Service type" value={partner.category} className="w-32" />
-                    <Input
-                      placeholder="Rating"
-                      type="number"
-                      step="0.1"
-                      max="5"
-                      value={partner.rating}
-                      className="w-20"
-                    />
-                    <Button variant="ghost" size="sm">
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button variant="outline" size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Partner
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="w-5 h-5" />
-                Tourist Attractions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-gray-600">Add local attractions and places to visit</p>
-              <div className="space-y-3">
-                {eventData.touristAttractions.map((attraction, index) => (
-                  <div key={index} className="p-3 border rounded space-y-3">
-                    <div className="flex items-center gap-4">
-                      <Input placeholder="Attraction name" value={attraction.name} className="flex-1" />
-                      <Input placeholder="Category" value={attraction.category} className="w-32" />
+          {/* <TabsContent value="features" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Hotel className="w-5 h-5" />
+                  Featured Hotels
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-gray-600">Add recommended hotels for attendees</p>
+                <div className="space-y-3">
+                  {eventData.featuredHotels.map((hotel, index) => (
+                    <div key={index} className="flex items-center gap-4 p-3 border rounded">
+                      <Input placeholder="Hotel name" value={hotel.name} className="flex-1" />
+                      <Input placeholder="Category" value={hotel.category} className="w-32" />
                       <Input
                         placeholder="Rating"
                         type="number"
                         step="0.1"
                         max="5"
-                        value={attraction.rating}
+                        value={hotel.rating}
                         className="w-20"
                       />
                       <Button variant="ghost" size="sm">
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
-                    <Textarea placeholder="Description" value={attraction.description} rows={2} />
-                  </div>
-                ))}
-                <Button variant="outline" size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Attraction
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  ))}
+                  <Button variant="outline" size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Hotel
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Plane className="w-5 h-5" />
+                  Travel Partners
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-gray-600">Add travel and transportation partners</p>
+                <div className="space-y-3">
+                  {eventData.travelPartners.map((partner, index) => (
+                    <div key={index} className="flex items-center gap-4 p-3 border rounded">
+                      <Input placeholder="Partner name" value={partner.name} className="flex-1" />
+                      <Input placeholder="Service type" value={partner.category} className="w-32" />
+                      <Input
+                        placeholder="Rating"
+                        type="number"
+                        step="0.1"
+                        max="5"
+                        value={partner.rating}
+                        className="w-20"
+                      />
+                      <Button variant="ghost" size="sm">
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button variant="outline" size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Partner
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5" />
+                  Tourist Attractions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-gray-600">Add local attractions and places to visit</p>
+                <div className="space-y-3">
+                  {eventData.touristAttractions.map((attraction, index) => (
+                    <div key={index} className="p-3 border rounded space-y-3">
+                      <div className="flex items-center gap-4">
+                        <Input placeholder="Attraction name" value={attraction.name} className="flex-1" />
+                        <Input placeholder="Category" value={attraction.category} className="w-32" />
+                        <Input
+                          placeholder="Rating"
+                          type="number"
+                          step="0.1"
+                          max="5"
+                          value={attraction.rating}
+                          className="w-20"
+                        />
+                        <Button variant="ghost" size="sm">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <Textarea placeholder="Description" value={attraction.description} rows={2} />
+                    </div>
+                  ))}
+                  <Button variant="outline" size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Attraction
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent> */}
 
         {/* Preview Tab */}
         <TabsContent value="preview" className="space-y-6">
