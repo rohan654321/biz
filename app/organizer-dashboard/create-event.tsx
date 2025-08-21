@@ -92,12 +92,6 @@ export default function CreateEvent() {
     "Conference",
     "Workshop",
     "Seminar",
-    "Trade Show",
-    "Manufacturing",
-    "Technology",
-    "Healthcare",
-    "Education",
-    "Finance",
   ]
 
   const addHighlight = () => {
