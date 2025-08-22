@@ -1,7 +1,7 @@
 // components/ExploreVenues.tsx
 "use client"
 
-import { useState } from "react"
+
 import { Star, MapPin } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { getAllVenues } from "@/lib/data/events" // <-- must be client-safe
@@ -10,10 +10,7 @@ export default function ExploreVenues() {
 
   const venues = getAllVenues() 
   const router = useRouter()
-  // If getAllVenues returns an array directly:
-  // const initial = getAllVenues && typeof getAllVenues === "function" ? getAllVenues() : []
-  // // If it returns a Promise (unlikely for client import) you could adapt, but prefer server/api approach in that case.
-  // const [venues] = useState(initial)
+
 
   const handleVenueClick = (venue: typeof venues[number]) => {
     router.push(`/venue/${venue.id}`)
