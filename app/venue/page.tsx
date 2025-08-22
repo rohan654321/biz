@@ -27,6 +27,7 @@ import {
   Trophy,
   Music,
 } from "lucide-react"
+import { getAllVenues } from "@/lib/data/events"
 
 export default function VenuesPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -35,208 +36,16 @@ export default function VenuesPage() {
   const [selectedCollections, setSelectedCollections] = useState<string[]>([])
 
   // Mock venues data
-  const venues = [
-    {
-      id: 1,
-      name: "Grand Convention Center",
-      location: "Mumbai, Maharashtra",
-      country: "India",
-      city: "Mumbai",
-      address: "123 Business District, Mumbai",
-      capacity: "5000 people",
-      type: "Convention Center",
-      collection: "Exhibition & Convention Centres",
-      rating: 4.8,
-      reviews: 156,
-      price: "₹50,000",
-      priceUnit: "per day",
-      image: "/images/gpex.jpg",
-      images: [
-        "/placeholder.svg?height=200&width=300&text=Hall+1",
-        "/placeholder.svg?height=200&width=300&text=Hall+2",
-        "/placeholder.svg?height=200&width=300&text=Hall+3",
-      ],
-      amenities: ["wifi", "parking", "catering", "security", "av"],
-      description:
-        "Premier convention center with state-of-the-art facilities and multiple halls for large-scale events.",
-      contact: {
-        phone: "+91 98765 43210",
-        email: "info@grandconvention.com",
-        website: "www.grandconvention.com",
-      },
-      availability: "Available",
-      featured: true,
-      totalHalls: 8,
-      established: "2015",
-    },
-    {
-      id: 2,
-      name: "Royal Banquet Hall",
-      location: "Delhi, India",
-      country: "India",
-      city: "Delhi",
-      address: "456 Central Delhi, New Delhi",
-      capacity: "800 people",
-      type: "Banquet Hall",
-      collection: "Banquets & Halls",
-      rating: 4.6,
-      reviews: 89,
-      price: "₹25,000",
-      priceUnit: "per day",
-      image: "/images/gpex.jpg",
-      images: [
-        "/placeholder.svg?height=200&width=300&text=Banquet+1",
-        "/placeholder.svg?height=200&width=300&text=Banquet+2",
-      ],
-      amenities: ["wifi", "parking", "catering", "av"],
-      description: "Elegant banquet hall perfect for weddings, corporate events, and celebrations.",
-      contact: {
-        phone: "+91 87654 32109",
-        email: "bookings@royalbanquet.com",
-        website: "www.royalbanquet.com",
-      },
-      availability: "Available",
-      featured: false,
-      totalHalls: 3,
-      established: "2018",
-    },
-    {
-      id: 3,
-      name: "Tech Hub Conference Center",
-      location: "London, United Kingdom",
-      country: "United Kingdom",
-      city: "London",
-      address: "789 Tech District, London",
-      capacity: "1200 people",
-      type: "Conference Center",
-      collection: "Conference Centres",
-      rating: 4.7,
-      reviews: 234,
-      price: "£450",
-      priceUnit: "per day",
-      image: "/images/gpex.jpg",
-      images: [
-        "/placeholder.svg?height=200&width=300&text=Conference+1",
-        "/placeholder.svg?height=200&width=300&text=Conference+2",
-        "/placeholder.svg?height=200&width=300&text=Conference+3",
-      ],
-      amenities: ["wifi", "parking", "catering", "security", "av"],
-      description: "Modern conference center equipped with latest technology for corporate events and seminars.",
-      contact: {
-        phone: "+44 20 7946 0958",
-        email: "events@techhub.com",
-        website: "www.techhub.com",
-      },
-      availability: "Booked",
-      featured: true,
-      totalHalls: 5,
-      established: "2020",
-    },
-    {
-      id: 4,
-      name: "Heritage Palace Hotel",
-      location: "New York, United States",
-      country: "United States",
-      city: "New York",
-      address: "321 Heritage Lane, Manhattan",
-      capacity: "2000 people",
-      type: "Hotel Venue",
-      collection: "Hotels & Resorts",
-      rating: 4.9,
-      reviews: 67,
-      price: "$850",
-      priceUnit: "per day",
-      image: "/images/gpex.jpg",
-      images: [
-        "/placeholder.svg?height=200&width=300&text=Palace+1",
-        "/placeholder.svg?height=200&width=300&text=Palace+2",
-      ],
-      amenities: ["wifi", "parking", "catering", "security"],
-      description: "Magnificent heritage hotel venue perfect for luxury weddings and premium events.",
-      contact: {
-        phone: "+1 212 555 0123",
-        email: "reservations@heritagepalace.com",
-        website: "www.heritagepalace.com",
-      },
-      availability: "Available",
-      featured: false,
-      totalHalls: 6,
-      established: "1995",
-    },
-    {
-      id: 5,
-      name: "Olympic Sports Complex",
-      location: "Sydney, Australia",
-      country: "Australia",
-      city: "Sydney",
-      address: "555 Olympic Park, Sydney",
-      capacity: "15000 people",
-      type: "Sports Complex",
-      collection: "Sports Complexes",
-      rating: 4.5,
-      reviews: 123,
-      price: "AU$1200",
-      priceUnit: "per day",
-      image: "/images/gpex.jpg",
-      images: [
-        "/placeholder.svg?height=200&width=300&text=Stadium+1",
-        "/placeholder.svg?height=200&width=300&text=Stadium+2",
-        "/placeholder.svg?height=200&width=300&text=Stadium+3",
-      ],
-      amenities: ["wifi", "parking", "catering", "security", "av"],
-      description: "World-class sports complex perfect for large sporting events and concerts.",
-      contact: {
-        phone: "+61 2 9876 5432",
-        email: "events@olympiccomplex.com",
-        website: "www.olympiccomplex.com",
-      },
-      availability: "Available",
-      featured: true,
-      totalHalls: 4,
-      established: "2000",
-    },
-    {
-      id: 6,
-      name: "Grand Auditorium",
-      location: "Toronto, Canada",
-      country: "Canada",
-      city: "Toronto",
-      address: "888 Arts District, Toronto",
-      capacity: "3000 people",
-      type: "Auditorium",
-      collection: "Auditoriums",
-      rating: 4.4,
-      reviews: 78,
-      price: "CA$600",
-      priceUnit: "per day",
-      image: "/images/gpex.jpg",
-      images: [
-        "/placeholder.svg?height=200&width=300&text=Auditorium+1",
-        "/placeholder.svg?height=200&width=300&text=Auditorium+2",
-      ],
-      amenities: ["wifi", "parking", "av"],
-      description: "Prestigious auditorium perfect for concerts, theater performances, and large presentations.",
-      contact: {
-        phone: "+1 416 555 0987",
-        email: "info@grandauditorium.com",
-        website: "www.grandauditorium.com",
-      },
-      availability: "Available",
-      featured: false,
-      totalHalls: 2,
-      established: "2010",
-    },
-  ]
+  const venues = getAllVenues() ;
 
 const popularCities = [
-  "London",
-  "New York",
-  "Tokyo",
-  "Paris",
-  "Sydney",
-  "Dubai",
-  "Singapore",
-  "Rome"
+  "Bangalore",
+  "Hyderabad",
+  "Chennai",
+  "Pune",
+  "Gurgaon",
+  "Noida",
+  "Mumbai",
 ]
 
 
@@ -316,14 +125,14 @@ const popularCities = [
   const filteredVenues = venues.filter((venue) => {
     const matchesSearch =
       venue.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      venue.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      venue.type.toLowerCase().includes(searchQuery.toLowerCase())
+      venue.location.address.toLowerCase().includes(searchQuery.toLowerCase()) 
+      // venue.type.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesCity = selectedCities.length === 0 || selectedCities.includes(venue.city)
-    const matchesCountry = selectedCountries.length === 0 || selectedCountries.includes(venue.country)
-    const matchesCollection = selectedCollections.length === 0 || selectedCollections.includes(venue.collection)
+    const matchesCity = selectedCities.length === 0 || selectedCities.includes(venue.location.city)
+    const matchesCountry = selectedCountries.length === 0 || selectedCountries.includes(venue.location.country)
+    // const matchesCollection = selectedCollections.length === 0 || selectedCollections.includes(venue..collection)
 
-    return matchesSearch && matchesCity && matchesCountry && matchesCollection
+    return matchesSearch && matchesCity && matchesCountry 
   })
 
   return (
@@ -460,12 +269,12 @@ const popularCities = [
                 <div key={venue.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group rounded-sm border-1">
                   <div className="relative">
                     <img
-                      src={venue.image || "/placeholder.svg"}
+                      src={venue.images[0] || "/placeholder.svg"}
                       alt={venue.name}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute top-3 left-3">
-                      {venue.featured && <Badge className="bg-orange-500 text-white">Featured</Badge>}
+                      {venue.isVerified && <Badge className="bg-orange-500 text-white">Featured</Badge>}
                     </div>
                     <div className="absolute top-3 right-3 flex space-x-2">
                       <Button size="sm" variant="ghost" className="bg-white/80 hover:bg-white p-2">
@@ -476,13 +285,13 @@ const popularCities = [
                       </Button>
                     </div>
                     <div className="absolute bottom-3 right-3">
-                      <Badge
+                      {/* <Badge
                         className={`${
                           venue.availability === "Available" ? "bg-green-500 text-white" : "bg-red-500 text-white"
                         }`}
                       >
-                        {venue.availability}
-                      </Badge>
+                        {venue.availability[0]}
+                      </Badge> */}
                     </div>
                   </div>
 
@@ -491,79 +300,17 @@ const popularCities = [
                       <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{venue.name}</h3>
                       <div className="flex items-center space-x-1">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm font-medium">{venue.rating}</span>
-                        <span className="text-sm text-gray-500">({venue.reviews})</span>
+                        <span className="text-sm font-medium">{venue.rating.average}</span>
+                        <span className="text-sm text-gray-500">({venue.reviews.length})</span>
                       </div>
                     </div>
 
                     <div className="flex items-center text-gray-600 mb-2">
                       <MapPin className="w-4 h-4 mr-1" />
-                      <span className="text-sm">{venue.location}</span>
+                      <span className="text-sm">{venue.location.address}</span>
                     </div>
 
-                    {/* <div className="flex items-center text-gray-600 mb-3">
-                      <Users className="w-4 h-4 mr-1" />
-                      <span className="text-sm">Up to {venue.capacity}</span>
-                      <span className="text-gray-400 mx-2">•</span>
-                      <span className="text-sm">{venue.type}</span>
-                    </div>   */}
-
-                    {/* <p className="text-sm text-gray-600 mb-4 line-clamp-2">{venue.description}</p> */}
-
-                    {/* Amenities */}
-                    {/* <div className="flex flex-wrap gap-2 mb-4">
-                      {venue.amenities.slice(0, 4).map((amenity) => (
-                        <div key={amenity} className="flex items-center space-x-1 bg-gray-100 rounded-full px-2 py-1">
-                          {getAmenityIcon(amenity)}
-                          <span className="text-xs text-gray-700">{getAmenityLabel(amenity)}</span>
-                        </div>
-                      ))}
-                      {venue.amenities.length > 4 && (
-                        <div className="flex items-center bg-gray-100 rounded-full px-2 py-1">
-                          <span className="text-xs text-gray-700">+{venue.amenities.length - 4} more</span>
-                        </div>
-                      )}
-                    </div> */}
-
-                    {/* Price and Action */}
-                    {/* <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xl font-bold text-gray-900">{venue.price}</span>
-                        <span className="text-sm text-gray-600 ml-1">{venue.priceUnit}</span>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" className="bg-transparent">
-                          View Details
-                        </Button>
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                          Book Now
-                        </Button>
-                      </div>
-                    </div> */}
-
-                    {/* Contact Info */}
-                    {/* <div className="mt-4 pt-4 border-t border-gray-100">
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <div className="flex items-center space-x-3">
-                          <div className="flex items-center">
-                            <Phone className="w-3 h-3 mr-1" />
-                            <span>Call</span>
-                          </div>
-                          <div className="flex items-center">
-                            <Mail className="w-3 h-3 mr-1" />
-                            <span>Email</span>
-                          </div>
-                          <div className="flex items-center">
-                            <Globe className="w-3 h-3 mr-1" />
-                            <span>Website</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
-                          <span>Est. {venue.established}</span>
-                        </div>
-                      </div>
-                    </div> */}
+                  
                   </CardContent>
                 </div>
               ))}

@@ -20,149 +20,149 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { getAllOrganizers } from "@/lib/data/events"
 
 // Mock organizer data
-const organizers = [
-  {
-    id: 1,
-    name: "EventPro Solutions",
-    company: "EventPro Solutions Ltd.",
-    image: "/placeholder.svg?height=200&width=300",
-    rating: 4.9,
-    reviewCount: 156,
-    location: "Mumbai, India",
-    country: "India",
-    category: "Corporate Events",
-    eventsOrganized: 245,
-    yearsExperience: 8,
-    specialties: ["Corporate Conferences", "Product Launches", "Team Building"],
-    description:
-      "Leading corporate event management company specializing in large-scale conferences and product launches.",
-    phone: "+91 98765 43210",
-    email: "contact@eventpro.com",
-    website: "www.eventpro.com",
-    verified: true,
-    featured: true,
-    totalAttendees: "50K+",
-    successRate: 98,
-    nextAvailable: "2024-02-15",
-  },
-  {
-    id: 2,
-    name: "Celebration Masters",
-    company: "Celebration Masters Inc.",
-    image: "/placeholder.svg?height=200&width=300",
-    rating: 4.8,
-    reviewCount: 203,
-    location: "Delhi, India",
-    country: "India",
-    category: "Weddings",
-    eventsOrganized: 189,
-    yearsExperience: 12,
-    specialties: ["Destination Weddings", "Traditional Ceremonies", "Reception Planning"],
-    description: "Premium wedding planners creating unforgettable moments with attention to every detail.",
-    phone: "+91 98765 43211",
-    email: "info@celebrationmasters.com",
-    website: "www.celebrationmasters.com",
-    verified: true,
-    featured: false,
-    totalAttendees: "35K+",
-    successRate: 96,
-    nextAvailable: "2024-02-20",
-  },
-  {
-    id: 3,
-    name: "TechConf Organizers",
-    company: "TechConf Global",
-    image: "/placeholder.svg?height=200&width=300",
-    rating: 4.7,
-    reviewCount: 89,
-    location: "Bangalore, India",
-    country: "India",
-    category: "Technology",
-    eventsOrganized: 67,
-    yearsExperience: 5,
-    specialties: ["Tech Conferences", "Startup Events", "Innovation Summits"],
-    description: "Specialized in organizing cutting-edge technology conferences and startup events.",
-    phone: "+91 98765 43212",
-    email: "hello@techconf.com",
-    website: "www.techconf.com",
-    verified: true,
-    featured: true,
-    totalAttendees: "25K+",
-    successRate: 94,
-    nextAvailable: "2024-02-18",
-  },
-  {
-    id: 4,
-    name: "Global Events USA",
-    company: "Global Events LLC",
-    image: "/placeholder.svg?height=200&width=300",
-    rating: 4.9,
-    reviewCount: 312,
-    location: "New York, USA",
-    country: "United States",
-    category: "International",
-    eventsOrganized: 456,
-    yearsExperience: 15,
-    specialties: ["International Conferences", "Trade Shows", "Corporate Summits"],
-    description: "Premier international event management company with global reach and expertise.",
-    phone: "+1 555-123-4567",
-    email: "contact@globaleventsusa.com",
-    website: "www.globaleventsusa.com",
-    verified: true,
-    featured: true,
-    totalAttendees: "100K+",
-    successRate: 99,
-    nextAvailable: "2024-02-12",
-  },
-  {
-    id: 5,
-    name: "London Event Co.",
-    company: "London Event Company Ltd.",
-    image: "/placeholder.svg?height=200&width=300",
-    rating: 4.6,
-    reviewCount: 178,
-    location: "London, UK",
-    country: "United Kingdom",
-    category: "Corporate Events",
-    eventsOrganized: 234,
-    yearsExperience: 10,
-    specialties: ["Business Conferences", "Networking Events", "Award Ceremonies"],
-    description: "Established London-based event organizers specializing in corporate and business events.",
-    phone: "+44 20 7123 4567",
-    email: "info@londoneventco.com",
-    website: "www.londoneventco.com",
-    verified: true,
-    featured: false,
-    totalAttendees: "45K+",
-    successRate: 95,
-    nextAvailable: "2024-02-25",
-  },
-  {
-    id: 6,
-    name: "Sydney Celebrations",
-    company: "Sydney Celebrations Pty Ltd",
-    image: "/placeholder.svg?height=200&width=300",
-    rating: 4.8,
-    reviewCount: 145,
-    location: "Sydney, Australia",
-    country: "Australia",
-    category: "Social Events",
-    eventsOrganized: 167,
-    yearsExperience: 7,
-    specialties: ["Social Gatherings", "Cultural Events", "Community Festivals"],
-    description: "Creative event organizers bringing communities together through memorable celebrations.",
-    phone: "+61 2 9123 4567",
-    email: "hello@sydneycelebrations.com",
-    website: "www.sydneycelebrations.com",
-    verified: true,
-    featured: false,
-    totalAttendees: "30K+",
-    successRate: 93,
-    nextAvailable: "2024-03-01",
-  },
-]
+const organizers =getAllOrganizers () || [];
+//   {
+//     id: 1,
+//     name: "EventPro Solutions",
+//     image: "/placeholder.svg?height=200&width=300",
+//     rating: 4.9,
+//     reviewCount: 156,
+//     location: "Mumbai, India",
+//     country: "India",
+//     category: "Corporate Events",
+//     eventsOrganized: 245,
+//     yearsofExperience: 8,
+//     specialties: ["Corporate Conferences", "Product Launches", "Team Building"],
+//     description:
+//       "Leading corporate event management company specializing in large-scale conferences and product launches.",
+//     phone: "+91 98765 43210",
+//     email: "contact@eventpro.com",
+//     website: "www.eventpro.com",
+//     verified: true,
+//     featured: true,
+//     totalAttendees: "50K+",
+//     successRate: 98,
+//     nextAvailable: "2024-02-15",
+//   },
+//   {
+//     id: 2,
+//     name: "Celebration Masters",
+//     company: "Celebration Masters Inc.",
+//     image: "/placeholder.svg?height=200&width=300",
+//     rating: 4.8,
+//     reviewCount: 203,
+//     location: "Delhi, India",
+//     country: "India",
+//     category: "Weddings",
+//     eventsOrganized: 189,
+//     yearsofExperience: 12,
+//     specialties: ["Destination Weddings", "Traditional Ceremonies", "Reception Planning"],
+//     description: "Premium wedding planners creating unforgettable moments with attention to every detail.",
+//     phone: "+91 98765 43211",
+//     email: "info@celebrationmasters.com",
+//     website: "www.celebrationmasters.com",
+//     verified: true,
+//     featured: false,
+//     totalAttendees: "35K+",
+//     successRate: 96,
+//     nextAvailable: "2024-02-20",
+//   },
+//   {
+//     id: 3,
+//     name: "TechConf Organizers",
+//     company: "TechConf Global",
+//     image: "/placeholder.svg?height=200&width=300",
+//     rating: 4.7,
+//     reviewCount: 89,
+//     location: "Bangalore, India",
+//     country: "India",
+//     category: "Technology",
+//     eventsOrganized: 67,
+//     yearsofExperience: 5,
+//     specialties: ["Tech Conferences", "Startup Events", "Innovation Summits"],
+//     description: "Specialized in organizing cutting-edge technology conferences and startup events.",
+//     phone: "+91 98765 43212",
+//     email: "hello@techconf.com",
+//     website: "www.techconf.com",
+//     verified: true,
+//     featured: true,
+//     totalAttendees: "25K+",
+//     successRate: 94,
+//     nextAvailable: "2024-02-18",
+//   },
+//   {
+//     id: 4,
+//     name: "Global Events USA",
+//     company: "Global Events LLC",
+//     image: "/placeholder.svg?height=200&width=300",
+//     rating: 4.9,
+//     reviewCount: 312,
+//     location: "New York, USA",
+//     country: "United States",
+//     category: "International",
+//     eventsOrganized: 456,
+//     yearsofExperience: 15,
+//     specialties: ["International Conferences", "Trade Shows", "Corporate Summits"],
+//     description: "Premier international event management company with global reach and expertise.",
+//     phone: "+1 555-123-4567",
+//     email: "contact@globaleventsusa.com",
+//     website: "www.globaleventsusa.com",
+//     verified: true,
+//     featured: true,
+//     totalAttendees: "100K+",
+//     successRate: 99,
+//     nextAvailable: "2024-02-12",
+//   },
+//   {
+//     id: 5,
+//     name: "London Event Co.",
+//     company: "London Event Company Ltd.",
+//     image: "/placeholder.svg?height=200&width=300",
+//     rating: 4.6,
+//     reviewCount: 178,
+//     location: "London, UK",
+//     country: "United Kingdom",
+//     category: "Corporate Events",
+//     eventsOrganized: 234,
+//     yearsofExperience: 10,
+//     specialties: ["Business Conferences", "Networking Events", "Award Ceremonies"],
+//     description: "Established London-based event organizers specializing in corporate and business events.",
+//     phone: "+44 20 7123 4567",
+//     email: "info@londoneventco.com",
+//     website: "www.londoneventco.com",
+//     verified: true,
+//     featured: false,
+//     totalAttendees: "45K+",
+//     successRate: 95,
+//     nextAvailable: "2024-02-25",
+//   },
+//   {
+//     id: 6,
+//     name: "Sydney Celebrations",
+//     company: "Sydney Celebrations Pty Ltd",
+//     image: "/placeholder.svg?height=200&width=300",
+//     rating: 4.8,
+//     reviewCount: 145,
+//     location: "Sydney, Australia",
+//     country: "Australia",
+//     category: "Social Events",
+//     eventsOrganized: 167,
+//     yearsofExperience: 7,
+//     specialties: ["Social Gatherings", "Cultural Events", "Community Festivals"],
+//     description: "Creative event organizers bringing communities together through memorable celebrations.",
+//     phone: "+61 2 9123 4567",
+//     email: "hello@sydneycelebrations.com",
+//     website: "www.sydneycelebrations.com",
+//     verified: true,
+//     featured: false,
+//     totalAttendees: "30K+",
+//     successRate: 93,
+//     nextAvailable: "2024-03-01",
+//   },
+// ]
 
 const cities = [
   "Mumbai",
@@ -214,9 +214,9 @@ export default function OrganizersPage() {
     const filtered = organizers.filter((organizer) => {
       const matchesSearch =
         organizer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        organizer.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        organizer.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        organizer.specialties.some((specialty) => specialty.toLowerCase().includes(searchTerm.toLowerCase()))
+        organizer.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        organizer.website.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        organizer.specialties?.some((specialty) => specialty.toLowerCase().includes(searchTerm.toLowerCase())) || false
 
       const matchesCity =
         selectedCities.length === 0 || selectedCities.some((city) => organizer.location.includes(city))
@@ -234,7 +234,7 @@ export default function OrganizersPage() {
         case "rating":
           return b.rating - a.rating
         case "experience":
-          return b.yearsExperience - a.yearsExperience
+          return b.yearsOfExperience - a.yearsOfExperience
         case "events":
           return b.eventsOrganized - a.eventsOrganized
         case "name":
@@ -451,7 +451,7 @@ export default function OrganizersPage() {
                       <img
                         src={organizer.image || "/placeholder.svg"}
                         alt={organizer.name}
-                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-48  group-hover:scale-105 transition-transform duration-300"
                       />
                         {/* {organizer.featured && (
                         <Badge className="absolute top-3 left-3 bg-orange-500 hover:bg-orange-600">Featured</Badge>
@@ -484,7 +484,7 @@ export default function OrganizersPage() {
                       <div className="flex justify-between items-start mb-3">
                         <div>
                           <h3 className="font-semibold text-lg text-gray-900 mb-1">{organizer.name}</h3>
-                          <p className="text-sm text-gray-600">{organizer.company}</p>
+                          {/* <p className="text-sm text-gray-600">{organizer.company}</p> */}
                         </div>
                         <div className="flex items-center gap-1">
                           <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -501,7 +501,7 @@ export default function OrganizersPage() {
                       <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
-                          <span>{organizer.yearsExperience} years</span>
+                          <span>{organizer.yearsOfExperience} years</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <TrendingUp className="h-4 w-4" />

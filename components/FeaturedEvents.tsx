@@ -3,6 +3,8 @@
 import { Share2, MapPin, Calendar, ChevronLeft, ChevronRight } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { events } from "@/lib/data/events"
+import { Button } from "./ui/button"
+import Link from "next/link"
 
 // Filter only featured events
 const featuredEvents = Object.values(events).filter((event) => event.featured)
@@ -95,10 +97,12 @@ export default function FeaturedEvents() {
                 transform: `translateX(-${currentSlide * 100}%)`,
               }}
             >
+              
               {slides.map((slideEvents, slideIndex) => (
                 <div key={slideIndex} className="w-full flex-shrink-0">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {slideEvents.map((event, eventIndex) => (
+                       <Link href={`/event/${event.id}`} key={eventIndex} className="cursor-pointer">
                       <div
                         key={event.id}
                         className="bg-white border border-gray-200 rounded-sm p-4 hover:shadow-md transition-all duration-200 hover:border-blue-300 group"
@@ -164,6 +168,7 @@ export default function FeaturedEvents() {
                             
                             </div>
                       </div>
+                      </Link>
                     ))}
 
                     {/* Fill empty slots if needed */}

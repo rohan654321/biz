@@ -4,6 +4,37 @@ export interface EventImage {
   alt: string
   type: "main" | "gallery"
 }
+export interface Organizer{
+  id: string
+  name: string
+  image: string
+  rating: number
+  reviewCount: number
+  location: string
+  country: string
+  category: string
+  eventsOrganized: number
+  yearsOfExperience: number
+  specialties?: string[]
+  description: string
+  phone: string
+  email: string
+  avatar: string
+  website: string
+  verified: boolean
+  founded: string
+  headquarters: string
+  certifications?: string[]
+  achievements?: string[]
+  fullDescription: string
+  companySize?: string[]
+  socialMedia?: {
+    linkedin?: string
+    twitter?: string
+    facebook?: string
+    instagram?: string
+  }
+}
 
 export interface EventOrganizer {
   id: string
@@ -260,6 +291,19 @@ export interface Venue {
   isPremium: boolean
 }
 
+/*---------- upcomming events ----------*/
+export interface UpcomingEvent {
+  id: string
+  title: string
+  date: string
+  location: {
+    city: string
+    country: string
+    venueName: string
+  }
+  image: string
+}
+
 // Mock event data with comprehensive organizer information
 export const events: Record<string, Event> = {
   "catering-decor-expo-2025": {
@@ -489,9 +533,9 @@ export const events: Record<string, Event> = {
     vip: true,
   },
     "India-fintech-expo": {
-    id: "london-fintech-expo",
+    id: "India-fintech-expo",
      logo: "/logo/logo.png",
-    title: "London FinTech Expo",
+    title: "India-fintech-expo",
     description: "Europe's largest financial technology exhibition and conference.",
     highlights: ["Blockchain", "Digital Banking", "Cryptocurrency"],
     location: {
@@ -1238,7 +1282,193 @@ export const events: Record<string, Event> = {
   },
 }
 
+export const organizers: Organizer[] = [ 
+  {
+    id: "fintech-london",
+    name: "FinTech London Events",
+    image: "/images/signupimg.png",
+    description: "Premier financial technology event organizer connecting Europe's fintech ecosystem",
+    phone: "+44 20 7946 0958",
+    email: "fintech5.gmail.com" ,
+    avatar: "/placeholder.svg?height=128&width=128&text=FinTechLDN",
+    website: "https://fintechlondon.com",
+    founded: "2011",
+    headquarters: "London, United Kingdom",
+    location: "London, UK",
+    country: "United Kingdom",
+    category: "Finance",
+    rating:4.6,
+    reviewCount:180,
+    eventsOrganized: 25,
+    yearsOfExperience: 13,
+    verified: true,
+    specialties: ["FinTech Conferences", "Blockchain Events", "Digital Banking Summits", "Crypto Exhibitions"],
+    certifications: [
+      "Financial Services Event Management",
+      "FinTech Specialist Certification",
+      "European Event Standards",
+      "Financial Regulation Compliance",
+    ],
+    achievements: [
+      "Best FinTech Event Organizer Europe 2023",
+      "Excellence in Financial Innovation",
+      "Top Financial Technology Conference Company",
+      "European FinTech Leadership Award",
+      "Blockchain Innovation Recognition",
+    ],
+    fullDescription:
+      "FinTech London Events has been driving Europe's financial technology revolution for over 13 years. We organize premier fintech conferences and exhibitions that connect traditional financial institutions with innovative technology companies, regulatory bodies with disruptive startups, and investors with groundbreaking opportunities. Our events have facilitated the adoption of blockchain technology, digital banking solutions, and cryptocurrency innovations across Europe. We are committed to advancing financial technology and promoting regulatory clarity in the evolving fintech landscape.",
 
+  },
+    {
+    id: "techsummit-bangalore",
+    name: "TechSummit Bangalore",
+    image: "/images/signupimg.png",
+    description: "India’s leading technology summit bringing together innovators, startups, and global enterprises",
+    phone: "+91 80 4567 8901",
+    email: "techsumit.gmail.com" ,
+    avatar: "/placeholder.svg?height=128&width=128&text=FinTechLDN",
+    website: "https://techsummitblr.com",
+    founded: "2014",
+    headquarters: "Bangalore, India",
+    country: "India",
+    category: "Technology",
+    location: "Bangalore, India",
+    rating:3.8,
+    reviewCount:120,
+    eventsOrganized: 30,
+    yearsOfExperience: 9,
+    verified: true,
+    specialties: ["AI & Machine Learning", "Cloud Computing", "IoT & Robotics", "Startup Networking"],
+    certifications: [
+      "ISO 9001: Event Management",
+      "Global Tech Standards",
+      "Innovation Leadership Certification",
+      "Sustainability in Events",
+    ],  
+    achievements: [
+       "Top Tech Event Asia 2022",
+      "Best Startup Showcase Platform",
+      "Global AI Innovation Award",
+      "Sustainable Event Excellence",
+      "Tech Leadership Recognition India",
+    ],
+    fullDescription:
+      "TechSummit Bangalore is India’s premier technology event platform that fosters innovation, entrepreneurship, and global partnerships. Since 2014, we have hosted thousands of innovators, startup founders, tech leaders, and investors. Our events showcase breakthroughs in AI, IoT, Cloud Computing, and Robotics, driving India’s role as a global technology hub.",
+
+  },
+    {
+    id: "medexpo-Dubai",
+    name: "MedExpo Dubai",
+    image: "/images/signupimg.png",
+    description: "Global healthcare and medicical technology exhibition in the middle east",
+    phone: "+971 4 5678 9012",
+    email: "fintech5.gmail.com" ,
+    avatar: "/placeholder.svg?height=128&width=128&text=FinTechLDN",
+    website: "https://fintechlondon.com",
+    founded: "2007",
+    headquarters: "Dubai, UAE",
+    location: "Dubai, UAE",
+    country: "UAE",
+    category: "Healthcare",
+    rating:5,
+    reviewCount:250,
+    eventsOrganized: 50,
+    yearsOfExperience: 16,
+    verified: true,
+    specialties: ["Healthcare Conferences", "Medical Device Exhibitions", "Pharma Innovations", "Digital Health"],
+    certifications: [
+      "Healthcare Event Accreditation",
+      "Global Medical Standards",
+      "Pharma Regulation Compliance",
+      "ISO 13485 Certified Events",
+    ],
+    achievements: [
+      "Largest Healthcare Event in Middle East 2023",
+      "Best Medical Expo Organizer Award",
+      "Global Pharma Networking Excellence",
+      "Innovation in Digital Health Events",
+      "Top International Exhibitor Platform",
+    ],
+    fullDescription:
+      "MedExpo Dubai is the Middle East’s largest and most influential medical exhibition, connecting healthcare professionals, medical technology companies, pharmaceutical giants, and policymakers. Since 2007, it has played a critical role in advancing medical research, digital health adoption, and international collaboration in healthcare.",
+
+  },
+    {
+    id: "green-energy-berlin",
+    name: "Green Energy Berlin",
+    image: "/images/signupimg.png",
+    description: "Driving Europe’s renewable energy revolution through global conferences and exhibitions",
+    phone: "+49 30 9876 5432",
+    email: "events@greenenergy.gmail.com" ,
+    avatar: "/placeholder.svg?height=128&width=128&text=FinTechLDN",
+    website: "https://greenenergyberlin.de",
+    founded: "2010",
+    headquarters: "Berlin, Germany",
+    location: "Berlin, Germany",
+    country: "Germany",
+    category: "Energy",
+    rating: 4.7,
+    reviewCount: 95,
+    eventsOrganized: 40,
+    yearsOfExperience: 13,
+    verified: true,
+    specialties: ["Renewable Energy Summits", "Solar & Wind Conferences", "Climate Action Events", "Sustainable Tech Exhibitions"],
+    certifications: [
+      "European Energy Event Standards",
+      "Sustainability Certification",
+      "Renewable Innovation Accreditation",
+      "ISO 14001 Environmental Compliance",
+    ],
+    achievements: [
+      "Best Renewable Energy Event Europe 2022",
+      "Climate Action Leadership Award",
+      "Top Sustainability Conference Platform",
+      "Global Clean Energy Innovation Award",
+      "Green Tech Excellence Recognition",
+    ],
+    fullDescription:
+      "GreenEnergy Berlin is a leading European platform dedicated to renewable energy, sustainability, and climate action. Since 2010, our conferences and exhibitions have united policymakers, renewable tech innovators, investors, and NGOs to accelerate the transition towards a green future.",
+
+  },
+    {
+    id: "edtech-newyork",
+    name: "EdTech New York",
+    image: "/images/signupimg.png",
+    description: "Shaping the future of education through innovation, technology, and global collaboration",
+    phone: "+1 212 555 0198",
+    email: "helloedtech@gmail.com" ,
+    avatar: "/placeholder.svg?height=128&width=128&text=FinTechLDN",
+    website: "https://edtechnyc.org",
+    founded: "2016",
+    headquarters: "New York, United States",
+    location: "New York, USA",
+    country: "USA",
+    category: "Education",
+    rating: 4.5,
+    reviewCount: 210,
+    eventsOrganized: 20,
+    yearsOfExperience: 7,
+    verified: true,
+    specialties: ["EdTech Conferences", "E-Learning Exhibitions", "AI in Education Summits", "Higher Education Innovation"],
+    certifications: [
+      "EdTech Innovation Certification",
+      "Global Education Standards",
+      "Digital Learning Accreditation",
+      "Event Management ISO 20121",
+    ],
+    achievements: [
+       "Top EdTech Event North America 2023",
+      "Education Innovation Excellence Award",
+      "Best E-Learning Platform Showcase",
+      "Global Higher Education Networking Recognition",
+      "AI in Education Leadership Award",
+    ],
+    fullDescription:
+      "EdTech New York is the leading event organizer for educational technology, bringing together educators, entrepreneurs, tech leaders, and policymakers. Since 2016, we have been shaping the future of education by showcasing advancements in digital learning, AI-driven education, and higher education innovation.",
+  }
+  
+];
 export const users: User[] = [
  {
   id: '1',
@@ -1415,7 +1645,7 @@ export const venues: Venue[] = [
     description:
       "Mumbai's premier exhibition and convention center, offering world-class facilities for trade shows, conferences, and corporate events. Located in the heart of Goregaon East with excellent connectivity.",
     images: [
-      "/placeholder.svg?height=400&width=600&text=Bombay+Exhibition+Centre+Main",
+      "/city/c1.jpg",
       "/placeholder.svg?height=300&width=400&text=Exhibition+Hall",
       "/placeholder.svg?height=300&width=400&text=Conference+Room",
       "/placeholder.svg?height=300&width=400&text=Lobby+Area",
@@ -1564,11 +1794,483 @@ export const venues: Venue[] = [
     isVerified: true,
     isPremium: true,
   },
+   {
+    id: "Delhi-exhibition-centre",
+    name: "Delhi Exhibition Centre",
+    description:
+      "Delhi's premier exhibition and convention center, offering world-class facilities for trade shows, conferences, and corporate events. Located in the heart of Goregaon East with excellent connectivity.",
+    images: [
+      "/city/c3.jpg",
+      "/placeholder.svg?height=300&width=400&text=Exhibition+Hall",
+      "/placeholder.svg?height=300&width=400&text=Conference+Room",
+      "/placeholder.svg?height=300&width=400&text=Lobby+Area",
+    ],
+    location: {
+      address: "Pragati Maidan, New Delhi",
+      city: "Delhi",
+      state: "Delhi",
+      country: "India",
+      zipCode: "400063",
+      coordinates: {
+        lat: 19.1595,
+        lng: 72.8656,
+      },
+    },
+    contact: {
+      phone: "+91 22 6671 7000",
+      email: "info@delhiexhibitioncentre.com",
+      website: "https://delhiexhibitioncentre.com",
+    },
+    capacity: {
+      total: 5000,
+      theater: 3000,
+      banquet: 2500,
+      cocktail: 4000,
+      classroom: 1500,
+    },
+    amenities: [
+      "Air Conditioning",
+      "High-Speed WiFi",
+      "Audio/Visual Equipment",
+      "Parking for 1000+ vehicles",
+      "Food Court",
+      "VIP Lounges",
+      "Security Services",
+      "Wheelchair Accessible",
+      "Business Center",
+      "Catering Services",
+    ],
+    meetingSpaces: [
+      {
+        id: "main-hall",
+        name: "Main Exhibition Hall",
+        capacity: 5000,
+        area: 15000,
+        features: ["Modular Layout", "High Ceiling", "Loading Dock", "Climate Control"],
+        hourlyRate: 25000,
+        images: ["/placeholder.svg?height=300&width=400&text=Main+Hall"],
+      },
+      {
+        id: "conference-room-a",
+        name: "Conference Room A",
+        capacity: 200,
+        area: 500,
+        features: ["Projector", "Sound System", "Video Conferencing", "Whiteboard"],
+        hourlyRate: 5000,
+        images: ["/placeholder.svg?height=300&width=400&text=Conference+A"],
+      },
+      {
+        id: "boardroom",
+        name: "Executive Boardroom",
+        capacity: 25,
+        area: 100,
+        features: ["Premium Furniture", "Smart TV", "Coffee Station", "Private Entrance"],
+        hourlyRate: 3000,
+        images: ["/placeholder.svg?height=300&width=400&text=Boardroom"],
+      },
+    ],
+    pricing: {
+      baseRate: 15000,
+      currency: "₹",
+      packages: [
+        {
+          name: "Basic Package",
+          price: 50000,
+          includes: ["Venue Rental", "Basic AV Equipment", "Security", "Cleaning"],
+        },
+        {
+          name: "Premium Package",
+          price: 85000,
+          includes: ["Venue Rental", "Full AV Setup", "Catering", "Decoration", "Event Coordination"],
+        },
+        {
+          name: "Corporate Package",
+          price: 120000,
+          includes: ["Venue Rental", "Premium AV", "Catering", "Branding", "Photography", "Event Management"],
+        },
+      ],
+    },
+    availability: {
+      "2025-01-15": false,
+      "2025-01-16": false,
+      "2025-01-17": false,
+      "2025-02-15": false,
+      "2025-02-16": false,
+      "2025-02-17": false,
+      "2025-03-10": true,
+      "2025-03-11": true,
+      "2025-03-12": true,
+    },
+    rating: {
+      average: 4.5,
+      count: 234,
+      breakdown: {
+        service: 4.6,
+        facilities: 4.4,
+        location: 4.7,
+        value: 4.3,
+      },
+    },
+    reviews: [
+      {
+        id: "r1",
+        author: "Rajesh Kumar",
+        rating: 5,
+        comment:
+          "Excellent venue for our annual conference. The facilities were top-notch and the staff was very professional.",
+        date: "2024-12-15",
+        eventType: "Corporate Conference",
+      },
+      {
+        id: "r2",
+        author: "Priya Sharma",
+        rating: 4,
+        comment: "Great location and good facilities. The parking was convenient and the venue was well-maintained.",
+        date: "2024-11-28",
+        eventType: "Trade Show",
+      },
+      {
+        id: "r3",
+        author: "Amit Patel",
+        rating: 5,
+        comment:
+          "Perfect venue for our product launch. The technical support team was excellent and everything went smoothly.",
+        date: "2024-10-20",
+        eventType: "Product Launch",
+      },
+    ],
+    policies: {
+      cancellation:
+        "48 hours advance notice required for cancellation. 50% refund for cancellations made 7 days prior.",
+      catering: "External catering allowed with prior approval. In-house catering services available.",
+      parking: "Complimentary parking for up to 1000 vehicles. Valet parking available at additional cost.",
+      accessibility: "Fully wheelchair accessible with ramps, elevators, and accessible restrooms.",
+    },
+    isVerified: true,
+    isPremium: true,
+  },
+   {
+    id: "Bangalore-exhibition-centre",
+    name: "Bangalore Exhibition Centre",
+    description:
+      "Bangalore's premier exhibition and convention center, offering world-class facilities for trade shows, conferences, and corporate events. Located in the heart of Goregaon East with excellent connectivity.",
+    images: [
+      "/city/c2.jpg",
+      "/placeholder.svg?height=300&width=400&text=Exhibition+Hall",
+      "/placeholder.svg?height=300&width=400&text=Conference+Room",
+      "/placeholder.svg?height=300&width=400&text=Lobby+Area",
+    ],
+    location: {
+      address: "Palace ground",
+      city: "Bangalore",
+      state: "Karnataka",
+      country: "Canada",
+      zipCode: "560092",
+      coordinates: {
+        lat: 19.1595,
+        lng: 72.8656,
+      },
+    },
+    contact: {
+      phone: "+91 22 6671 7000",
+      email: "info@bangaloreexhibitioncentre.com",
+      website: "https://bangaloreexhibitioncentre.com",
+    },
+    capacity: {
+      total: 5000,
+      theater: 3000,
+      banquet: 2500,
+      cocktail: 4000,
+      classroom: 1500,
+    },
+    amenities: [
+      "Air Conditioning",
+      "High-Speed WiFi",
+      "Audio/Visual Equipment",
+      "Parking for 1000+ vehicles",
+      "Food Court",
+      "VIP Lounges",
+      "Security Services",
+      "Wheelchair Accessible",
+      "Business Center",
+      "Catering Services",
+    ],
+    meetingSpaces: [
+      {
+        id: "main-hall",
+        name: "Main Exhibition Hall",
+        capacity: 5000,
+        area: 15000,
+        features: ["Modular Layout", "High Ceiling", "Loading Dock", "Climate Control"],
+        hourlyRate: 25000,
+        images: ["/placeholder.svg?height=300&width=400&text=Main+Hall"],
+      },
+      {
+        id: "conference-room-a",
+        name: "Conference Room A",
+        capacity: 200,
+        area: 500,
+        features: ["Projector", "Sound System", "Video Conferencing", "Whiteboard"],
+        hourlyRate: 5000,
+        images: ["/placeholder.svg?height=300&width=400&text=Conference+A"],
+      },
+      {
+        id: "boardroom",
+        name: "Executive Boardroom",
+        capacity: 25,
+        area: 100,
+        features: ["Premium Furniture", "Smart TV", "Coffee Station", "Private Entrance"],
+        hourlyRate: 3000,
+        images: ["/placeholder.svg?height=300&width=400&text=Boardroom"],
+      },
+    ],
+    pricing: {
+      baseRate: 15000,
+      currency: "₹",
+      packages: [
+        {
+          name: "Basic Package",
+          price: 50000,
+          includes: ["Venue Rental", "Basic AV Equipment", "Security", "Cleaning"],
+        },
+        {
+          name: "Premium Package",
+          price: 85000,
+          includes: ["Venue Rental", "Full AV Setup", "Catering", "Decoration", "Event Coordination"],
+        },
+        {
+          name: "Corporate Package",
+          price: 120000,
+          includes: ["Venue Rental", "Premium AV", "Catering", "Branding", "Photography", "Event Management"],
+        },
+      ],
+    },
+    availability: {
+      "2025-01-15": false,
+      "2025-01-16": false,
+      "2025-01-17": false,
+      "2025-02-15": false,
+      "2025-02-16": false,
+      "2025-02-17": false,
+      "2025-03-10": true,
+      "2025-03-11": true,
+      "2025-03-12": true,
+    },
+    rating: {
+      average: 4.5,
+      count: 234,
+      breakdown: {
+        service: 4.6,
+        facilities: 4.4,
+        location: 4.7,
+        value: 4.3,
+      },
+    },
+    reviews: [
+      {
+        id: "r1",
+        author: "Rajesh Kumar",
+        rating: 5,
+        comment:
+          "Excellent venue for our annual conference. The facilities were top-notch and the staff was very professional.",
+        date: "2024-12-15",
+        eventType: "Corporate Conference",
+      },
+      {
+        id: "r2",
+        author: "Priya Sharma",
+        rating: 4,
+        comment: "Great location and good facilities. The parking was convenient and the venue was well-maintained.",
+        date: "2024-11-28",
+        eventType: "Trade Show",
+      },
+      {
+        id: "r3",
+        author: "Amit Patel",
+        rating: 5,
+        comment:
+          "Perfect venue for our product launch. The technical support team was excellent and everything went smoothly.",
+        date: "2024-10-20",
+        eventType: "Product Launch",
+      },
+    ],
+    policies: {
+      cancellation:
+        "48 hours advance notice required for cancellation. 50% refund for cancellations made 7 days prior.",
+      catering: "External catering allowed with prior approval. In-house catering services available.",
+      parking: "Complimentary parking for up to 1000 vehicles. Valet parking available at additional cost.",
+      accessibility: "Fully wheelchair accessible with ramps, elevators, and accessible restrooms.",
+    },
+    isVerified: true,
+    isPremium: true,
+  },
+   {
+    id: "Hyderabad-exhibition-centre",
+    name: "Hyderabad Exhibition Centre",
+    description:
+      "Hyderabad's premier exhibition and convention center, offering world-class facilities for trade shows, conferences, and corporate events. Located in the heart of Goregaon East with excellent connectivity.",
+    images: [
+      "/city/c4.jpg",
+      "/placeholder.svg?height=300&width=400&text=Exhibition+Hall",
+      "/placeholder.svg?height=300&width=400&text=Conference+Room",
+      "/placeholder.svg?height=300&width=400&text=Lobby+Area",
+    ],
+    location: {
+      address: "Western Express Highway, hyderabad",
+      city: "Hyderabad",
+      state: "Telanagana",
+      country: "India",
+      zipCode: "400063",
+      coordinates: {
+        lat: 19.1595,
+        lng: 72.8656,
+      },
+    },
+    contact: {
+      phone: "+91 22 6671 7000",
+      email: "info@hyderabadexhibitioncentre.com",
+      website: "https://hyderabadexhibitioncentre.com",
+    },
+    capacity: {
+      total: 5000,
+      theater: 3000,
+      banquet: 2500,
+      cocktail: 4000,
+      classroom: 1500,
+    },
+    amenities: [
+      "Air Conditioning",
+      "High-Speed WiFi",
+      "Audio/Visual Equipment",
+      "Parking for 1000+ vehicles",
+      "Food Court",
+      "VIP Lounges",
+      "Security Services",
+      "Wheelchair Accessible",
+      "Business Center",
+      "Catering Services",
+    ],
+    meetingSpaces: [
+      {
+        id: "main-hall",
+        name: "Main Exhibition Hall",
+        capacity: 5000,
+        area: 15000,
+        features: ["Modular Layout", "High Ceiling", "Loading Dock", "Climate Control"],
+        hourlyRate: 25000,
+        images: ["/placeholder.svg?height=300&width=400&text=Main+Hall"],
+      },
+      {
+        id: "conference-room-a",
+        name: "Conference Room A",
+        capacity: 200,
+        area: 500,
+        features: ["Projector", "Sound System", "Video Conferencing", "Whiteboard"],
+        hourlyRate: 5000,
+        images: ["/placeholder.svg?height=300&width=400&text=Conference+A"],
+      },
+      {
+        id: "boardroom",
+        name: "Executive Boardroom",
+        capacity: 25,
+        area: 100,
+        features: ["Premium Furniture", "Smart TV", "Coffee Station", "Private Entrance"],
+        hourlyRate: 3000,
+        images: ["/placeholder.svg?height=300&width=400&text=Boardroom"],
+      },
+    ],
+    pricing: {
+      baseRate: 15000,
+      currency: "₹",
+      packages: [
+        {
+          name: "Basic Package",
+          price: 50000,
+          includes: ["Venue Rental", "Basic AV Equipment", "Security", "Cleaning"],
+        },
+        {
+          name: "Premium Package",
+          price: 85000,
+          includes: ["Venue Rental", "Full AV Setup", "Catering", "Decoration", "Event Coordination"],
+        },
+        {
+          name: "Corporate Package",
+          price: 120000,
+          includes: ["Venue Rental", "Premium AV", "Catering", "Branding", "Photography", "Event Management"],
+        },
+      ],
+    },
+    availability: {
+      "2025-01-15": false,
+      "2025-01-16": false,
+      "2025-01-17": false,
+      "2025-02-15": false,
+      "2025-02-16": false,
+      "2025-02-17": false,
+      "2025-03-10": true,
+      "2025-03-11": true,
+      "2025-03-12": true,
+    },
+    rating: {
+      average: 4.5,
+      count: 234,
+      breakdown: {
+        service: 4.6,
+        facilities: 4.4,
+        location: 4.7,
+        value: 4.3,
+      },
+    },
+    reviews: [
+      {
+        id: "r1",
+        author: "Rajesh Kumar",
+        rating: 5,
+        comment:
+          "Excellent venue for our annual conference. The facilities were top-notch and the staff was very professional.",
+        date: "2024-12-15",
+        eventType: "Corporate Conference",
+      },
+      {
+        id: "r2",
+        author: "Priya Sharma",
+        rating: 4,
+        comment: "Great location and good facilities. The parking was convenient and the venue was well-maintained.",
+        date: "2024-11-28",
+        eventType: "Trade Show",
+      },
+      {
+        id: "r3",
+        author: "Amit Patel",
+        rating: 5,
+        comment:
+          "Perfect venue for our product launch. The technical support team was excellent and everything went smoothly.",
+        date: "2024-10-20",
+        eventType: "Product Launch",
+      },
+    ],
+    policies: {
+      cancellation:
+        "48 hours advance notice required for cancellation. 50% refund for cancellations made 7 days prior.",
+      catering: "External catering allowed with prior approval. In-house catering services available.",
+      parking: "Complimentary parking for up to 1000 vehicles. Valet parking available at additional cost.",
+      accessibility: "Fully wheelchair accessible with ramps, elevators, and accessible restrooms.",
+    },
+    isVerified: true,
+    isPremium: true,
+  },
 ]
+export const UpcomingEvents: Record<string,UpcomingEvent>={
+}
 
 // Helper functions
+
 export function getEventById(id: string): Event | undefined {
   return events[id]
+}
+
+export function getAllOrganizers(): Organizer[] {
+  return organizers
 }
 
 export function getAllEvents(): Event[] {

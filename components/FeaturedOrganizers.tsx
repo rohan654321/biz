@@ -4,17 +4,11 @@ import { useEffect, useRef, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { MoreHorizontal } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { on } from "events"
+import { getAllOrganizers } from "@/lib/data/events"
 
-const organizers = [
-  { id: 1, name: "Max Events Pvt Ltd", logo: "/Organizers/maxx.png", description: "Leading event organizer", events:"5" },
-  { id: 2, name: "Max Exhibitions", logo: "/Organizers/maxx.png", description: "Exhibition specialists", events:"5" },
-  { id: 3, name: "Max Conferences", logo: "/Organizers/maxx.png", description: "Conference organizers", events:"5" },
-  { id: 4, name: "Max Trade Shows", logo: "/Organizers/maxx.png", description: "Trade show experts", events:"5" },
-  { id: 5, name: "Max Corporate Events", logo: "/Organizers/maxx.png", description: "Corporate event planners", events:"5" },
-  { id: 6, name: "Max Entertainment", logo: "/Organizers/maxx.png", description: "Entertainment events", events:"5" },
-  { id: 7, name: "Max Sports Events", logo: "/Organizers/maxx.png", description: "Sports event organizers", events:"5" },
-  { id: 8, name: "Max Cultural Events", logo: "/Organizers/maxx.png", description: "Cultural event specialists", events:"5" },
-]
+
+const organizers = getAllOrganizers()
 
 export default function FeaturedOrganizers() {
   const scrollRef = useRef<HTMLDivElement | null>(null)
@@ -46,7 +40,7 @@ export default function FeaturedOrganizers() {
 
    const handleViewAllClick = () => {
     // Navigate to all events
-    router.push("/event")
+    router.push("/organizer")
   }
 
   return (
@@ -86,6 +80,7 @@ export default function FeaturedOrganizers() {
             scrollbarWidth: "none", // Firefox
             msOverflowStyle: "none", // IE/Edge
           }}
+          
         >
           <style jsx>{`
             div::-webkit-scrollbar {
@@ -93,14 +88,15 @@ export default function FeaturedOrganizers() {
             }
           `}</style>
 
-          {organizers.map((organizer) => (
+          {organizers.map((organizer:any) => (
             <div
+              onClick={() => router.push(`/organizer/${organizer.id}`)}
               key={organizer.id}
-              className="min-w-[250px] bg-white border border-gray-200 rounded-sm p-5 flex-shrink-0 hover:shadow-md hover:border-gray-300 transition duration-200"
+              className="max-w-[200px] bg-white border border-gray-200 rounded-sm p-1 flex-shrink-0 hover:shadow-md hover:border-gray-300 transition duration-200"
             >
               <div className="flex items-center justify-center h-10 mb-4">
                 <img
-                  src={organizer.logo}
+                  src={organizer.image}
                   alt={organizer.name}
                   className="max-h-full max-w-full object-contain"
                 />
