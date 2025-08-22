@@ -7,129 +7,268 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import {
-  Plus,
-  X,
-  Upload,
-  MapPin,
-  IndianRupee,
-  Star,
-  Calendar,
-  Building,
-  Camera,
-  FileText,
-  Layout,
-  Hotel,
-  Plane,
-} from "lucide-react"
+import { Calendar, MapPin, Clock, IndianRupee, Upload, X, Plus, Eye, Save, Send } from "lucide-react"
+import Image from "next/image"
+
+interface SpaceCost {
+  type: string
+  description: string
+  pricePerSqm?: number
+  minArea?: number
+  pricePerUnit?: number
+  unit?: string
+  isFixed: boolean
+}
+
+interface EventFormData {
+  // Basic Info
+  title: string
+  description: string
+  eventType: string
+  categories: string[]
+  startDate: string
+  endDate: string
+  dailyStart: string
+  dailyEnd: string
+  timezone: string
+  venue: string
+  city: string
+  address: string
+
+  // Pricing
+  currency: string
+  generalPrice: number
+  studentPrice: number
+  vipPrice: number
+
+  // Event Details
+  highlights: string[]
+  tags: string[]
+  dressCode: string
+  ageLimit: string
+  featured: boolean
+  vip: boolean
+
+  // Space Costs
+  spaceCosts: SpaceCost[]
+
+  // Media
+  images: string[]
+  brochure: string
+  layoutPlan: string
+
+  // Features
+  featuredHotels: Array<{
+    name: string
+    category: string
+    rating: number
+    image: string
+  }>
+  travelPartners: Array<{
+    name: string
+    category: string
+    rating: number
+    image: string
+    description: string
+  }>
+  touristAttractions: Array<{
+    name: string
+    category: string
+    rating: number
+    image: string
+    description: string
+  }>
+}
 
 export default function CreateEvent() {
-  const [eventData, setEventData] = useState({
-    // Basic Information
+  const [activeTab, setActiveTab] = useState("basic")
+  const [formData, setFormData] = useState<EventFormData>({
     title: "",
     description: "",
     eventType: "",
-    categories: [] as string[],
-
-    // Timing
+    categories: [],
     startDate: "",
     endDate: "",
-    dailyStart: "10:00",
+    dailyStart: "09:00",
     dailyEnd: "18:00",
     timezone: "Asia/Kolkata",
-
-    // Location
     venue: "",
     city: "",
     address: "",
-
-    // Pricing
     currency: "₹",
     generalPrice: 0,
     studentPrice: 0,
     vipPrice: 0,
-
-    // Event Details
-    highlights: [] as string[],
-    tags: [] as string[],
+    highlights: [],
+    tags: [],
     dressCode: "Business Casual",
-    ageLimit: "All Ages Welcome",
-
-    // Features
+    ageLimit: "18+",
     featured: false,
     vip: false,
-
-    // Images
-    images: [] as string[],
-
-    // Exhibitor Space Costs
-    exhibitSpaceCosts: [
-      { type: "Standard Booth", description: "Basic booth space", minArea: 9, pricePerSqm: 5000 },
-      { type: "Premium Booth", description: "Enhanced booth with premium location", minArea: 12, pricePerSqm: 7500 },
-      { type: "Corner Booth", description: "Corner location with extra visibility", minArea: 9, pricePerSqm: 6000 },
+    spaceCosts: [
+      {
+        type: "Shell Space (Standard Booth)",
+        description: "Fully constructed booth with walls, flooring, basic lighting, and standard amenities",
+        pricePerSqm: 5000,
+        minArea: 9,
+        isFixed: true,
+      },
+      {
+        type: "Raw Space",
+        description: "Open floor space without any construction or amenities",
+        pricePerSqm: 2500,
+        minArea: 20,
+        isFixed: false,
+      },
+      {
+        type: "2 Side Open Space",
+        description: "Space with two sides open for better visibility and accessibility",
+        pricePerSqm: 3500,
+        minArea: 12,
+        isFixed: true,
+      },
+      {
+        type: "3 Side Open Space",
+        description: "Premium corner space with three sides open for maximum exposure",
+        pricePerSqm: 4200,
+        minArea: 15,
+        isFixed: true,
+      },
+      {
+        type: "4 Side Open Space",
+        description: "Island space with all four sides open for 360-degree visibility",
+        pricePerSqm: 5500,
+        minArea: 25,
+        isFixed: true,
+      },
+      {
+        type: "Mezzanine Charges",
+        description: "Additional upper level space for storage or display purposes",
+        pricePerSqm: 1500,
+        minArea: 10,
+        isFixed: true,
+      },
+      {
+        type: "Additional Power",
+        description: "Extra electrical power supply for high-consumption equipment",
+        pricePerUnit: 800,
+        unit: "KW",
+        isFixed: true,
+      },
+      {
+        type: "Compressed Air",
+        description: "Compressed air supply for machinery demonstration (6 bar pressure)",
+        pricePerUnit: 1200,
+        unit: "HP",
+        isFixed: true,
+      },
     ],
-
-    // Additional Content
-    brochureUrl: "",
-    layoutPlanUrl: "",
-
-    // Featured Items
-    featuredHotels: [] as Array<{ name: string; category: string; rating: number }>,
-    travelPartners: [] as Array<{ name: string; category: string; rating: number }>,
-    touristAttractions: [] as Array<{ name: string; description: string; category: string; rating: number }>,
+    images: [],
+    brochure: "",
+    layoutPlan: "",
+    featuredHotels: [],
+    travelPartners: [],
+    touristAttractions: [],
   })
 
-  const [currentHighlight, setCurrentHighlight] = useState("")
-  const [currentTag, setCurrentTag] = useState("")
-  const [activeTab, setActiveTab] = useState("basic")
+  const [newHighlight, setNewHighlight] = useState("")
+  const [newTag, setNewTag] = useState("")
 
-  const availableCategories = [
-    "Exhibition",
+  const eventTypes = [
     "Conference",
+    // "Trade Show",
+    "Exhibition",
     "Workshop",
     "Seminar",
+    // "Networking Event",
+    // "Product Launch",
+    // "Corporate Event",
   ]
 
+  const eventCategories = [
+    "Technology",
+    "Healthcare",
+    "Finance",
+    "Education",
+    "Manufacturing",
+    "Automotive",
+    "Fashion",
+    "Food & Beverage",
+    "Real Estate",
+    "Energy",
+  ]
+
+  const currencies = ["₹", "$", "€", "£", "¥"]
+
   const addHighlight = () => {
-    if (currentHighlight.trim()) {
-      setEventData((prev) => ({
+    if (newHighlight.trim()) {
+      setFormData((prev) => ({
         ...prev,
-        highlights: [...prev.highlights, currentHighlight.trim()],
+        highlights: [...prev.highlights, newHighlight.trim()],
       }))
-      setCurrentHighlight("")
+      setNewHighlight("")
     }
   }
 
   const removeHighlight = (index: number) => {
-    setEventData((prev) => ({
+    setFormData((prev) => ({
       ...prev,
       highlights: prev.highlights.filter((_, i) => i !== index),
     }))
   }
 
   const addTag = () => {
-    if (currentTag.trim()) {
-      setEventData((prev) => ({
+    if (newTag.trim()) {
+      setFormData((prev) => ({
         ...prev,
-        tags: [...prev.tags, currentTag.trim()],
+        tags: [...prev.tags, newTag.trim()],
       }))
-      setCurrentTag("")
+      setNewTag("")
     }
   }
 
   const removeTag = (index: number) => {
-    setEventData((prev) => ({
+    setFormData((prev) => ({
       ...prev,
       tags: prev.tags.filter((_, i) => i !== index),
     }))
   }
 
-  const toggleCategory = (category: string) => {
-    setEventData((prev) => ({
+  const addCustomSpaceCost = () => {
+    setFormData((prev) => ({
+      ...prev,
+      spaceCosts: [
+        ...prev.spaceCosts,
+        {
+          type: "",
+          description: "",
+          pricePerSqm: 0,
+          minArea: 0,
+          isFixed: false,
+        },
+      ],
+    }))
+  }
+
+  const updateSpaceCost = (index: number, field: string, value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      spaceCosts: prev.spaceCosts.map((cost, i) => (i === index ? { ...cost, [field]: value } : cost)),
+    }))
+  }
+
+  const removeSpaceCost = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      spaceCosts: prev.spaceCosts.filter((_, i) => i !== index),
+    }))
+  }
+
+  const handleCategoryToggle = (category: string) => {
+    setFormData((prev) => ({
       ...prev,
       categories: prev.categories.includes(category)
         ? prev.categories.filter((c) => c !== category)
@@ -137,161 +276,166 @@ export default function CreateEvent() {
     }))
   }
 
-  const updateSpaceCost = (index: number, field: string, value: any) => {
-    setEventData((prev) => ({
-      ...prev,
-      exhibitSpaceCosts: prev.exhibitSpaceCosts.map((cost, i) => (i === index ? { ...cost, [field]: value } : cost)),
-    }))
+  const handleSaveDraft = () => {
+    console.log("Saving draft:", formData)
+    // Implement draft saving logic
   }
 
-  const addSpaceCost = () => {
-    setEventData((prev) => ({
-      ...prev,
-      exhibitSpaceCosts: [
-        ...prev.exhibitSpaceCosts,
-        {
-          type: "Custom Booth",
-          description: "Custom booth space",
-          minArea: 9,
-          pricePerSqm: 5000,
-        },
-      ],
-    }))
-  }
-
-  const removeSpaceCost = (index: number) => {
-    setEventData((prev) => ({
-      ...prev,
-      exhibitSpaceCosts: prev.exhibitSpaceCosts.filter((_, i) => i !== index),
-    }))
+  const handlePublishEvent = () => {
+    console.log("Publishing event:", formData)
+    // Implement event publishing logic
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Create New Event</h1>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Create New Event</h2>
+          <p className="text-gray-600">Fill in the details to create your event</p>
+        </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="bg-transparent">
-            <FileText className="w-4 h-4 mr-2" />
-            Save as Draft
+          <Button variant="outline" onClick={handleSaveDraft}>
+            <Save className="w-4 h-4 mr-2" />
+            Save Draft
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700">
-            <Calendar className="w-4 h-4 mr-2" />
+          <Button onClick={handlePublishEvent}>
+            <Send className="w-4 h-4 mr-2" />
             Publish Event
           </Button>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="details">Event Details</TabsTrigger>
           <TabsTrigger value="pricing">Pricing & Space</TabsTrigger>
           <TabsTrigger value="media">Media & Content</TabsTrigger>
-          {/* <TabsTrigger value="features">Features</TabsTrigger> */}
+          <TabsTrigger value="features">Features</TabsTrigger>
           <TabsTrigger value="preview">Preview</TabsTrigger>
         </TabsList>
 
-        {/* Basic Information Tab */}
+        {/* Basic Info Tab */}
         <TabsContent value="basic" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="w-5 h-5" />
-                Basic Event Information
-              </CardTitle>
+              <CardTitle>Event Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="event-title">Event Title *</Label>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <Label htmlFor="title">Event Title *</Label>
                   <Input
-                    id="event-title"
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                     placeholder="Enter event title"
-                    value={eventData.title}
-                    onChange={(e) => setEventData((prev) => ({ ...prev, title: e.target.value }))}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="event-type">Event  Categories *</Label>
+
+                <div>
+                  <Label htmlFor="eventType">Event Type *</Label>
                   <Select
-                    value={eventData.eventType}
-                    onValueChange={(value) => setEventData((prev) => ({ ...prev, eventType: value }))}
+                    value={formData.eventType}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, eventType: value }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select event Categories" />
+                      <SelectValue placeholder="Select event type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="exhibition">Education</SelectItem>
-                      <SelectItem value="conference">Finance</SelectItem>
-                      <SelectItem value="workshop">blockchain</SelectItem>
-                      <SelectItem value="seminar">etc</SelectItem>
-                      {/* <SelectItem value="trade-show">Trade Show</SelectItem> */}
+                      {eventTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Event Description *</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Describe your event in detail"
-                  rows={4}
-                  value={eventData.description}
-                  onChange={(e) => setEventData((prev) => ({ ...prev, description: e.target.value }))}
-                />
-              </div>
-
-              <div className="space-y-3">
-                <Label>Event Type</Label>
-                <div className="flex flex-wrap gap-2">
-                  {availableCategories.map((category) => (
-                    <div key={category} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={category}
-                        checked={eventData.categories.includes(category)}
-                        onCheckedChange={() => toggleCategory(category)}
-                      />
-                      <Label htmlFor={category} className="text-sm">
+                <div>
+                  <Label>Event Type</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {eventCategories.map((category) => (
+                      <Badge
+                        key={category}
+                        variant={formData.categories.includes(category) ? "default" : "outline"}
+                        className="cursor-pointer"
+                        onClick={() => handleCategoryToggle(category)}
+                      >
                         {category}
-                      </Label>
-                    </div>
-                  ))}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {eventData.categories.map((category, index) => (
-                    <Badge key={index} variant="secondary">
-                      {category}
-                    </Badge>
-                  ))}
+
+                <div className="md:col-span-2">
+                  <Label htmlFor="description">Event Description *</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                    placeholder="Describe your event"
+                    rows={4}
+                  />
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="start-date">Start Date *</Label>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                Event Timing
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="startDate">Start Date *</Label>
                   <Input
-                    id="start-date"
+                    id="startDate"
                     type="date"
-                    value={eventData.startDate}
-                    onChange={(e) => setEventData((prev) => ({ ...prev, startDate: e.target.value }))}
+                    value={formData.startDate}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, startDate: e.target.value }))}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="end-date">End Date *</Label>
+
+                <div>
+                  <Label htmlFor="endDate">End Date *</Label>
                   <Input
-                    id="end-date"
+                    id="endDate"
                     type="date"
-                    value={eventData.endDate}
-                    onChange={(e) => setEventData((prev) => ({ ...prev, endDate: e.target.value }))}
+                    value={formData.endDate}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, endDate: e.target.value }))}
                   />
                 </div>
-                <div className="space-y-2">
+
+                <div>
+                  <Label htmlFor="dailyStart">Daily Start Time</Label>
+                  <Input
+                    id="dailyStart"
+                    type="time"
+                    value={formData.dailyStart}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, dailyStart: e.target.value }))}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="dailyEnd">Daily End Time</Label>
+                  <Input
+                    id="dailyEnd"
+                    type="time"
+                    value={formData.dailyEnd}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, dailyEnd: e.target.value }))}
+                  />
+                </div>
+
+                <div>
                   <Label htmlFor="timezone">Timezone</Label>
                   <Select
-                    value={eventData.timezone}
-                    onValueChange={(value) => setEventData((prev) => ({ ...prev, timezone: value }))}
+                    value={formData.timezone}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, timezone: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -305,27 +449,6 @@ export default function CreateEvent() {
                   </Select>
                 </div>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="daily-start">Daily Start Time</Label>
-                  <Input
-                    id="daily-start"
-                    type="time"
-                    value={eventData.dailyStart}
-                    onChange={(e) => setEventData((prev) => ({ ...prev, dailyStart: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="daily-end">Daily End Time</Label>
-                  <Input
-                    id="daily-end"
-                    type="time"
-                    value={eventData.dailyEnd}
-                    onChange={(e) => setEventData((prev) => ({ ...prev, dailyEnd: e.target.value }))}
-                  />
-                </div>
-              </div>
             </CardContent>
           </Card>
 
@@ -336,36 +459,38 @@ export default function CreateEvent() {
                 Location Details
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
                   <Label htmlFor="venue">Venue Name *</Label>
                   <Input
                     id="venue"
-                    placeholder="Event venue name"
-                    value={eventData.venue}
-                    onChange={(e) => setEventData((prev) => ({ ...prev, venue: e.target.value }))}
+                    value={formData.venue}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, venue: e.target.value }))}
+                    placeholder="Enter venue name"
                   />
                 </div>
-                <div className="space-y-2">
+
+                <div>
                   <Label htmlFor="city">City *</Label>
                   <Input
                     id="city"
-                    placeholder="City"
-                    value={eventData.city}
-                    onChange={(e) => setEventData((prev) => ({ ...prev, city: e.target.value }))}
+                    value={formData.city}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))}
+                    placeholder="Enter city"
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address">Full Address *</Label>
-                <Textarea
-                  id="address"
-                  placeholder="Complete venue address"
-                  rows={2}
-                  value={eventData.address}
-                  onChange={(e) => setEventData((prev) => ({ ...prev, address: e.target.value }))}
-                />
+
+                <div className="md:col-span-2">
+                  <Label htmlFor="address">Full Address *</Label>
+                  <Textarea
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, address: e.target.value }))}
+                    placeholder="Enter complete address"
+                    rows={2}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -375,31 +500,26 @@ export default function CreateEvent() {
         <TabsContent value="details" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Star className="w-5 h-5" />
-                Event Highlights
-              </CardTitle>
+              <CardTitle>Event Highlights</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-2">
                 <Input
+                  value={newHighlight}
+                  onChange={(e) => setNewHighlight(e.target.value)}
                   placeholder="Add event highlight"
-                  value={currentHighlight}
-                  onChange={(e) => setCurrentHighlight(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && addHighlight()}
                 />
-                <Button onClick={addHighlight} size="sm">
+                <Button onClick={addHighlight}>
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="space-y-2">
-                {eventData.highlights.map((highlight, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                    <span className="text-sm">{highlight}</span>
-                    <Button variant="ghost" size="sm" onClick={() => removeHighlight(index)}>
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
+              <div className="flex flex-wrap gap-2">
+                {formData.highlights.map((highlight, index) => (
+                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                    {highlight}
+                    <X className="w-3 h-3 cursor-pointer" onClick={() => removeHighlight(index)} />
+                  </Badge>
                 ))}
               </div>
             </CardContent>
@@ -412,102 +532,98 @@ export default function CreateEvent() {
             <CardContent className="space-y-4">
               <div className="flex gap-2">
                 <Input
-                  placeholder="Add event tag (e.g., #Automation)"
-                  value={currentTag}
-                  onChange={(e) => setCurrentTag(e.target.value)}
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  placeholder="Add event tag"
                   onKeyPress={(e) => e.key === "Enter" && addTag()}
                 />
-                <Button onClick={addTag} size="sm">
+                <Button onClick={addTag}>
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {eventData.tags.map((tag, index) => (
+                {formData.tags.map((tag, index) => (
                   <Badge key={index} variant="outline" className="flex items-center gap-1">
                     #{tag}
-                    <Button variant="ghost" size="sm" className="h-4 w-4 p-0" onClick={() => removeTag(index)}>
-                      <X className="w-3 h-3" />
-                    </Button>
+                    <X className="w-3 h-3 cursor-pointer" onClick={() => removeTag(index)} />
                   </Badge>
                 ))}
               </div>
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Event Guidelines</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="dress-code">Dress Code</Label>
+          <Card>
+            <CardHeader>
+              <CardTitle>Event Guidelines</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="dressCode">Dress Code</Label>
                   <Select
-                    value={eventData.dressCode}
-                    onValueChange={(value) => setEventData((prev) => ({ ...prev, dressCode: value }))}
+                    value={formData.dressCode}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, dressCode: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="Casual">Casual</SelectItem>
                       <SelectItem value="Business Casual">Business Casual</SelectItem>
                       <SelectItem value="Formal">Formal</SelectItem>
-                      <SelectItem value="Smart Casual">Smart Casual</SelectItem>
-                      <SelectItem value="Casual">Casual</SelectItem>
-                      <SelectItem value="No Dress Code">No Dress Code</SelectItem>
+                      <SelectItem value="Black Tie">Black Tie</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="age-limit">Age Restrictions</Label>
+
+                <div>
+                  <Label htmlFor="ageLimit">Age Limit</Label>
                   <Select
-                    value={eventData.ageLimit}
-                    onValueChange={(value) => setEventData((prev) => ({ ...prev, ageLimit: value }))}
+                    value={formData.ageLimit}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, ageLimit: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="All Ages Welcome">All Ages Welcome</SelectItem>
-                      <SelectItem value="18+ Only">18+ Only</SelectItem>
-                      <SelectItem value="21+ Only">21+ Only</SelectItem>
-                      <SelectItem value="Professional Adults Only">Professional Adults Only</SelectItem>
+                      <SelectItem value="All Ages">All Ages</SelectItem>
+                      <SelectItem value="18+">18+</SelectItem>
+                      <SelectItem value="21+">21+</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Event Features</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="featured">Featured Event</Label>
-                    <p className="text-sm text-gray-600">Highlight this event on homepage</p>
-                  </div>
-                  <Switch
-                    id="featured"
-                    checked={eventData.featured}
-                    onCheckedChange={(checked) => setEventData((prev) => ({ ...prev, featured: checked }))}
-                  />
+          <Card>
+            <CardHeader>
+              <CardTitle>Event Features</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Featured Event</Label>
+                  <p className="text-sm text-gray-600">Mark this event as featured</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="vip">VIP Event</Label>
-                    <p className="text-sm text-gray-600">Mark as premium/VIP event</p>
-                  </div>
-                  <Switch
-                    id="vip"
-                    checked={eventData.vip}
-                    onCheckedChange={(checked) => setEventData((prev) => ({ ...prev, vip: checked }))}
-                  />
+                <Switch
+                  checked={formData.featured}
+                  onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, featured: checked }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>VIP Event</Label>
+                  <p className="text-sm text-gray-600">Mark this as a VIP event</p>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                <Switch
+                  checked={formData.vip}
+                  onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, vip: checked }))}
+                />
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Pricing & Space Tab */}
@@ -519,53 +635,57 @@ export default function CreateEvent() {
                 Ticket Pricing
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="currency">Currency</Label>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label>Currency</Label>
                   <Select
-                    value={eventData.currency}
-                    onValueChange={(value) => setEventData((prev) => ({ ...prev, currency: value }))}
+                    value={formData.currency}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, currency: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="₹">₹ (INR)</SelectItem>
-                      <SelectItem value="$">$ (USD)</SelectItem>
-                      <SelectItem value="€">€ (EUR)</SelectItem>
-                      <SelectItem value="£">£ (GBP)</SelectItem>
+                      {currencies.map((currency) => (
+                        <SelectItem key={currency} value={currency}>
+                          {currency}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="general-price">General Ticket Price</Label>
+
+                <div>
+                  <Label htmlFor="generalPrice">General Entry</Label>
                   <Input
-                    id="general-price"
+                    id="generalPrice"
                     type="number"
+                    value={formData.generalPrice}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, generalPrice: Number(e.target.value) }))}
                     placeholder="0"
-                    value={eventData.generalPrice}
-                    onChange={(e) => setEventData((prev) => ({ ...prev, generalPrice: Number(e.target.value) }))}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="student-price">Student Ticket Price</Label>
+
+                <div>
+                  <Label htmlFor="studentPrice">Student Price</Label>
                   <Input
-                    id="student-price"
+                    id="studentPrice"
                     type="number"
+                    value={formData.studentPrice}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, studentPrice: Number(e.target.value) }))}
                     placeholder="0"
-                    value={eventData.studentPrice}
-                    onChange={(e) => setEventData((prev) => ({ ...prev, studentPrice: Number(e.target.value) }))}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="vip-price">VIP Ticket Price</Label>
+
+                <div>
+                  <Label htmlFor="vipPrice">VIP Price</Label>
                   <Input
-                    id="vip-price"
+                    id="vipPrice"
                     type="number"
+                    value={formData.vipPrice}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, vipPrice: Number(e.target.value) }))}
                     placeholder="0"
-                    value={eventData.vipPrice}
-                    onChange={(e) => setEventData((prev) => ({ ...prev, vipPrice: Number(e.target.value) }))}
                   />
                 </div>
               </div>
@@ -574,64 +694,179 @@ export default function CreateEvent() {
 
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Layout className="w-5 h-5" />
-                  Exhibitor Space Costs
-                </CardTitle>
-                <Button onClick={addSpaceCost} size="sm">
+              <CardTitle>Exhibitor Space Costs</CardTitle>
+              <p className="text-sm text-gray-600">
+                Configure pricing for different types of exhibition spaces and services
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-6">
+                {formData.spaceCosts.map((cost, index) => (
+                  <div key={index} className="p-6 border rounded-lg bg-gray-50">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <h4 className="font-semibold text-lg">{cost.type}</h4>
+                        {cost.isFixed && (
+                          <Badge variant="secondary" className="text-xs">
+                            Standard
+                          </Badge>
+                        )}
+                      </div>
+                      {!cost.isFixed && (
+                        <Button variant="outline" size="sm" onClick={() => removeSpaceCost(index)}>
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">Description</Label>
+                        <p className="text-sm text-gray-600 mt-1 p-3 bg-white rounded border">{cost.description}</p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {cost.isFixed && cost.type !== "Shell Space (Standard Booth)" ? (
+                          <>
+                            <div>
+                              <Label className="text-sm font-medium">Space Type</Label>
+                              <Input
+                                value={cost.type}
+                                onChange={(e) => updateSpaceCost(index, "type", e.target.value)}
+                                placeholder="Enter space type"
+                                disabled={cost.isFixed}
+                                className="bg-gray-100"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium">
+                                {cost.unit ? `Price per ${cost.unit}` : "Price per sq.m"}
+                              </Label>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-500">{formData.currency}</span>
+                                <Input
+                                  type="number"
+                                  value={cost.pricePerSqm || cost.pricePerUnit || 0}
+                                  onChange={(e) =>
+                                    updateSpaceCost(
+                                      index,
+                                      cost.unit ? "pricePerUnit" : "pricePerSqm",
+                                      Number(e.target.value),
+                                    )
+                                  }
+                                  placeholder="0"
+                                />
+                              </div>
+                            </div>
+                            {!cost.unit && (
+                              <div>
+                                <Label className="text-sm font-medium">Minimum Area (sq.m)</Label>
+                                <Input
+                                  type="number"
+                                  value={cost.minArea || 0}
+                                  onChange={(e) => updateSpaceCost(index, "minArea", Number(e.target.value))}
+                                  placeholder="0"
+                                />
+                              </div>
+                            )}
+                          </>
+                        ) : cost.isFixed ? (
+                          <>
+                            <div>
+                              <Label className="text-sm font-medium">Price per sq.m</Label>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-500">{formData.currency}</span>
+                                <Input
+                                  type="number"
+                                  value={cost.pricePerSqm || 0}
+                                  onChange={(e) => updateSpaceCost(index, "pricePerSqm", Number(e.target.value))}
+                                  placeholder="0"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium">Minimum Area (sq.m)</Label>
+                              <Input
+                                type="number"
+                                value={cost.minArea || 0}
+                                onChange={(e) => updateSpaceCost(index, "minArea", Number(e.target.value))}
+                                placeholder="0"
+                              />
+                            </div>
+                            <div className="flex items-end">
+                              <div className="text-sm">
+                                <span className="text-gray-600">Total from: </span>
+                                <span className="font-semibold text-lg">
+                                  {formData.currency}
+                                  {((cost.pricePerSqm || 0) * (cost.minArea || 0)).toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div>
+                              <Label className="text-sm font-medium">Space Type</Label>
+                              <Input
+                                value={cost.type}
+                                onChange={(e) => updateSpaceCost(index, "type", e.target.value)}
+                                placeholder="Enter space type"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium">Price per sq.m</Label>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-500">{formData.currency}</span>
+                                <Input
+                                  type="number"
+                                  value={cost.pricePerSqm || 0}
+                                  onChange={(e) => updateSpaceCost(index, "pricePerSqm", Number(e.target.value))}
+                                  placeholder="0"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium">Minimum Area (sq.m)</Label>
+                              <Input
+                                type="number"
+                                value={cost.minArea || 0}
+                                onChange={(e) => updateSpaceCost(index, "minArea", Number(e.target.value))}
+                                placeholder="0"
+                              />
+                            </div>
+                            <div className="md:col-span-3">
+                              <Label className="text-sm font-medium">Description</Label>
+                              <Textarea
+                                value={cost.description}
+                                onChange={(e) => updateSpaceCost(index, "description", e.target.value)}
+                                placeholder="Describe this space type"
+                                rows={2}
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {cost.unit && (
+                        <div className="flex items-center justify-between p-3 bg-blue-50 rounded border border-blue-200">
+                          <span className="text-sm text-blue-800">Service pricing per {cost.unit}</span>
+                          <span className="font-semibold text-blue-900">
+                            {formData.currency}
+                            {(cost.pricePerUnit || 0).toLocaleString()} per {cost.unit}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-4 border-t">
+                <Button variant="outline" onClick={addCustomSpaceCost} className="w-full bg-transparent">
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Space Type
+                  Add Custom Space Type
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {eventData.exhibitSpaceCosts.map((cost, index) => (
-                <div key={index} className="p-4 border rounded-lg space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium">Space Type {index + 1}</h4>
-                    {eventData.exhibitSpaceCosts.length > 1 && (
-                      <Button variant="ghost" size="sm" onClick={() => removeSpaceCost(index)}>
-                        <X className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label>Space Type</Label>
-                      <Input
-                        value={cost.type}
-                        onChange={(e) => updateSpaceCost(index, "type", e.target.value)}
-                        placeholder="e.g., Standard Booth"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Description</Label>
-                      <Input
-                        value={cost.description}
-                        onChange={(e) => updateSpaceCost(index, "description", e.target.value)}
-                        placeholder="Brief description"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Min Area (sq.m)</Label>
-                      <Input
-                        type="number"
-                        value={cost.minArea}
-                        onChange={(e) => updateSpaceCost(index, "minArea", Number(e.target.value))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Price per sq.m</Label>
-                      <Input
-                        type="number"
-                        value={cost.pricePerSqm}
-                        onChange={(e) => updateSpaceCost(index, "pricePerSqm", Number(e.target.value))}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
             </CardContent>
           </Card>
         </TabsContent>
@@ -641,110 +876,96 @@ export default function CreateEvent() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Camera className="w-5 h-5" />
+                <Upload className="w-5 h-5" />
                 Event Images
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                 <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-600 mb-2">Upload event images</p>
-                <p className="text-sm text-gray-500 mb-4">Drag and drop images or click to browse</p>
-                <Button variant="outline">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Choose Images
-                </Button>
+                <p className="text-gray-600 mb-2">Drag and drop images here, or click to browse</p>
+                <Button variant="outline">Choose Images</Button>
               </div>
+
+              {formData.images.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {formData.images.map((image, index) => (
+                    <div key={index} className="relative">
+                      <Image
+                        src={image || "/placeholder.svg"}
+                        alt={`Event image ${index + 1}`}
+                        width={200}
+                        height={150}
+                        className="w-full h-32 object-cover rounded-lg"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            images: prev.images.filter((_, i) => i !== index),
+                          }))
+                        }
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Event Brochure
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="brochure-url">Brochure URL</Label>
+          <Card>
+            <CardHeader>
+              <CardTitle>Documents</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Event Brochure</Label>
+                <div className="flex gap-2 mt-1">
                   <Input
-                    id="brochure-url"
-                    placeholder="https://example.com/brochure.pdf"
-                    value={eventData.brochureUrl}
-                    onChange={(e) => setEventData((prev) => ({ ...prev, brochureUrl: e.target.value }))}
+                    value={formData.brochure}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, brochure: e.target.value }))}
+                    placeholder="Upload brochure"
+                    readOnly
                   />
-                </div>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <FileText className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600">Upload PDF brochure</p>
-                  <Button variant="outline" size="sm" className="mt-2 bg-transparent">
-                    Upload PDF
+                  <Button variant="outline">
+                    <Upload className="w-4 h-4" />
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Layout className="w-5 h-5" />
-                  Layout Plan
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="layout-url">Layout Plan URL</Label>
+              <div>
+                <Label>Layout Plan</Label>
+                <div className="flex gap-2 mt-1">
                   <Input
-                    id="layout-url"
-                    placeholder="https://example.com/layout.pdf"
-                    value={eventData.layoutPlanUrl}
-                    onChange={(e) => setEventData((prev) => ({ ...prev, layoutPlanUrl: e.target.value }))}
+                    value={formData.layoutPlan}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, layoutPlan: e.target.value }))}
+                    placeholder="Upload layout plan"
+                    readOnly
                   />
-                </div>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <Layout className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600">Upload floor plan</p>
-                  <Button variant="outline" size="sm" className="mt-2 bg-transparent">
-                    Upload Plan
+                  <Button variant="outline">
+                    <Upload className="w-4 h-4" />
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Features Tab */}
           {/* <TabsContent value="features" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Hotel className="w-5 h-5" />
-                  Featured Hotels
-                </CardTitle>
+                <CardTitle>Featured Hotels</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-gray-600">Add recommended hotels for attendees</p>
-                <div className="space-y-3">
-                  {eventData.featuredHotels.map((hotel, index) => (
-                    <div key={index} className="flex items-center gap-4 p-3 border rounded">
-                      <Input placeholder="Hotel name" value={hotel.name} className="flex-1" />
-                      <Input placeholder="Category" value={hotel.category} className="w-32" />
-                      <Input
-                        placeholder="Rating"
-                        type="number"
-                        step="0.1"
-                        max="5"
-                        value={hotel.rating}
-                        className="w-20"
-                      />
-                      <Button variant="ghost" size="sm">
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button variant="outline" size="sm">
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <p>Add recommended hotels for attendees</p>
+                  <Button variant="outline" className="mt-2 bg-transparent">
                     <Plus className="w-4 h-4 mr-2" />
                     Add Hotel
                   </Button>
@@ -754,32 +975,12 @@ export default function CreateEvent() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Plane className="w-5 h-5" />
-                  Travel Partners
-                </CardTitle>
+                <CardTitle>Travel Partners</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-gray-600">Add travel and transportation partners</p>
-                <div className="space-y-3">
-                  {eventData.travelPartners.map((partner, index) => (
-                    <div key={index} className="flex items-center gap-4 p-3 border rounded">
-                      <Input placeholder="Partner name" value={partner.name} className="flex-1" />
-                      <Input placeholder="Service type" value={partner.category} className="w-32" />
-                      <Input
-                        placeholder="Rating"
-                        type="number"
-                        step="0.1"
-                        max="5"
-                        value={partner.rating}
-                        className="w-20"
-                      />
-                      <Button variant="ghost" size="sm">
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button variant="outline" size="sm">
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <p>Add travel and transportation partners</p>
+                  <Button variant="outline" className="mt-2 bg-transparent">
                     <Plus className="w-4 h-4 mr-2" />
                     Add Partner
                   </Button>
@@ -789,35 +990,12 @@ export default function CreateEvent() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  Tourist Attractions
-                </CardTitle>
+                <CardTitle>Tourist Attractions</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-gray-600">Add local attractions and places to visit</p>
-                <div className="space-y-3">
-                  {eventData.touristAttractions.map((attraction, index) => (
-                    <div key={index} className="p-3 border rounded space-y-3">
-                      <div className="flex items-center gap-4">
-                        <Input placeholder="Attraction name" value={attraction.name} className="flex-1" />
-                        <Input placeholder="Category" value={attraction.category} className="w-32" />
-                        <Input
-                          placeholder="Rating"
-                          type="number"
-                          step="0.1"
-                          max="5"
-                          value={attraction.rating}
-                          className="w-20"
-                        />
-                        <Button variant="ghost" size="sm">
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <Textarea placeholder="Description" value={attraction.description} rows={2} />
-                    </div>
-                  ))}
-                  <Button variant="outline" size="sm">
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <p>Add local attractions and places to visit</p>
+                  <Button variant="outline" className="mt-2 bg-transparent">
                     <Plus className="w-4 h-4 mr-2" />
                     Add Attraction
                   </Button>
@@ -830,97 +1008,115 @@ export default function CreateEvent() {
         <TabsContent value="preview" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Event Preview</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="w-5 h-5" />
+                Event Preview
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="p-6 bg-gray-50 rounded-lg">
-                <h2 className="text-2xl font-bold text-blue-900 mb-2">{eventData.title || "Event Title"}</h2>
-                <div className="flex items-center gap-4 text-gray-600 mb-4">
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    <span>
-                      {eventData.venue || "Venue"}, {eventData.city || "City"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    <span>
-                      {eventData.startDate || "Start Date"} - {eventData.endDate || "End Date"}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-gray-700 mb-4">{eventData.description || "Event description will appear here..."}</p>
-
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {eventData.categories.map((category, index) => (
-                    <Badge key={index} variant="secondary">
-                      {category}
-                    </Badge>
-                  ))}
-                </div>
-
-                {eventData.highlights.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="font-semibold">Event Highlights:</h4>
-                    <ul className="space-y-1">
-                      {eventData.highlights.map((highlight, index) => (
-                        <li key={index} className="flex items-start gap-2">
-                          <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
-                          <span className="text-gray-700">{highlight}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-semibold mb-2">Pricing</h4>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span>General:</span>
-                      <span>
-                        {eventData.currency}
-                        {eventData.generalPrice}
-                      </span>
+            <CardContent>
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-2xl font-bold text-blue-900">{formData.title || "Event Title"}</h3>
+                    <div className="flex items-center gap-4 mt-2 text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        <span>
+                          {formData.startDate || "Start Date"} - {formData.endDate || "End Date"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        <span>
+                          {formData.venue || "Venue"}, {formData.city || "City"}
+                        </span>
+                      </div>
                     </div>
-                    {eventData.studentPrice > 0 && (
-                      <div className="flex justify-between">
-                        <span>Student:</span>
-                        <span>
-                          {eventData.currency}
-                          {eventData.studentPrice}
-                        </span>
-                      </div>
-                    )}
-                    {eventData.vipPrice > 0 && (
-                      <div className="flex justify-between">
-                        <span>VIP:</span>
-                        <span>
-                          {eventData.currency}
-                          {eventData.vipPrice}
-                        </span>
-                      </div>
-                    )}
                   </div>
-                </div>
 
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-semibold mb-2">Timing</h4>
-                  <div className="space-y-1 text-sm">
+                  <div className="flex flex-wrap gap-2">
+                    {formData.categories.map((category) => (
+                      <Badge key={category} variant="secondary">
+                        {category}
+                      </Badge>
+                    ))}
+                  </div>
+
+                  <p className="text-gray-700">{formData.description || "Event description will appear here..."}</p>
+
+                  {formData.highlights.length > 0 && (
                     <div>
-                      Daily: {eventData.dailyStart} - {eventData.dailyEnd}
+                      <h4 className="font-semibold mb-2">Event Highlights:</h4>
+                      <div className="space-y-1">
+                        {formData.highlights.map((highlight, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-blue-600 rounded-full" />
+                            <span className="text-gray-700">{highlight}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div>Timezone: {eventData.timezone}</div>
-                  </div>
-                </div>
+                  )}
 
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-semibold mb-2">Guidelines</h4>
-                  <div className="space-y-1 text-sm">
-                    <div>Dress Code: {eventData.dressCode}</div>
-                    <div>Age Limit: {eventData.ageLimit}</div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                    <div className="bg-white p-4 rounded-lg border">
+                      <h4 className="font-semibold mb-2">General Entry</h4>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {formData.currency}
+                        {formData.generalPrice || 0}
+                      </p>
+                    </div>
+
+                    {formData.studentPrice > 0 && (
+                      <div className="bg-white p-4 rounded-lg border">
+                        <h4 className="font-semibold mb-2">Student Price</h4>
+                        <p className="text-2xl font-bold text-green-600">
+                          {formData.currency}
+                          {formData.studentPrice}
+                        </p>
+                      </div>
+                    )}
+
+                    {formData.vipPrice > 0 && (
+                      <div className="bg-white p-4 rounded-lg border">
+                        <h4 className="font-semibold mb-2">VIP Price</h4>
+                        <p className="text-2xl font-bold text-purple-600">
+                          {formData.currency}
+                          {formData.vipPrice}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Space Costs Preview */}
+                  <div className="mt-6">
+                    <h4 className="font-semibold mb-4">Exhibition Space Pricing</h4>
+                    <div className="grid gap-3">
+                      {formData.spaceCosts.map((cost, index) => (
+                        <div key={index} className="bg-white p-4 rounded-lg border flex justify-between items-center">
+                          <div>
+                            <h5 className="font-medium">{cost.type}</h5>
+                            <p className="text-sm text-gray-600">{cost.description}</p>
+                          </div>
+                          <div className="text-right">
+                            {cost.unit ? (
+                              <p className="font-semibold text-blue-600">
+                                {formData.currency}
+                                {(cost.pricePerUnit || 0).toLocaleString()} per {cost.unit}
+                              </p>
+                            ) : (
+                              <>
+                                <p className="font-semibold text-blue-600">
+                                  {formData.currency}
+                                  {(cost.pricePerSqm || 0).toLocaleString()} per sq.m
+                                </p>
+                                <p className="text-sm text-gray-500">Min: {cost.minArea || 0} sq.m</p>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
