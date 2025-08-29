@@ -144,6 +144,7 @@ export default function SignupPage() {
 
         // Redirect to home page after successful registration
         setTimeout(() => {
+          alert("Registration successful!")
           router.push("/")
         }, 1500)
       } else {

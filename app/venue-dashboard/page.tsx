@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { signOut } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Sidebar,
@@ -141,6 +142,12 @@ export default function VenueDashboardPage() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+                  <Button
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white my-10"
+                  >
+                    Logout
+                  </Button>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { signOut } from "next-auth/react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -291,6 +292,12 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+                  <Button
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white my-10"
+                  >
+                    Logout
+                  </Button>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

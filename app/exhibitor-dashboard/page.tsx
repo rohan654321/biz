@@ -28,8 +28,23 @@ import PromotionsMarketing from "./promotions-marketing"
 import LeadManagement from "./lead-management"
 import AnalyticsReports from "./analytics-reports"
 import DashboardSettings from "./settings"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth-options"
+import { redirect } from "next/navigation"
 
-export default function ExhibitorDashboardPage() {
+export default async function ExhibitorDashboardPage({params}:{params:{id:string}}) {
+  const { id } = params
+    const session = await getServerSession(authOptions)
+  
+    if (!session) {
+      redirect("/login")
+    }
+  
+    // Check if user is trying to access their own dashboard or if they're admin
+    if (session.user.id !== id && session.user.role !== "ADMIN") {
+      redirect("/login")
+    }
+
   const [activeSection, setActiveSection] = useState("company-info")
 
   // Mock exhibitor data

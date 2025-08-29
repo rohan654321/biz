@@ -42,7 +42,7 @@ import AnalyticsDashboard from "./analytics-dashboard"
 import EventPromotion from "./event-promotion"
 import MessagesCenter from "./messages-center"
 import SettingsPanel from "./settings-panel"
-import MyPlan from "./my-plan"  
+import MyPlan from "./my-plan"
 import OrganizerInfo from "./organizer-info"
 
 export default function OrganizerDashboardPage() {
@@ -305,11 +305,11 @@ export default function OrganizerDashboardPage() {
                     </SidebarMenuItem>
                   ))}
                   <Button
-                              onClick={() => signOut({ callbackUrl: "/login" })}
-                              className="w-full bg-red-500 hover:bg-red-600 text-white my-10"
-                            >
-                              Logout
-                            </Button>
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white my-10"
+                  >
+                    Logout
+                  </Button>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
