@@ -3,8 +3,8 @@ import { authOptions } from "@/lib/auth-options"
 import { redirect } from "next/navigation"
 import ExhibitorDashboardClient from "../exhibitorLayout"
 
-export default async function ExhibitorDashboardPage({ params }: { params: { id: string } }) {
-  const { id } = params
+export default async function ExhibitorDashboardPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } =await params
   const session = await getServerSession(authOptions)
 
   if (!session) {

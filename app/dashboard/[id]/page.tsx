@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { UserDashboard } from "../user-dashboard"
 
 export default async function DashboardPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } =await params
+  const { id } = await params
   const session = await getServerSession(authOptions)
 
   if (!session) {
