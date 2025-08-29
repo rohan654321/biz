@@ -26,21 +26,21 @@ export default function LoginPage() {
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
       // Redirect based on user role
-      if (session.user.role === "admin") {
-        router.push(`/dashboard`)
-      } else if (session.user.role === "organizer") {
+      if (session.user.role === "ATTENDEE") {
+        router.push(`/dashboard/${session.user.id}`)
+      } else if (session.user.role === "ORGANIZER") {
         router.push("/organizer-dashboard")
       } else if (session.user.role === "superadmin") {
         router.push("/admin-dashboard")
-      } else if (session.user.role === "exhibitor") {
+      } else if (session.user.role === "EXHIBITOR") {
         router.push("/exhibitor-dashboard")
-      } else if (session.user.role === "speaker") {
+      } else if (session.user.role === "SPEAKER") {
         router.push("/speaker-dashboard")
-      } else if (session.user.role === "venue") {
+      } else if (session.user.role === "VENUE") {
         router.push("/venue-dashboard")
       } else {
         // Default user dashboard
-        router.push(`/dashboard`)
+        router.push(`/login`)
       }
     }
   }, [session, status, router])
