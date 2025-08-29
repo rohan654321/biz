@@ -1,18 +1,86 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
 
-interface SettingsSectionProps {
-  userData: any
+interface UserData {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  phone?: string
+  avatar?: string
+  role: string
+  bio?: string
+  website?: string
+  linkedin?: string
+  twitter?: string
+  company?: string
+  jobTitle?: string
+  location?: {
+    address: string
+    city: string
+    state: string
+    country: string
+  }
+  isVerified: boolean
+  createdAt: string
+  lastLogin?: string
+  _count?: {
+    eventsAttended: number
+    eventsOrganized: number
+    connections: number
+  }
 }
 
-export function SettingsSection({ userData }: SettingsSectionProps) {
+interface SettingsSectionProps {
+  userData: UserData
+  onUpdate: (data: Partial<UserData>) => void
+}
+
+export function SettingsSection({ userData, onUpdate }: SettingsSectionProps) {
+  const { toast } = useToast()
+  const [accountData, setAccountData] = useState({
+    firstName: userData.firstName,
+    lastName: userData.lastName,
+    email: userData.email,
+    phone: userData.phone || "",
+  })
+
+  const [preferences, setPreferences] = useState({
+    emailNotifications: true,
+    pushNotifications: false,
+    marketingEmails: false,
+    profileVisibility: "public",
+    connectionRequests: "everyone",
+  })
+
+  const handleAccountSave = () => {
+    onUpdate(accountData)
+    toast({
+      title: "Success",
+      description: "Account settings updated successfully!",
+    })
+  }
+
+  const handlePreferencesSave = () => {
+    // In a real app, this would save to the backend
+    toast({
+      title: "Success",
+      description: "Preferences updated successfully!",
+    })
+  }
+
   return (
-    <div className="space-y-6 max-w-6xl mx-auto px-4">
+    <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Account Settings */}
         <Card>
@@ -21,108 +89,157 @@ export function SettingsSection({ userData }: SettingsSectionProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input id="name" defaultValue={userData.name} />
+              <Label htmlFor="firstName">First Name</Label>
+              <Input
+                id="firstName"
+                value={accountData.firstName}
+                onChange={(e) => setAccountData({ ...accountData, firstName: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input
+                id="lastName"
+                value={accountData.lastName}
+                onChange={(e) => setAccountData({ ...accountData, lastName: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" defaultValue={userData.email} />
+              <Input
+                id="email"
+                type="email"
+                value={accountData.email}
+                onChange={(e) => setAccountData({ ...accountData, email: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" defaultValue={userData.phone} />
+              <Input
+                id="phone"
+                value={accountData.phone}
+                onChange={(e) => setAccountData({ ...accountData, phone: e.target.value })}
+              />
             </div>
-            <Button>Save Changes</Button>
+            <Button onClick={handleAccountSave}>Save Changes</Button>
           </CardContent>
         </Card>
-        {/* Privacy Settings */}
+
+        {/* Privacy & Notifications */}
         <Card>
           <CardHeader>
-            <CardTitle>Privacy Settings</CardTitle>
+            <CardTitle>Privacy & Notifications</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Profile Visibility</div>
-                <div className="text-sm text-gray-600">Who can see your profile</div>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Email Notifications</div>
+                  <div className="text-sm text-gray-600">Receive event updates via email</div>
+                </div>
+                <Switch
+                  checked={preferences.emailNotifications}
+                  onCheckedChange={(checked) => setPreferences({ ...preferences, emailNotifications: checked })}
+                />
               </div>
-              <Button variant="outline" size="sm">
-                Public
-              </Button>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Email Notifications</div>
-                <div className="text-sm text-gray-600">Receive event updates via email</div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Push Notifications</div>
+                  <div className="text-sm text-gray-600">Receive push notifications</div>
+                </div>
+                <Switch
+                  checked={preferences.pushNotifications}
+                  onCheckedChange={(checked) => setPreferences({ ...preferences, pushNotifications: checked })}
+                />
               </div>
-              <Button variant="outline" size="sm">
-                Enabled
-              </Button>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Connection Requests</div>
-                <div className="text-sm text-gray-600">Who can send you connection requests</div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Marketing Emails</div>
+                  <div className="text-sm text-gray-600">Receive promotional content</div>
+                </div>
+                <Switch
+                  checked={preferences.marketingEmails}
+                  onCheckedChange={(checked) => setPreferences({ ...preferences, marketingEmails: checked })}
+                />
               </div>
-              <Button variant="outline" size="sm">
-                Everyone
-              </Button>
+
+              <div className="space-y-2">
+                <Label>Profile Visibility</Label>
+                <Select
+                  value={preferences.profileVisibility}
+                  onValueChange={(value) => setPreferences({ ...preferences, profileVisibility: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="public">Public</SelectItem>
+                    <SelectItem value="connections">Connections Only</SelectItem>
+                    <SelectItem value="private">Private</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Connection Requests</Label>
+                <Select
+                  value={preferences.connectionRequests}
+                  onValueChange={(value) => setPreferences({ ...preferences, connectionRequests: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="everyone">Everyone</SelectItem>
+                    <SelectItem value="mutual">Mutual Connections</SelectItem>
+                    <SelectItem value="none">No One</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+            <Button onClick={handlePreferencesSave}>Save Preferences</Button>
           </CardContent>
         </Card>
-        {/* Password Settings */}
-        <Card>
+
+        {/* Security Settings */}
+        <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Password & Security</CardTitle>
+            <CardTitle>Security</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="current-password">Current Password</Label>
-              <Input id="current-password" type="password" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new-password">New Password</Label>
-              <Input id="new-password" type="password" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm New Password</Label>
-              <Input id="confirm-password" type="password" />
-            </div>
-            <Button>Update Password</Button>
-          </CardContent>
-        </Card>
-        {/* Notification Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Notification Preferences</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 border rounded-lg">
               <div>
-                <div className="font-medium">Event Reminders</div>
-                <div className="text-sm text-gray-600">Get notified about upcoming events</div>
+                <div className="font-medium">Change Password</div>
+                <div className="text-sm text-gray-600">Update your account password</div>
               </div>
-              <Button variant="outline" size="sm">
-                On
-              </Button>
+              <Button variant="outline">Change Password</Button>
             </div>
-            <div className="flex items-center justify-between">
+
+            <div className="flex items-center justify-between p-4 border rounded-lg">
               <div>
-                <div className="font-medium">New Messages</div>
-                <div className="text-sm text-gray-600">Get notified about new messages</div>
+                <div className="font-medium">Two-Factor Authentication</div>
+                <div className="text-sm text-gray-600">Add an extra layer of security</div>
               </div>
-              <Button variant="outline" size="sm">
-                On
-              </Button>
+              <Button variant="outline">Enable 2FA</Button>
             </div>
-            <div className="flex items-center justify-between">
+
+            <div className="flex items-center justify-between p-4 border rounded-lg">
               <div>
-                <div className="font-medium">Connection Requests</div>
-                <div className="text-sm text-gray-600">Get notified about new connection requests</div>
+                <div className="font-medium">Active Sessions</div>
+                <div className="text-sm text-gray-600">Manage your active login sessions</div>
               </div>
-              <Button variant="outline" size="sm">
-                On
-              </Button>
+              <Button variant="outline">View Sessions</Button>
+            </div>
+
+            <div className="flex items-center justify-between p-4 border rounded-lg border-red-200">
+              <div>
+                <div className="font-medium text-red-600">Delete Account</div>
+                <div className="text-sm text-gray-600">Permanently delete your account and data</div>
+              </div>
+              <Button variant="destructive">Delete Account</Button>
             </div>
           </CardContent>
         </Card>

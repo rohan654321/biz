@@ -1,0 +1,759 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// User Management
+model User {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  email             String   @unique
+  password          String
+  firstName         String
+  lastName          String
+  phone             String?
+  avatar            String?
+  role              UserRole @default(ATTENDEE)
+  isVerified        Boolean  @default(false)
+  isActive          Boolean  @default(true)
+  emailVerified     Boolean  @default(false)
+  phoneVerified     Boolean  @default(false)
+  twoFactorEnabled  Boolean  @default(false)
+  lastLogin         DateTime?
+  loginAttempts     Int      @default(0)
+  lockoutUntil      DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Profile Information
+  bio               String?
+  website           String?
+  linkedin          String?
+  twitter           String?
+  company           String?
+  jobTitle          String?
+  location          String?
+  timezone          String?
+  language          String   @default("en")
+
+  // Relationships
+  organizedEvents   Event[]  @relation("EventOrganizer")
+  registrations     EventRegistration[]
+  speakerSessions   SpeakerSession[]
+  exhibitorBooths   ExhibitorBooth[]
+  venueBookings     VenueBooking[]
+  sentMessages      Message[] @relation("MessageSender")
+  receivedMessages  Message[] @relation("MessageReceiver")
+  reviews           Review[]
+  payments          Payment[]
+  notifications     Notification[]
+  analytics         UserAnalytics[]
+  settings          Settings?
+  campaigns         Campaign[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  ORGANIZER
+  ATTENDEE
+  SPEAKER
+  EXHIBITOR
+  VENUE_MANAGER
+}
+
+// Event Management
+model Event {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  title             String
+  description       String
+  shortDescription  String?
+  slug              String   @unique
+  status            EventStatus @default(DRAFT)
+  category          String
+  tags              String[]
+  
+  // Dates and Times
+  startDate         DateTime
+  endDate           DateTime
+  registrationStart DateTime
+  registrationEnd   DateTime
+  timezone          String
+  
+  // Location
+  venueId           String?  @db.ObjectId
+  venue             Venue?   @relation(fields: [venueId], references: [id])
+  isVirtual         Boolean  @default(false)
+  virtualLink       String?
+  address           String?
+  city              String?
+  state             String?
+  country           String?
+  zipCode           String?
+  
+  // Capacity and Pricing
+  maxAttendees      Int?
+  currentAttendees  Int      @default(0)
+  ticketTypes       TicketType[]
+  currency          String   @default("USD")
+  
+  // Media
+  images            String[]
+  videos            String[]
+  documents         String[]
+  bannerImage       String?
+  thumbnailImage    String?
+  
+  // Settings
+  isPublic          Boolean  @default(true)
+  requiresApproval  Boolean  @default(false)
+  allowWaitlist     Boolean  @default(false)
+  refundPolicy      String?
+  
+  // SEO
+  metaTitle         String?
+  metaDescription   String?
+  
+  // Organizer
+  organizerId       String   @db.ObjectId
+  organizer         User     @relation("EventOrganizer", fields: [organizerId], references: [id])
+  
+  // Exhibition Spaces
+  exhibitionSpaces  ExhibitionSpace[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relationships
+  registrations     EventRegistration[]
+  speakerSessions   SpeakerSession[]
+  exhibitorBooths   ExhibitorBooth[]
+  reviews           Review[]
+  analytics         EventAnalytics[]
+  campaigns         Campaign[]
+
+  @@map("events")
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+type TicketType {
+  id          String
+  name        String
+  description String?
+  price       Float
+  earlyBirdPrice Float?
+  earlyBirdEnd   DateTime?
+  quantity    Int
+  sold        Int @default(0)
+  isActive    Boolean @default(true)
+}
+
+// Exhibition Space Management
+model ExhibitionSpace {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId         String   @db.ObjectId
+  event           Event    @relation(fields: [eventId], references: [id])
+  
+  spaceType       ExhibitionSpaceType
+  name            String
+  description     String
+  dimensions      String
+  area            Float
+  location        String?
+  
+  // Pricing
+  basePrice       Float
+  currency        String   @default("USD")
+  
+  // Services
+  powerIncluded   Boolean  @default(false)
+  additionalPowerRate Float?
+  compressedAirRate Float?
+  
+  // Availability
+  isAvailable     Boolean  @default(true)
+  maxBooths       Int?
+  bookedBooths    Int      @default(0)
+  
+  // Setup Requirements
+  setupRequirements Json?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relationships
+  exhibitorBooths ExhibitorBooth[]
+
+  @@map("exhibition_spaces")
+}
+
+enum ExhibitionSpaceType {
+  SHELL_SPACE
+  RAW_SPACE
+  TWO_SIDE_OPEN
+  THREE_SIDE_OPEN
+  FOUR_SIDE_OPEN
+  MEZZANINE
+}
+
+// Venue Management
+model Venue {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  description     String
+  address         String
+  city            String
+  state           String
+  country         String
+  zipCode         String
+  phone           String?
+  email           String?
+  website         String?
+  
+  // Capacity and Spaces
+  totalCapacity   Int
+  meetingSpaces   MeetingSpace[]
+  amenities       String[]
+  
+  // Media
+  images          String[]
+  videos          String[]
+  floorPlans      String[]
+  virtualTour     String?
+  
+  // Pricing
+  basePrice       Float
+  currency        String   @default("USD")
+  
+  // Availability
+  isActive        Boolean  @default(true)
+  
+  // Location
+  latitude        Float?
+  longitude       Float?
+  
+  // Ratings
+  averageRating   Float    @default(0)
+  totalReviews    Int      @default(0)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relationships
+  events          Event[]
+  bookings        VenueBooking[]
+  reviews         Review[]
+  analytics       VenueAnalytics[]
+
+  @@map("venues")
+}
+
+type MeetingSpace {
+  id          String
+  name        String
+  capacity    Int
+  area        Float
+  amenities   String[]
+  hourlyRate  Float
+  isAvailable Boolean @default(true)
+}
+
+// Speaker Management
+model SpeakerSession {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId         String   @db.ObjectId
+  event           Event    @relation(fields: [eventId], references: [id])
+  speakerId       String   @db.ObjectId
+  speaker         User     @relation(fields: [speakerId], references: [id])
+  
+  title           String
+  description     String
+  sessionType     SessionType
+  duration        Int      // in minutes
+  startTime       DateTime
+  endTime         DateTime
+  room            String?
+  
+  // Content
+  abstract        String?
+  learningObjectives String[]
+  targetAudience  String?
+  materials       String[]
+  
+  // Status
+  status          SessionStatus @default(SCHEDULED)
+  
+  // Ratings
+  averageRating   Float    @default(0)
+  totalRatings    Int      @default(0)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("speaker_sessions")
+}
+
+enum SessionType {
+  KEYNOTE
+  PRESENTATION
+  WORKSHOP
+  PANEL
+  ROUNDTABLE
+}
+
+enum SessionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// Exhibitor Management
+model ExhibitorBooth {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId         String   @db.ObjectId
+  event           Event    @relation(fields: [eventId], references: [id])
+  exhibitorId     String   @db.ObjectId
+  exhibitor       User     @relation(fields: [exhibitorId], references: [id])
+  spaceId         String   @db.ObjectId
+  space           ExhibitionSpace @relation(fields: [spaceId], references: [id])
+  
+  boothNumber     String
+  companyName     String
+  description     String?
+  
+  // Services
+  additionalPower Float    @default(0) // in KW
+  compressedAir   Float    @default(0) // in HP
+  
+  // Setup
+  setupRequirements Json?
+  specialRequests String?
+  
+  // Pricing
+  totalCost       Float
+  currency        String   @default("USD")
+  
+  // Status
+  status          BoothStatus @default(BOOKED)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("exhibitor_booths")
+}
+
+enum BoothStatus {
+  BOOKED
+  CONFIRMED
+  SETUP
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+// Registration Management
+model EventRegistration {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId         String   @db.ObjectId
+  event           Event    @relation(fields: [eventId], references: [id])
+  userId          String   @db.ObjectId
+  user            User     @relation(fields: [userId], references: [id])
+  
+  ticketTypeId    String
+  quantity        Int      @default(1)
+  totalAmount     Float
+  currency        String   @default("USD")
+  
+  // Status
+  status          RegistrationStatus @default(PENDING)
+  
+  // Additional Info
+  specialRequests String?
+  dietaryRestrictions String?
+  
+  // Payment
+  paymentId       String?  @db.ObjectId
+  payment         Payment? @relation(fields: [paymentId], references: [id])
+  
+  registeredAt    DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("event_registrations")
+}
+
+enum RegistrationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+  WAITLISTED
+}
+
+// Venue Booking
+model VenueBooking {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  venueId         String   @db.ObjectId
+  venue           Venue    @relation(fields: [venueId], references: [id])
+  userId          String   @db.ObjectId
+  user            User     @relation(fields: [userId], references: [id])
+  
+  startDate       DateTime
+  endDate         DateTime
+  totalAmount     Float
+  currency        String   @default("USD")
+  
+  // Spaces
+  meetingSpaces   String[] // IDs of booked meeting spaces
+  
+  // Status
+  status          BookingStatus @default(PENDING)
+  
+  // Additional Info
+  purpose         String?
+  specialRequests String?
+  
+  // Payment
+  paymentId       String?  @db.ObjectId
+  payment         Payment? @relation(fields: [paymentId], references: [id])
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("venue_bookings")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  REFUNDED
+}
+
+// Payment Management
+model Payment {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  user            User     @relation(fields: [userId], references: [id])
+  
+  amount          Float
+  currency        String   @default("USD")
+  status          PaymentStatus
+  
+  // Payment Gateway
+  gateway         String   // stripe, paypal, etc.
+  gatewayTransactionId String?
+  
+  // Metadata
+  description     String?
+  metadata        Json?
+  
+  // Refund
+  refundAmount    Float?
+  refundReason    String?
+  refundedAt      DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relationships
+  eventRegistrations EventRegistration[]
+  venueBookings   VenueBooking[]
+
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+// Communication System
+model Message {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId        String   @db.ObjectId
+  sender          User     @relation("MessageSender", fields: [senderId], references: [id])
+  receiverId      String   @db.ObjectId
+  receiver        User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+  
+  subject         String?
+  content         String
+  attachments     String[]
+  
+  // Threading
+  threadId        String?
+  replyToId       String?  @db.ObjectId
+  
+  // Status
+  isRead          Boolean  @default(false)
+  readAt          DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("messages")
+}
+
+// Notification System
+model Notification {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  user            User     @relation(fields: [userId], references: [id])
+  
+  type            NotificationType
+  title           String
+  message         String
+  
+  // Channels
+  channels        NotificationChannel[]
+  
+  // Status
+  isRead          Boolean  @default(false)
+  readAt          DateTime?
+  
+  // Metadata
+  metadata        Json?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  EVENT_REMINDER
+  REGISTRATION_CONFIRMATION
+  PAYMENT_CONFIRMATION
+  MESSAGE_RECEIVED
+  BOOKING_CONFIRMATION
+  SYSTEM_UPDATE
+}
+
+enum NotificationChannel {
+  PUSH
+  EMAIL
+  SMS
+}
+
+// Campaign Management
+model Campaign {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  description     String?
+  type            CampaignType
+  
+  // Targeting
+  targetAudience  Json
+  
+  // Content
+  subject         String?
+  content         String
+  template        String?
+  
+  // Scheduling
+  scheduledAt     DateTime?
+  sentAt          DateTime?
+  
+  // Status
+  status          CampaignStatus @default(DRAFT)
+  
+  // Analytics
+  totalSent       Int      @default(0)
+  totalOpened     Int      @default(0)
+  totalClicked    Int      @default(0)
+  
+  // Relationships
+  createdById     String   @db.ObjectId
+  createdBy       User     @relation(fields: [createdById], references: [id])
+  eventId         String?  @db.ObjectId
+  event           Event?   @relation(fields: [eventId], references: [id])
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("campaigns")
+}
+
+enum CampaignType {
+  EMAIL
+  PUSH
+  SMS
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  CANCELLED
+}
+
+// Review System
+model Review {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  user            User     @relation(fields: [userId], references: [id])
+  
+  // Target (Event or Venue)
+  eventId         String?  @db.ObjectId
+  event           Event?   @relation(fields: [eventId], references: [id])
+  venueId         String?  @db.ObjectId
+  venue           Venue?   @relation(fields: [venueId], references: [id])
+  
+  rating          Int      // 1-5
+  title           String?
+  comment         String?
+  
+  // Status
+  isApproved      Boolean  @default(false)
+  isPublic        Boolean  @default(true)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("reviews")
+}
+
+// Analytics
+model Analytics {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Target
+  entityType      String   // event, venue, user, etc.
+  entityId        String   @db.ObjectId
+  
+  // Metrics
+  views           Int      @default(0)
+  clicks          Int      @default(0)
+  conversions     Int      @default(0)
+  revenue         Float    @default(0)
+  
+  // Dimensions
+  date            DateTime
+  source          String?
+  medium          String?
+  campaign        String?
+  country         String?
+  city            String?
+  device          String?
+  browser         String?
+  
+  createdAt       DateTime @default(now())
+
+  @@map("analytics")
+}
+
+// Specialized Analytics
+model EventAnalytics {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId         String   @db.ObjectId
+  event           Event    @relation(fields: [eventId], references: [id])
+  
+  // Registration Metrics
+  totalRegistrations Int   @default(0)
+  totalRevenue    Float    @default(0)
+  conversionRate  Float    @default(0)
+  
+  // Engagement Metrics
+  pageViews       Int      @default(0)
+  uniqueVisitors  Int      @default(0)
+  averageTimeOnPage Float  @default(0)
+  
+  // Geographic Data
+  topCountries    Json?
+  topCities       Json?
+  
+  // Traffic Sources
+  trafficSources  Json?
+  
+  date            DateTime
+  createdAt       DateTime @default(now())
+
+  @@map("event_analytics")
+}
+
+model UserAnalytics {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  user            User     @relation(fields: [userId], references: [id])
+  
+  // Activity Metrics
+  loginCount      Int      @default(0)
+  eventsAttended  Int      @default(0)
+  eventsOrganized Int      @default(0)
+  totalSpent      Float    @default(0)
+  
+  // Engagement
+  lastActiveAt    DateTime?
+  averageSessionDuration Float @default(0)
+  
+  date            DateTime
+  createdAt       DateTime @default(now())
+
+  @@map("user_analytics")
+}
+
+model VenueAnalytics {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  venueId         String   @db.ObjectId
+  venue           Venue    @relation(fields: [venueId], references: [id])
+  
+  // Booking Metrics
+  totalBookings   Int      @default(0)
+  totalRevenue    Float    @default(0)
+  occupancyRate   Float    @default(0)
+  
+  // Performance
+  averageRating   Float    @default(0)
+  totalReviews    Int      @default(0)
+  
+  date            DateTime
+  createdAt       DateTime @default(now())
+
+  @@map("venue_analytics")
+}
+
+// Settings
+model Settings {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @unique @db.ObjectId
+  user            User     @relation(fields: [userId], references: [id])
+  
+  // Notification Preferences
+  emailNotifications Boolean @default(true)
+  pushNotifications Boolean  @default(true)
+  smsNotifications Boolean   @default(false)
+  
+  // Privacy Settings
+  profileVisibility String  @default("public") // public, private, friends
+  showEmail         Boolean @default(false)
+  showPhone         Boolean @default(false)
+  
+  // Communication Preferences
+  marketingEmails   Boolean @default(true)
+  eventUpdates      Boolean @default(true)
+  
+  // Display Preferences
+  theme             String  @default("light") // light, dark, auto
+  language          String  @default("en")
+  timezone          String  @default("UTC")
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("settings")
+}
