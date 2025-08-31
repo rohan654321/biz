@@ -27,7 +27,7 @@ export default function LoginPage() {
     if (status === "authenticated" && session?.user) {
       // Redirect based on user role
       if (session.user.role === "ATTENDEE") {
-        router.push(`/dashboard`)
+        router.push(`/dashboard/${session.user.id}`)
       } else if (session.user.role === "ORGANIZER") {
         router.push("/organizer-dashboard")
       } else if (session.user.role === "superadmin") {
