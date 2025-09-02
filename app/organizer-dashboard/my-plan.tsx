@@ -1,14 +1,44 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Crown, Check, CreditCard, Download, Calendar, Users, Headphones } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { Crown, Check, Download, Calendar, Users, Headphones, Loader2 } from "lucide-react"
 
-export default function MyPlan() {
-  // Mock plan data
-  const currentPlan = {
+interface MyPlanProps {
+  organizerId: string
+}
+
+interface Subscription {
+  id: string
+  planName: string
+  planType: string
+  price: number
+  status: string
+  renewalDate: string
+  features: string[]
+}
+
+interface Usage {
+  events: { used: number; limit: number }
+  attendees: { used: number; limit: number }
+  storage: { used: number; limit: number }
+  promotions: { used: number; limit: number }
+}
+
+export default function MyPlan({ organizerId }: MyPlanProps) {
+  const { toast } = useToast()
+  const [loading, setLoading] = useState(true)
+  const [upgrading, setUpgrading] = useState(false)
+  const [subscription, setSubscription] = useState<Subscription | null>(null)
+  const [usage, setUsage] = useState<Usage | null>(null)
+  const [daysLeft, setDaysLeft] = useState(0)
+
+  // Mock plan data - will be replaced with API data
+  const [currentPlan, setCurrentPlan] = useState({
     name: "Professional",
     price: 2999,
     billing: "monthly",
@@ -21,11 +51,12 @@ export default function MyPlan() {
       "Custom branding",
       "Email marketing tools",
     ],
-  }
+  })
 
   const plans = [
     {
       name: "Starter",
+      type: "BASIC",
       price: 999,
       popular: false,
       features: [
@@ -38,6 +69,7 @@ export default function MyPlan() {
     },
     {
       name: "Professional",
+      type: "PRO",
       price: 2999,
       popular: true,
       features: [
@@ -52,6 +84,7 @@ export default function MyPlan() {
     },
     {
       name: "Enterprise",
+      type: "ENTERPRISE",
       price: 9999,
       popular: false,
       features: [
@@ -100,6 +133,86 @@ export default function MyPlan() {
     },
   ]
 
+  useEffect(() => {
+    fetchSubscriptionData()
+  }, [organizerId])
+
+  const fetchSubscriptionData = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/organizers/${organizerId}/subscription`)
+      if (!response.ok) throw new Error("Failed to fetch subscription data")
+
+      const data = await response.json()
+      setSubscription(data.subscription)
+      setUsage(data.usage)
+      setDaysLeft(data.daysLeft)
+
+      // Update current plan with API data
+      if (data.subscription) {
+        setCurrentPlan({
+          name: data.subscription.planName,
+          price: data.subscription.price,
+          billing: "monthly",
+          nextBilling: new Date(data.subscription.renewalDate).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+          features: data.subscription.features || currentPlan.features,
+        })
+      }
+    } catch (error) {
+      console.error("Error fetching subscription:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load subscription data",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleUpgrade = async (planType: string, planName: string, price: number) => {
+    try {
+      setUpgrading(true)
+      const response = await fetch(`/api/organizers/${organizerId}/subscription`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ planType, planName, price }),
+      })
+
+      if (!response.ok) throw new Error("Failed to upgrade plan")
+
+      toast({
+        title: "Success",
+        description: `Successfully upgraded to ${planName} plan!`,
+      })
+
+      fetchSubscriptionData() // Refresh data
+    } catch (error) {
+      console.error("Error upgrading plan:", error)
+      toast({
+        title: "Error",
+        description: "Failed to upgrade plan",
+        variant: "destructive",
+      })
+    } finally {
+      setUpgrading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900">My Plan</h1>
@@ -108,7 +221,6 @@ export default function MyPlan() {
         <TabsList>
           <TabsTrigger value="current">Current Plan</TabsTrigger>
           <TabsTrigger value="upgrade">Upgrade Plan</TabsTrigger>
-          {/* <TabsTrigger value="payment">Payment Methods</TabsTrigger> */}
           <TabsTrigger value="billing">Billing History</TabsTrigger>
         </TabsList>
 
@@ -125,25 +237,30 @@ export default function MyPlan() {
                     </p>
                   </div>
                 </div>
-                <Badge variant="default">Active</Badge>
+                <Badge variant="default">{subscription?.status || "Active"}</Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
                   <Calendar className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">25</p>
+                  <p className="text-2xl font-bold">{usage?.events.limit === -1 ? "∞" : usage?.events.limit || "25"}</p>
                   <p className="text-sm text-gray-600">Events per month</p>
+                  {usage && <p className="text-xs text-gray-500 mt-1">{usage.events.used} used this month</p>}
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
                   <Users className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">5K</p>
+                  <p className="text-2xl font-bold">
+                    {usage?.attendees.limit === -1 ? "∞" : `${(usage?.attendees.limit || 5000) / 1000}K`}
+                  </p>
                   <p className="text-sm text-gray-600">Attendees per event</p>
+                  {usage && <p className="text-xs text-gray-500 mt-1">{usage.attendees.used} total attendees</p>}
                 </div>
                 <div className="text-center p-4 bg-purple-50 rounded-lg">
                   <Headphones className="w-8 h-8 text-purple-500 mx-auto mb-2" />
                   <p className="text-2xl font-bold">Priority</p>
                   <p className="text-sm text-gray-600">Support level</p>
+                  <p className="text-xs text-gray-500 mt-1">{daysLeft} days until renewal</p>
                 </div>
               </div>
 
@@ -196,49 +313,23 @@ export default function MyPlan() {
                   <Button
                     className="w-full"
                     variant={plan.name === currentPlan.name ? "outline" : "default"}
-                    disabled={plan.name === currentPlan.name}
+                    disabled={plan.name === currentPlan.name || upgrading}
+                    onClick={() => handleUpgrade(plan.type, plan.name, plan.price)}
                   >
-                    {plan.name === currentPlan.name
-                      ? "Current Plan"
-                      : plan.price > currentPlan.price
-                        ? "Upgrade Now"
-                        : "Downgrade"}
+                    {upgrading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : plan.name === currentPlan.name ? (
+                      "Current Plan"
+                    ) : plan.price > currentPlan.price ? (
+                      "Upgrade Now"
+                    ) : (
+                      "Downgrade"
+                    )}
                   </Button>
                 </CardContent>
               </Card>
             ))}
           </div>
-        </TabsContent>
-
-        <TabsContent value="payment" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment Methods</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {paymentMethods.map((method) => (
-                <div key={method.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <CreditCard className="w-6 h-6 text-gray-400" />
-                    <div>
-                      <p className="font-medium">
-                        {method.type} •••• •••• •••• {method.last4}
-                      </p>
-                      <p className="text-sm text-gray-600">Expires {method.expiry}</p>
-                    </div>
-                    {method.isDefault && <Badge variant="secondary">Default</Badge>}
-                  </div>
-                  <Button variant="outline" size="sm">
-                    Edit
-                  </Button>
-                </div>
-              ))}
-              <Button variant="outline" className="w-full bg-transparent">
-                <CreditCard className="w-4 h-4 mr-2" />
-                Add New Payment Method
-              </Button>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="billing" className="space-y-6">

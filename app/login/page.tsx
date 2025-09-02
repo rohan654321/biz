@@ -29,7 +29,7 @@ export default function LoginPage() {
       if (session.user.role === "ATTENDEE") {
         router.push(`/dashboard/${session.user.id}`)
       } else if (session.user.role === "ORGANIZER") {
-        router.push("/organizer-dashboard")
+        router.push(`/organizer-dashboard/${session.user.id}`)
       } else if (session.user.role === "superadmin") {
         router.push("/admin-dashboard")
       } else if (session.user.role === "EXHIBITOR") {

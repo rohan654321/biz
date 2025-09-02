@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
 import {
   Megaphone,
   Users,
@@ -31,10 +32,14 @@ import {
   Code,
   Stethoscope,
   Star,
+  Loader2,
+  Eye,
+  MousePointer,
+  TrendingUp,
 } from "lucide-react"
 
 interface Event {
-  id: number
+  id: string
   title: string
   date: string
   location: string
@@ -42,11 +47,34 @@ interface Event {
   attendees: number
   revenue: number
   registrations: number
-  type: string
+  category: string
+}
+
+interface Promotion {
+  id: string
+  eventId: string
+  event: {
+    id: string
+    title: string
+    date: string
+    location: string
+    status: string
+  } | null
+  packageType: string
+  targetCategories: string[]
+  status: string
+  amount: number
+  duration: number
+  startDate: string
+  endDate: string
+  impressions: number
+  clicks: number
+  conversions: number
+  createdAt: string
 }
 
 interface EventPromotionProps {
-  events: Event[]
+  organizerId: string
 }
 
 interface PromotionPackage {
@@ -70,12 +98,19 @@ interface CategoryFilter {
   color: string
 }
 
-export default function EventPromotion({ events }: EventPromotionProps) {
+export default function EventPromotion({ organizerId }: EventPromotionProps) {
+  const { toast } = useToast()
   const [selectedTab, setSelectedTab] = useState("platform-promotion")
   const [selectedEvent, setSelectedEvent] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedPackage, setSelectedPackage] = useState("")
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [creating, setCreating] = useState(false)
+
+  // State for API data
+  const [events, setEvents] = useState<Event[]>([])
+  const [promotions, setPromotions] = useState<Promotion[]>([])
 
   // Platform promotion packages
   const promotionPackages: PromotionPackage[] = [
@@ -235,6 +270,75 @@ export default function EventPromotion({ events }: EventPromotionProps) {
     },
   ]
 
+  useEffect(() => {
+    fetchPromotionData()
+  }, [organizerId])
+
+  const fetchPromotionData = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/organizers/${organizerId}/promotions`)
+      if (!response.ok) throw new Error("Failed to fetch promotion data")
+
+      const data = await response.json()
+      setEvents(data.events || [])
+      setPromotions(data.promotions || [])
+    } catch (error) {
+      console.error("Error fetching promotion data:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load promotion data",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const createPromotion = async () => {
+    const selectedPackageData = promotionPackages.find((p) => p.id === selectedPackage)
+    if (!selectedPackageData || !selectedEvent) return
+
+    try {
+      setCreating(true)
+      const response = await fetch(`/api/organizers/${organizerId}/promotions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          eventId: selectedEvent,
+          packageType: selectedPackageData.id,
+          targetCategories: selectedCategories,
+          amount: selectedPackageData.price,
+          duration: Number.parseInt(selectedPackageData.duration.split(" ")[0]),
+        }),
+      })
+
+      if (!response.ok) throw new Error("Failed to create promotion")
+
+      toast({
+        title: "Success",
+        description: "Promotion campaign created successfully!",
+      })
+
+      setIsPaymentDialogOpen(false)
+      setSelectedEvent("")
+      setSelectedCategories([])
+      setSelectedPackage("")
+      fetchPromotionData() // Refresh data
+    } catch (error) {
+      console.error("Error creating promotion:", error)
+      toast({
+        title: "Error",
+        description: "Failed to create promotion campaign",
+        variant: "destructive",
+      })
+    } finally {
+      setCreating(false)
+    }
+  }
+
   const calculateEstimatedReach = () => {
     if (selectedCategories.length === 0) return 0
     return selectedCategories.reduce((total, categoryId) => {
@@ -265,6 +369,14 @@ export default function EventPromotion({ events }: EventPromotionProps) {
 
   const selectedPackageData = promotionPackages.find((p) => p.id === selectedPackage)
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -277,10 +389,54 @@ export default function EventPromotion({ events }: EventPromotionProps) {
         </div>
       </div>
 
+      {/* Active Promotions */}
+      {promotions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              Active Promotions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {promotions.map((promotion) => (
+                <div key={promotion.id} className="p-4 border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <Badge variant={promotion.status === "ACTIVE" ? "default" : "secondary"}>{promotion.status}</Badge>
+                    <span className="text-sm text-gray-500">{promotion.packageType}</span>
+                  </div>
+                  <h3 className="font-semibold mb-2">{promotion.event?.title || "Event"}</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Impressions:</span>
+                      <div className="flex items-center gap-1">
+                        <Eye className="w-3 h-3" />
+                        <span>{promotion.impressions.toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Clicks:</span>
+                      <div className="flex items-center gap-1">
+                        <MousePointer className="w-3 h-3" />
+                        <span>{promotion.clicks.toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Conversions:</span>
+                      <span className="font-medium text-green-600">{promotion.conversions}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-1">
           <TabsTrigger value="platform-promotion">Platform Promotion</TabsTrigger>
-          {/* <TabsTrigger value="external-campaigns">External Campaigns</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="platform-promotion" className="space-y-6">
@@ -470,27 +626,6 @@ export default function EventPromotion({ events }: EventPromotionProps) {
             </>
           )}
         </TabsContent>
-
-        <TabsContent value="external-campaigns" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>External Marketing Campaigns</CardTitle>
-              <p className="text-sm text-gray-600">
-                Create campaigns for social media, email marketing, and other external platforms
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <Megaphone className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">External Campaigns</h3>
-                <p className="text-gray-500 mb-4">
-                  This feature allows you to create and manage campaigns for external platforms
-                </p>
-                <Button variant="outline">Coming Soon</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
 
       {/* Payment Dialog */}
@@ -581,8 +716,12 @@ export default function EventPromotion({ events }: EventPromotionProps) {
                 <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <CreditCard className="w-4 h-4 mr-2" />
+                <Button onClick={createPromotion} disabled={creating}>
+                  {creating ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <CreditCard className="w-4 h-4 mr-2" />
+                  )}
                   Pay ₹{selectedPackageData.price.toLocaleString()}
                 </Button>
               </div>

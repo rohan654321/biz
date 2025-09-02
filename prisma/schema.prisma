@@ -39,6 +39,28 @@ model User {
   timezone          String?
   language          String   @default("en")
 
+  // Organizer-specific fields
+  organizationName  String?
+  description       String?
+  headquarters      String?
+  founded           String?
+  teamSize          String?
+  specialties       String[]
+  achievements      String[]
+  certifications    String[]
+  
+  // Business Information
+  businessEmail     String?
+  businessPhone     String?
+  businessAddress   String?
+  taxId             String?
+  
+  // Statistics (computed fields)
+  totalEvents       Int      @default(0)
+  activeEvents      Int      @default(0)
+  totalAttendees    Int      @default(0)
+  totalRevenue      Float    @default(0)
+
   // Relationships
   organizedEvents   Event[]  @relation("EventOrganizer")
   registrations     EventRegistration[]
@@ -74,7 +96,7 @@ model Event {
   shortDescription  String?
   slug              String   @unique
   status            EventStatus @default(DRAFT)
-  category          String
+  category          String?
   tags              String[]
   
   // Dates and Times
@@ -90,6 +112,7 @@ model Event {
   isVirtual         Boolean  @default(false)
   virtualLink       String?
   address           String?
+  location          String?
   city              String?
   state             String?
   country           String?

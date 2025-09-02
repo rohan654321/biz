@@ -42,7 +42,17 @@ interface CompanyInfoProps {
 
 export default function CompanyInfo({ exhibitorData }: CompanyInfoProps) {
   const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState(exhibitorData)
+ const [formData, setFormData] = useState<ExhibitorData>({
+  companyName: exhibitorData?.companyName || "",
+  logo: exhibitorData?.logo || "",
+  contactPerson: exhibitorData?.contactPerson || "",
+  email: exhibitorData?.email || "",
+  mobile: exhibitorData?.mobile || "",
+  website: exhibitorData?.website || "",
+  categories: exhibitorData?.categories || [],
+  description: exhibitorData?.description || "",
+})
+
   const [newCategory, setNewCategory] = useState("")
 
   const socialLinks = [
@@ -99,10 +109,10 @@ export default function CompanyInfo({ exhibitorData }: CompanyInfoProps) {
                 <AvatarImage src={formData.logo || "/placeholder.svg"} />
                 <AvatarFallback className="text-2xl">
                   {formData.companyName
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
+                    ? formData.companyName.split(" ").map((n) => n[0]).join("")
+                    : "EX"}
                 </AvatarFallback>
+
               </Avatar>
               {isEditing && (
                 <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">

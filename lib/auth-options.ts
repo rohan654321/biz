@@ -13,6 +13,7 @@ declare module "next-auth" {
       role?: string
       firstName?: string
       lastName?: string
+      avatar?: string | null   // 👈 Add this
     }
   }
 

@@ -25,7 +25,7 @@ import { User, Calendar, Users, MessageSquare, Settings, Bell, Loader2 } from "l
 import { ProfileSection } from "./profile-section"
 import { EventsSection } from "./events-section"
 import { ConnectionsSection } from "./connections-section"
-import { MessagesSection } from "./messages-section"
+import  MessagesSection  from "./messages-section"
 import { SettingsSection } from "./settings-section"
 import { useToast } from "@/hooks/use-toast"
 
@@ -237,7 +237,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       case "connections":
         return <ConnectionsSection userId={userId} />
       case "messages":
-        return <MessagesSection userId={userId} />
+        return <MessagesSection organizerId={userId} />
       case "settings":
         return <SettingsSection userData={userData} onUpdate={updateUserData} />
       default:

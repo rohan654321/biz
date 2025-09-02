@@ -1,20 +1,17 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { redirect } from "next/navigation"
-import ExhibitorDashboardClient from "../exhibitorLayout"
+import ExhibitorLayoutPage from "../exhibitorLayout"
 
-export default async function ExhibitorDashboardPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ExhibitorDashboardPage({ params }:{ params: Promise<{ id: string }> }) {
   const { id } =await params
   const session = await getServerSession(authOptions)
 
-  if (!session) {
+  if (!session) redirect("/login")
+
+  if (session.user.id !== id && session.user.role !== "EXHIBITOR") {
     redirect("/login")
   }
 
-  // Only allow own dashboard or admin
-  if (session.user.id !== id && session.user.role !== "ADMIN") {
-    redirect("/login")
-  }
-
-  return <ExhibitorDashboardClient />
+  return <ExhibitorLayoutPage userId={id} />
 }
