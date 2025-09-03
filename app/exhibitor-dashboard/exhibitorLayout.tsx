@@ -33,7 +33,7 @@ import ProductListing from "./product-listing"
 import LeadManagement from "./lead-management"
 import AppointmentScheduling from "./appointment-scheduling"
 import AnalyticsReports from "./analytics-reports"
-import PromotionsMarketing from "./promotions-marketing"
+// import PromotionsMarketing from "./promotions-marketing"
 import ExhibitorSettings from "./settings"
 
 interface ExhibitorData {
