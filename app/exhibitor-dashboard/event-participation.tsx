@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useToast } from "@/hooks/use-toast"
 import {
   Calendar,
   MapPin,
@@ -18,59 +20,84 @@ import {
   Building,
 } from "lucide-react"
 
-export default function EventParticipation() {
+interface EventParticipationProps {
+  exhibitorId: string
+}
+
+interface Event {
+  id: string
+  eventId: string
+  eventName: string
+  date: string
+  endDate: string
+  venue: string
+  boothSize: string
+  boothNumber: string
+  paymentStatus: string
+  setupTime?: string
+  dismantleTime?: string
+  passes: number
+  passesUsed: number
+  invoiceAmount: number
+  status: string
+  specialRequests?: string
+  organizer?: {
+    id: string
+    firstName: string
+    lastName: string
+    company: string
+  }
+}
+
+export default function EventParticipation({ exhibitorId }: EventParticipationProps) {
+  const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("upcoming")
+  const [events, setEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock event participation data
-  const upcomingEvents = [
-    {
-      id: 1,
-      eventName: "Global Tech Expo 2025",
-      date: "March 15-17, 2025",
-      venue: "Mumbai Convention Center",
-      boothSize: "3m x 3m",
-      boothNumber: "A-45",
-      paymentStatus: "Paid",
-      setupTime: "March 14, 2025 - 2:00 PM to 6:00 PM",
-      dismantleTime: "March 17, 2025 - 6:00 PM to 10:00 PM",
-      passes: 5,
-      passesUsed: 2,
-      invoiceAmount: 45000,
-    },
-    {
-      id: 2,
-      eventName: "Healthcare Innovation Summit",
-      date: "April 22-24, 2025",
-      venue: "Delhi Exhibition Center",
-      boothSize: "6m x 3m",
-      boothNumber: "B-12",
-      paymentStatus: "Pending",
-      setupTime: "April 21, 2025 - 1:00 PM to 5:00 PM",
-      dismantleTime: "April 24, 2025 - 5:00 PM to 9:00 PM",
-      passes: 8,
-      passesUsed: 0,
-      invoiceAmount: 75000,
-    },
-  ]
+  useEffect(() => {
+    if (exhibitorId && exhibitorId !== "undefined") {
+      fetchEvents()
+    }
+  }, [exhibitorId])
 
-  const pastEvents = [
-    {
-      id: 3,
-      eventName: "AI & Machine Learning Conference",
-      date: "January 10-12, 2025",
-      venue: "Bangalore Tech Park",
-      boothSize: "3m x 3m",
-      boothNumber: "C-28",
-      paymentStatus: "Paid",
-      passes: 5,
-      passesUsed: 5,
-      invoiceAmount: 35000,
-      leadsGenerated: 45,
-      visitors: 120,
-    },
-  ]
+  const fetchEvents = async () => {
+    try {
+      setLoading(true)
+      setError(null)
 
-  const EventCard = ({ event, isPast = false }: { event: any; isPast?: boolean }) => (
+      const response = await fetch(`/api/exhibitors/${exhibitorId}/events`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch events")
+      }
+
+      const data = await response.json()
+      setEvents(data.events || [])
+    } catch (err) {
+      console.error("Error fetching events:", err)
+      setError(err instanceof Error ? err.message : "An error occurred")
+      toast({
+        title: "Error",
+        description: "Failed to load events. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const upcomingEvents = events.filter((event) => event.status === "PUBLISHED" && new Date(event.endDate) > new Date())
+
+  const pastEvents = events.filter((event) => event.status === "COMPLETED" || new Date(event.endDate) <= new Date())
+
+  const EventCard = ({ event, isPast = false }: { event: Event; isPast?: boolean }) => (
     <Card>
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
@@ -79,7 +106,7 @@ export default function EventParticipation() {
             <div className="space-y-2 text-sm text-gray-600">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                {event.date}
+                {event.date} - {event.endDate}
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
@@ -92,10 +119,10 @@ export default function EventParticipation() {
             </div>
           </div>
           <Badge
-            variant={event.paymentStatus === "Paid" ? "default" : "destructive"}
-            className={event.paymentStatus === "Paid" ? "bg-green-500" : ""}
+            variant={event.paymentStatus === "PAID" ? "default" : "destructive"}
+            className={event.paymentStatus === "PAID" ? "bg-green-500" : ""}
           >
-            {event.paymentStatus === "Paid" ? (
+            {event.paymentStatus === "PAID" ? (
               <CheckCircle className="w-3 h-3 mr-1" />
             ) : (
               <AlertCircle className="w-3 h-3 mr-1" />
@@ -104,7 +131,7 @@ export default function EventParticipation() {
           </Badge>
         </div>
 
-        {!isPast && (
+        {!isPast && event.setupTime && event.dismantleTime && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-sm">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -138,11 +165,18 @@ export default function EventParticipation() {
           </div>
           {isPast && (
             <div className="text-center p-3 bg-orange-50 rounded-lg">
-              <div className="font-semibold text-orange-600">{event.leadsGenerated}</div>
+              <div className="font-semibold text-orange-600">45</div>
               <div className="text-gray-600">Leads Generated</div>
             </div>
           )}
         </div>
+
+        {event.specialRequests && (
+          <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+            <p className="text-sm font-medium text-gray-700 mb-1">Special Requests:</p>
+            <p className="text-sm text-gray-600">{event.specialRequests}</p>
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
@@ -157,7 +191,7 @@ export default function EventParticipation() {
             <Users className="w-4 h-4" />
             Passes
           </Button>
-          {!isPast && event.paymentStatus === "Pending" && (
+          {!isPast && event.paymentStatus === "PENDING" && (
             <Button size="sm" className="flex items-center gap-2 bg-green-600 hover:bg-green-700">
               <CreditCard className="w-4 h-4" />
               Pay Now
@@ -167,6 +201,29 @@ export default function EventParticipation() {
       </CardContent>
     </Card>
   )
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <div className="space-y-4">
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={fetchEvents}>Try Again</Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -180,20 +237,36 @@ export default function EventParticipation() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
-          <TabsTrigger value="upcoming">Upcoming Events</TabsTrigger>
-          <TabsTrigger value="past">Past Events</TabsTrigger>
+          <TabsTrigger value="upcoming">Upcoming Events ({upcomingEvents.length})</TabsTrigger>
+          <TabsTrigger value="past">Past Events ({pastEvents.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="upcoming" className="space-y-4">
-          {upcomingEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
+          {upcomingEvents.length > 0 ? (
+            upcomingEvents.map((event) => <EventCard key={event.id} event={event} />)
+          ) : (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">No upcoming events</h3>
+                <p className="text-gray-500">Register for events to see them here</p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="past" className="space-y-4">
-          {pastEvents.map((event) => (
-            <EventCard key={event.id} event={event} isPast={true} />
-          ))}
+          {pastEvents.length > 0 ? (
+            pastEvents.map((event) => <EventCard key={event.id} event={event} isPast={true} />)
+          ) : (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">No past events</h3>
+                <p className="text-gray-500">Your completed events will appear here</p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
 

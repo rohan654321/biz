@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Calendar, Clock, MapPin, Users, Video, Mic, Monitor, Coffee } from "lucide-react"
 
-export function MySessions() {
+export default function MySessions() {
   const [filter, setFilter] = useState("all")
 
   const sessions = [

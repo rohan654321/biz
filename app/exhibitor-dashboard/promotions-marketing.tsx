@@ -33,6 +33,10 @@ import {
   Star,
 } from "lucide-react"
 
+interface PromotionsMarketingProps {
+  exhibitorId: string
+}
+
 interface Event {
   id: number
   title: string
@@ -43,10 +47,6 @@ interface Event {
   revenue: number
   registrations: number
   type: string
-}
-
-interface EventPromotionProps {
-  events?: Event[]
 }
 
 interface PromotionPackage {
@@ -70,7 +70,7 @@ interface CategoryFilter {
   color: string
 }
 
-export default function PromotionsMarketing({ events = [] }: EventPromotionProps) {
+export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketingProps) {
   const [selectedTab, setSelectedTab] = useState("platform-promotion")
   const [selectedEvent, setSelectedEvent] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
@@ -78,44 +78,41 @@ export default function PromotionsMarketing({ events = [] }: EventPromotionProps
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
 
   // Mock events data for exhibitors
-  const exhibitorEvents: Event[] =
-    events.length > 0
-      ? events
-      : [
-          {
-            id: 1,
-            title: "Global Tech Expo 2025",
-            date: "2025-03-15",
-            location: "Mumbai, India",
-            status: "Confirmed",
-            attendees: 5000,
-            revenue: 150000,
-            registrations: 4500,
-            type: "Technology",
-          },
-          {
-            id: 2,
-            title: "Healthcare Innovation Summit",
-            date: "2025-04-20",
-            location: "Delhi, India",
-            status: "Pending",
-            attendees: 3000,
-            revenue: 90000,
-            registrations: 2800,
-            type: "Healthcare",
-          },
-          {
-            id: 3,
-            title: "Manufacturing Excellence Fair",
-            date: "2025-05-10",
-            location: "Bangalore, India",
-            status: "Confirmed",
-            attendees: 4200,
-            revenue: 120000,
-            registrations: 3900,
-            type: "Manufacturing",
-          },
-        ]
+  const exhibitorEvents: Event[] = [
+    {
+      id: 1,
+      title: "Global Tech Expo 2025",
+      date: "2025-03-15",
+      location: "Mumbai, India",
+      status: "Confirmed",
+      attendees: 5000,
+      revenue: 150000,
+      registrations: 4500,
+      type: "Technology",
+    },
+    {
+      id: 2,
+      title: "Healthcare Innovation Summit",
+      date: "2025-04-20",
+      location: "Delhi, India",
+      status: "Pending",
+      attendees: 3000,
+      revenue: 90000,
+      registrations: 2800,
+      type: "Healthcare",
+    },
+    {
+      id: 3,
+      title: "Manufacturing Excellence Fair",
+      date: "2025-05-10",
+      location: "Bangalore, India",
+      status: "Confirmed",
+      attendees: 4200,
+      revenue: 120000,
+      registrations: 3900,
+      type: "Manufacturing",
+    },
+  ]
 
   // Platform promotion packages
   const promotionPackages: PromotionPackage[] = [

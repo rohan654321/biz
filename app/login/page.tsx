@@ -35,7 +35,7 @@ export default function LoginPage() {
       } else if (session.user.role === "EXHIBITOR") {
         router.push(`/exhibitor-dashboard/${session.user.id}`)
       } else if (session.user.role === "SPEAKER") {
-        router.push("/speaker-dashboard")
+        router.push(`/speaker-dashboard/${session.user.id}`)
       } else if (session.user.role === "VENUE_MANAGER") {
         router.push("/venue-dashboard")
       } else {

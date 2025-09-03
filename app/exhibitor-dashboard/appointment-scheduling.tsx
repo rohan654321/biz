@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,89 +8,121 @@ import { Calendar } from "@/components/ui/calendar"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useToast } from "@/hooks/use-toast"
 import { Clock, CalendarIcon, CheckCircle, X, Eye, Phone, Mail, Building } from "lucide-react"
 
-export default function AppointmentScheduling() {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
-  const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
+interface AppointmentSchedulingProps {
+  exhibitorId: string
+}
 
-  // Mock appointment data
-  const appointments = [
-    {
-      id: 1,
-      visitorName: "Arjun Mehta",
-      visitorEmail: "arjun@techstart.com",
-      visitorPhone: "+91 98765 43210",
-      company: "TechStart Solutions",
-      designation: "CTO",
-      requestedDate: "2025-01-18",
-      requestedTime: "14:00",
-      duration: "30 minutes",
-      purpose: "Discuss AI platform integration for our existing systems",
-      status: "Pending",
-      priority: "High",
-      profileViews: 15,
-      previousMeetings: 0,
-    },
-    {
-      id: 2,
-      visitorName: "Kavya Singh",
-      visitorEmail: "kavya@innovate.in",
-      visitorPhone: "+91 87654 32109",
-      company: "Innovate India",
-      designation: "Product Manager",
-      requestedDate: "2025-01-19",
-      requestedTime: "11:30",
-      duration: "45 minutes",
-      purpose: "Product demo and pricing discussion for cloud security suite",
-      status: "Approved",
-      priority: "Medium",
-      profileViews: 8,
-      previousMeetings: 1,
-    },
-    {
-      id: 3,
-      visitorName: "Rohit Kumar",
-      visitorEmail: "rohit@manufacturing.co",
-      visitorPhone: "+91 76543 21098",
-      company: "Manufacturing Co",
-      designation: "IT Head",
-      requestedDate: "2025-01-20",
-      requestedTime: "16:00",
-      duration: "60 minutes",
-      purpose: "Comprehensive solution discussion for enterprise mobile app development",
-      status: "Approved",
-      priority: "High",
-      profileViews: 22,
-      previousMeetings: 2,
-    },
-    {
-      id: 4,
-      visitorName: "Priya Sharma",
-      visitorEmail: "priya@retail.com",
-      visitorPhone: "+91 65432 10987",
-      company: "Retail Solutions",
-      designation: "Operations Manager",
-      requestedDate: "2025-01-17",
-      requestedTime: "10:00",
-      duration: "30 minutes",
-      purpose: "Quick overview of analytics solutions for retail business",
-      status: "Completed",
-      priority: "Low",
-      profileViews: 5,
-      previousMeetings: 0,
-    },
-  ]
+interface Appointment {
+  id: string
+  visitorName: string
+  visitorEmail: string
+  visitorPhone?: string
+  company?: string
+  designation?: string
+  requestedDate: string
+  requestedTime: string
+  duration: string
+  purpose: string
+  status: string
+  priority: string
+  profileViews: number
+  previousMeetings: number
+  notes?: string
+  meetingLink?: string
+  location?: string
+}
+
+export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedulingProps) {
+  const { toast } = useToast()
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (exhibitorId && exhibitorId !== "undefined") {
+      fetchAppointments()
+    }
+  }, [exhibitorId])
+
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const response = await fetch(`/api/exhibitors/${exhibitorId}/appointments`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch appointments")
+      }
+
+      const data = await response.json()
+      setAppointments(data.appointments || [])
+    } catch (err) {
+      console.error("Error fetching appointments:", err)
+      setError(err instanceof Error ? err.message : "An error occurred")
+      toast({
+        title: "Error",
+        description: "Failed to load appointments. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const updateAppointment = async (appointmentId: string, updates: Partial<Appointment>) => {
+    try {
+      const response = await fetch(`/api/exhibitors/${exhibitorId}/appointments`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          appointmentId,
+          ...updates,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update appointment")
+      }
+
+      setAppointments(appointments.map((apt) => (apt.id === appointmentId ? { ...apt, ...updates } : apt)))
+
+      toast({
+        title: "Success",
+        description: "Appointment updated successfully!",
+      })
+    } catch (err) {
+      console.error("Error updating appointment:", err)
+      toast({
+        title: "Error",
+        description: "Failed to update appointment. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Pending":
+      case "PENDING":
         return "bg-yellow-500"
-      case "Approved":
+      case "CONFIRMED":
         return "bg-green-500"
-      case "Completed":
+      case "COMPLETED":
         return "bg-blue-500"
-      case "Cancelled":
+      case "CANCELLED":
         return "bg-red-500"
       default:
         return "bg-gray-500"
@@ -99,18 +131,18 @@ export default function AppointmentScheduling() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "High":
+      case "HIGH":
         return "text-red-600 bg-red-50"
-      case "Medium":
+      case "MEDIUM":
         return "text-yellow-600 bg-yellow-50"
-      case "Low":
+      case "LOW":
         return "text-green-600 bg-green-50"
       default:
         return "text-gray-600 bg-gray-50"
     }
   }
 
-  const AppointmentCard = ({ appointment }: { appointment: any }) => (
+  const AppointmentCard = ({ appointment }: { appointment: Appointment }) => (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
@@ -131,10 +163,12 @@ export default function AppointmentScheduling() {
                 <Mail className="w-4 h-4" />
                 {appointment.visitorEmail}
               </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4" />
-                {appointment.visitorPhone}
-              </div>
+              {appointment.visitorPhone && (
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  {appointment.visitorPhone}
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <CalendarIcon className="w-4 h-4" />
                 {appointment.requestedDate} at {appointment.requestedTime} ({appointment.duration})
@@ -170,20 +204,28 @@ export default function AppointmentScheduling() {
                     </div>
                     <div>
                       <label className="text-sm font-medium">Meeting Notes</label>
-                      <Textarea placeholder="Add meeting notes or preparation points..." className="mt-1" />
+                      <Textarea
+                        placeholder="Add meeting notes or preparation points..."
+                        className="mt-1"
+                        value={selectedAppointment.notes || ""}
+                        onChange={(e) => setSelectedAppointment({ ...selectedAppointment, notes: e.target.value })}
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium">Status</label>
-                        <Select value={selectedAppointment.status}>
+                        <Select
+                          value={selectedAppointment.status}
+                          onValueChange={(value) => setSelectedAppointment({ ...selectedAppointment, status: value })}
+                        >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Pending">Pending</SelectItem>
-                            <SelectItem value="Approved">Approved</SelectItem>
-                            <SelectItem value="Completed">Completed</SelectItem>
-                            <SelectItem value="Cancelled">Cancelled</SelectItem>
+                            <SelectItem value="PENDING">Pending</SelectItem>
+                            <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+                            <SelectItem value="COMPLETED">Completed</SelectItem>
+                            <SelectItem value="CANCELLED">Cancelled</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -194,7 +236,18 @@ export default function AppointmentScheduling() {
                     </div>
                     <div className="flex justify-end gap-3">
                       <Button variant="outline">Cancel</Button>
-                      <Button>Save Changes</Button>
+                      <Button
+                        onClick={() => {
+                          if (selectedAppointment) {
+                            updateAppointment(selectedAppointment.id, {
+                              status: selectedAppointment.status,
+                              notes: selectedAppointment.notes,
+                            })
+                          }
+                        }}
+                      >
+                        Save Changes
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -228,9 +281,13 @@ export default function AppointmentScheduling() {
             Requested: {appointment.requestedDate} at {appointment.requestedTime}
           </div>
           <div className="flex items-center gap-2">
-            {appointment.status === "Pending" && (
+            {appointment.status === "PENDING" && (
               <>
-                <Button size="sm" className="flex items-center gap-2 bg-green-600 hover:bg-green-700">
+                <Button
+                  size="sm"
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                  onClick={() => updateAppointment(appointment.id, { status: "CONFIRMED" })}
+                >
                   <CheckCircle className="w-4 h-4" />
                   Approve
                 </Button>
@@ -242,13 +299,14 @@ export default function AppointmentScheduling() {
                   variant="outline"
                   size="sm"
                   className="flex items-center gap-2 text-red-600 hover:text-red-700 bg-transparent"
+                  onClick={() => updateAppointment(appointment.id, { status: "CANCELLED" })}
                 >
                   <X className="w-4 h-4" />
                   Decline
                 </Button>
               </>
             )}
-            {appointment.status === "Approved" && (
+            {appointment.status === "CONFIRMED" && (
               <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
                 <Clock className="w-4 h-4" />
                 Reschedule
@@ -259,6 +317,29 @@ export default function AppointmentScheduling() {
       </CardContent>
     </Card>
   )
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <div className="space-y-4">
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={fetchAppointments}>Try Again</Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -281,7 +362,7 @@ export default function AppointmentScheduling() {
         <Card>
           <CardContent className="p-6 text-center">
             <div className="text-3xl font-bold text-yellow-600">
-              {appointments.filter((a) => a.status === "Pending").length}
+              {appointments.filter((a) => a.status === "PENDING").length}
             </div>
             <div className="text-gray-600">Pending</div>
           </CardContent>
@@ -289,15 +370,15 @@ export default function AppointmentScheduling() {
         <Card>
           <CardContent className="p-6 text-center">
             <div className="text-3xl font-bold text-green-600">
-              {appointments.filter((a) => a.status === "Approved").length}
+              {appointments.filter((a) => a.status === "CONFIRMED").length}
             </div>
-            <div className="text-gray-600">Approved</div>
+            <div className="text-gray-600">Confirmed</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6 text-center">
             <div className="text-3xl font-bold text-purple-600">
-              {appointments.filter((a) => a.status === "Completed").length}
+              {appointments.filter((a) => a.status === "COMPLETED").length}
             </div>
             <div className="text-gray-600">Completed</div>
           </CardContent>
@@ -320,9 +401,17 @@ export default function AppointmentScheduling() {
 
         {/* Appointments List */}
         <div className="lg:col-span-2 space-y-4">
-          {appointments.map((appointment) => (
-            <AppointmentCard key={appointment.id} appointment={appointment} />
-          ))}
+          {appointments.length > 0 ? (
+            appointments.map((appointment) => <AppointmentCard key={appointment.id} appointment={appointment} />)
+          ) : (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <CalendarIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">No appointments</h3>
+                <p className="text-gray-500">Appointment requests will appear here</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

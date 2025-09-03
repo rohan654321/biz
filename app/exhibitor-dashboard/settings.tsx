@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -22,6 +21,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
 import {
   SettingsIcon,
   Lock,
@@ -39,21 +39,24 @@ import {
 } from "lucide-react"
 
 interface ExhibitorData {
-  companyName: string
-  logo: string
-  contactPerson: string
+  id: string
+  firstName: string
+  lastName: string
   email: string
-  mobile: string
-  website: string
-  categories: string[]
-  description: string
+  phone?: string
+  company?: string
+  jobTitle?: string
+  bio?: string
+  website?: string
+  linkedin?: string
+  twitter?: string
+  avatar?: string
 }
 
-interface SettingsProps {
-  exhibitorData: ExhibitorData
-}
-
-export default function Settings({ exhibitorData }: SettingsProps) {
+export default function ExhibitorSettings({ exhibitorId }: { exhibitorId: string }) {
+  const { toast } = useToast()
+  const [loading, setLoading] = useState(true)
+  const [exhibitorData, setExhibitorData] = useState<ExhibitorData | null>(null)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -90,6 +93,52 @@ export default function Settings({ exhibitorData }: SettingsProps) {
     dateFormat: "dd/mm/yyyy",
   })
 
+  // Fetch exhibitor data on component mount
+  useEffect(() => {
+    const fetchExhibitorData = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/exhibitors/${exhibitorId}`)
+        if (!response.ok) throw new Error("Failed to fetch exhibitor data")
+
+        const data = await response.json()
+        if (data.success) {
+          setExhibitorData(data.exhibitor)
+        }
+      } catch (error) {
+        console.error("Error fetching exhibitor data:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load exhibitor data",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (exhibitorId) {
+      fetchExhibitorData()
+    }
+  }, [exhibitorId, toast])
+
+  // Add loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (!exhibitorData) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-gray-500">No exhibitor data found</p>
+      </div>
+    )
+  }
+
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPasswordData({
       ...passwordData,
@@ -97,24 +146,56 @@ export default function Settings({ exhibitorData }: SettingsProps) {
     })
   }
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert("New passwords don't match!")
+      toast({
+        title: "Error",
+        description: "New passwords don't match!",
+        variant: "destructive",
+      })
       return
     }
     if (passwordData.newPassword.length < 8) {
-      alert("Password must be at least 8 characters long!")
+      toast({
+        title: "Error",
+        description: "Password must be at least 8 characters long!",
+        variant: "destructive",
+      })
       return
     }
-    // Handle password update
-    console.log("Password update submitted")
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    })
-    alert("Password updated successfully!")
+
+    try {
+      const response = await fetch(`/api/exhibitors/${exhibitorId}/password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        }),
+      })
+
+      if (!response.ok) throw new Error("Failed to update password")
+
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      })
+
+      toast({
+        title: "Success",
+        description: "Password updated successfully!",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update password",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleNotificationChange = (key: string, value: boolean) => {
@@ -138,10 +219,25 @@ export default function Settings({ exhibitorData }: SettingsProps) {
     })
   }
 
-  const handleDeleteAccount = () => {
-    // Handle account deletion
-    console.log("Account deletion requested")
-    alert("Account deletion request submitted. You will receive a confirmation email.")
+  const handleDeleteAccount = async () => {
+    try {
+      const response = await fetch(`/api/exhibitors/${exhibitorId}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) throw new Error("Failed to delete account")
+
+      toast({
+        title: "Account Deletion",
+        description: "Account deletion request submitted. You will receive a confirmation email.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete account",
+        variant: "destructive",
+      })
+    }
   }
 
   return (
@@ -165,16 +261,16 @@ export default function Settings({ exhibitorData }: SettingsProps) {
           <CardContent className="space-y-4">
             <div className="text-center">
               <Avatar className="w-24 h-24 mx-auto mb-4">
-                <AvatarImage src={exhibitorData.logo || "/placeholder.svg"} />
+                <AvatarImage src={exhibitorData.avatar || "/placeholder.svg"} />
                 <AvatarFallback className="text-xl">
-                  {exhibitorData.companyName
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
+                  {exhibitorData.firstName?.[0]}
+                  {exhibitorData.lastName?.[0]}
                 </AvatarFallback>
               </Avatar>
-              <h3 className="font-semibold text-lg">{exhibitorData.companyName}</h3>
-              <p className="text-gray-600">{exhibitorData.contactPerson}</p>
+              <h3 className="font-semibold text-lg">
+                {exhibitorData.firstName} {exhibitorData.lastName}
+              </h3>
+              <p className="text-gray-600">{exhibitorData.company}</p>
             </div>
 
             <Separator />
@@ -184,14 +280,18 @@ export default function Settings({ exhibitorData }: SettingsProps) {
                 <Mail className="w-4 h-4 text-gray-400" />
                 <span className="text-sm text-gray-700">{exhibitorData.email}</span>
               </div>
-              <div className="flex items-center gap-3">
-                <Phone className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-700">{exhibitorData.mobile}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Globe className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-700">{exhibitorData.website}</span>
-              </div>
+              {exhibitorData.phone && (
+                <div className="flex items-center gap-3">
+                  <Phone className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-700">{exhibitorData.phone}</span>
+                </div>
+              )}
+              {exhibitorData.website && (
+                <div className="flex items-center gap-3">
+                  <Globe className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-700">{exhibitorData.website}</span>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

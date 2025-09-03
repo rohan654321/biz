@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Edit, Save, X, Plus, Camera, MapPin, Mail, Phone, Linkedin, Globe } from "lucide-react"
 
-export function MyProfile() {
+export default function MyProfile() {
   const [isEditing, setIsEditing] = useState(false)
   const [profile, setProfile] = useState({
     fullName: "John Smith",

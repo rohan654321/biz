@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useToast } from "@/hooks/use-toast"
 import {
   XAxis,
   YAxis,
@@ -21,54 +23,108 @@ import {
 } from "recharts"
 import { Eye, Download, Users, TrendingUp, FileText } from "lucide-react"
 
-export default function AnalyticsReports() {
+interface AnalyticsReportsProps {
+  exhibitorId: string
+}
+
+interface AnalyticsData {
+  overview: {
+    totalProfileViews: number
+    brochureDownloads: number
+     totalRevenue: number
+  profileViews: number
+    leadsGenerated: number
+    visitorEngagement: number
+  }
+  profileViewsData: Array<{ date: string; views: number }>
+  brochureDownloadsData: Array<{ name: string; downloads: number; percentage: number }>
+  leadSourceData: Array<{ name: string; value: number; color: string }>
+  engagementData: Array<{ metric: string; current: number; previous: number; change: number }>
+}
+
+export default function AnalyticsReports({ exhibitorId }: AnalyticsReportsProps) {
+  const { toast } = useToast()
   const [timeRange, setTimeRange] = useState("30d")
   const [activeTab, setActiveTab] = useState("overview")
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock analytics data
-  const overviewStats = {
-    totalProfileViews: 1850,
-    brochureDownloads: 456,
-    leadsGenerated: 89,
-    visitorEngagement: 67.5,
+  useEffect(() => {
+    if (exhibitorId && exhibitorId !== "undefined") {
+      fetchAnalytics()
+    }
+  }, [exhibitorId, timeRange])
+
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const response = await fetch(`/api/exhibitors/${exhibitorId}/analytics?timeRange=${timeRange}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch analytics")
+      }
+
+      const data = await response.json()
+      setAnalytics(data.analytics)
+    } catch (err) {
+      console.error("Error fetching analytics:", err)
+      setError(err instanceof Error ? err.message : "An error occurred")
+      toast({
+        title: "Error",
+        description: "Failed to load analytics. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const profileViewsData = [
-    { date: "Jan 10", views: 45 },
-    { date: "Jan 11", views: 52 },
-    { date: "Jan 12", views: 38 },
-    { date: "Jan 13", views: 61 },
-    { date: "Jan 14", views: 48 },
-    { date: "Jan 15", views: 73 },
-    { date: "Jan 16", views: 56 },
-    { date: "Jan 17", views: 69 },
-    { date: "Jan 18", views: 82 },
-    { date: "Jan 19", views: 74 },
-  ]
-
-  const brochureDownloadsData = [
-    { name: "AI Platform Brochure", downloads: 156, percentage: 34.2 },
-    { name: "Security Suite Overview", downloads: 123, percentage: 27.0 },
-    { name: "Mobile App Features", downloads: 89, percentage: 19.5 },
-    { name: "Technical Specifications", downloads: 67, percentage: 14.7 },
-    { name: "Pricing Guide", downloads: 21, percentage: 4.6 },
-  ]
-
-  const leadSourceData = [
-    { name: "Profile Views", value: 45, color: "#3B82F6" },
-    { name: "Brochure Downloads", value: 28, color: "#10B981" },
-    { name: "Product Inquiries", value: 16, color: "#F59E0B" },
-    { name: "Appointment Requests", value: 11, color: "#EF4444" },
-  ]
-
-  const engagementData = [
-    { metric: "Profile Views", current: 1850, previous: 1420, change: 30.3 },
-    { metric: "Brochure Downloads", current: 456, previous: 389, change: 17.2 },
-    { metric: "Product Inquiries", current: 89, previous: 76, change: 17.1 },
-    { metric: "Appointment Bookings", current: 23, previous: 18, change: 27.8 },
-  ]
-
   const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"]
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-64" />
+          <Skeleton className="h-64" />
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={fetchAnalytics}>Try Again</Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!analytics) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-600">No analytics data available</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -108,7 +164,10 @@ export default function AnalyticsReports() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Profile Views</p>
-                    <p className="text-2xl font-bold">{overviewStats.totalProfileViews.toLocaleString()}</p>
+                    <p className="text-2xl font-bold">{analytics?.overview?.totalRevenue
+  ? analytics.overview.totalRevenue.toLocaleString("en-US", { style: "currency", currency: "USD" })
+  : "0"}
+</p>
                   </div>
                   <Eye className="w-8 h-8 text-blue-500" />
                 </div>
@@ -120,7 +179,7 @@ export default function AnalyticsReports() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Brochure Downloads</p>
-                    <p className="text-2xl font-bold">{overviewStats.brochureDownloads}</p>
+                    <p className="text-2xl font-bold">{analytics.overview.brochureDownloads}</p>
                   </div>
                   <Download className="w-8 h-8 text-green-500" />
                 </div>
@@ -132,7 +191,7 @@ export default function AnalyticsReports() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Leads Generated</p>
-                    <p className="text-2xl font-bold">{overviewStats.leadsGenerated}</p>
+                    <p className="text-2xl font-bold">{analytics.overview.leadsGenerated}</p>
                   </div>
                   <Users className="w-8 h-8 text-purple-500" />
                 </div>
@@ -144,7 +203,7 @@ export default function AnalyticsReports() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Engagement Rate</p>
-                    <p className="text-2xl font-bold">{overviewStats.visitorEngagement}%</p>
+                    <p className="text-2xl font-bold">{analytics.overview.visitorEngagement}%</p>
                   </div>
                   <TrendingUp className="w-8 h-8 text-orange-500" />
                 </div>
@@ -161,7 +220,7 @@ export default function AnalyticsReports() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={profileViewsData}>
+                  <AreaChart data={analytics.profileViewsData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
                     <YAxis />
@@ -180,7 +239,7 @@ export default function AnalyticsReports() {
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
-                      data={leadSourceData}
+                      data={analytics.leadSourceData}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
@@ -189,7 +248,7 @@ export default function AnalyticsReports() {
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {leadSourceData.map((entry, index) => (
+                      {analytics.leadSourceData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -208,7 +267,7 @@ export default function AnalyticsReports() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={profileViewsData}>
+                <LineChart data={analytics.profileViewsData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis />
@@ -222,14 +281,14 @@ export default function AnalyticsReports() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
               <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-blue-600">{overviewStats.totalProfileViews}</div>
+                <div className="text-3xl font-bold text-blue-600">{analytics.overview.totalProfileViews}</div>
                 <div className="text-gray-600">Total Views</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-6 text-center">
                 <div className="text-3xl font-bold text-green-600">
-                  {Math.round(overviewStats.totalProfileViews / 30)}
+                  {Math.round(analytics.overview.totalProfileViews / 30)}
                 </div>
                 <div className="text-gray-600">Daily Average</div>
               </CardContent>
@@ -237,7 +296,7 @@ export default function AnalyticsReports() {
             <Card>
               <CardContent className="p-6 text-center">
                 <div className="text-3xl font-bold text-purple-600">
-                  {Math.max(...profileViewsData.map((d) => d.views))}
+                  {Math.max(...analytics.profileViewsData.map((d) => d.views))}
                 </div>
                 <div className="text-gray-600">Peak Day</div>
               </CardContent>
@@ -252,7 +311,7 @@ export default function AnalyticsReports() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {brochureDownloadsData.map((item, index) => (
+                {analytics.brochureDownloadsData.map((item, index) => (
                   <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center gap-3">
                       <FileText className="w-5 h-5 text-blue-500" />
@@ -265,7 +324,7 @@ export default function AnalyticsReports() {
                       <div className="w-32 bg-gray-200 rounded-full h-2">
                         <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${item.percentage}%` }} />
                       </div>
-                      <div className="text-sm font-medium">{item.percentage}%</div>
+                      <div className="text-sm font-medium">{item.percentage.toFixed(1)}%</div>
                     </div>
                   </div>
                 ))}
@@ -276,20 +335,23 @@ export default function AnalyticsReports() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
               <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-green-600">{overviewStats.brochureDownloads}</div>
+                <div className="text-3xl font-bold text-green-600">{analytics.overview.brochureDownloads}</div>
                 <div className="text-gray-600">Total Downloads</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-blue-600">{brochureDownloadsData.length}</div>
+                <div className="text-3xl font-bold text-blue-600">{analytics.brochureDownloadsData.length}</div>
                 <div className="text-gray-600">Active Brochures</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-6 text-center">
                 <div className="text-3xl font-bold text-purple-600">
-                  {Math.round((overviewStats.brochureDownloads / overviewStats.totalProfileViews) * 100)}%
+                  {Math.round(
+                    (analytics.overview.brochureDownloads / Math.max(analytics.overview.totalProfileViews, 1)) * 100,
+                  )}
+                  %
                 </div>
                 <div className="text-gray-600">Download Rate</div>
               </CardContent>
@@ -304,7 +366,7 @@ export default function AnalyticsReports() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {engagementData.map((item, index) => (
+                {analytics.engagementData.map((item, index) => (
                   <div key={index} className="p-4 border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <div className="font-medium">{item.metric}</div>

@@ -8,7 +8,7 @@ import { signIn, signOut, useSession } from "next-auth/react"
 import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
-  const [exploreOpen, setExploreOpen] = useState(false);
+  const [exploreOpen, setExploreOpen] = useState(false);  
   const [country, setCountry] = useState('IND');
 
   const router = useRouter();
@@ -49,7 +49,7 @@ export default function Navbar() {
     } else if (role === "superadmin") {
       router.push("/admin-dashboard");
     } else {
-      router.push("/dashboard"); // fallback route
+      router.push("/login"); // fallback route
     }
   };
 
