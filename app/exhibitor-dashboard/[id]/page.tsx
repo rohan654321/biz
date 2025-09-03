@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { redirect } from "next/navigation"
-import {ExhibitorLayout}  from "../exhibitorlayout"
+import {ExhibitorLayout}  from "../exhibitor-layout"
 
 export default async function DashboardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
