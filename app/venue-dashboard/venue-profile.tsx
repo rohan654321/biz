@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState ,useEffect } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Building2, Star, Users, Camera, Plus, Edit, Trash2, CheckCircle, Upload, Save, MapPin } from "lucide-react"
 
 interface VenueData {
+  id: string
   venueName: string
   logo: string
   contactPerson: string
@@ -34,15 +35,23 @@ interface VenueProfileProps {
 
 export default function VenueProfile({ venueData }: VenueProfileProps) {
   const [isEditing, setIsEditing] = useState(false)
-  const [profileData, setProfileData] = useState({
-    venueName: venueData.venueName,
-    description: venueData.description,
-    contactPerson: venueData.contactPerson,
-    email: venueData.email,
-    mobile: venueData.mobile,
-    address: venueData.address,
-    website: venueData.website,
-  })
+  const [profileData, setProfileData] = useState<VenueData | null>(null)
+
+  useEffect(() => {
+  const fetchVenue = async () => {
+    try {
+      const res = await fetch(`/api/venue-manager/${venueData.id}`)
+      const data = await res.json()
+      if (data.success) {
+        setProfileData(data.venue)
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  fetchVenue()
+}, [venueData.id])
 
   const [images, setImages] = useState([
     "/placeholder.svg?height=300&width=400&text=Main+Hall",
@@ -190,11 +199,16 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                       {isEditing ? (
                         <Input
                           id="venue-name"
-                          value={profileData.venueName}
-                          onChange={(e) => setProfileData({ ...profileData, venueName: e.target.value })}
+                          value={profileData?.venueName}
+                          onChange={(e) =>
+                            setProfileData({
+                              ...(profileData ?? {}),
+                              venueName: e.target.value,
+                            } as VenueData)
+                          }
                         />
                       ) : (
-                        <div className="p-2 bg-gray-50 rounded">{profileData.venueName}</div>
+                        <div className="p-2 bg-gray-50 rounded">{profileData?.venueName}</div>
                       )}
                     </div>
 
@@ -203,11 +217,16 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                       {isEditing ? (
                         <Input
                           id="contact-person"
-                          value={profileData.contactPerson}
-                          onChange={(e) => setProfileData({ ...profileData, contactPerson: e.target.value })}
+                          value={profileData?.contactPerson}
+                          onChange={(e) =>
+                            setProfileData(prev => ({
+                              ...(prev ?? {}),
+                              contactPerson: e.target.value,
+                            }) as VenueData)
+                          }
                         />
                       ) : (
-                        <div className="p-2 bg-gray-50 rounded">{profileData.contactPerson}</div>
+                        <div className="p-2 bg-gray-50 rounded">{profileData?.contactPerson}</div>
                       )}
                     </div>
 
@@ -217,11 +236,16 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                         <Input
                           id="email"
                           type="email"
-                          value={profileData.email}
-                          onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                          value={profileData?.email}
+                          onChange={(e) =>
+                            setProfileData(prev => ({
+                              ...(prev ?? {}),
+                              email: e.target.value,
+                            }) as VenueData)
+                          }
                         />
                       ) : (
-                        <div className="p-2 bg-gray-50 rounded">{profileData.email}</div>
+                        <div className="p-2 bg-gray-50 rounded">{profileData?.email}</div>
                       )}
                     </div>
 
@@ -230,11 +254,16 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                       {isEditing ? (
                         <Input
                           id="mobile"
-                          value={profileData.mobile}
-                          onChange={(e) => setProfileData({ ...profileData, mobile: e.target.value })}
+                          value={profileData?.mobile}
+                          onChange={(e) =>
+                            setProfileData(prev => ({
+                              ...(prev ?? {}),
+                              mobile: e.target.value,
+                            }) as VenueData)
+                          }
                         />
                       ) : (
-                        <div className="p-2 bg-gray-50 rounded">{profileData.mobile}</div>
+                        <div className="p-2 bg-gray-50 rounded">{profileData?.mobile}</div>
                       )}
                     </div>
 
@@ -243,11 +272,16 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                       {isEditing ? (
                         <Input
                           id="website"
-                          value={profileData.website}
-                          onChange={(e) => setProfileData({ ...profileData, website: e.target.value })}
+                          value={profileData?.website}
+                          onChange={(e) =>
+                            setProfileData(prev => ({
+                              ...(prev ?? {}),
+                              website: e.target.value,
+                            }) as VenueData)
+                          }
                         />
                       ) : (
-                        <div className="p-2 bg-gray-50 rounded">{profileData.website}</div>
+                        <div className="p-2 bg-gray-50 rounded">{profileData?.website}</div>
                       )}
                     </div>
 
@@ -256,11 +290,16 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                       {isEditing ? (
                         <Input
                           id="address"
-                          value={profileData.address}
-                          onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
+                          value={profileData?.address}
+                          onChange={(e) =>
+                            setProfileData(prev => ({
+                              ...(prev ?? {}),
+                              address: e.target.value,
+                            }) as VenueData)
+                          }
                         />
                       ) : (
-                        <div className="p-2 bg-gray-50 rounded">{profileData.address}</div>
+                        <div className="p-2 bg-gray-50 rounded">{profileData?.address}</div>
                       )}
                     </div>
                   </div>
@@ -271,12 +310,17 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                       <Textarea
                         id="description"
                         rows={4}
-                        value={profileData.description}
-                        onChange={(e) => setProfileData({ ...profileData, description: e.target.value })}
+                        value={profileData?.description}
+                        onChange={(e) =>
+                          setProfileData(prev => ({
+                            ...(prev ?? {}),
+                            description: e.target.value,
+                          }) as VenueData)
+                        }
                         placeholder="Describe your venue, its unique features, and what makes it special..."
                       />
                     ) : (
-                      <div className="p-2 bg-gray-50 rounded min-h-[100px]">{profileData.description}</div>
+                      <div className="p-2 bg-gray-50 rounded min-h-[100px]">{profileData?.description}</div>
                     )}
                   </div>
                 </CardContent>
@@ -351,9 +395,8 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-5 h-5 ${
-                          i < Math.floor(venueData.averageRating) ? "text-yellow-400 fill-current" : "text-gray-300"
-                        }`}
+                        className={`w-5 h-5 ${i < Math.floor(venueData.averageRating) ? "text-yellow-400 fill-current" : "text-gray-300"
+                          }`}
                       />
                     ))}
                   </div>
@@ -659,9 +702,9 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                 <div className="space-y-2">
                   <Label htmlFor="full-address">Full Address</Label>
                   {isEditing ? (
-                    <Textarea id="full-address" rows={3} defaultValue={profileData.address} />
+                    <Textarea id="full-address" rows={3} defaultValue={profileData?.address} />
                   ) : (
-                    <div className="p-2 bg-gray-50 rounded min-h-[80px]">{profileData.address}</div>
+                    <div className="p-2 bg-gray-50 rounded min-h-[80px]">{profileData?.address}</div>
                   )}
                 </div>
 
@@ -706,13 +749,13 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
             </Card>
           </div>
 
-         
+
         </TabsContent>
 
 
         {/* Floor Plans Management */}
         <TabsContent value="floorplan" className="space-y-6">
-         <Card>
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Building2 className="w-5 h-5" />

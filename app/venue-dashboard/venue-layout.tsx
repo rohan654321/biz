@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { signOut } from "next-auth/react"
+import { useToast } from "@/hooks/use-toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Sidebar,
@@ -19,7 +20,9 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Building2, Calendar, MapPin, MessageSquare, Star, FileText, Bell, Settings } from "lucide-react"
-
+import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 // Import all section components
 import VenueProfile from "./venue-profile"
 import EventManagement from "./event-management"
@@ -28,26 +31,151 @@ import CommunicationCenter from "./communication-center"
 import RatingsReviews from "./ratings-reviews"
 import LegalDocumentation from "./legal-documentation"
 import VenueSettings from "./venue-settings"
+import { promise } from "zod"
 
-export default function VenueDashboardPage() {
+type VenueData = {
+  id: string
+  venueName: string
+  logo: string
+  contactPerson: string
+  email: string
+  mobile: string
+  address: string
+  website: string
+  description: string
+  maxCapacity: number
+  totalHalls: number
+  totalEvents: number
+  activeBookings: number
+  averageRating: number
+  totalReviews: number
+}
+
+interface UserDashboardProps {
+  userId: string
+}
+
+export default function VenueDashboardPage({ userId }: UserDashboardProps) {
   const [activeSection, setActiveSection] = useState("venue-profile")
+  const [venueData, setVenueData] = useState<VenueData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const { toast } = useToast()
 
-  // Mock venue data
-  const venueData = {
-    venueName: "Grand Convention Center",
-    logo: "/placeholder.svg?height=120&width=120&text=GCC",
-    contactPerson: "Priya Sharma",
-    email: "priya@grandconvention.com",
-    mobile: "+91 98765 43210",
-    address: "123 Business District, Mumbai, Maharashtra 400001",
-    website: "www.grandconvention.com",
-    description: "Premier convention center in the heart of Mumbai with state-of-the-art facilities",
-    maxCapacity: 5000,
-    totalHalls: 8,
-    totalEvents: 156,
-    activeBookings: 12,
-    averageRating: 4.7,
-    totalReviews: 89,
+  useEffect(() => {
+    if (status === "loading") return
+
+    if (status === "unauthenticated") {
+      router.push("/login")
+      return
+    }
+
+    // Check if user can access this dashboard
+    if (session?.user.id !== userId && session?.user.role !== "VENUE_MANAGER") {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to view this dashboard.",
+        variant: "destructive",
+      })
+      router.push("/login")
+      return
+    }
+
+    fetchVenueData()
+  }, [userId, status, session, router, toast])
+
+const fetchVenueData = async () => {
+  try {
+    setLoading(true)
+    setError(null)
+
+    const response = await fetch(`/api/venue-manager/${userId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error("User not found")
+      }
+      if (response.status === 403) {
+        throw new Error("Access denied")
+      }
+      throw new Error("Failed to fetch user data")
+    }
+
+    const data = await response.json()
+    
+    // Handle both possible response structures
+    if (data.user && data.user.venue) {
+      setVenueData(data.user.venue)
+    } else if (data.venue) {
+      setVenueData(data.venue)
+    } else if (data.user) {
+      setVenueData(data.user)
+    } else {
+      throw new Error("Invalid data structure in response")
+    }
+    
+  } catch (err) {
+    console.error("Error fetching user data:", err)
+    setError(err instanceof Error ? err.message : "An error occurred")
+
+    if (err instanceof Error && (err.message === "Access denied" || err.message === "User not found")) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      })
+      router.push("/login")
+    }
+  } finally {
+    setLoading(false)
+  }
+}
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-red-600">Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button onClick={fetchVenueData} className="w-full">
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!venueData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>No Data</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600">No venue data found.</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   const sidebarItems = [
@@ -97,7 +225,9 @@ export default function VenueDashboardPage() {
       case "booking-system":
         return <BookingSystem />
       case "communication":
-        return <CommunicationCenter />
+      // venue-layout.tsx
+return <CommunicationCenter params={{ id: userId }} />
+
       case "ratings-reviews":
         return <RatingsReviews />
       case "legal-documentation":
@@ -116,11 +246,11 @@ export default function VenueDashboardPage() {
           <SidebarHeader className="border-b p-4">
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10">
-                <AvatarImage src={venueData.logo || "/placeholder.svg"} />
+                <AvatarImage src={venueData?.logo || "/placeholder.svg"} />
                 <AvatarFallback>GCC</AvatarFallback>
               </Avatar>
               <div>
-                <div className="font-semibold">{venueData.venueName}</div>
+                <div className="font-semibold">{venueData?.venueName}</div>
                 <div className="text-sm text-gray-600">Venue Manager</div>
               </div>
             </div>
@@ -162,7 +292,7 @@ export default function VenueDashboardPage() {
                 <Bell className="w-4 h-4" />
               </Button>
               <Avatar className="w-8 h-8">
-                <AvatarImage src={venueData.logo || "/placeholder.svg"} />
+                <AvatarImage src={venueData?.logo || "/placeholder.svg"} />
                 <AvatarFallback>GCC</AvatarFallback>
               </Avatar>
             </div>

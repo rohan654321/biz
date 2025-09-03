@@ -257,7 +257,7 @@ export function ExhibitorDashboard({userId}: UserDashboardProps) {
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         <div className="p-8">
-          {activeTab === "myprofile" && <MyProfile />}
+          {activeTab === "myprofile" && <MyProfile speakerId={exhibitor.id} />}
           {activeTab === "mysessions" && <MySessions />}
           {activeTab === "materials" && <PresentationMaterials />}
           {activeTab === "feedback" && <FeedbackRatings />}

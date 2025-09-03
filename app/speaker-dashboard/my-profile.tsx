@@ -1,67 +1,115 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/hooks/use-toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Edit, Save, X, Plus, Camera, MapPin, Mail, Phone, Linkedin, Globe } from "lucide-react"
 
-export default function MyProfile() {
-  const [isEditing, setIsEditing] = useState(false)
-  const [profile, setProfile] = useState({
-    fullName: "John Smith",
-    designation: "Senior Technology Architect",
-    company: "TechCorp Solutions",
-    email: "john.smith@techcorp.com",
-    phone: "+1 (555) 123-4567",
-    linkedin: "linkedin.com/in/johnsmith",
-    website: "johnsmith.tech",
-    location: "San Francisco, CA",
-    bio: "Experienced technology leader with 15+ years in enterprise software development. Passionate about cloud architecture, AI/ML, and digital transformation. Regular speaker at tech conferences worldwide.",
-    expertise: ["Cloud Architecture", "AI/ML", "Digital Transformation", "Enterprise Software", "DevOps"],
-    speakingExperience: "50+ conferences, 200+ sessions delivered globally",
-  })
+type SpeakerProfile = {
+  fullName: string
+  designation: string
+  company: string
+  email: string
+  phone: string
+  linkedin: string
+  website: string
+  location: string
+  bio: string
+  speakingExperience: string
+  // expertise?: string[]
+}
 
+export default function MyProfile({ speakerId }: { speakerId: string }) {
+  const [isEditing, setIsEditing] = useState(false)
+  const { toast } = useToast()
+  const [loading, setLoading] = useState(false)
+  const [profile, setProfile] = useState<SpeakerProfile | null>(null)
   const [newExpertise, setNewExpertise] = useState("")
 
-  const handleSave = () => {
-    setIsEditing(false)
-    // Save logic here
-  }
-
-  const addExpertise = () => {
-    if (newExpertise.trim()) {
-      setProfile({
-        ...profile,
-        expertise: [...profile.expertise, newExpertise.trim()],
-      })
-      setNewExpertise("")
-    }
-  }
-
-  const removeExpertise = (index: number) => {
-    setProfile({
-      ...profile,
-      expertise: profile.expertise.filter((_, i) => i !== index),
+  // 🔹 Save profile (PUT request)
+const handleSave = async () => {
+  if (!profile) return
+  try {
+    setLoading(true)
+    const response = await fetch(`/api/speakers/${speakerId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(profile),
     })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || data.message || "Failed to update speaker")
+    }
+
+    if (data.success) {
+      setProfile(data.profile) // Use the profile returned by the backend
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      })
+      setIsEditing(false)
+    } else {
+      throw new Error(data.error || "Update failed")
+    }
+  } catch (error) {
+    console.error("Error updating profile:", error)
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : "Failed to update profile",
+      variant: "destructive",
+    })
+  } finally {
+    setLoading(false)
+  }
+}
+  // 🔹 Fetch profile (GET request)
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const res = await fetch(`/api/speakers/${speakerId}`)
+        if (!res.ok) throw new Error("Failed to fetch profile")
+        const data = await res.json()
+        if (data.success) {
+          setProfile(data.profile)
+        }
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    loadProfile()
+  }, [speakerId])
+
+  if (!profile) {
+    return <p>Loading profile...</p>
   }
 
   return (
     <div className="space-y-6">
+      {/* Header with edit/save button */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">My Profile</h2>
-        <Button onClick={() => (isEditing ? handleSave() : setIsEditing(true))} className="flex items-center space-x-2">
+        <Button
+          onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
+          className="flex items-center space-x-2"
+          disabled={loading}
+        >
           {isEditing ? <Save className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
           <span>{isEditing ? "Save Changes" : "Edit Profile"}</span>
         </Button>
       </div>
 
+      {/* Profile Picture */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Picture & Basic Info */}
         <Card>
           <CardHeader>
             <CardTitle>Profile Picture</CardTitle>
@@ -71,7 +119,9 @@ export default function MyProfile() {
               <div className="relative">
                 <Avatar className="w-32 h-32">
                   <AvatarImage src="/placeholder.svg?height=128&width=128" />
-                  <AvatarFallback className="text-2xl">JS</AvatarFallback>
+                  <AvatarFallback className="text-2xl">
+                    {profile.fullName?.charAt(0)}
+                  </AvatarFallback>
                 </Avatar>
                 {isEditing && (
                   <Button size="sm" className="absolute bottom-0 right-0 rounded-full w-8 h-8 p-0">
@@ -88,112 +138,44 @@ export default function MyProfile() {
           </CardContent>
         </Card>
 
-        {/* Contact Information */}
+        {/* Contact Info */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Contact Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  value={profile.fullName}
-                  onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="designation">Designation</Label>
-                <Input
-                  id="designation"
-                  value={profile.designation}
-                  onChange={(e) => setProfile({ ...profile, designation: e.target.value })}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="company">Company/Institution</Label>
-                <Input
-                  id="company"
-                  value={profile.company}
-                  onChange={(e) => setProfile({ ...profile, company: e.target.value })}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="location"
-                    value={profile.location}
-                    onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-                    disabled={!isEditing}
-                    className="pl-10"
-                  />
+              {[
+                { id: "fullName", label: "Full Name", value: profile.fullName },
+                { id: "designation", label: "Designation", value: profile.designation },
+                { id: "company", label: "Company/Institution", value: profile.company },
+                { id: "location", label: "Location", value: profile.location, icon: <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> },
+                { id: "email", label: "Email", value: profile.email, type: "email", icon: <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> },
+                { id: "phone", label: "Phone", value: profile.phone, icon: <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> },
+                { id: "linkedin", label: "LinkedIn", value: profile.linkedin, icon: <Linkedin className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> },
+                { id: "website", label: "Website", value: profile.website, icon: <Globe className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> },
+              ].map((field) => (
+                <div key={field.id} className="space-y-2">
+                  <Label htmlFor={field.id}>{field.label}</Label>
+                  <div className="relative">
+                    {field.icon}
+                    <Input
+                      id={field.id}
+                      type={field.type || "text"}
+                      value={field.value || ""}
+                      onChange={(e) => setProfile({ ...profile, [field.id]: e.target.value })}
+                      disabled={!isEditing}
+                      className={field.icon ? "pl-10" : ""}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="email"
-                    type="email"
-                    value={profile.email}
-                    onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                    disabled={!isEditing}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="phone"
-                    value={profile.phone}
-                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                    disabled={!isEditing}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="linkedin">LinkedIn</Label>
-                <div className="relative">
-                  <Linkedin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="linkedin"
-                    value={profile.linkedin}
-                    onChange={(e) => setProfile({ ...profile, linkedin: e.target.value })}
-                    disabled={!isEditing}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="website">Website</Label>
-                <div className="relative">
-                  <Globe className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="website"
-                    value={profile.website}
-                    onChange={(e) => setProfile({ ...profile, website: e.target.value })}
-                    disabled={!isEditing}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Bio & Experience */}
+      {/* Bio & Speaking Experience */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -225,40 +207,6 @@ export default function MyProfile() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Expertise/Topics */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Expertise & Topics of Interest</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {profile.expertise.map((topic, index) => (
-              <Badge key={index} variant="secondary" className="flex items-center space-x-1">
-                <span>{topic}</span>
-                {isEditing && (
-                  <button onClick={() => removeExpertise(index)} className="ml-1 hover:text-red-600">
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </Badge>
-            ))}
-          </div>
-          {isEditing && (
-            <div className="flex space-x-2">
-              <Input
-                placeholder="Add new expertise topic"
-                value={newExpertise}
-                onChange={(e) => setNewExpertise(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && addExpertise()}
-              />
-              <Button onClick={addExpertise} size="sm">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   )
 }

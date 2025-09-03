@@ -75,6 +75,18 @@ model User {
   analytics         UserAnalytics[]
   settings          Settings?
   campaigns         Campaign[]
+  broadcastsSent            Broadcast[] @relation("BroadcastSender")
+  broadcastsReceived        BroadcastRecipient[]
+
+  //venue
+  maxCapacity Int?
+  totalHalls  Int?
+  activeBookings Int?
+  averageRating Int?
+  totalReviews Int?
+
+  //speaker
+   speakingExperience String?
 
   @@map("users")
 }
@@ -548,6 +560,8 @@ model Notification {
   // Status
   isRead          Boolean  @default(false)
   readAt          DateTime?
+
+  priority  String   @default("NORMAL") // LOW, NORMAL, MEDIUM, HIGH
   
   // Metadata
   metadata        Json?
@@ -779,4 +793,45 @@ model Settings {
   updatedAt         DateTime @updatedAt
 
   @@map("settings")
+}
+
+model Broadcast {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  content     String
+  type        String   // EMAIL, SMS, WHATSAPP, PUSH, ALL
+  status      String   @default("DRAFT") // DRAFT, SCHEDULED, SENT, FAILED
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  
+  // Sender info
+  senderId    String   @db.ObjectId
+  sender      User     @relation("BroadcastSender", fields: [senderId], references: [id])
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  recipients  BroadcastRecipient[]
+  
+  @@map("broadcasts")
+}
+
+model BroadcastRecipient {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  broadcastId String   @db.ObjectId
+  userId      String   @db.ObjectId
+  status      String   @default("PENDING") // PENDING, SENT, DELIVERED, FAILED, READ
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  readAt      DateTime?
+  errorMessage String?
+  
+  // Relations
+  broadcast   Broadcast @relation(fields: [broadcastId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  
+  @@unique([broadcastId, userId])
+  @@map("broadcast_recipients")
 }
