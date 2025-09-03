@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { ExhibitorDashboard } from "@/app/exhibitor-dashboard/exhibitorlayout"
+import { ExhibitorLayout  } from "@/app/exhibitor-dashboard/exhibitorlayout"
 import { ExhibitorDashboardSkeleton } from "./loading"
 
 interface ExhibitorDashboardPageProps {
@@ -12,7 +12,7 @@ export default async function ExhibitorDashboardPage({ params }: ExhibitorDashbo
   return (
     <div className="min-h-screen bg-gray-50">
       <Suspense fallback={<ExhibitorDashboardSkeleton />}>
-        <ExhibitorDashboard userId={id} />
+        <ExhibitorLayout  userId={id} />
       </Suspense>
     </div>
   )

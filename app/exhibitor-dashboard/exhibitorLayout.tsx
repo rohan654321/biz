@@ -61,7 +61,7 @@ interface UserDashboardProps {
   userId: string
 }
 
-export function ExhibitorDashboard({ userId }: UserDashboardProps) {
+export function ExhibitorLayout({ userId }: UserDashboardProps) {
   // const { data: session } = useSession()
   const [exhibitor, setExhibitor] = useState<ExhibitorData | null>(null)
   const [loading, setLoading] = useState(true)
