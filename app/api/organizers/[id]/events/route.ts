@@ -34,11 +34,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         venue: {
           select: {
             id: true,
-            name: true,
-            address: true,
-            city: true,
-            state: true,
-            country: true,
+            firstName: true,
+            lastName: true,
+            location: true,
+            venueCity: true,
+            venueState: true,
+            venueCountry: true,
           },
         },
         _count: {
@@ -88,7 +89,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         endDate: event.endDate.toISOString(),
         location: event.isVirtual
           ? "Virtual Event"
-          : event.venue?.name || event.location || `${event.city}, ${event.state}` || event.address || "TBD",
+          : (event.venue ? `${event.venue.firstName} ${event.venue.lastName ?? ""}`.trim() : null) || event.location || `${event.city}, ${event.state}` || event.address || "TBD",
         status:
           event.status === "PUBLISHED"
             ? "Active"

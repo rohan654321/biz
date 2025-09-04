@@ -34,7 +34,7 @@ import VenueSettings from "./venue-settings"
 import { promise } from "zod"
 
 type VenueData = {
-  id: string
+   id: string
   venueName: string
   logo: string
   contactPerson: string
@@ -49,6 +49,7 @@ type VenueData = {
   activeBookings: number
   averageRating: number
   totalReviews: number
+  amenities: string[]
 }
 
 interface UserDashboardProps {

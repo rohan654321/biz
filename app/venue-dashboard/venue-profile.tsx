@@ -1,6 +1,6 @@
 "use client"
 
-import { useState ,useEffect } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,6 +27,7 @@ interface VenueData {
   activeBookings: number
   averageRating: number
   totalReviews: number
+  amenities: string[]
 }
 
 interface VenueProfileProps {
@@ -38,20 +39,23 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
   const [profileData, setProfileData] = useState<VenueData | null>(null)
 
   useEffect(() => {
-  const fetchVenue = async () => {
-    try {
-      const res = await fetch(`/api/venue-manager/${venueData.id}`)
-      const data = await res.json()
-      if (data.success) {
-        setProfileData(data.venue)
+    const fetchVenue = async () => {
+      try {
+        const res = await fetch(`/api/venue-manager/${venueData.id}`);
+        const data = await res.json();
+        if (data.success) {
+          setProfileData(data.venue);
+          setAmenities(data.venue.amenities || []); // ✅ sync
+          setMeetingSpaces(data.venue.meetingSpaces || [])
+        }
+      } catch (err) {
+        console.error(err);
       }
-    } catch (err) {
-      console.error(err)
-    }
-  }
+    };
 
-  fetchVenue()
-}, [venueData.id])
+    fetchVenue();
+  }, [venueData.id]);
+
 
   const [images, setImages] = useState([
     "/placeholder.svg?height=300&width=400&text=Main+Hall",
@@ -107,44 +111,155 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
     features: "",
   })
 
-  const handleSave = () => {
-    // Handle save logic here
-    console.log("Saving profile data:", profileData)
-    setIsEditing(false)
-  }
+  const handleSave = async () => {
+    if (!profileData) return;
 
-  const handleAddAmenity = () => {
-    if (newAmenity.trim()) {
-      setAmenities([...amenities, newAmenity.trim()])
-      setNewAmenity("")
+    try {
+      const res = await fetch(`/api/venue-manager/${venueData.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...profileData,
+          amenities, // ✅ push updated amenities too
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setProfileData(data.venue); // refresh with server response
+        setIsEditing(false);
+      } else {
+        console.error("Failed to update venue:", data.error);
+      }
+    } catch (err) {
+      console.error("Error updating venue:", err);
     }
-  }
+  };
 
-  const handleRemoveAmenity = (index: number) => {
-    setAmenities(amenities.filter((_, i) => i !== index))
-  }
+  const handleAddAmenity = async () => {
+    if (!newAmenity.trim()) return;
 
-  const handleAddSpace = () => {
-    if (newSpace.name && newSpace.capacity && newSpace.area && newSpace.hourlyRate) {
-      const space = {
+    try {
+      const updated = [...amenities, newAmenity.trim()];
+
+      const res = await fetch(`/api/venue-manager/${venueData.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...profileData,
+          amenities: updated,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setAmenities(data.venue.amenities); // refresh from DB response
+        setProfileData(data.venue);
+        setNewAmenity("");
+      } else {
+        console.error("Failed to add amenity:", data.error);
+      }
+    } catch (err) {
+      console.error("Error adding amenity:", err);
+    }
+  };
+
+  const handleRemoveAmenity = async (index: number) => {
+  const updatedAmenities = amenities.filter((_, i) => i !== index);
+
+  try {
+    const res = await fetch(`/api/venue-manager/${venueData.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...profileData,
+        amenities: updatedAmenities,
+      }),
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      setAmenities(data.venue.amenities);
+      setProfileData(data.venue);
+    } else {
+      console.error("Failed to remove amenity:", data.error);
+    }
+  } catch (err) {
+    console.error("Error removing amenity:", err);
+  }
+};
+
+
+  const handleAddSpace = async () => {
+    if (!newSpace.name.trim()) return;
+
+    const updatedSpaces = [
+      ...meetingSpaces,
+      {
         id: Date.now().toString(),
         name: newSpace.name,
-        capacity: Number.parseInt(newSpace.capacity),
-        area: Number.parseInt(newSpace.area),
-        hourlyRate: Number.parseInt(newSpace.hourlyRate),
-        features: newSpace.features
-          .split(",")
-          .map((f) => f.trim())
-          .filter(Boolean),
-      }
-      setMeetingSpaces([...meetingSpaces, space])
-      setNewSpace({ name: "", capacity: "", area: "", hourlyRate: "", features: "" })
-    }
-  }
+        capacity: Number(newSpace.capacity),
+        area: Number(newSpace.area),
+        hourlyRate: Number(newSpace.hourlyRate),
+        features: newSpace.features.split(",").map(f => f.trim()),
+      },
+    ];
 
-  const handleRemoveSpace = (id: string) => {
-    setMeetingSpaces(meetingSpaces.filter((space) => space.id !== id))
+    try {
+      const res = await fetch(`/api/venue-manager/${venueData.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...profileData,
+          meetingSpaces: updatedSpaces,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setMeetingSpaces(data.venue.meetingSpaces);
+        setProfileData(data.venue);
+        setNewSpace({ name: "", capacity: "", area: "", hourlyRate: "", features: "" });
+      } else {
+        console.error("Failed to add space:", data.error);
+      }
+    } catch (err) {
+      console.error("Error adding space:", err);
+    }
+  };
+
+
+const handleRemoveSpace = async (id: string) => {
+  const updatedSpaces = meetingSpaces.filter((space) => space.id !== id);
+
+  try {
+    const res = await fetch(`/api/venue-manager/${venueData.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...profileData,
+        meetingSpaces: updatedSpaces,
+      }),
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      setMeetingSpaces(data.venue.meetingSpaces);
+      setProfileData(data.venue);
+    } else {
+      console.error("Failed to remove space:", data.error);
+    }
+  } catch (err) {
+    console.error("Error removing space:", err);
   }
+};
+
 
   return (
     <div className="space-y-6">
@@ -528,7 +643,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                {meetingSpaces.map((space) => (
+                {meetingSpaces?.map((space) => (
                   <div key={space.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-semibold text-lg">{space.name}</h3>
@@ -560,11 +675,12 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                     <div>
                       <h4 className="font-medium text-sm mb-2">Features:</h4>
                       <div className="flex flex-wrap gap-1">
-                        {space.features.map((feature, index) => (
+                        {space.features?.map((feature, index) => (
                           <Badge key={index} variant="secondary" className="text-xs">
                             {feature}
                           </Badge>
                         ))}
+
                       </div>
                     </div>
                   </div>

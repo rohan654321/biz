@@ -66,7 +66,7 @@ model User {
   registrations     EventRegistration[]
   speakerSessions   SpeakerSession[]
   exhibitorBooths   ExhibitorBooth[]
-  venueBookings     VenueBooking[]
+  venueBookings     VenueBooking[] 
   sentMessages      Message[] @relation("MessageSender")
   receivedMessages  Message[] @relation("MessageReceiver")
   reviews           Review[]
@@ -75,15 +75,41 @@ model User {
   analytics         UserAnalytics[]
   settings          Settings?
   campaigns         Campaign[]
-  broadcastsSent            Broadcast[] @relation("BroadcastSender")
-  broadcastsReceived        BroadcastRecipient[]
+  broadcastsSent    Broadcast[] @relation("BroadcastSender")
+  broadcastsReceived   BroadcastRecipient[]
+  venueEvents Event[] @relation("EventVenue")
+  venueReviews Review[] @relation("VenueReviews")
+  venueAnalytics VenueAnalytics[]
+  meetingSpaces MeetingSpace[] 
 
   //venue
-  maxCapacity Int?
-  totalHalls  Int?
-  activeBookings Int?
-  averageRating Int?
-  totalReviews Int?
+  venueName         String?
+  venueDescription  String?
+  venueAddress      String?
+  venueCity         String?
+  venueState        String?
+  venueCountry      String?
+  venueZipCode      String?
+  venuePhone        String?
+  venueEmail        String?
+  venueWebsite      String?
+  maxCapacity       Int?
+  totalHalls        Int?
+  activeBookings    Int?
+  averageRating     Float    @default(0)
+  totalReviews      Int      @default(0)
+  amenities         String[]
+  venueImages       String[]
+  venueVideos       String[]
+  floorPlans        String[]
+  virtualTour       String?
+  basePrice         Float?
+  venueCurrency     String   @default("USD")
+  latitude          Float?
+  longitude         Float?
+
+    // ✅ store array of objects here
+  // venueBookings     VenueBooking[]   @relation("VenueBookingsAsManager")
 
   //speaker
    speakingExperience String?
@@ -120,7 +146,7 @@ model Event {
   
   // Location
   venueId           String?  @db.ObjectId
-  venue             Venue?   @relation(fields: [venueId], references: [id])
+   venue             User?    @relation("EventVenue", fields: [venueId], references: [id])
   isVirtual         Boolean  @default(false)
   virtualLink       String?
   address           String?
@@ -242,66 +268,71 @@ enum ExhibitionSpaceType {
 }
 
 // Venue Management
-model Venue {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  name            String
-  description     String
-  address         String
-  city            String
-  state           String
-  country         String
-  zipCode         String
-  phone           String?
-  email           String?
-  website         String?
+// model Venue {
+//   id              String   @id @default(auto()) @map("_id") @db.ObjectId
+//   name            String
+//   description     String
+//   address         String
+//   city            String
+//   state           String
+//   country         String
+//   zipCode         String
+//   phone           String?
+//   email           String?
+//   website         String?
   
-  // Capacity and Spaces
-  totalCapacity   Int
-  meetingSpaces   MeetingSpace[]
-  amenities       String[]
+//   // Capacity and Spaces
+//   totalCapacity   Int
+//   // ✅ Correct - need to create a separate model and relation
+// // meetingSpaces MeetingSpace[]
+//   amenities       String[]
   
-  // Media
-  images          String[]
-  videos          String[]
-  floorPlans      String[]
-  virtualTour     String?
+//   // Media
+//   images          String[]
+//   videos          String[]
+//   floorPlans      String[]
+//   virtualTour     String?
   
-  // Pricing
-  basePrice       Float
-  currency        String   @default("USD")
+//   // Pricing
+//   basePrice       Float
+//   currency        String   @default("USD")
   
-  // Availability
-  isActive        Boolean  @default(true)
+//   // Availability
+//   isActive        Boolean  @default(true)
   
-  // Location
-  latitude        Float?
-  longitude       Float?
+//   // Location
+//   latitude        Float?
+//   longitude       Float?
   
-  // Ratings
-  averageRating   Float    @default(0)
-  totalReviews    Int      @default(0)
+//   // Ratings
+//   averageRating   Float    @default(0)
+//   totalReviews    Int      @default(0)
   
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+//   createdAt       DateTime @default(now())
+//   updatedAt       DateTime @updatedAt
   
-  // Relationships
-  events          Event[]
-  bookings        VenueBooking[]
-  reviews         Review[]
-  analytics       VenueAnalytics[]
+//   // Relationships
+//   events          Event[]
+//   bookings        VenueBooking[]
+//   reviews         Review[]
+//   analytics       VenueAnalytics[]
 
-  @@map("venues")
-}
+//   @@map("venues")
+// }
 
-type MeetingSpace {
-  id          String
+model MeetingSpace {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   capacity    Int
   area        Float
-  amenities   String[]
   hourlyRate  Float
-  isAvailable Boolean @default(true)
+  isAvailable Boolean  @default(true)
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("meeting_spaces")
 }
+
 
 // Speaker Management
 model SpeakerSession {
@@ -435,13 +466,11 @@ enum RegistrationStatus {
   WAITLISTED
 }
 
-// Venue Booking
+// Venue Booking - now references User instead of Venue
 model VenueBooking {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   venueId         String   @db.ObjectId
-  venue           Venue    @relation(fields: [venueId], references: [id])
-  userId          String   @db.ObjectId
-  user            User     @relation(fields: [userId], references: [id])
+  venue           User     @relation(fields: [venueId], references: [id])
   
   startDate       DateTime
   endDate         DateTime
@@ -639,17 +668,17 @@ enum CampaignStatus {
   CANCELLED
 }
 
-// Review System
+// Review System - updated to handle venue reviews through User
 model Review {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   userId          String   @db.ObjectId
   user            User     @relation(fields: [userId], references: [id])
   
-  // Target (Event or Venue)
+  // Target (Event or Venue via User)
   eventId         String?  @db.ObjectId
   event           Event?   @relation(fields: [eventId], references: [id])
   venueId         String?  @db.ObjectId
-  venue           Venue?   @relation(fields: [venueId], references: [id])
+  venue           User?    @relation("VenueReviews", fields: [venueId], references: [id])
   
   rating          Int      // 1-5
   title           String?
@@ -664,6 +693,7 @@ model Review {
 
   @@map("reviews")
 }
+
 
 // Analytics
 model Analytics {
@@ -744,10 +774,11 @@ model UserAnalytics {
   @@map("user_analytics")
 }
 
+// Venue Analytics - now references User instead of Venue
 model VenueAnalytics {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   venueId         String   @db.ObjectId
-  venue           Venue    @relation(fields: [venueId], references: [id])
+  venue           User     @relation(fields: [venueId], references: [id])
   
   // Booking Metrics
   totalBookings   Int      @default(0)
