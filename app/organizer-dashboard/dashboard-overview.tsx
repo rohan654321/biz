@@ -25,20 +25,39 @@ interface Event {
 }
 
 interface DashboardOverviewProps {
+  organizerId: string
   organizerName: string
   dashboardStats: DashboardStats[]
   recentEvents: Event[]
+  onCreateEventClick: () => void
+  onManageAttendeesClick: () => void
+  onViewAnalyticsClick: () => void
+  onSendMessageClick: () => void
 }
 
-export default function DashboardOverview({ organizerName, dashboardStats, recentEvents }: DashboardOverviewProps) {
+
+export default function DashboardOverview({
+  organizerName,
+  dashboardStats,
+  recentEvents,
+  onCreateEventClick,
+  onManageAttendeesClick,
+  onViewAnalyticsClick,
+  onSendMessageClick
+}: DashboardOverviewProps) {
+
   return (
-    <div className="space-y-6 max-w-6xl mx-auto px-4    ">
+    <div className="space-y-6 max-w-6xl mx-auto px-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600">Welcome back, {organizerName}</p>
         </div>
-        <Button className="flex items-center gap-2">
+        
+        <Button
+          onClick={onCreateEventClick}   // <-- call parent to switch section
+          className="flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           Create New Event
         </Button>
@@ -89,7 +108,11 @@ export default function DashboardOverview({ organizerName, dashboardStats, recen
                   </div>
                   <Badge
                     variant={
-                      event.status === "Active" ? "default" : event.status === "Planning" ? "secondary" : "outline"
+                      event.status === "Active"
+                        ? "default"
+                        : event.status === "Planning"
+                        ? "secondary"
+                        : "outline"
                     }
                   >
                     {event.status}
@@ -106,22 +129,38 @@ export default function DashboardOverview({ organizerName, dashboardStats, recen
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
+              <Button
+                onClick={onCreateEventClick} // <-- same callback
+                variant="outline"
+                className="h-20 flex flex-col gap-2 bg-transparent"
+              >
                 <Plus className="w-6 h-6" />
                 Create Event
               </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
-                <Users className="w-6 h-6" />
-                Manage Attendees
-              </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
-                <BarChart3 className="w-6 h-6" />
-                View Analytics
-              </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
-                <MessageSquare className="w-6 h-6" />
-                Send Messages
-              </Button>
+             <Button
+  onClick={onManageAttendeesClick}
+  variant="outline"
+  className="h-20 flex flex-col gap-2 bg-transparent"
+>
+  <Users className="w-6 h-6" />
+  Manage Attendees
+</Button>
+<Button
+  onClick={onViewAnalyticsClick}
+  variant="outline"
+  className="h-20 flex flex-col gap-2 bg-transparent"
+>
+  <BarChart3 className="w-6 h-6" />
+  View Analytics
+</Button>
+<Button
+  onClick={onSendMessageClick}
+  variant="outline"
+  className="h-20 flex flex-col gap-2 bg-transparent"
+>
+  <MessageSquare className="w-6 h-6" />
+  Send Messages
+</Button>
             </div>
           </CardContent>
         </Card>

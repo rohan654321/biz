@@ -334,7 +334,17 @@ export default function OrganizerDashboardPage() {
     switch (activeSection) {
       case "dashboard":
         return (
-          <DashboardOverview organizerName={organizerData.name} dashboardStats={dashboardStats} recentEvents={events} />
+          <DashboardOverview
+  organizerName={organizerData.name}
+  dashboardStats={dashboardStats}
+  recentEvents={events}
+  organizerId={organizerId}
+  onCreateEventClick={() => setActiveSection("create-event")}
+  onManageAttendeesClick={() => setActiveSection("attendees")}
+  onViewAnalyticsClick={() => setActiveSection("analytics")}
+  onSendMessageClick={() => setActiveSection("messages")}
+/>
+
         )
       case "info":
         return <OrganizerInfo organizerData={organizerData} />
@@ -343,7 +353,9 @@ export default function OrganizerDashboardPage() {
       case "create-event":
         return <CreateEvent organizerId={organizerId} />
       case "attendees":
-        return <AttendeesManagement attendees={attendees} />
+        return <AttendeesManagement attendees={attendees} onSendMessageClick={function (): void {
+          throw new Error("Function not implemented.")
+        } } />
       case "analytics":
         return analyticsData ? (
           <AnalyticsDashboard analyticsData={analyticsData} events={events} organizerId={organizerId} />

@@ -29,8 +29,8 @@ interface Attendee {
 
 interface AttendeesManagementProps {
   attendees: Attendee[]
+  onSendMessageClick: (attendee: Attendee) => void
 }
-
 export default function AttendeesManagement({ attendees: initialAttendees }: AttendeesManagementProps) {
   const { toast } = useToast()
   const [attendees, setAttendees] = useState<Attendee[]>(initialAttendees)
