@@ -12,7 +12,12 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/hooks/use-toast"
 import { Calendar, MapPin, Clock, IndianRupee, X, Plus, Eye, Save, Send, Loader2 } from "lucide-react"
+import { nanoid } from "nanoid";
 
+interface FieldStatus {
+  name: string;
+  done: boolean;
+}
 interface CreateEventProps {
  
   organizerId: string
@@ -79,33 +84,63 @@ export default function CreateEvent({ organizerId }: CreateEventProps) {
     brochure: "",
     layoutPlan: "",
   })
-  const calculateCompletion = (): number => {
-  const requiredFields = [
+
+
+const getFieldStatus = (): FieldStatus[] => {
+  const fieldsToCheck = [
     "title",
     "description",
     "eventType",
     "categories",
     "startDate",
     "endDate",
+    "dailyStart",
+    "dailyEnd",
+    "timezone",
     "venue",
     "city",
     "address",
+    "currency",
+    "generalPrice",
+    "studentPrice",
+    "vipPrice",
+    "highlights",
     "tags",
+    "dressCode",
+    "ageLimit",
+    "featured",
+    "vip",
+    "images",
+    "brochure",
+    "layoutPlan",
   ];
 
-  let filledCount = 0;
-
-  requiredFields.forEach((field) => {
+  return fieldsToCheck.map((field) => {
     const value = (formData as any)[field];
-    if (Array.isArray(value)) {
-      if (value.length > 0) filledCount++;
-    } else if (typeof value === "string") {
-      if (value.trim() !== "") filledCount++;
-    }
-  });
+    let done = false;
 
-  return Math.round((filledCount / requiredFields.length) * 100);
+    if (Array.isArray(value)) {
+      done = value.length > 0;
+    } else if (typeof value === "string") {
+      done = value.trim() !== "";
+    } else if (typeof value === "number") {
+      done = value > 0;
+    } else if (typeof value === "boolean") {
+      done = value; // true = done, false = pending
+    }
+
+    return { name: field, done };
+  });
 };
+// Calculate form completion percentage
+const calculateCompletion = (): number => {
+  const statuses = getFieldStatus()
+  const doneCount = statuses.filter((field) => field.done).length
+  return Math.round((doneCount / statuses.length) * 100)
+}
+
+
+
 
   const [newHighlight, setNewHighlight] = useState("")
   const [newTag, setNewTag] = useState("")
@@ -237,37 +272,22 @@ const validateForm = (): boolean => {
 
 
 
-  const handlePublishEvent = async () => {
-   if (!validateForm()) {
-    console.log("Validation failed", errors);
-    return;
-  }
+const handlePublishEvent = async () => {
+  if (!validateForm()) return;
 
   try {
     setLoading(true);
+
+    const slug =
+      formData.title
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "") + "-" + nanoid(5)
+
     const response = await fetch(`/api/organizers/${organizerId}/events`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...formData, status: "published" }),
-    });
-
-    if (!response.ok) throw new Error("Failed to publish event");
-
-    setErrors({});
-    // reset form or show success
-  } catch (error) {
-    console.error(error);
-  } finally {
-    setLoading(false);
-}
-
-
-  try {
-    setLoading(true);
-    const response = await fetch(`/api/organizers/${organizerId}/events`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...formData, status: "published" }),
+      body: JSON.stringify({ ...formData, status: "published", slug }),
     });
 
     if (!response.ok) throw new Error("Failed to publish event");
@@ -319,6 +339,7 @@ const validateForm = (): boolean => {
 };
 
 
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -326,6 +347,24 @@ const validateForm = (): boolean => {
           <h2 className="text-2xl font-bold text-gray-900">Create New Event</h2>
           <p className="text-gray-600">Fill in the details to create your event</p>
         </div>
+        {/* <div className="mb-4">
+  <h3 className="font-semibold text-gray-700 mb-2">Field Status</h3>
+  <ul className="space-y-1 text-sm">
+    {getFieldStatus().map((field) => (
+      <li key={field.name} className="flex items-center gap-2">
+        <span
+          className={`w-3 h-3 rounded-full ${
+            field.done ? "bg-green-500" : "bg-red-500"
+          }`}
+        ></span>
+        <span className={field.done ? "text-gray-700" : "text-gray-400 line-through"}>
+          {field.name}
+        </span>
+      </li>
+    ))}
+  </ul>
+</div> */}
+
         <div className="mb-4">
   <p className="text-sm text-gray-600 mb-1">Form Completion: {calculateCompletion()}%</p>
   <div className="w-full h-2 bg-gray-200 rounded-full">
@@ -780,3 +819,4 @@ const validateForm = (): boolean => {
     </div>
   )
 }
+
