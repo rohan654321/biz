@@ -1,19 +1,13 @@
-import { NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
 
     // Validate ID
     if (!id || id === "undefined") {
-      return NextResponse.json(
-        { success: false, error: "Invalid venuemanager ID" },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: "Invalid venuemanager ID" }, { status: 400 })
     }
 
     // Query database with meeting spaces included
@@ -23,15 +17,12 @@ export async function GET(
         role: "VENUE_MANAGER",
       },
       include: {
-        meetingSpaces: true // Include related meeting spaces
-      }
+        meetingSpaces: true, // Include related meeting spaces
+      },
     })
 
     if (!venueManager) {
-      return NextResponse.json(
-        { success: false, error: "venuemanager not found" },
-        { status: 404 }
-      )
+      return NextResponse.json({ success: false, error: "venuemanager not found" }, { status: 404 })
     }
 
     // Return profile
@@ -57,29 +48,19 @@ export async function GET(
         meetingSpaces: venueManager.meetingSpaces || [], // Now properly structured
       },
     })
-
   } catch (error) {
     console.error("Error in venue API:", error)
-    return NextResponse.json(
-      { success: false, error: "Internal venue error" },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, error: "Internal venue error" }, { status: 500 })
   }
 }
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const body = await req.json()
 
     if (!id || id === "undefined") {
-      return NextResponse.json(
-        { success: false, error: "Invalid venuemanager ID" },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: "Invalid venuemanager ID" }, { status: 400 })
     }
 
     const {
@@ -135,14 +116,14 @@ export async function PUT(
 
       // Delete existing meeting spaces
       await tx.meetingSpace.deleteMany({
-        where: { userId: id }
+        where: { userId: id },
       })
 
       // Create new meeting spaces if provided
       let createdMeetingSpaces = []
       if (meetingSpaces && meetingSpaces.length > 0) {
         createdMeetingSpaces = await Promise.all(
-          meetingSpaces.map((space: any) => 
+          meetingSpaces.map((space: any) =>
             tx.meetingSpace.create({
               data: {
                 name: space.name || "",
@@ -151,9 +132,9 @@ export async function PUT(
                 hourlyRate: space.hourlyRate || 0,
                 isAvailable: space.isAvailable !== false, // Default to true
                 userId: id,
-              }
-            })
-          )
+              },
+            }),
+          ),
         )
       }
 
@@ -184,9 +165,140 @@ export async function PUT(
     })
   } catch (error) {
     console.error("Error in venue PUT API:", error)
+    return NextResponse.json({ success: false, error: "Internal venue error" }, { status: 500 })
+  }
+}
+
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id: organizerId } = await params
+    const body = await req.json()
+
+    console.log("[v0] POST request received for organizer:", organizerId)
+    console.log("[v0] Request body:", body)
+
+    // Extract venue manager data from the request
+    const {
+      venueName,
+      logo,
+      contactPerson,
+      email,
+      mobile,
+      address,
+      website,
+      description,
+      maxCapacity,
+      totalHalls,
+      activeBookings,
+      averageRating,
+      totalReviews,
+      amenities,
+      meetingSpaces,
+    } = body
+
+    // Validate required fields
+    if (!email) {
+      console.log("[v0] Validation failed: Email is required")
+      return NextResponse.json({ success: false, error: "Email is required" }, { status: 400 })
+    }
+
+    if (!organizerId) {
+      console.log("[v0] Validation failed: Organizer ID is required")
+      return NextResponse.json({ success: false, error: "Organizer ID is required" }, { status: 400 })
+    }
+
+    if (!venueName) {
+      console.log("[v0] Validation failed: Venue name is required")
+      return NextResponse.json({ success: false, error: "Venue name is required" }, { status: 400 })
+    }
+
+    // Verify organizer exists and is an ORGANIZER
+    const organizer = await prisma.user.findFirst({
+      where: {
+        id: organizerId,
+        role: "ORGANIZER",
+      },
+    })
+
+    if (!organizer) {
+      console.log("[v0] Organizer not found or invalid role")
+      return NextResponse.json({ success: false, error: "Organizer not found" }, { status: 404 })
+    }
+
+    // Split contactPerson into first/last name
+    let firstName = ""
+    let lastName = ""
+    if (contactPerson) {
+      const parts = contactPerson.split(" ")
+      firstName = parts[0] || ""
+      lastName = parts.slice(1).join(" ") || ""
+    }
+
+    // Use transaction to create venue manager and link to organizer
+    const result = await prisma.$transaction(async (tx) => {
+      // Create the venue manager user with just the ID reference
+      const newVenueManager = await tx.user.create({
+        data: {
+          role: "VENUE_MANAGER",
+          email: email,
+          firstName: firstName || "Venue",
+          lastName: lastName || "Manager",
+          password: "TEMP_PASSWORD",
+          company: venueName || null,
+          avatar: logo || null,
+          phone: mobile || null,
+          location: address || null,
+          website: website || null,
+          bio: description || null,
+          maxCapacity: maxCapacity ? Number.parseInt(maxCapacity) : 0,
+          totalHalls: totalHalls ? Number.parseInt(totalHalls) : 0,
+          activeBookings: activeBookings ? Number.parseInt(activeBookings) : 0,
+          averageRating: averageRating ? Number.parseFloat(averageRating) : 0,
+          totalReviews: totalReviews ? Number.parseInt(totalReviews) : 0,
+          amenities: amenities || [],
+          // Use only the ID field, not the relation object
+          organizerIdForVenueManager: organizerId,
+        },
+      })
+
+      // Create meeting spaces if provided
+      let createdMeetingSpaces = []
+      if (meetingSpaces && meetingSpaces.length > 0) {
+        createdMeetingSpaces = await Promise.all(
+          meetingSpaces.map((space: any) =>
+            tx.meetingSpace.create({
+              data: {
+                name: space.name || "",
+                capacity: space.capacity || 0,
+                area: space.area || 0,
+                hourlyRate: space.hourlyRate || 0,
+                isAvailable: space.isAvailable !== false,
+                userId: newVenueManager.id,
+              },
+            }),
+          ),
+        )
+      }
+
+      return { venueManager: newVenueManager, meetingSpaces: createdMeetingSpaces }
+    })
+
     return NextResponse.json(
-      { success: false, error: "Internal venue error" },
-      { status: 500 }
+      {
+        success: true,
+        message: "Venue manager created and added to organizer network",
+        data: result,
+      },
+      { status: 201 },
     )
+  } catch (error: any) {
+    console.error("Error in venue manager POST API:", error)
+
+    // Handle unique constraint violation (duplicate email)
+    if (error.code === "P2002") {
+      return NextResponse.json({ success: false, error: "Email already exists" }, { status: 409 })
+    }
+
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }

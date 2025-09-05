@@ -34,7 +34,7 @@ import {
   User,
   Loader2,
 } from "lucide-react"
-
+import { signOut } from "next-auth/react"
 // Import all section components
 import DashboardOverview from "../dashboard-overview"
 import MyEvents from "../my-events"
@@ -47,6 +47,10 @@ import SettingsPanel from "../settings-panel"
 import MyPlan from "../my-plan"
 import OrganizerInfo from "../organizer-info"
 import RevenueManagement from "../revenue-management"
+import AddSpeaker from "../add-speaker"
+import AddExhibitor from "../add-exhibitor"
+// import BookVenue from "../book-venue"
+import AddVenue from "../add-venue"
 
 interface OrganizerData {
   id: string
@@ -266,6 +270,26 @@ export default function OrganizerDashboardPage() {
       id: "my-plan",
     },
     {
+      title:"Add speaker",
+      icon: Users,
+      id: "speaker",
+    },
+    {
+      title:"Add exhibitor",
+      icon: Users,
+      id: "exhibitor",
+    },
+    // {
+    //   title:"book venue",
+    //   icon: Users,
+    //   id: "venue",
+    // },
+    {
+      title:"add venue",
+      icon: Users,
+      id: "addvenue",
+    },
+    {
       title: "Messages",
       icon: MessageSquare,
       id: "messages",
@@ -342,6 +366,8 @@ export default function OrganizerDashboardPage() {
         return <MyEvents events={events} />
       case "create-event":
         return <CreateEvent organizerId={organizerId} />
+      case "addvenue":
+        return <AddVenue organizerId={organizerId} />
       case "attendees":
         return <AttendeesManagement attendees={attendees} />
       case "analytics":
@@ -362,6 +388,12 @@ export default function OrganizerDashboardPage() {
         )
       case "promotion":
         return <EventPromotion organizerId={organizerId} />
+      case "speaker":
+        return <AddSpeaker organizerId={organizerId} />
+      case "exhibitor":
+        return <AddExhibitor organizerId={organizerId} />
+      // case "venue":
+      //   return <BookVenue organizerId={organizerId} />
       case "my-plan":
         return <MyPlan  organizerId={organizerId} />
       case "messages":
@@ -431,6 +463,12 @@ export default function OrganizerDashboardPage() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+                  <Button
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white my-10"
+                  >
+                    Logout
+                  </Button>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

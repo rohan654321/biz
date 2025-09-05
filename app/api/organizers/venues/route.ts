@@ -1,0 +1,69 @@
+import { type NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const { organizerId, venueIds } = body
+
+    console.log("[v0] Adding existing venues to organizer network")
+    console.log("[v0] Organizer ID:", organizerId)
+    console.log("[v0] Venue IDs:", venueIds)
+
+    // Validate required fields
+    if (!organizerId) {
+      return NextResponse.json({ success: false, error: "Organizer ID is required" }, { status: 400 })
+    }
+
+    if (!venueIds || !Array.isArray(venueIds) || venueIds.length === 0) {
+      return NextResponse.json({ success: false, error: "Venue IDs are required" }, { status: 400 })
+    }
+
+    // Verify organizer exists and is an ORGANIZER
+    const organizer = await prisma.user.findFirst({
+      where: {
+        id: organizerId,
+        role: "ORGANIZER",
+      },
+    })
+
+    if (!organizer) {
+      return NextResponse.json({ success: false, error: "Organizer not found" }, { status: 404 })
+    }
+
+    // Verify all venues exist and are VENUE_MANAGERs
+    const venues = await prisma.user.findMany({
+      where: {
+        id: { in: venueIds },
+        role: "VENUE_MANAGER",
+      },
+    })
+
+    if (venues.length !== venueIds.length) {
+      return NextResponse.json({ success: false, error: "Some venues not found or invalid" }, { status: 404 })
+    }
+
+    // Update venues to link them to the organizer
+    const updatedVenues = await prisma.user.updateMany({
+      where: {
+        id: { in: venueIds },
+        role: "VENUE_MANAGER",
+      },
+      data: {
+        organizerIdForVenueManager: organizerId,
+      },
+    })
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: `${updatedVenues.count} venue(s) added to organizer network`,
+        data: { updatedCount: updatedVenues.count },
+      },
+      { status: 200 },
+    )
+  } catch (error: any) {
+    console.error("Error adding venues to organizer network:", error)
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
+  }
+}
