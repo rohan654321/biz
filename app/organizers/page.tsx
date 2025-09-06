@@ -1,168 +1,36 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import {
-  Search,
-  MapPin,
-  Calendar,
-  Users,
-  Star,
-  Phone,
-  Mail,
-  Globe,
-  Filter,
-  Heart,
-  Share2,
-  Award,
-  TrendingUp,
-} from "lucide-react"
+import { useState, useMemo, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Search, MapPin, Calendar, Users, Star, Phone, Mail, Globe, Award, TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { getAllOrganizers } from "@/lib/data/events"
 
-// Mock organizer data
-const organizers =getAllOrganizers () || [];
-//   {
-//     id: 1,
-//     name: "EventPro Solutions",
-//     image: "/placeholder.svg?height=200&width=300",
-//     rating: 4.9,
-//     reviewCount: 156,
-//     location: "Mumbai, India",
-//     country: "India",
-//     category: "Corporate Events",
-//     eventsOrganized: 245,
-//     yearsofExperience: 8,
-//     specialties: ["Corporate Conferences", "Product Launches", "Team Building"],
-//     description:
-//       "Leading corporate event management company specializing in large-scale conferences and product launches.",
-//     phone: "+91 98765 43210",
-//     email: "contact@eventpro.com",
-//     website: "www.eventpro.com",
-//     verified: true,
-//     featured: true,
-//     totalAttendees: "50K+",
-//     successRate: 98,
-//     nextAvailable: "2024-02-15",
-//   },
-//   {
-//     id: 2,
-//     name: "Celebration Masters",
-//     company: "Celebration Masters Inc.",
-//     image: "/placeholder.svg?height=200&width=300",
-//     rating: 4.8,
-//     reviewCount: 203,
-//     location: "Delhi, India",
-//     country: "India",
-//     category: "Weddings",
-//     eventsOrganized: 189,
-//     yearsofExperience: 12,
-//     specialties: ["Destination Weddings", "Traditional Ceremonies", "Reception Planning"],
-//     description: "Premium wedding planners creating unforgettable moments with attention to every detail.",
-//     phone: "+91 98765 43211",
-//     email: "info@celebrationmasters.com",
-//     website: "www.celebrationmasters.com",
-//     verified: true,
-//     featured: false,
-//     totalAttendees: "35K+",
-//     successRate: 96,
-//     nextAvailable: "2024-02-20",
-//   },
-//   {
-//     id: 3,
-//     name: "TechConf Organizers",
-//     company: "TechConf Global",
-//     image: "/placeholder.svg?height=200&width=300",
-//     rating: 4.7,
-//     reviewCount: 89,
-//     location: "Bangalore, India",
-//     country: "India",
-//     category: "Technology",
-//     eventsOrganized: 67,
-//     yearsofExperience: 5,
-//     specialties: ["Tech Conferences", "Startup Events", "Innovation Summits"],
-//     description: "Specialized in organizing cutting-edge technology conferences and startup events.",
-//     phone: "+91 98765 43212",
-//     email: "hello@techconf.com",
-//     website: "www.techconf.com",
-//     verified: true,
-//     featured: true,
-//     totalAttendees: "25K+",
-//     successRate: 94,
-//     nextAvailable: "2024-02-18",
-//   },
-//   {
-//     id: 4,
-//     name: "Global Events USA",
-//     company: "Global Events LLC",
-//     image: "/placeholder.svg?height=200&width=300",
-//     rating: 4.9,
-//     reviewCount: 312,
-//     location: "New York, USA",
-//     country: "United States",
-//     category: "International",
-//     eventsOrganized: 456,
-//     yearsofExperience: 15,
-//     specialties: ["International Conferences", "Trade Shows", "Corporate Summits"],
-//     description: "Premier international event management company with global reach and expertise.",
-//     phone: "+1 555-123-4567",
-//     email: "contact@globaleventsusa.com",
-//     website: "www.globaleventsusa.com",
-//     verified: true,
-//     featured: true,
-//     totalAttendees: "100K+",
-//     successRate: 99,
-//     nextAvailable: "2024-02-12",
-//   },
-//   {
-//     id: 5,
-//     name: "London Event Co.",
-//     company: "London Event Company Ltd.",
-//     image: "/placeholder.svg?height=200&width=300",
-//     rating: 4.6,
-//     reviewCount: 178,
-//     location: "London, UK",
-//     country: "United Kingdom",
-//     category: "Corporate Events",
-//     eventsOrganized: 234,
-//     yearsofExperience: 10,
-//     specialties: ["Business Conferences", "Networking Events", "Award Ceremonies"],
-//     description: "Established London-based event organizers specializing in corporate and business events.",
-//     phone: "+44 20 7123 4567",
-//     email: "info@londoneventco.com",
-//     website: "www.londoneventco.com",
-//     verified: true,
-//     featured: false,
-//     totalAttendees: "45K+",
-//     successRate: 95,
-//     nextAvailable: "2024-02-25",
-//   },
-//   {
-//     id: 6,
-//     name: "Sydney Celebrations",
-//     company: "Sydney Celebrations Pty Ltd",
-//     image: "/placeholder.svg?height=200&width=300",
-//     rating: 4.8,
-//     reviewCount: 145,
-//     location: "Sydney, Australia",
-//     country: "Australia",
-//     category: "Social Events",
-//     eventsOrganized: 167,
-//     yearsofExperience: 7,
-//     specialties: ["Social Gatherings", "Cultural Events", "Community Festivals"],
-//     description: "Creative event organizers bringing communities together through memorable celebrations.",
-//     phone: "+61 2 9123 4567",
-//     email: "hello@sydneycelebrations.com",
-//     website: "www.sydneycelebrations.com",
-//     verified: true,
-//     featured: false,
-//     totalAttendees: "30K+",
-//     successRate: 93,
-//     nextAvailable: "2024-03-01",
-//   },
-// ]
+// Define the Organizer type
+interface Organizer {
+  id: string
+  name: string
+  image?: string
+  rating: number
+  reviewCount: number
+  location: string
+  country: string
+  category: string
+  eventsOrganized: number
+  yearsOfExperience: number
+  specialties: string[]
+  description: string
+  phone: string
+  email: string
+  website: string
+  verified: boolean
+  featured: boolean
+  totalAttendees: string
+  successRate: number
+  nextAvailable: string
+}
 
 const cities = [
   "Mumbai",
@@ -204,22 +72,56 @@ const categories = [
 ]
 
 export default function OrganizersPage() {
+  const router = useRouter()
+  const [organizers, setOrganizers] = useState<Organizer[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCities, setSelectedCities] = useState<string[]>([])
   const [selectedCountries, setSelectedCountries] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [sortBy, setSortBy] = useState("rating")
 
+  // Fetch organizers from API
+  useEffect(() => {
+    const fetchOrganizers = async () => {
+      try {
+        const response = await fetch("/api/organizers")
+        if (response.ok) {
+          const data = await response.json()
+          setOrganizers(data.organizers || [])
+        } else {
+          console.error("Failed to fetch organizers")
+          // Fallback to empty array if API fails
+          setOrganizers([])
+        }
+      } catch (error) {
+        console.error("Error fetching organizers:", error)
+        setOrganizers([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchOrganizers()
+  }, [])
+
+  // Handle card click to navigate to organizer detail page
+  const handleCardClick = (organizerId: string) => {
+    router.push(`/organizer/${organizerId}`)
+  }
+
   const filteredOrganizers = useMemo(() => {
     const filtered = organizers.filter((organizer) => {
       const matchesSearch =
         organizer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         organizer.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        organizer.website.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        organizer.specialties?.some((specialty) => specialty.toLowerCase().includes(searchTerm.toLowerCase())) || false
+        (organizer.website && organizer.website.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        organizer.specialties?.some((specialty) => specialty.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        false
 
       const matchesCity =
-        selectedCities.length === 0 || selectedCities.some((city) => organizer.location.includes(city))
+        selectedCities.length === 0 ||
+        (organizer.location && selectedCities.some((city) => organizer.location.includes(city)))
 
       const matchesCountry = selectedCountries.length === 0 || selectedCountries.includes(organizer.country)
 
@@ -245,7 +147,7 @@ export default function OrganizersPage() {
     })
 
     return filtered
-  }, [searchTerm, selectedCities, selectedCountries, selectedCategories, sortBy])
+  }, [organizers, searchTerm, selectedCities, selectedCountries, selectedCategories, sortBy])
 
   const toggleFilter = (value: string, selectedArray: string[], setSelectedArray: (arr: string[]) => void) => {
     if (selectedArray.includes(value)) {
@@ -260,6 +162,17 @@ export default function OrganizersPage() {
     setSelectedCountries([])
     setSelectedCategories([])
     setSearchTerm("")
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading Organizers...</h1>
+          <p className="text-gray-600">Please wait while we fetch the best event organizers for you.</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -358,23 +271,16 @@ export default function OrganizersPage() {
         {/* Main Content */}
         <div className="flex-1">
           {/* Header */}
-          <div className="bg-white border-y border-gray-200  px-8 py-6">
+          <div className="bg-white border-y border-gray-200 px-8 py-6">
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Find Expert Organizers</h1>
                 <p className="text-gray-600">Connect with professional event organizers for your next event</p>
               </div>
-              {/* <div className="flex gap-3">
-                <Button variant="outline" className="flex items-center gap-2 bg-transparent">
-                  <Filter className="h-4 w-4" />
-                  Filters
-                </Button>
-                <Button className="bg-blue-600 hover:bg-blue-700">Become an Organizer</Button>
-              </div> */}
             </div>
 
             {/* Search and Sort */}
-            {/* <div className="flex gap-4 items-center">
+            <div className="flex gap-4 items-center">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
@@ -394,7 +300,7 @@ export default function OrganizersPage() {
                 <option value="events">Sort by Events Organized</option>
                 <option value="name">Sort by Name</option>
               </select>
-            </div> */}
+            </div>
 
             {/* Active Filters */}
             {(selectedCities.length > 0 || selectedCountries.length > 0 || selectedCategories.length > 0) && (
@@ -430,7 +336,7 @@ export default function OrganizersPage() {
             </div>
 
             {filteredOrganizers.length === 0 ? (
-                <div className="text-center py-12">
+              <div className="text-center py-12">
                 <div className="text-gray-400 mb-4">
                   <Users className="h-16 w-16 mx-auto" />
                 </div>
@@ -445,46 +351,30 @@ export default function OrganizersPage() {
                 {filteredOrganizers.map((organizer) => (
                   <Card
                     key={organizer.id}
-                    className="group hover:shadow-lg transition-all duration-300 overflow-hidden"
+                    className="group hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer"
+                    onClick={() => handleCardClick(organizer.id)}
                   >
                     <div className="relative">
                       <img
                         src={organizer.image || "/placeholder.svg"}
                         alt={organizer.name}
-                        className="w-full h-48  group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                        {/* {organizer.featured && (
+                      {organizer.featured && (
                         <Badge className="absolute top-3 left-3 bg-orange-500 hover:bg-orange-600">Featured</Badge>
-                      )} */}
+                      )}
                       {organizer.verified && (
                         <Badge className="absolute top-3 right-3 bg-green-500 hover:bg-green-600">
                           <Award className="h-3 w-3 mr-1" />
                           Verified
                         </Badge>
                       )}
-                      {/* <div className="absolute top-3 right-3 flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Heart className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Share2 className="h-4 w-4" />
-                        </Button>
-                      </div> */}
                     </div>
 
                     <CardContent className="p-6">
                       <div className="flex justify-between items-start mb-3">
                         <div>
                           <h3 className="font-semibold text-lg text-gray-900 mb-1">{organizer.name}</h3>
-                          {/* <p className="text-sm text-gray-600">{organizer.company}</p> */}
                         </div>
                         <div className="flex items-center gap-1">
                           <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -508,7 +398,7 @@ export default function OrganizersPage() {
                           <span>{organizer.eventsOrganized} events</span>
                         </div>
                       </div>
-{/* 
+
                       <p className="text-sm text-gray-600 mb-4 line-clamp-2">{organizer.description}</p>
 
                       <div className="flex flex-wrap gap-1 mb-4">
@@ -563,7 +453,7 @@ export default function OrganizersPage() {
                         <Button className="flex-1 bg-blue-600 hover:bg-blue-700" size="sm">
                           Contact Now
                         </Button>
-                      </div> */}
+                      </div>
                     </CardContent>
                   </Card>
                 ))}

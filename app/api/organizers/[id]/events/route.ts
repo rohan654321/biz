@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
 import { prisma } from "@/lib/prisma"
 import { EventStatus } from "@prisma/client"
-import { ObjectId } from "mongodb"; // at top
+import { ObjectId } from "mongodb" // at top
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -90,7 +90,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         endDate: event.endDate.toISOString(),
         location: event.isVirtual
           ? "Virtual Event"
-          : (event.venue ? `${event.venue.firstName} ${event.venue.lastName ?? ""}`.trim() : null) || event.location || `${event.city}, ${event.state}` || event.address || "TBD",
+          : (event.venue ? `${event.venue.firstName} ${event.venue.lastName ?? ""}`.trim() : null) ||
+            event.location ||
+            `${event.city}, ${event.state}` ||
+            event.address ||
+            "TBD",
         status:
           event.status === "PUBLISHED"
             ? "Active"
@@ -136,57 +140,57 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     // Create new event in database
     const newEvent = await prisma.event.create({
-  data: {
-    id: new ObjectId().toHexString(), // 👈 add this
-    title: body.title,
-    description: body.description,
-    shortDescription: body.shortDescription,
-    slug:
-      (body.slug ??
-        body.title
-          .toLowerCase()
-          .replace(/\s+/g, "-")
-          .replace(/[^a-z0-9-]/g, "")),
-    status: (body.status?.toUpperCase() as EventStatus) || EventStatus.DRAFT,
-    category: body.category,
-    tags: body.tags || [],
-    startDate: new Date(body.startDate),
-    endDate: new Date(body.endDate),
-    registrationStart: new Date(body.registrationStart || body.startDate),
-    registrationEnd: new Date(body.registrationEnd || body.endDate),
-    timezone: body.timezone || "UTC",
-    isVirtual: body.isVirtual || false,
-    virtualLink: body.virtualLink,
-    address: body.address,
-    location: body.location,
-    city: body.city,
-    state: body.state,
-    country: body.country,
-    zipCode: body.zipCode,
-    maxAttendees: body.maxAttendees,
-    ticketTypes: body.ticketTypes || [],
-    currency: body.currency || "USD",
-    images: body.images || [],
-    bannerImage: body.bannerImage,
-    thumbnailImage: body.thumbnailImage,
-    isPublic: body.isPublic !== false,
-    requiresApproval: body.requiresApproval || false,
-    allowWaitlist: body.allowWaitlist || false,
-    refundPolicy: body.refundPolicy,
-    metaTitle: body.metaTitle,
-    metaDescription: body.metaDescription,
-    organizerId: id,
-  },
-  select: {
-    id: true,
-    title: true,
-    description: true,
-    status: true,
-    startDate: true,
-    endDate: true,
-    createdAt: true,
-  },
-});
+      data: {
+        id: new ObjectId().toHexString(), // 👈 add this
+        title: body.title,
+        description: body.description,
+        shortDescription: body.shortDescription,
+        slug:
+          body.slug ??
+          body.title
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9-]/g, ""),
+        status: (body.status?.toUpperCase() as EventStatus) || EventStatus.DRAFT,
+        category: body.category,
+        tags: body.tags || [],
+        startDate: new Date(body.startDate),
+        endDate: new Date(body.endDate),
+        registrationStart: new Date(body.registrationStart || body.startDate),
+        registrationEnd: new Date(body.registrationEnd || body.endDate),
+        timezone: body.timezone || "UTC",
+        isVirtual: body.isVirtual || false,
+        virtualLink: body.virtualLink,
+        address: body.address,
+        location: body.location,
+        city: body.city,
+        state: body.state,
+        country: body.country,
+        zipCode: body.zipCode,
+        maxAttendees: body.maxAttendees,
+        ticketTypes: body.ticketTypes || [],
+        currency: body.currency || "USD",
+        images: body.images || [],
+        bannerImage: body.bannerImage,
+        thumbnailImage: body.thumbnailImage,
+        isPublic: body.isPublic !== false,
+        requiresApproval: body.requiresApproval || false,
+        allowWaitlist: body.allowWaitlist || false,
+        refundPolicy: body.refundPolicy,
+        metaTitle: body.metaTitle,
+        metaDescription: body.metaDescription,
+        organizerId: id,
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        startDate: true,
+        endDate: true,
+        createdAt: true,
+      },
+    })
 
     // Update organizer's total events count
     await prisma.user.update({

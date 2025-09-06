@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -21,8 +21,53 @@ import {
   ExternalLink,
 } from "lucide-react"
 import Image from "next/image"
-import { getAllEvents } from "@/lib/data/events"
 import { useParams, useRouter } from "next/navigation"
+
+interface Organizer {
+  id: string
+  name: string
+  company: string
+  email: string
+  phone: string
+  location: string
+  website: string
+  description: string
+  avatar: string
+  totalEvents: number
+  activeEvents: number
+  totalAttendees: number
+  totalRevenue: number
+  founded: string
+  teamSize: string
+  headquarters: string
+  specialties: string[]
+  achievements: string[]
+  certifications: string[]
+  organizationName: string
+  businessEmail: string
+  businessPhone: string
+  businessAddress: string
+}
+
+interface Event {
+  id: number
+  title: string
+  description: string
+  date: string
+  startDate: string
+  endDate: string
+  location: string
+  status: string
+  attendees: number
+  registrations: number
+  revenue: number
+  type: string
+  maxAttendees: number
+  isVirtual: boolean
+  bannerImage?: string
+  thumbnailImage?: string
+  isPublic: boolean
+}
 
 export default function OrganizerPage() {
   const params = useParams()
@@ -31,68 +76,95 @@ export default function OrganizerPage() {
 
   const [activeTab, setActiveTab] = useState("overview")
   const [currentPage, setCurrentPage] = useState(1)
+  const [organizer, setOrganizer] = useState<Organizer | null>(null)
+  const [events, setEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const eventsPerPage = 6
 
-  // Get all events and filter by organizer
-  const allEvents = getAllEvents()
-  const organizerEvents = allEvents.filter((event) => event.organizer.id === organizerId)
+  useEffect(() => {
+    const fetchOrganizerData = async () => {
+      try {
+        setLoading(true)
 
-  // Mock additional organizer data (in real app, this would come from API)
-  const organizerDetails = {
-    founded: "2018",
-    headquarters: "Mumbai, India",
-    website: "https://eventcorp.in",
-    specialties: ["Corporate Events", "Trade Shows", "Conferences", "Exhibitions"],
-    certifications: ["ISO 9001:2015", "Event Management Certified", "Safety Compliance"],
-    description: "EventCorp is a leading event management company.",
-    achievements: [
-      "Best Event Management Company 2023",
-      "Excellence in Customer Service Award",
-      "Top 10 Event Organizers in India",
-      "Sustainability in Events Recognition",
-    ],
-  }
+        // Fetch organizer details
+        const organizerResponse = await fetch(`/api/organizers/${organizerId}`)
+        if (!organizerResponse.ok) {
+          throw new Error("Organizer not found")
+        }
+        const organizerData = await organizerResponse.json()
+        setOrganizer(organizerData.organizer)
 
-  // Get organizer details from the first event (in real app, this would be a separate API)
-  const organizer = organizerEvents[0]?.organizer
+        // Fetch organizer events
+        const eventsResponse = await fetch(`/api/organizers/${organizerId}/events`)
+        if (eventsResponse.ok) {
+          const eventsData = await eventsResponse.json()
+          setEvents(eventsData.events || [])
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load organizer")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (organizerId) {
+      fetchOrganizerData()
+    }
+  }, [organizerId])
 
   // Calculate organizer statistics
   const stats = useMemo(() => {
-    const totalEvents = organizerEvents.length
-    // const totalFollowers = organizerEvents.reduce((sum, event) => sum + event.followers, 0)
-    const avgRating =
-      organizerEvents.length > 0
-        ? organizerEvents.reduce((sum, event) => sum + event.rating.average, 0) / organizerEvents.length
-        : 0
-    const upcomingEvents = organizerEvents.filter((event) => event.status === "upcoming").length
-    const completedEvents = organizerEvents.filter((event) => event.status === "completed").length
-    const featuredEvents = organizerEvents.filter((event) => event.featured).length
+    if (!organizer || !events)
+      return {
+        totalEvents: 0,
+        avgRating: 0,
+        upcomingEvents: 0,
+        completedEvents: 0,
+        featuredEvents: 0,
+      }
+
+    const totalEvents = events.length
+    const avgRating = 4.5 // placeholder since we don't have ratings in the API yet
+    const upcomingEvents = events.filter((event) => event.status === "Active").length
+    const completedEvents = events.filter((event) => event.status === "Completed").length
+    const featuredEvents = 0 // placeholder
 
     return {
       totalEvents,
-    //   totalFollowers,
-      avgRating: Math.round(avgRating * 10) / 10,
+      avgRating,
       upcomingEvents,
       completedEvents,
       featuredEvents,
     }
-  }, [organizerEvents])
+  }, [organizer, events])
 
-  if (!organizer) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading Organizer...</h1>
+          <p className="text-gray-600">Please wait while we fetch the organizer details.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !organizer) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Organizer Not Found</h1>
-          <p className="text-gray-600 mb-4">The organizer you're looking for doesn't exist.</p>
-          <Button onClick={() => router.push("/events")}>Back to Events</Button>
+          <p className="text-gray-600 mb-4">{error || "The organizer you're looking for doesn't exist."}</p>
+          <Button onClick={() => router.push("/organizers")}>Back to Organizers</Button>
         </div>
       </div>
     )
   }
 
   // Pagination for events
-  const totalPages = Math.ceil(organizerEvents.length / eventsPerPage)
-  const paginatedEvents = organizerEvents.slice((currentPage - 1) * eventsPerPage, currentPage * eventsPerPage)
+  const totalPages = Math.ceil(events.length / eventsPerPage)
+  const paginatedEvents = events.slice((currentPage - 1) * eventsPerPage, currentPage * eventsPerPage)
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -137,7 +209,7 @@ export default function OrganizerPage() {
               <div className="flex flex-wrap gap-6 text-blue-100">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
-                  <span>{organizerDetails.headquarters}</span>
+                  <span>{organizer.headquarters}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4" />
@@ -147,12 +219,14 @@ export default function OrganizerPage() {
                   <Mail className="w-4 h-4" />
                   <span>{organizer.email}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4" />
-                  <a href={organizerDetails.website} className="hover:text-white transition-colors">
-                    Visit Website
-                  </a>
-                </div>
+                {organizer.website && (
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-4 h-4" />
+                    <a href={organizer.website} className="hover:text-white transition-colors">
+                      Visit Website
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -186,16 +260,16 @@ export default function OrganizerPage() {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="grid grid-cols-2 md:grid-cols-6 gap-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{stats.totalEvents}</div>
+              <div className="text-2xl font-bold text-gray-900">{organizer.totalEvents}</div>
               <div className="text-sm text-gray-600">Total Events</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{stats.upcomingEvents}</div>
-              <div className="text-sm text-gray-600">Upcoming</div>
+              <div className="text-2xl font-bold text-gray-900">{organizer.activeEvents}</div>
+              <div className="text-sm text-gray-600">Active Events</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">2</div>
-              <div className="text-sm text-gray-600">Total Followers</div>
+              <div className="text-2xl font-bold text-gray-900">{organizer.totalAttendees}</div>
+              <div className="text-sm text-gray-600">Total Attendees</div>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
@@ -209,7 +283,7 @@ export default function OrganizerPage() {
               <div className="text-sm text-gray-600">Featured</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{organizerDetails.founded}</div>
+              <div className="text-2xl font-bold text-gray-900">{organizer.founded}</div>
               <div className="text-sm text-gray-600">Founded</div>
             </div>
           </div>
@@ -236,9 +310,9 @@ export default function OrganizerPage() {
                   <CardContent className="p-6">
                     <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
                       <Building className="w-5 h-5" />
-                      About {organizer.name}
+                      About {organizer.organizationName}
                     </h3>
-                    <p className="text-gray-600 leading-relaxed">{organizerDetails.description}</p>
+                    <p className="text-gray-600 leading-relaxed">{organizer.description}</p>
                   </CardContent>
                 </Card>
 
@@ -247,13 +321,13 @@ export default function OrganizerPage() {
                   <CardContent className="p-6">
                     <h3 className="text-xl font-semibold mb-4">Recent Events</h3>
                     <div className="space-y-4">
-                      {organizerEvents.slice(0, 3).map((event) => (
+                      {events.slice(0, 3).map((event) => (
                         <div
                           key={event.id}
                           className="flex gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                         >
                           <Image
-                            src={event.images[0]?.url || "/placeholder.svg"}
+                            src={event.bannerImage || "/placeholder.svg?height=60&width=80"}
                             alt={event.title}
                             width={80}
                             height={60}
@@ -263,21 +337,19 @@ export default function OrganizerPage() {
                             <h4 className="font-medium text-gray-900 mb-1">{event.title}</h4>
                             <div className="flex items-center text-sm text-gray-600 mb-1">
                               <Calendar className="w-4 h-4 mr-1" />
-                              {formatDate(event.timings.startDate)}
+                              {formatDate(event.startDate)}
                             </div>
                             <div className="flex items-center text-sm text-gray-600">
                               <MapPin className="w-4 h-4 mr-1" />
-                              {event.location.city}
+                              {event.location}
                             </div>
                           </div>
                           <div className="text-right">
                             <div className="flex items-center gap-1 mb-1">
                               <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                              <span className="text-sm font-medium">{event.rating.average}</span>
+                              <span className="text-sm font-medium">4.5</span>
                             </div>
-                            <Badge variant={event.status === "upcoming" ? "default" : "secondary"}>
-                              {event.status}
-                            </Badge>
+                            <Badge variant={event.status === "Active" ? "default" : "secondary"}>{event.status}</Badge>
                           </div>
                         </div>
                       ))}
@@ -298,7 +370,7 @@ export default function OrganizerPage() {
                   <CardContent className="p-6">
                     <h3 className="text-lg font-semibold mb-4">Specialties</h3>
                     <div className="flex flex-wrap gap-2">
-                      {organizerDetails.specialties.map((specialty, index) => (
+                      {organizer.specialties.map((specialty, index) => (
                         <Badge key={index} variant="secondary">
                           {specialty}
                         </Badge>
@@ -315,7 +387,7 @@ export default function OrganizerPage() {
                       Achievements
                     </h3>
                     <div className="space-y-2">
-                      {organizerDetails.achievements.map((achievement, index) => (
+                      {organizer.achievements.map((achievement, index) => (
                         <div key={index} className="flex items-start gap-2">
                           <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                           <span className="text-sm text-gray-600">{achievement}</span>
@@ -330,7 +402,7 @@ export default function OrganizerPage() {
                   <CardContent className="p-6">
                     <h3 className="text-lg font-semibold mb-4">Certifications</h3>
                     <div className="space-y-2">
-                      {organizerDetails.certifications.map((cert, index) => (
+                      {organizer.certifications.map((cert, index) => (
                         <div key={index} className="flex items-center gap-2">
                           <CheckCircle className="w-4 h-4 text-blue-500" />
                           <span className="text-sm text-gray-600">{cert}</span>
@@ -349,7 +421,7 @@ export default function OrganizerPage() {
               <h3 className="text-xl font-semibold">All Events by {organizer.name}</h3>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">
-                  Showing {paginatedEvents.length} of {organizerEvents.length} events
+                  Showing {paginatedEvents.length} of {events.length} events
                 </span>
               </div>
             </div>
@@ -361,48 +433,40 @@ export default function OrganizerPage() {
                   <CardContent className="p-0">
                     <div className="relative">
                       <Image
-                        src={event.images[0]?.url || "/placeholder.svg"}
+                        src={event.bannerImage || "/placeholder.svg?height=200&width=400"}
                         alt={event.title}
                         width={400}
                         height={200}
                         className="w-full h-48 object-cover rounded-t-lg"
                       />
-                      {event.featured && (
-                        <Badge className="absolute top-3 left-3 bg-yellow-500 text-yellow-900">Featured</Badge>
-                      )}
-                      {event.vip && <Badge className="absolute top-3 right-3 bg-purple-500 text-white">VIP</Badge>}
+                      <Badge className="absolute top-3 right-3 bg-blue-500 text-white">{event.type}</Badge>
                     </div>
                     <div className="p-4">
                       <h4 className="font-semibold text-lg mb-2 line-clamp-1">{event.title}</h4>
                       <div className="space-y-2 mb-3">
                         <div className="flex items-center text-sm text-gray-600">
                           <Calendar className="w-4 h-4 mr-2" />
-                          {formatDate(event.timings.startDate)}
+                          {formatDate(event.startDate)}
                         </div>
                         <div className="flex items-center text-sm text-gray-600">
                           <MapPin className="w-4 h-4 mr-2" />
-                          {event.location.city}, {event.location.venue}
+                          {event.location}
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="text-sm font-medium">{event.rating.average}</span>
-                          <span className="text-sm text-gray-500">({event.rating.count})</span>
+                          <span className="text-sm font-medium">4.5</span>
+                          <span className="text-sm text-gray-500">(12)</span>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold text-blue-600">
-                            {event.pricing.currency}
-                            {event.pricing.general === 0 ? "Free" : event.pricing.general}
-                          </div>
+                          <div className="text-sm text-gray-600">{event.attendees} attendees</div>
                         </div>
                       </div>
-                      <div className="flex flex-wrap gap-1 mt-3">
-                        {event.categories.slice(0, 2).map((category, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs">
-                            {category}
-                          </Badge>
-                        ))}
+                      <div className="mt-3">
+                        <Badge variant="outline" className="text-xs">
+                          {event.status}
+                        </Badge>
                       </div>
                     </div>
                   </CardContent>
@@ -456,22 +520,21 @@ export default function OrganizerPage() {
                   <div className="space-y-4">
                     <div>
                       <label className="text-sm font-medium text-gray-500">Founded</label>
-                      <p className="text-gray-900">{organizerDetails.founded}</p>
+                      <p className="text-gray-900">{organizer.founded}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Headquarters</label>
-                      <p className="text-gray-900">{organizerDetails.headquarters}</p>
+                      <p className="text-gray-900">{organizer.headquarters}</p>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Website</label>
-                      <a
-                        href={organizerDetails.website}
-                        className="text-blue-600 hover:underline flex items-center gap-1"
-                      >
-                        {organizerDetails.website}
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </div>
+                    {organizer.website && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Website</label>
+                        <a href={organizer.website} className="text-blue-600 hover:underline flex items-center gap-1">
+                          {organizer.website}
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      </div>
+                    )}
                     <div>
                       <label className="text-sm font-medium text-gray-500">Contact</label>
                       <div className="space-y-1">
@@ -489,23 +552,23 @@ export default function OrganizerPage() {
                   <div className="space-y-4">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Total Events Organized</span>
-                      <span className="font-semibold">{stats.totalEvents}</span>
+                      <span className="font-semibold">{organizer.totalEvents}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Upcoming Events</span>
-                      <span className="font-semibold">{stats.upcomingEvents}</span>
+                      <span className="text-gray-600">Active Events</span>
+                      <span className="font-semibold">{organizer.activeEvents}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Completed Events</span>
-                      <span className="font-semibold">{stats.completedEvents}</span>
+                      <span className="text-gray-600">Total Attendees</span>
+                      <span className="font-semibold">{organizer.totalAttendees.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Featured Events</span>
-                      <span className="font-semibold">{stats.featuredEvents}</span>
+                      <span className="text-gray-600">Total Revenue</span>
+                      <span className="font-semibold">${organizer.totalRevenue.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Total Followers</span>
-                      {/* <span className="font-semibold">{stats.totalFollowers.toLocaleString()}</span> */}
+                      <span className="text-gray-600">Team Size</span>
+                      <span className="font-semibold">{organizer.teamSize}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Average Rating</span>
@@ -522,7 +585,7 @@ export default function OrganizerPage() {
             <Card>
               <CardContent className="p-6">
                 <h3 className="text-xl font-semibold mb-4">Full Description</h3>
-                <p className="text-gray-600 leading-relaxed">{organizerDetails.description}</p>
+                <p className="text-gray-600 leading-relaxed">{organizer.description}</p>
               </CardContent>
             </Card>
           </TabsContent>
