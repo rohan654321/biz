@@ -10,8 +10,9 @@ datasource db {
 // User Management
 model User {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
-  email             String   @unique
-  password          String
+  email             String?   @unique
+  password          String   @default("TEMP_PASSWORD")
+
   firstName         String
   lastName          String
   phone             String?
@@ -81,6 +82,22 @@ model User {
   venueReviews Review[] @relation("VenueReviews")
   venueAnalytics VenueAnalytics[]
   meetingSpaces MeetingSpace[] 
+  promotions   Promotion[] // ✅ back relation for event promotions
+
+    // Relations for organizer-speaker
+  organizerId String? @db.ObjectId
+  organizer   User?   @relation("OrganizerSpeakers", fields: [organizerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  speakers    User[]  @relation("OrganizerSpeakers")
+  
+   // Exhibitor relation
+  organizerIdForExhibitor String? @db.ObjectId
+  organizerForExhibitor   User?   @relation("OrganizerExhibitors", fields: [organizerIdForExhibitor], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  exhibitors              User[]  @relation("OrganizerExhibitors")
+  
+   // Venue Manager relation
+  organizerIdForVenueManager String? @db.ObjectId
+  organizerForVenueManager   User?   @relation("OrganizerVenueManagers", fields: [organizerIdForVenueManager], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  venueManagers              User[]  @relation("OrganizerVenueManagers")
 
   promotions   Promotion[] // ✅ back relation for event promotions
 
@@ -130,7 +147,7 @@ enum UserRole {
 
 // Event Management
 model Event {
-  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+   id        String   @id @map("_id") @db.ObjectId
   title             String
   description       String
   shortDescription  String?
@@ -138,6 +155,7 @@ model Event {
   status            EventStatus @default(DRAFT)
   category          String?
   tags              String[]
+  eventType         String[]
   
   // Dates and Times
   startDate         DateTime
@@ -148,7 +166,7 @@ model Event {
   
   // Location
   venueId           String?  @db.ObjectId
-   venue             User?    @relation("EventVenue", fields: [venueId], references: [id])
+  venue             User?    @relation("EventVenue", fields: [venueId], references: [id])
   isVirtual         Boolean  @default(false)
   virtualLink       String?
   address           String?
@@ -198,6 +216,7 @@ model Event {
   reviews           Review[]
   analytics         EventAnalytics[]
   campaigns         Campaign[]
+  promotions   Promotion[] // ✅ back relation for event promotions
 
   promotions   Promotion[] // ✅ back relation for event promotions
   @@map("events")
@@ -222,7 +241,6 @@ type TicketType {
   isActive    Boolean @default(true)
 }
 
-// Exhibition Space Management
 model ExhibitionSpace {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   eventId         String   @db.ObjectId
@@ -234,32 +252,33 @@ model ExhibitionSpace {
   dimensions      String
   area            Float
   location        String?
-  
+
   // Pricing
   basePrice       Float
   currency        String   @default("USD")
-  
+
   // Services
-  powerIncluded   Boolean  @default(false)
+  powerIncluded       Boolean  @default(false)
   additionalPowerRate Float?
-  compressedAirRate Float?
-  
+  compressedAirRate   Float?
+
   // Availability
   isAvailable     Boolean  @default(true)
   maxBooths       Int?
   bookedBooths    Int      @default(0)
-  
+
   // Setup Requirements
   setupRequirements Json?
-  
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  
+
   // Relationships
   exhibitorBooths ExhibitorBooth[]
 
   @@map("exhibition_spaces")
 }
+
 
 enum ExhibitionSpaceType {
   SHELL_SPACE
@@ -269,6 +288,67 @@ enum ExhibitionSpaceType {
   FOUR_SIDE_OPEN
   MEZZANINE
 }
+
+model ExhibitorBooth {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId         String   @db.ObjectId
+  event           Event    @relation(fields: [eventId], references: [id])
+  exhibitorId     String   @db.ObjectId
+  exhibitor       User     @relation(fields: [exhibitorId], references: [id])
+  spaceId         String   @db.ObjectId
+  space           ExhibitionSpace @relation(fields: [spaceId], references: [id])
+  spaceReference String?   // ← add this line
+  
+  boothNumber     String
+  companyName     String
+  description     String?
+
+  // Services
+  additionalPower Float    @default(0)
+  compressedAir   Float    @default(0)
+
+  setupRequirements Json?
+  specialRequests String?
+
+  totalCost       Float
+  currency        String   @default("USD")
+
+  status          BoothStatus @default(BOOKED)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([eventId, exhibitorId]) // 👈 Add this line
+  @@map("exhibitor_booths")
+}
+
+model Promotion {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  organizerId     String   @db.ObjectId
+  organizer       User     @relation(fields: [organizerId], references: [id])
+
+  eventId         String   @db.ObjectId
+  event           Event    @relation(fields: [eventId], references: [id])
+
+  packageType     String
+  targetCategories String[]   // ✅ no @db.Array
+  status          String   @default("PENDING")
+  amount          Float
+  duration        Int
+
+  startDate       DateTime
+  endDate         DateTime
+
+  impressions     Int      @default(0)
+  clicks          Int      @default(0)
+  conversions     Int      @default(0)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("promotions")
+}
+
 
 // Venue Management
 // model Venue {
@@ -387,40 +467,6 @@ enum SessionStatus {
   CANCELLED
 }
 
-// Exhibitor Management
-model ExhibitorBooth {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  eventId         String   @db.ObjectId
-  event           Event    @relation(fields: [eventId], references: [id])
-  exhibitorId     String   @db.ObjectId
-  exhibitor       User     @relation(fields: [exhibitorId], references: [id])
-  spaceId         String   @db.ObjectId
-  space           ExhibitionSpace @relation(fields: [spaceId], references: [id])
-  
-  boothNumber     String
-  companyName     String
-  description     String?
-  
-  // Services
-  additionalPower Float    @default(0) // in KW
-  compressedAir   Float    @default(0) // in HP
-  
-  // Setup
-  setupRequirements Json?
-  specialRequests String?
-  
-  // Pricing
-  totalCost       Float
-  currency        String   @default("USD")
-  
-  // Status
-  status          BoothStatus @default(BOOKED)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@map("exhibitor_booths")
-}
 
 enum BoothStatus {
   BOOKED

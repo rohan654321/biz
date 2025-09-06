@@ -816,4 +816,3 @@ const handlePublishEvent = async () => {
     </div>
   )
 }
-

@@ -35,7 +35,7 @@ import {
   TrendingUp,
   LogOut,
 } from "lucide-react"
-
+import { signOut } from "next-auth/react"
 // Import all section components
 import DashboardOverview from "../dashboard-overview"
 import MyEvents from "../my-events"
@@ -48,8 +48,6 @@ import SettingsPanel from "../settings-panel"
 // import MyPlan from "../my-plan"
 import OrganizerInfo from "../organizer-info"
 import RevenueManagement from "../revenue-management"
-import ActivePromotions from "../ActivePromotion"
-import { signOut } from "next-auth/react"
 
 interface OrganizerData {
   id: string
@@ -326,11 +324,11 @@ export default function OrganizerDashboardPage() {
       icon: Megaphone,
       id: "promotion",
     },
-    // {
-    //   title: "My Plan",
-    //   icon: Crown,
-    //   id: "my-plan",
-    // },
+    {
+      title: "My Plan",
+      icon: Crown,
+      id: "my-plan",
+    },
     {
       title: "Messages",
       icon: MessageSquare,
@@ -417,6 +415,8 @@ export default function OrganizerDashboardPage() {
         return <MyEvents events={events} />
       case "create-event":
         return <CreateEvent organizerId={organizerId} />
+      case "addvenue":
+        return <AddVenue organizerId={organizerId} />
       case "attendees":
         return <AttendeesManagement attendees={attendees} onSendMessageClick={function (): void {
           throw new Error("Function not implemented.")
@@ -439,8 +439,8 @@ export default function OrganizerDashboardPage() {
         )
       case "promotion":
         return <EventPromotion organizerId={organizerId} />
-      case "active-promotions":
-        return <ActivePromotions organizerId={organizerId} />
+      case "my-plan":
+        return <MyPlan  organizerId={organizerId} />
       case "messages":
         return <MessagesCenter organizerId={organizerId} />
       case "settings":
@@ -508,6 +508,12 @@ export default function OrganizerDashboardPage() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+                  <Button
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white my-10"
+                  >
+                    Logout
+                  </Button>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
