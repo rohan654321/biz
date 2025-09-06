@@ -33,6 +33,7 @@ import {
   Megaphone,
   User,
   Loader2,
+  TrendingUp,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 // Import all section components
@@ -51,6 +52,8 @@ import AddSpeaker from "../add-speaker"
 import AddExhibitor from "../add-exhibitor"
 // import BookVenue from "../book-venue"
 import AddVenue from "../add-venue"
+import ActivePromotions from "../ActivePromotion"
+
 
 interface OrganizerData {
   id: string
@@ -239,6 +242,11 @@ export default function OrganizerDashboardPage() {
       icon: Calendar,
       id: "events",
     },
+        {
+  title: "Active Promotions",
+  icon: TrendingUp,   // or Megaphone if you prefer
+  id: "active-promotions",
+},
     {
       title: "Create Event",
       icon: Plus,
@@ -299,6 +307,8 @@ export default function OrganizerDashboardPage() {
       icon: Settings,
       id: "settings",
     },
+
+
   ]
 
   const dashboardStats = organizerData
@@ -376,6 +386,8 @@ export default function OrganizerDashboardPage() {
         return <MyEvents events={events} />
       case "create-event":
         return <CreateEvent organizerId={organizerId} />
+         case "active-promotions":
+  return <ActivePromotions organizerId={organizerId} />
       case "addvenue":
         return <AddVenue organizerId={organizerId} />
       case "attendees":
@@ -412,6 +424,8 @@ export default function OrganizerDashboardPage() {
         return <MessagesCenter organizerId={organizerId}  />
       case "settings":
         return <SettingsPanel organizerData={organizerData} />
+     
+
       default:
         return <div>Select a section from the sidebar</div>
     }

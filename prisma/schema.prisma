@@ -214,8 +214,8 @@ model Event {
   reviews           Review[]
   analytics         EventAnalytics[]
   campaigns         Campaign[]
-  promotions   Promotion[] // ✅ back relation for event promotions
 
+  promotions   Promotion[] // ✅ back relation for event promotions
   @@map("events")
 }
 

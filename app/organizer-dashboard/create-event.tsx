@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/hooks/use-toast"
 import { Calendar, MapPin, Clock, IndianRupee, X, Plus, Eye, Save, Send, Loader2 } from "lucide-react"
 import { nanoid } from "nanoid";
+// import ActivePromotions from "./ActivePromotion"
 
 interface FieldStatus {
   name: string;
@@ -37,9 +38,9 @@ interface EventFormData {
   city: string
   address: string
   currency: string
-  generalPrice: number
-  studentPrice: number
-  vipPrice: number
+  generalPrice: string
+  studentPrice: string
+  vipPrice: string
   highlights: string[]
   tags: string[]
   dressCode: string
@@ -71,9 +72,9 @@ export default function CreateEvent({ organizerId }: CreateEventProps) {
     city: "",
     address: "",
     currency: "₹",
-    generalPrice: 0,
-    studentPrice: 0,
-    vipPrice: 0,
+    generalPrice: "",
+    studentPrice: "",
+    vipPrice: "",
     highlights: [],
     tags: [],
     dressCode: "Business Casual",
@@ -94,9 +95,6 @@ const getFieldStatus = (): FieldStatus[] => {
     "categories",
     "startDate",
     "endDate",
-    "dailyStart",
-    "dailyEnd",
-    "timezone",
     "venue",
     "city",
     "address",
@@ -104,34 +102,29 @@ const getFieldStatus = (): FieldStatus[] => {
     "generalPrice",
     "studentPrice",
     "vipPrice",
-    "highlights",
-    "tags",
-    "dressCode",
-    "ageLimit",
-    "featured",
-    "vip",
-    "images",
-    "brochure",
-    "layoutPlan",
   ];
 
   return fieldsToCheck.map((field) => {
     const value = (formData as any)[field];
     let done = false;
 
+    // Treat only user-entered values as done
     if (Array.isArray(value)) {
       done = value.length > 0;
     } else if (typeof value === "string") {
-      done = value.trim() !== "";
+      // Only count as done if not empty and not a default placeholder
+      const defaultPlaceholders: { [key: string]: string } = {
+        currency: "₹",
+      };
+      done = value.trim() !== "" && value !== (defaultPlaceholders[field] || "");
     } else if (typeof value === "number") {
       done = value > 0;
-    } else if (typeof value === "boolean") {
-      done = value; // true = done, false = pending
     }
 
     return { name: field, done };
   });
 };
+
 // Calculate form completion percentage
 const calculateCompletion = (): number => {
   const statuses = getFieldStatus()
@@ -267,11 +260,6 @@ const validateForm = (): boolean => {
 
   return Object.keys(newErrors).length === 0;
 };
-
-
-
-
-
 const handlePublishEvent = async () => {
   if (!validateForm()) return;
 
@@ -312,9 +300,9 @@ const handlePublishEvent = async () => {
       city: "",
       address: "",
       currency: "₹",
-      generalPrice: 0,
-      studentPrice: 0,
-      vipPrice: 0,
+      generalPrice: "",
+      studentPrice: "",
+      vipPrice: "",
       highlights: [],
       tags: [],
       dressCode: "Business Casual",
@@ -692,35 +680,44 @@ const handlePublishEvent = async () => {
 
                 <div>
                   <Label htmlFor="generalPrice">General Entry</Label>
-                  <Input
-                    id="generalPrice"
-                    type="number"
-                    value={formData.generalPrice}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, generalPrice: Number(e.target.value) }))}
-                    placeholder="0"
-                  />
+                 <Input
+  id="generalPrice"
+  type="number"
+  placeholder="0"
+  value={formData.generalPrice}
+  onChange={(e) =>
+    setFormData((prev) => ({ ...prev, generalPrice: e.target.value }))
+  }
+/>
+
                 </div>
 
                 <div>
                   <Label htmlFor="studentPrice">Student Price</Label>
-                  <Input
-                    id="studentPrice"
-                    type="number"
-                    value={formData.studentPrice}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, studentPrice: Number(e.target.value) }))}
-                    placeholder="0"
-                  />
+              <Input
+  id="studentPrice"
+  type="number"
+  placeholder="0"
+  value={formData.studentPrice}
+  onChange={(e) =>
+    setFormData((prev) => ({ ...prev, studentPrice: e.target.value }))
+  }
+/>
+
                 </div>
 
                 <div>
                   <Label htmlFor="vipPrice">VIP Price</Label>
-                  <Input
-                    id="vipPrice"
-                    type="number"
-                    value={formData.vipPrice}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, vipPrice: Number(e.target.value) }))}
-                    placeholder="0"
-                  />
+             <Input
+  id="vipPrice"
+  type="number"
+  placeholder="0"
+  value={formData.vipPrice}
+  onChange={(e) =>
+    setFormData((prev) => ({ ...prev, vipPrice: e.target.value }))
+  }
+/>
+
                 </div>
               </div>
             </CardContent>
@@ -790,7 +787,7 @@ const handlePublishEvent = async () => {
                       </p>
                     </div>
 
-                    {formData.studentPrice > 0 && (
+                    {formData.studentPrice > "" && (
                       <div className="bg-white p-4 rounded-lg border">
                         <h4 className="font-semibold mb-2">Student Price</h4>
                         <p className="text-2xl font-bold text-green-600">
@@ -800,7 +797,7 @@ const handlePublishEvent = async () => {
                       </div>
                     )}
 
-                    {formData.vipPrice > 0 && (
+                    {formData.vipPrice > "" && (
                       <div className="bg-white p-4 rounded-lg border">
                         <h4 className="font-semibold mb-2">VIP Price</h4>
                         <p className="text-2xl font-bold text-purple-600">
