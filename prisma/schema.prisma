@@ -153,6 +153,7 @@ model Event {
   status            EventStatus @default(DRAFT)
   category          String?
   tags              String[]
+  eventType         String[]
   
   // Dates and Times
   startDate         DateTime
