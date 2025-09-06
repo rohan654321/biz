@@ -34,6 +34,7 @@ import {
   Loader2,
   TrendingUp,
   LogOut,
+  Crown,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 // Import all section components
@@ -48,6 +49,8 @@ import SettingsPanel from "../settings-panel"
 // import MyPlan from "../my-plan"
 import OrganizerInfo from "../organizer-info"
 import RevenueManagement from "../revenue-management"
+import AddVenue from "../add-venue"
+import MyPlan from "../my-plan"
 
 interface OrganizerData {
   id: string
