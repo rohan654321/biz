@@ -132,7 +132,7 @@ model User {
    speakingExperience String?
 
   @@map("users")
-}
+} 
 
 enum UserRole {
   ADMIN
@@ -347,58 +347,7 @@ model Promotion {
 }
 
 
-// Venue Management
-// model Venue {
-//   id              String   @id @default(auto()) @map("_id") @db.ObjectId
-//   name            String
-//   description     String
-//   address         String
-//   city            String
-//   state           String
-//   country         String
-//   zipCode         String
-//   phone           String?
-//   email           String?
-//   website         String?
-  
-//   // Capacity and Spaces
-//   totalCapacity   Int
-//   // ✅ Correct - need to create a separate model and relation
-// // meetingSpaces MeetingSpace[]
-//   amenities       String[]
-  
-//   // Media
-//   images          String[]
-//   videos          String[]
-//   floorPlans      String[]
-//   virtualTour     String?
-  
-//   // Pricing
-//   basePrice       Float
-//   currency        String   @default("USD")
-  
-//   // Availability
-//   isActive        Boolean  @default(true)
-  
-//   // Location
-//   latitude        Float?
-//   longitude       Float?
-  
-//   // Ratings
-//   averageRating   Float    @default(0)
-//   totalReviews    Int      @default(0)
-  
-//   createdAt       DateTime @default(now())
-//   updatedAt       DateTime @updatedAt
-  
-//   // Relationships
-//   events          Event[]
-//   bookings        VenueBooking[]
-//   reviews         Review[]
-//   analytics       VenueAnalytics[]
 
-//   @@map("venues")
-// }
 
 model MeetingSpace {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -597,9 +546,9 @@ enum PaymentStatus {
 model Message {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   senderId        String   @db.ObjectId
-  sender          User     @relation("MessageSender", fields: [senderId], references: [id])
+  sender          User?     @relation("MessageSender", fields: [senderId], references: [id])
   receiverId      String   @db.ObjectId
-  receiver        User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+  receiver        User?     @relation("MessageReceiver", fields: [receiverId], references: [id])
   
   subject         String?
   content         String

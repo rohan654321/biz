@@ -2265,9 +2265,29 @@ export const UpcomingEvents: Record<string,UpcomingEvent>={
 
 // Helper functions
 
-export function getEventById(id: string): Event | undefined {
-  return events[id]
+// lib/api/events.ts
+export async function fetchEventById(id: string) {
+  try {
+    const res = await fetch(`/api/events/${id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store", // ensures always fresh data
+    })
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch event: ${res.statusText}`)
+    }
+
+    const data = await res.json()
+    return data
+  } catch (error) {
+    console.error("[Frontend] Error fetching event:", error)
+    throw error
+  }
 }
+
 
 export function getAllOrganizers(): Organizer[] {
   return organizers

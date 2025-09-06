@@ -19,8 +19,21 @@ import {
   CheckCheck,
   Check,
   Loader2,
+  Trash2,
+  X,
 } from "lucide-react"
 import Image from "next/image"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface Connection {
   id: string
@@ -77,6 +90,9 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
   const [showNewChat, setShowNewChat] = useState(false)
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
+  const [deleteMessageId, setDeleteMessageId] = useState<string | null>(null)
+  const [deleteConversationId, setDeleteConversationId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -289,6 +305,73 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
 
   const selectedContactInfo = getSelectedContactInfo()
 
+  const deleteMessage = async (messageId: string) => {
+    try {
+      setDeleting(true)
+      const response = await fetch(`/api/organizers/${organizerId}/messages/${messageId}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) throw new Error("Failed to delete message")
+
+      // Remove message from local state
+      setMessages((prev) => prev.filter((msg) => msg.id !== messageId))
+
+      // Update conversations list
+      fetchConversations()
+
+      toast({
+        title: "Success",
+        description: "Message deleted successfully",
+      })
+    } catch (error) {
+      console.error("Error deleting message:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete message",
+        variant: "destructive",
+      })
+    } finally {
+      setDeleting(false)
+      setDeleteMessageId(null)
+    }
+  }
+
+  const deleteConversation = async (contactId: string) => {
+    try {
+      setDeleting(true)
+      const response = await fetch(`/api/organizers/${organizerId}/messages?contactId=${contactId}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) throw new Error("Failed to delete conversation")
+
+      // Remove conversation from local state
+      setConversations((prev) => prev.filter((conv) => conv.contactId !== contactId))
+
+      // Clear selected contact if it was the deleted conversation
+      if (selectedContact === contactId) {
+        setSelectedContact(null)
+        setMessages([])
+      }
+
+      toast({
+        title: "Success",
+        description: "Conversation deleted successfully",
+      })
+    } catch (error) {
+      console.error("Error deleting conversation:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete conversation",
+        variant: "destructive",
+      })
+    } finally {
+      setDeleting(false)
+      setDeleteConversationId(null)
+    }
+  }
+
   return (
     <div className="h-[600px] flex border rounded-lg overflow-hidden bg-white">
       {/* Conversations Sidebar */}
@@ -391,12 +474,11 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
               {conversations.map((conversation) => (
                 <div
                   key={conversation.id}
-                  className={`p-3 hover:bg-gray-50 cursor-pointer ${
+                  className={`group relative p-3 hover:bg-gray-50 cursor-pointer ${
                     selectedContact === conversation.contactId ? "bg-blue-50 border-r-2 border-blue-500" : ""
                   }`}
-                  onClick={() => setSelectedContact(conversation.contactId)}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3" onClick={() => setSelectedContact(conversation.contactId)}>
                     <Image
                       src={conversation.contact?.avatar || "/placeholder.svg?height=40&width=40"}
                       alt="Contact"
@@ -423,6 +505,18 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                       </div>
                     </div>
                   </div>
+                  {/* Delete button for conversations */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setDeleteConversationId(conversation.contactId)
+                    }}
+                  >
+                    <X className="w-3 h-3 text-gray-400 hover:text-red-500" />
+                  </Button>
                 </div>
               ))}
             </div>
@@ -464,9 +558,22 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                   <Button variant="ghost" size="sm">
                     <Video className="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="sm">
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        className="text-red-600 focus:text-red-600"
+                        onClick={() => setDeleteConversationId(selectedContact)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Conversation
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </div>
@@ -488,23 +595,36 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                   {messages.map((message) => (
                     <div
                       key={message.id}
-                      className={`flex ${message.senderId === organizerId ? "justify-end" : "justify-start"}`}
+                      className={`group flex ${message.senderId === organizerId ? "justify-end" : "justify-start"}`}
                     >
-                      <div
-                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                          message.senderId === organizerId ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"
-                        }`}
-                      >
-                        <p className="text-sm">{message.content}</p>
+                      <div className="relative">
                         <div
-                          className={`flex items-center justify-end gap-1 mt-1 ${
-                            message.senderId === organizerId ? "text-blue-100" : "text-gray-500"
+                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                            message.senderId === organizerId ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"
                           }`}
                         >
-                          <span className="text-xs">{formatTime(message.createdAt)}</span>
-                          {message.senderId === organizerId &&
-                            (message.isRead ? <CheckCheck className="w-3 h-3" /> : <Check className="w-3 h-3" />)}
+                          <p className="text-sm">{message.content}</p>
+                          <div
+                            className={`flex items-center justify-end gap-1 mt-1 ${
+                              message.senderId === organizerId ? "text-blue-100" : "text-gray-500"
+                            }`}
+                          >
+                            <span className="text-xs">{formatTime(message.createdAt)}</span>
+                            {message.senderId === organizerId &&
+                              (message.isRead ? <CheckCheck className="w-3 h-3" /> : <Check className="w-3 h-3" />)}
+                          </div>
                         </div>
+                        {/* Delete button for messages */}
+                        {message.senderId === organizerId && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute -top-2 -left-8 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => setDeleteMessageId(message.id)}
+                          >
+                            <Trash2 className="w-3 h-3 text-gray-400 hover:text-red-500" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -543,6 +663,53 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
           </div>
         )}
       </div>
+
+      {/* Delete message confirmation dialog */}
+      <AlertDialog open={!!deleteMessageId} onOpenChange={() => setDeleteMessageId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Message</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this message? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteMessageId && deleteMessage(deleteMessageId)}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete conversation confirmation dialog */}
+      <AlertDialog open={!!deleteConversationId} onOpenChange={() => setDeleteConversationId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Conversation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this entire conversation? All messages will be permanently deleted and
+              this action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteConversationId && deleteConversation(deleteConversationId)}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Delete Conversation
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

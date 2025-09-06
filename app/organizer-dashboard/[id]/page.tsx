@@ -385,7 +385,7 @@ export default function OrganizerDashboardPage() {
       case "events":
         return <MyEvents events={events} />
       case "create-event":
-        return <CreateEvent organizerId={organizerId} />
+        return <CreateEvent />
          case "active-promotions":
   return <ActivePromotions organizerId={organizerId} />
       case "addvenue":
