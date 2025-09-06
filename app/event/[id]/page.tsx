@@ -1,3 +1,5 @@
+"use client"
+
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -5,13 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Star, Phone, Mail, MapPin, Clock, IndianRupee } from "lucide-react"
-import { exhibitors, getEventById } from "@/lib/data/events"
 import { notFound } from "next/navigation"
 import EventHero from "@/components/event-hero"
 import EventImageGallery from "@/components/event-image-gallery"
 import { Plus } from "lucide-react"
 import { Share2 } from "lucide-react"
 import { Bookmark } from "lucide-react"
+import { useEffect, useState } from "react"
 
 interface EventPageProps {
   params: Promise<{
@@ -19,20 +21,72 @@ interface EventPageProps {
   }>
 }
 
-export default async function EventPage({ params }: EventPageProps) {
-  const { id } = await params
-  const event = getEventById(id)
+export default function EventPage({ params }: EventPageProps) {
+  const [event, setEvent] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  if (!event) {
-    notFound()
+  useEffect(() => {
+    async function fetchEvent() {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        // Await the params Promise to get the actual id
+        const resolvedParams = await params
+        const eventId = resolvedParams.id
+        
+        const res = await fetch(`/api/events/${eventId}`)
+        
+        if (!res.ok) {
+          if (res.status === 404) {
+            notFound()
+            return
+          }
+          throw new Error(`Failed to fetch event: ${res.statusText}`)
+        }
+        
+        const data = await res.json()
+        setEvent(data)
+      } catch (err) {
+        console.error('Error fetching event:', err)
+        setError(err instanceof Error ? err.message : 'An error occurred')
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchEvent()
+  }, [params])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">Loading event details...</p>
+        </div>
+      </div>
+    )
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error loading event: {error}</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!event) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p>Event not found</p>
+      </div>
+    )
   }
 
   const followers = Array(6).fill({
@@ -178,7 +232,7 @@ export default async function EventPage({ params }: EventPageProps) {
                     <div className="space-y-3">
                       <h4 className="font-semibold text-lg">Event Highlights:</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {event.highlights.map((highlight, index) => (
+                        {event.highlights.map((highlight:any, index:any) => (
                           <div key={index} className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />
                             <span className="text-gray-700">{highlight}</span>
@@ -196,57 +250,13 @@ export default async function EventPage({ params }: EventPageProps) {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {[
-                        "Automation",
-                        "PrecisionEngineering",
-                        "IndustrialAutomation",
-                        "SmartManufacturing",
-                        "Robotics",
-                        "ProcessAutomation",
-                        "DigitalManufacturing",
-                        "PrecisionTechnology",
-                        "AutomationTechnology",
-                        "AdvancedManufacturing",
-                        "CNCPrecision",
-                        "MotionControl",
-                        "Mechatronics",
-                        "PLCProgramming",
-                        "FactoryAutomation",
-                        "SensorTechnology",
-                        "RoboticAutomation",
-                        "IndustrialRobotics",
-                        "AutomationSolutions",
-                        "AccuracyMatters",
-                      ].map((tag) => (
+                      {event.tags?.map((tag: string) => (
                         <button
                           key={tag}
                           className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full hover:bg-blue-100 hover:border-blue-300 transition-colors duration-200"
                         >
                           #{tag}
                         </button>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Exhibitor Profile Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-blue-700">Exhibitor Profile</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {[
-                        "CNC Machines (Turning, Milling, Grinding, Drilling, Boring, etc.)",
-                        "Laser Cutting & Water Jet Cutting Machines",
-                        "EDM, Wire Cut, and Electrochemical Machining",
-                        "High-Speed Machining Centers & Multi-Axis Machines",
-                        "Industrial Robots & Collaborative Robots (Cobots)",
-                      ].map((item, index) => (
-                        <div key={index} className="flex items-start gap-3">
-                          <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
-                          <span className="text-gray-700 leading-relaxed">{item}</span>
-                        </div>
                       ))}
                     </div>
                   </CardContent>
@@ -358,7 +368,7 @@ export default async function EventPage({ params }: EventPageProps) {
                           </span>
                         </div>
                         <p className="text-sm text-gray-700">{event.organizer.description}</p>
-                        <p className="text-sm text-blue-900 mt-1">1 Upcoming Events • {event.followers?.length??0} Followers</p>
+                        <p className="text-sm text-blue-900 mt-1">1 Upcoming Events • {event.followers?.length ?? 0} Followers</p>
                       </div>
                     </div>
                   </CardContent>
@@ -385,81 +395,6 @@ export default async function EventPage({ params }: EventPageProps) {
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Exhibitor List */}
-                <div className="py-6">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-1">Exhibitor List</h2>
-                  <p className="text-sm text-gray-500 mb-6">{event.exhibitors?.length ?? 0}</p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    {exhibitors.map((Exhibitor, index) => (
-                      <Card key={index} className="border">
-                        <CardContent className="p-4">
-                          <div className="flex gap-4 items-center mb-4">
-                            <div className="w-16 h-16 flex justify-center">
-                              <Image
-                                src={Exhibitor.img || "/placeholder.svg"}
-                                alt="Profile"
-                                width={60}
-                                height={60}
-                                className="object-contain shadow-sm rounded-md"
-                              />
-                            </div>
-                            <div className="flex-1">
-                              <button className="px-3 py-1 text-red-600 text-sm border-2 border-red-600 rounded-md hover:bg-red-50 transition">
-                                +Follow
-                              </button>
-                            </div>
-                          </div>
-                          <p className="text-lg font-bold text-gray-700 mb-3">{Exhibitor.company}</p>
-                          <button className="w-full border-2 border-red-600 text-white bg-red-600 text-sm py-2 rounded-full font-semibold hover:bg-red-700 transition">
-                            Schedule Meeting
-                          </button>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-
-                  <div className="flex justify-center mt-6">
-                    <Button className="bg-red-600 hover:bg-red-700 text-white py-2 px-6 rounded-lg">
-                      View All Exhibitors
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Followers Section */}
-                <div className="py-6">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-1">Followers</h2>
-                  <p className="text-sm text-gray-500 mb-6">{event.followers?.length??0} Followers</p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    {event.followers?.map((User, index) => (
-                      <Card key={index} className="border">
-                        <CardContent className="p-4">
-                          <div className="flex gap-4 items-center mb-4">
-                            <div className="w-16 h-16 flex justify-center">
-                              <Image
-                                src={User.img || "/placeholder.svg"}
-                                alt="Profile"
-                                width={60}
-                                height={60}
-                                className="object-contain shadow-sm rounded-full"
-                              />
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-blue-900 text-sm">{User.name}</h3>
-                              <p className="text-xs text-gray-700">{User.company}</p>
-                              <p className="text-xs text-gray-700">{User.location}</p>
-                            </div>
-                          </div>
-                          <button className="w-full border-2 border-red-600 text-red-600 text-sm py-1 rounded-full font-semibold hover:bg-red-50 transition">
-                            Connect
-                          </button>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
 
                 {/* Reviews Section */}
                 <div className="space-y-6">
@@ -509,34 +444,6 @@ export default async function EventPage({ params }: EventPageProps) {
                       </div>
                     </div>
 
-                    <div className="border rounded-lg p-4 space-y-2">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <div className="bg-blue-600 text-white font-bold rounded-full w-10 h-10 flex items-center justify-center">
-                            R
-                          </div>
-                          <div>
-                            <p className="font-semibold">Ramesh S</p>
-                            <p className="text-xs text-gray-500">
-                              Vice President at Mobile Technology
-                              <br />
-                              Chennai, India
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center font-bold text-blue-800">
-                          5 <Star className="w-4 h-4 fill-red-500 text-red-500 ml-1" />
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-700">
-                        Texworld Apparel Sourcing Paris is a prominent tradeshow taking place at the Paris Le Bourget
-                        Exhibition Centre in Paris, France. Organized by Messe Frankfurt France S.A.S, this event
-                        attracts a diverse audience from countries such as the USA and Pakistan, showcasing the global
-                        reach of the fashion and apparel industry...
-                        <span className="text-red-500 font-semibold cursor-pointer"> Read More</span>
-                      </p>
-                    </div>
-
                     <div className="flex gap-2 mt-4">
                       <Button variant="outline">Prev</Button>
                       <Button variant="outline">Next</Button>
@@ -548,10 +455,35 @@ export default async function EventPage({ params }: EventPageProps) {
               <TabsContent value="exhibitors">
                 <div className="py-6">
                   <h2 className="text-xl font-semibold text-gray-800 mb-1">Exhibitor List</h2>
-                  <p className="text-sm text-gray-500 mb-6">68 Exhibitor of Current Edition</p>
+                  <p className="text-sm text-gray-500 mb-6">{event.exhibitors?.length ?? 0} Exhibitors of Current Edition</p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    {followers.map((follower, index) => (
+                    {event.exhibitors?.map((exhibitor: any, index: any) => (
+                      <Card key={index} className="border">
+                        <CardContent className="p-4">
+                          <div className="flex gap-4 items-center mb-4">
+                            <div className="w-16 h-16 flex justify-center">
+                              <Image
+                                src={exhibitor.logo || "/placeholder.svg"}
+                                alt="Profile"
+                                width={60}
+                                height={60}
+                                className="object-contain shadow-sm rounded-md"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <button className="px-3 py-1 text-red-600 text-sm border-2 border-red-600 rounded-md hover:bg-red-50 transition">
+                                +Follow
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-lg font-bold text-gray-700 mb-3">{exhibitor.company}</p>
+                          <button className="w-full border-2 border-red-600 text-white bg-red-600 text-sm py-2 rounded-full font-semibold hover:bg-red-700 transition">
+                            Schedule Meeting
+                          </button>
+                        </CardContent>
+                      </Card>
+                    )) || followers.map((follower, index) => (
                       <Card key={index} className="border">
                         <CardContent className="p-4">
                           <div className="flex gap-4 items-center mb-4">
@@ -587,7 +519,7 @@ export default async function EventPage({ params }: EventPageProps) {
                     <CardTitle>Exhibit Space Pricing</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {event.exhibitSpaceCosts.map((cost, index) => (
+                    {event.exhibitSpaceCosts?.map((cost: any, index: any) => (
                       <div
                         key={index}
                         className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border"
@@ -602,7 +534,9 @@ export default async function EventPage({ params }: EventPageProps) {
                           {cost.pricePerSqm.toLocaleString()}/sq.m
                         </span>
                       </div>
-                    ))}
+                    )) || (
+                      <p className="text-gray-600">No space cost information available.</p>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -630,7 +564,7 @@ export default async function EventPage({ params }: EventPageProps) {
                       <p className="text-gray-600">Brochure will be displayed here</p>
                     </div>
                   </CardContent>
-                  <button className="mx-5 mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition ">
+                  <button className="mx-5 mt-4 bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition">
                     Download Brochure
                   </button>
                 </Card>
@@ -656,7 +590,7 @@ export default async function EventPage({ params }: EventPageProps) {
               <TabsContent value="speakers">
                 <div className="py-6">
                   <h2 className="text-xl font-semibold text-gray-800 mb-1">Speaker List</h2>
-                  <p className="text-sm text-gray-500 mb-6">68 speakers of Current Edition</p>
+                  <p className="text-sm text-gray-500 mb-6">{event.speakers?.length ?? 0} speakers of Current Edition</p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                     {followers.map((follower, index) => (
@@ -701,7 +635,7 @@ export default async function EventPage({ params }: EventPageProps) {
                         <AvatarFallback className="text-lg">
                           {event.organizer.name
                             .split(" ")
-                            .map((n) => n[0])
+                            .map((n:any) => n[0])
                             .join("")}
                         </AvatarFallback>
                       </Avatar>
@@ -752,7 +686,7 @@ export default async function EventPage({ params }: EventPageProps) {
                 <CardTitle className="text-lg">Featured Hotels</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {event.featuredItems.map((item) => (
+                {event.featuredItems?.map((item:any) => (
                   <div key={item.id} className="flex gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
                     <Image
                       src={item.image || "/placeholder.svg"}
@@ -774,7 +708,7 @@ export default async function EventPage({ params }: EventPageProps) {
                       </div>
                     </div>
                   </div>
-                ))}
+                )) || <p className="text-gray-600">No featured items available.</p>}
               </CardContent>
             </Card>
 
@@ -784,7 +718,7 @@ export default async function EventPage({ params }: EventPageProps) {
                 <CardTitle className="text-lg">Featured Travel Partners</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {event.touristAttractions.map((attraction) => (
+                {event.touristAttractions?.map((attraction:any) => (
                   <div key={attraction.id} className="flex gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
                     <Image
                       src={attraction.image || "/placeholder.svg"}
@@ -807,7 +741,7 @@ export default async function EventPage({ params }: EventPageProps) {
                       </div>
                     </div>
                   </div>
-                ))}
+                )) || <p className="text-gray-600">No travel partners available.</p>}
               </CardContent>
             </Card>
 
@@ -817,7 +751,7 @@ export default async function EventPage({ params }: EventPageProps) {
                 <CardTitle className="text-lg">Places to Visit in {event.location.city}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {event.touristAttractions.map((attraction) => (
+                {event.touristAttractions?.map((attraction:any) => (
                   <div key={attraction.id} className="flex gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
                     <Image
                       src={attraction.image || "/placeholder.svg"}
@@ -840,7 +774,7 @@ export default async function EventPage({ params }: EventPageProps) {
                       </div>
                     </div>
                   </div>
-                ))}
+                )) || <p className="text-gray-600">No tourist attractions available.</p>}
               </CardContent>
             </Card>
           </div>

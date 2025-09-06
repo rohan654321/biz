@@ -25,7 +25,7 @@ import { User, Calendar, Users, MessageSquare, Settings, Bell, Loader2 } from "l
 import { ProfileSection } from "./profile-section"
 import { EventsSection } from "./events-section"
 import { ConnectionsSection } from "./connections-section"
-import  MessagesSection  from "./messages-section"
+import  MessagesSection  from "@/app/organizer-dashboard/messages-center"
 import { SettingsSection } from "./settings-section"
 import { useToast } from "@/hooks/use-toast"
 
