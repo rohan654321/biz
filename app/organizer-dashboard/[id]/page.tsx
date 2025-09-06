@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Sidebar,
@@ -25,7 +25,6 @@ import {
   Plus,
   Users,
   BarChart3,
-  Crown,
   MessageSquare,
   Settings,
   Bell,
@@ -33,6 +32,8 @@ import {
   Megaphone,
   User,
   Loader2,
+  TrendingUp,
+  LogOut,
 } from "lucide-react"
 
 // Import all section components
@@ -44,9 +45,11 @@ import AnalyticsDashboard from "../analytics-dashboard"
 import EventPromotion from "../event-promotion"
 import MessagesCenter from "../messages-center"
 import SettingsPanel from "../settings-panel"
-import MyPlan from "../my-plan"
+// import MyPlan from "../my-plan"
 import OrganizerInfo from "../organizer-info"
 import RevenueManagement from "../revenue-management"
+import ActivePromotions from "../ActivePromotion"
+import { signOut } from "next-auth/react"
 
 interface OrganizerData {
   id: string
@@ -108,6 +111,7 @@ interface Attendee {
 
 export default function OrganizerDashboardPage() {
   const params = useParams()
+  const router = useRouter()
   const { toast } = useToast()
   const [activeSection, setActiveSection] = useState("dashboard")
   const [organizerData, setOrganizerData] = useState<OrganizerData | null>(null)
@@ -117,6 +121,7 @@ export default function OrganizerDashboardPage() {
   const [revenueData, setRevenueData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const organizerId = params.id as string
 
@@ -219,6 +224,62 @@ export default function OrganizerDashboardPage() {
     }
   }, [organizerId])
 
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      
+      // Try to call the logout API endpoint
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      if (response.ok) {
+        // Redirect to home page after successful logout
+        router.push('/')
+        toast({
+          title: "Success",
+          description: "You have been logged out successfully",
+        })
+      } else {
+        // If the API endpoint fails, try a client-side logout
+        console.warn('Logout API failed, performing client-side logout')
+        
+        // Clear any client-side storage
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth-token')
+          sessionStorage.removeItem('auth-token')
+          document.cookie = 'auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+        }
+        
+        // Redirect to home page
+        router.push('/')
+        toast({
+          title: "Success",
+          description: "You have been logged out successfully",
+        })
+      }
+    } catch (error) {
+      console.error('Error during logout:', error)
+      // Even if there's an error, try to clear client-side storage and redirect
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth-token')
+        sessionStorage.removeItem('auth-token')
+        document.cookie = 'auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+      }
+      
+      router.push('/')
+      toast({
+        title: "Success",
+        description: "You have been logged out successfully",
+      })
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
+
   const sidebarItems = [
     {
       title: "Dashboard",
@@ -246,6 +307,11 @@ export default function OrganizerDashboardPage() {
       id: "attendees",
     },
     {
+      title: "Active Promotions",
+      icon: TrendingUp,
+      id: "active-promotions",
+    },
+    {
       title: "Analytics",
       icon: BarChart3,
       id: "analytics",
@@ -260,11 +326,11 @@ export default function OrganizerDashboardPage() {
       icon: Megaphone,
       id: "promotion",
     },
-    {
-      title: "My Plan",
-      icon: Crown,
-      id: "my-plan",
-    },
+    // {
+    //   title: "My Plan",
+    //   icon: Crown,
+    //   id: "my-plan",
+    // },
     {
       title: "Messages",
       icon: MessageSquare,
@@ -335,16 +401,15 @@ export default function OrganizerDashboardPage() {
       case "dashboard":
         return (
           <DashboardOverview
-  organizerName={organizerData.name}
-  dashboardStats={dashboardStats}
-  recentEvents={events}
-  organizerId={organizerId}
-  onCreateEventClick={() => setActiveSection("create-event")}
-  onManageAttendeesClick={() => setActiveSection("attendees")}
-  onViewAnalyticsClick={() => setActiveSection("analytics")}
-  onSendMessageClick={() => setActiveSection("messages")}
-/>
-
+            organizerName={organizerData.name}
+            dashboardStats={dashboardStats}
+            recentEvents={events}
+            organizerId={organizerId}
+            onCreateEventClick={() => setActiveSection("create-event")}
+            onManageAttendeesClick={() => setActiveSection("attendees")}
+            onViewAnalyticsClick={() => setActiveSection("analytics")}
+            onSendMessageClick={() => setActiveSection("messages")}
+          />
         )
       case "info":
         return <OrganizerInfo organizerData={organizerData} />
@@ -374,10 +439,10 @@ export default function OrganizerDashboardPage() {
         )
       case "promotion":
         return <EventPromotion organizerId={organizerId} />
-      case "my-plan":
-        return <MyPlan  organizerId={organizerId} />
+      case "active-promotions":
+        return <ActivePromotions organizerId={organizerId} />
       case "messages":
-        return <MessagesCenter organizerId={organizerId}  />
+        return <MessagesCenter organizerId={organizerId} />
       case "settings":
         return <SettingsPanel organizerData={organizerData} />
       default:
@@ -443,6 +508,22 @@ export default function OrganizerDashboardPage() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+            
+            {/* Logout Button */}
+            <SidebarGroup className="mt-auto">
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                                    <Button
+                                      onClick={() => signOut({ callbackUrl: "/login" })}
+                                      className="w-full bg-red-500 hover:bg-red-600 text-white mt-20 "
+                                    >
+                                      Logout
+                                    </Button>
+                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

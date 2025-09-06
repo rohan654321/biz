@@ -82,6 +82,8 @@ model User {
   venueAnalytics VenueAnalytics[]
   meetingSpaces MeetingSpace[] 
 
+  promotions   Promotion[] // ✅ back relation for event promotions
+
   //venue
   venueName         String?
   venueDescription  String?
@@ -197,6 +199,7 @@ model Event {
   analytics         EventAnalytics[]
   campaigns         Campaign[]
 
+  promotions   Promotion[] // ✅ back relation for event promotions
   @@map("events")
 }
 
@@ -666,6 +669,32 @@ enum CampaignStatus {
   SCHEDULED
   SENT
   CANCELLED
+}
+model Promotion {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  organizerId     String   @db.ObjectId
+  organizer       User     @relation(fields: [organizerId], references: [id])
+
+  eventId         String   @db.ObjectId
+  event           Event    @relation(fields: [eventId], references: [id])
+
+  packageType     String
+  targetCategories String[]   // ✅ no @db.Array
+  status          String   @default("PENDING")
+  amount          Float
+  duration        Int
+
+  startDate       DateTime
+  endDate         DateTime
+
+  impressions     Int      @default(0)
+  clicks          Int      @default(0)
+  conversions     Int      @default(0)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("promotions")
 }
 
 // Review System - updated to handle venue reviews through User

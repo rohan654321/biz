@@ -23,6 +23,7 @@ interface Event {
   attendees: number
   registrations: number
   revenue: number
+  currency?: string // added optional currency
   type: string
   maxAttendees?: number
   isVirtual: boolean
@@ -90,10 +91,10 @@ export default function MyEvents({ events: initialEvents }: MyEventsProps) {
     }
   }
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number, currency?: string) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "USD",
+      currency: currency || "USD", // default to USD if missing
     }).format(amount)
   }
 
@@ -223,7 +224,7 @@ export default function MyEvents({ events: initialEvents }: MyEventsProps) {
                   </div>
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-4 h-4" />
-                    <span>{formatCurrency(event.revenue)}</span>
+                    <span>{formatCurrency(event.revenue, event.currency)}</span>
                   </div>
                 </div>
 
@@ -289,7 +290,7 @@ export default function MyEvents({ events: initialEvents }: MyEventsProps) {
                                   </div>
                                   <div className="flex justify-between">
                                     <span className="text-gray-600">Revenue:</span>
-                                    <span>{formatCurrency(selectedEvent.revenue)}</span>
+                                    <span>{formatCurrency(selectedEvent.revenue, selectedEvent.currency)}</span>
                                   </div>
                                   <div className="flex justify-between">
                                     <span className="text-gray-600">Max Capacity:</span>
