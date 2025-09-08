@@ -54,7 +54,6 @@ import AddExhibitor from "../add-exhibitor"
 import AddVenue from "../add-venue"
 import ActivePromotions from "../ActivePromotion"
 
-
 interface OrganizerData {
   id: string
   name: string
@@ -242,11 +241,11 @@ export default function OrganizerDashboardPage() {
       icon: Calendar,
       id: "events",
     },
-        {
-  title: "Active Promotions",
-  icon: TrendingUp,   // or Megaphone if you prefer
-  id: "active-promotions",
-},
+    {
+      title: "Active Promotions",
+      icon: TrendingUp, // or Megaphone if you prefer
+      id: "active-promotions",
+    },
     {
       title: "Create Event",
       icon: Plus,
@@ -278,12 +277,12 @@ export default function OrganizerDashboardPage() {
       id: "my-plan",
     },
     {
-      title:"Add speaker",
+      title: "Add speaker",
       icon: Users,
       id: "speaker",
     },
     {
-      title:"Add exhibitor",
+      title: "Add exhibitor",
       icon: Users,
       id: "exhibitor",
     },
@@ -293,7 +292,7 @@ export default function OrganizerDashboardPage() {
     //   id: "venue",
     // },
     {
-      title:"add venue",
+      title: "add venue",
       icon: Users,
       id: "addvenue",
     },
@@ -307,8 +306,6 @@ export default function OrganizerDashboardPage() {
       icon: Settings,
       id: "settings",
     },
-
-
   ]
 
   const dashboardStats = organizerData
@@ -369,31 +366,35 @@ export default function OrganizerDashboardPage() {
       case "dashboard":
         return (
           <DashboardOverview
-  organizerName={organizerData.name}
-  dashboardStats={dashboardStats}
-  recentEvents={events}
-  organizerId={organizerId}
-  onCreateEventClick={() => setActiveSection("create-event")}
-  onManageAttendeesClick={() => setActiveSection("attendees")}
-  onViewAnalyticsClick={() => setActiveSection("analytics")}
-  onSendMessageClick={() => setActiveSection("messages")}
-/>
-
+            organizerName={organizerData.name}
+            dashboardStats={dashboardStats}
+            recentEvents={events}
+            organizerId={organizerId}
+            onCreateEventClick={() => setActiveSection("create-event")}
+            onManageAttendeesClick={() => setActiveSection("attendees")}
+            onViewAnalyticsClick={() => setActiveSection("analytics")}
+            onSendMessageClick={() => setActiveSection("messages")}
+          />
         )
       case "info":
         return <OrganizerInfo organizerData={organizerData} />
       case "events":
-        return <MyEvents events={events} />
+        return <MyEvents organizerId={organizerId} />
       case "create-event":
-        return <CreateEvent />
-         case "active-promotions":
-  return <ActivePromotions organizerId={organizerId} />
+        return <CreateEvent organizerId={organizerId} />
+      case "active-promotions":
+        return <ActivePromotions organizerId={organizerId} />
       case "addvenue":
         return <AddVenue organizerId={organizerId} />
       case "attendees":
-        return <AttendeesManagement attendees={attendees} onSendMessageClick={function (): void {
-          throw new Error("Function not implemented.")
-        } } />
+        return (
+          <AttendeesManagement
+            attendees={attendees}
+            onSendMessageClick={(): void => {
+              throw new Error("Function not implemented.")
+            }}
+          />
+        )
       case "analytics":
         return analyticsData ? (
           <AnalyticsDashboard analyticsData={analyticsData} events={events} organizerId={organizerId} />
@@ -419,12 +420,11 @@ export default function OrganizerDashboardPage() {
       // case "venue":
       //   return <BookVenue organizerId={organizerId} />
       case "my-plan":
-        return <MyPlan  organizerId={organizerId} />
+        return <MyPlan organizerId={organizerId} />
       case "messages":
-        return <MessagesCenter organizerId={organizerId}  />
+        return <MessagesCenter organizerId={organizerId} />
       case "settings":
         return <SettingsPanel organizerData={organizerData} />
-     
 
       default:
         return <div>Select a section from the sidebar</div>

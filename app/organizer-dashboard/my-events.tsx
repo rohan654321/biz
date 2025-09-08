@@ -12,45 +12,97 @@ import { Calendar, MapPin, Users, DollarSign, Edit, Trash2, Eye, Search, Plus, L
 import Image from "next/image"
 
 interface Event {
-  id: number
+  id: string
   title: string
   description: string
-  date: string
   startDate: string
   endDate: string
-  location: string
-  status: string
-  attendees: number
-  registrations: number
-  revenue: number
-  currency?: string // added optional currency
-  type: string
-  maxAttendees?: number
-  isVirtual: boolean
+  venue: string
+  city: string
+  address: string
+  eventType: string
+  generalPrice: number
+  vipPrice: number
+  premiumPrice: number
+  images: string[]
   bannerImage?: string
   thumbnailImage?: string
-  isPublic: boolean
+  categories: string[]
+  tags: string[]
+  status?: "upcoming" | "ongoing" | "past"
+  attendees?: number
+  registrations?: number
+  revenue?: number
+  maxAttendees?: number
+  isPublic?: boolean
 }
 
 interface MyEventsProps {
-  events: Event[]
+  organizerId: string
 }
 
-export default function MyEvents({ events: initialEvents }: MyEventsProps) {
+export default function MyEvents({ organizerId }: MyEventsProps) {
   const { toast } = useToast()
-  const [events, setEvents] = useState<Event[]>(initialEvents)
-  const [filteredEvents, setFilteredEvents] = useState<Event[]>(initialEvents)
+  const [events, setEvents] = useState<Event[]>([])
+  const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [typeFilter, setTypeFilter] = useState("all")
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
 
-  // Update events when props change
+  const calculateEventStatus = (startDate: string, endDate: string): "upcoming" | "ongoing" | "past" => {
+    const now = new Date()
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+
+    if (now < start) {
+      return "upcoming"
+    } else if (now >= start && now <= end) {
+      return "ongoing"
+    } else {
+      return "past"
+    }
+  }
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/organizers/${organizerId}/events`)
+      if (response.ok) {
+        const data = await response.json()
+        const eventsWithStatus = data.events.map((event: Event) => ({
+          ...event,
+          status: calculateEventStatus(event.startDate, event.endDate),
+          bannerImage: event.images && event.images.length > 0 ? event.images[0] : undefined,
+          location: `${event.venue}, ${event.city}`,
+        }))
+        setEvents(eventsWithStatus)
+        setFilteredEvents(eventsWithStatus)
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to fetch events",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error)
+      toast({
+        title: "Error",
+        description: "Failed to fetch events",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    setEvents(initialEvents)
-    setFilteredEvents(initialEvents)
-  }, [initialEvents])
+    if (organizerId) {
+      fetchEvents()
+    }
+  }, [organizerId])
 
   // Filter events based on search and filters
   useEffect(() => {
@@ -61,40 +113,52 @@ export default function MyEvents({ events: initialEvents }: MyEventsProps) {
         (event) =>
           event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
           event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.location.toLowerCase().includes(searchTerm.toLowerCase()),
+          event.venue.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          event.city.toLowerCase().includes(searchTerm.toLowerCase()),
       )
     }
 
     if (statusFilter !== "all") {
-      filtered = filtered.filter((event) => event.status.toLowerCase() === statusFilter.toLowerCase())
+      filtered = filtered.filter((event) => event.status === statusFilter)
     }
 
     if (typeFilter !== "all") {
-      filtered = filtered.filter((event) => event.type.toLowerCase() === typeFilter.toLowerCase())
+      filtered = filtered.filter((event) => event.eventType.toLowerCase() === typeFilter.toLowerCase())
     }
 
     setFilteredEvents(filtered)
   }, [events, searchTerm, statusFilter, typeFilter])
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "active":
+    switch (status) {
+      case "upcoming":
         return "default"
-      case "planning":
+      case "ongoing":
         return "secondary"
-      case "completed":
+      case "past":
         return "outline"
-      case "cancelled":
-        return "destructive"
       default:
         return "secondary"
     }
   }
 
-  const formatCurrency = (amount: number, currency?: string) => {
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "upcoming":
+        return "Upcoming"
+      case "ongoing":
+        return "Ongoing"
+      case "past":
+        return "Past Event"
+      default:
+        return status
+    }
+  }
+
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: currency || "USD", // default to USD if missing
+      currency: "USD",
     }).format(amount)
   }
 
@@ -106,15 +170,22 @@ export default function MyEvents({ events: initialEvents }: MyEventsProps) {
     })
   }
 
-  const handleDeleteEvent = async (eventId: number) => {
+  const handleDeleteEvent = async (eventId: string) => {
     try {
       setLoading(true)
-      // API call to delete event would go here
-      toast({
-        title: "Event Deleted",
-        description: "Event has been successfully deleted.",
+      const response = await fetch(`/api/organizers/${organizerId}/events/${eventId}`, {
+        method: "DELETE",
       })
-      setEvents(events.filter((event) => event.id !== eventId))
+
+      if (response.ok) {
+        toast({
+          title: "Event Deleted",
+          description: "Event has been successfully deleted.",
+        })
+        setEvents(events.filter((event) => event.id !== eventId))
+      } else {
+        throw new Error("Failed to delete event")
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -126,7 +197,16 @@ export default function MyEvents({ events: initialEvents }: MyEventsProps) {
     }
   }
 
-  const uniqueTypes = [...new Set(events.map((event) => event.type))]
+  const uniqueTypes = [...new Set(events.map((event) => event.eventType).filter(Boolean))]
+
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -162,10 +242,9 @@ export default function MyEvents({ events: initialEvents }: MyEventsProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="planning">Planning</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="upcoming">Upcoming</SelectItem>
+                <SelectItem value="ongoing">Ongoing</SelectItem>
+                <SelectItem value="past">Past Events</SelectItem>
               </SelectContent>
             </Select>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
@@ -191,13 +270,15 @@ export default function MyEvents({ events: initialEvents }: MyEventsProps) {
           <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-shadow">
             <div className="relative h-48">
               <Image
-                src={event.bannerImage || event.thumbnailImage || "/placeholder.svg?height=200&width=400"}
+                src={event.bannerImage || "/placeholder.svg?height=200&width=400&query=event banner"}
                 alt={event.title}
                 fill
                 className="object-cover"
               />
               <div className="absolute top-4 right-4">
-                <Badge variant={getStatusColor(event.status)}>{event.status}</Badge>
+                <Badge variant={getStatusColor(event.status || "upcoming")}>
+                  {getStatusLabel(event.status || "upcoming")}
+                </Badge>
               </div>
             </div>
 
@@ -211,25 +292,29 @@ export default function MyEvents({ events: initialEvents }: MyEventsProps) {
                 <div className="space-y-2 text-sm text-gray-600">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
-                    <span>{formatDate(event.startDate)}</span>
+                    <span>
+                      {formatDate(event.startDate)} - {formatDate(event.endDate)}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4" />
-                    <span className="line-clamp-1">{event.location}</span>
+                    <span className="line-clamp-1">
+                      {event.venue}, {event.city}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4" />
-                    <span>{event.attendees} attendees</span>
+                    <span>{event.attendees || 0} attendees</span>
                     {event.maxAttendees && <span className="text-gray-400">/ {event.maxAttendees}</span>}
                   </div>
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-4 h-4" />
-                    <span>{formatCurrency(event.revenue, event.currency)}</span>
+                    <span>{formatCurrency(event.generalPrice)}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-3 border-t">
-                  <Badge variant="outline">{event.type}</Badge>
+                  <Badge variant="outline">{event.eventType}</Badge>
                   <div className="flex items-center gap-1">
                     <Dialog>
                       <DialogTrigger asChild>
@@ -245,7 +330,10 @@ export default function MyEvents({ events: initialEvents }: MyEventsProps) {
                           <div className="space-y-4">
                             <div className="relative h-64 rounded-lg overflow-hidden">
                               <Image
-                                src={selectedEvent.bannerImage || "/placeholder.svg?height=300&width=600"}
+                                src={
+                                  selectedEvent.bannerImage ||
+                                  "/placeholder.svg?height=300&width=600&query=event banner"
+                                }
                                 alt={selectedEvent.title}
                                 fill
                                 className="object-cover"
@@ -257,11 +345,13 @@ export default function MyEvents({ events: initialEvents }: MyEventsProps) {
                                 <div className="space-y-2 text-sm">
                                   <div className="flex justify-between">
                                     <span className="text-gray-600">Status:</span>
-                                    <Badge variant={getStatusColor(selectedEvent.status)}>{selectedEvent.status}</Badge>
+                                    <Badge variant={getStatusColor(selectedEvent.status || "upcoming")}>
+                                      {getStatusLabel(selectedEvent.status || "upcoming")}
+                                    </Badge>
                                   </div>
                                   <div className="flex justify-between">
                                     <span className="text-gray-600">Type:</span>
-                                    <span>{selectedEvent.type}</span>
+                                    <span>{selectedEvent.eventType}</span>
                                   </div>
                                   <div className="flex justify-between">
                                     <span className="text-gray-600">Start Date:</span>
@@ -273,32 +363,34 @@ export default function MyEvents({ events: initialEvents }: MyEventsProps) {
                                   </div>
                                   <div className="flex justify-between">
                                     <span className="text-gray-600">Location:</span>
-                                    <span className="text-right">{selectedEvent.location}</span>
+                                    <span className="text-right">
+                                      {selectedEvent.venue}, {selectedEvent.city}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
                               <div>
-                                <h4 className="font-medium mb-2">Statistics</h4>
+                                <h4 className="font-medium mb-2">Pricing & Stats</h4>
                                 <div className="space-y-2 text-sm">
                                   <div className="flex justify-between">
-                                    <span className="text-gray-600">Attendees:</span>
-                                    <span>{selectedEvent.attendees}</span>
+                                    <span className="text-gray-600">General:</span>
+                                    <span>{formatCurrency(selectedEvent.generalPrice)}</span>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span className="text-gray-600">Registrations:</span>
-                                    <span>{selectedEvent.registrations}</span>
+                                    <span className="text-gray-600">VIP:</span>
+                                    <span>{formatCurrency(selectedEvent.vipPrice)}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Premium:</span>
+                                    <span>{formatCurrency(selectedEvent.premiumPrice)}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Attendees:</span>
+                                    <span>{selectedEvent.attendees || 0}</span>
                                   </div>
                                   <div className="flex justify-between">
                                     <span className="text-gray-600">Revenue:</span>
-                                    <span>{formatCurrency(selectedEvent.revenue, selectedEvent.currency)}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">Max Capacity:</span>
-                                    <span>{selectedEvent.maxAttendees || "Unlimited"}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">Public:</span>
-                                    <span>{selectedEvent.isPublic ? "Yes" : "No"}</span>
+                                    <span>{formatCurrency(selectedEvent.revenue || 0)}</span>
                                   </div>
                                 </div>
                               </div>
@@ -307,6 +399,18 @@ export default function MyEvents({ events: initialEvents }: MyEventsProps) {
                               <h4 className="font-medium mb-2">Description</h4>
                               <p className="text-sm text-gray-600">{selectedEvent.description}</p>
                             </div>
+                            {selectedEvent.tags && selectedEvent.tags.length > 0 && (
+                              <div>
+                                <h4 className="font-medium mb-2">Tags</h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {selectedEvent.tags.map((tag, index) => (
+                                    <Badge key={index} variant="outline">
+                                      {tag}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </DialogContent>

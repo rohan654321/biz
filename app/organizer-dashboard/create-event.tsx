@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import type React from "react"
+
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,8 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
+import { Progress } from "@/components/ui/progress"
 import { Calendar, MapPin, Clock, IndianRupee, Upload, X, Plus, Eye, Save, Send } from "lucide-react"
 import Image from "next/image"
+import { useToast } from "@/hooks/use-toast"
 
 interface SpaceCost {
   type: string
@@ -43,6 +47,7 @@ interface EventFormData {
   generalPrice: number
   studentPrice: number
   vipPrice: number
+  groupPrice: number
 
   // Event Details
   highlights: string[]
@@ -81,10 +86,42 @@ interface EventFormData {
     image: string
     description: string
   }>
+
+  // Additional Fields
+  ageRestriction: string
+  accessibility: string
+  parking: string
+  publicTransport: string
+  foodBeverage: string
+  wifi: string
+  photography: string
+  recording: string
+  liveStreaming: string
+  socialMedia: string
+  networking: string
+  certificates: string
+  materials: string
+  followUp: string
 }
 
-export default function CreateEvent() {
+interface ValidationErrors {
+  title?: string
+  description?: string
+  eventType?: string
+  startDate?: string
+  endDate?: string
+  venue?: string
+  city?: string
+  address?: string
+  tags?: string
+}
+
+export default function CreateEvent({ organizerId }: { organizerId: string }) {
   const [activeTab, setActiveTab] = useState("basic")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [completionPercentage, setCompletionPercentage] = useState(0)
+  const { toast } = useToast()
+  const [showValidationErrors, setShowValidationErrors] = useState(false)
   const [formData, setFormData] = useState<EventFormData>({
     title: "",
     description: "",
@@ -102,6 +139,7 @@ export default function CreateEvent() {
     generalPrice: 0,
     studentPrice: 0,
     vipPrice: 0,
+    groupPrice: 0,
     highlights: [],
     tags: [],
     dressCode: "Business Casual",
@@ -172,10 +210,49 @@ export default function CreateEvent() {
     featuredHotels: [],
     travelPartners: [],
     touristAttractions: [],
+    ageRestriction: "",
+    accessibility: "",
+    parking: "",
+    publicTransport: "",
+    foodBeverage: "",
+    wifi: "",
+    photography: "",
+    recording: "",
+    liveStreaming: "",
+    socialMedia: "",
+    networking: "",
+    certificates: "",
+    materials: "",
+    followUp: "",
+  })
+
+  const [showHotelModal, setShowHotelModal] = useState(false)
+  const [showPartnerModal, setShowPartnerModal] = useState(false)
+  const [showAttractionModal, setShowAttractionModal] = useState(false)
+  const [currentHotel, setCurrentHotel] = useState({ name: "", category: "", rating: 5, image: "" })
+  const [currentPartner, setCurrentPartner] = useState({
+    name: "",
+    category: "",
+    rating: 5,
+    image: "",
+    description: "",
+  })
+  const [currentAttraction, setCurrentAttraction] = useState({
+    name: "",
+    category: "",
+    rating: 5,
+    image: "",
+    description: "",
   })
 
   const [newHighlight, setNewHighlight] = useState("")
   const [newTag, setNewTag] = useState("")
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
+  const [isPublishing, setIsPublishing] = useState(false)
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const brochureInputRef = useRef<HTMLInputElement>(null)
+  const layoutPlanInputRef = useRef<HTMLInputElement>(null)
 
   const eventTypes = [
     "Conference",
@@ -276,42 +353,374 @@ export default function CreateEvent() {
     }))
   }
 
-  const handleSaveDraft = () => {
-    console.log("Saving draft:", formData)
-    // Implement draft saving logic
+  const calculateCompletionPercentage = () => {
+    const requiredFields = [
+      formData.title,
+      formData.description,
+      formData.eventType,
+      formData.startDate,
+      formData.endDate,
+      formData.venue,
+      formData.city,
+      formData.address,
+    ]
+
+    const optionalFields = [
+      formData.categories.length > 0,
+      formData.highlights.length > 0,
+      formData.tags.length > 0,
+      formData.generalPrice > 0,
+      formData.images.length > 0,
+    ]
+
+    const requiredCompleted = requiredFields.filter((field) => field && field.toString().trim() !== "").length
+    const optionalCompleted = optionalFields.filter(Boolean).length
+
+    // Required fields are worth 80%, optional fields 20%
+    const requiredPercentage = (requiredCompleted / requiredFields.length) * 80
+    const optionalPercentage = (optionalCompleted / optionalFields.length) * 20
+
+    return Math.round(requiredPercentage + optionalPercentage)
   }
 
-  const handlePublishEvent = () => {
-    console.log("Publishing event:", formData)
-    // Implement event publishing logic
+  useEffect(() => {
+    setCompletionPercentage(calculateCompletionPercentage())
+  }, [formData])
+
+  const handleSaveDraft = async () => {
+    setIsSubmitting(true)
+    try {
+      const eventData = {
+        ...formData,
+        status: "DRAFT",
+        startDate: new Date(formData.startDate).toISOString(),
+        endDate: new Date(formData.endDate).toISOString(),
+        ticketTypes: [
+          { name: "General", price: formData.generalPrice, currency: formData.currency },
+          { name: "Student", price: formData.studentPrice, currency: formData.currency },
+          { name: "VIP", price: formData.vipPrice, currency: formData.currency },
+        ].filter((ticket) => ticket.price > 0),
+      }
+
+      const response = await fetch(`/api/organizers/${organizerId}/events`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(eventData),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to save draft")
+      }
+
+      const result = await response.json()
+      toast({
+        title: "Draft Saved",
+        description: "Your event draft has been saved successfully.",
+      })
+    } catch (error) {
+      console.error("Error saving draft:", error)
+      toast({
+        title: "Error",
+        description: "Failed to save draft. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handlePublishEvent = async () => {
+    const newValidationErrors: ValidationErrors = {}
+
+    // Basic Info - all fields required
+    if (!formData.title.trim()) newValidationErrors.title = "Title is required for publishing"
+    if (!formData.description.trim()) newValidationErrors.description = "Description is required for publishing"
+    if (!formData.eventType.trim()) newValidationErrors.eventType = "Event type is required for publishing"
+    if (!formData.startDate.trim()) newValidationErrors.startDate = "Start date is required for publishing"
+    if (!formData.endDate.trim()) newValidationErrors.endDate = "End date is required for publishing"
+    if (!formData.venue.trim()) newValidationErrors.venue = "Venue is required for publishing"
+    if (!formData.city.trim()) newValidationErrors.city = "City is required for publishing"
+    if (!formData.address.trim()) newValidationErrors.address = "Address is required for publishing"
+
+    // Event Details - only tags required
+    if (formData.tags.length === 0) newValidationErrors.tags = "Event tags & keywords are required for publishing"
+
+    setValidationErrors(newValidationErrors)
+
+    if (Object.keys(newValidationErrors).length > 0) {
+      return
+    }
+
+    setIsPublishing(true)
+    try {
+      console.log("[v0] Publishing event with data:", formData)
+      const response = await fetch(`/api/organizers/${organizerId}/events`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          status: "published",
+        }),
+      })
+
+      console.log("[v0] Response status:", response.status)
+      const responseData = await response.json()
+      console.log("[v0] Response data:", responseData)
+
+      if (!response.ok) {
+        throw new Error(responseData.error || "Failed to publish event")
+      }
+
+      toast({
+        title: "Success",
+        description: "Event is created successfully",
+      })
+
+      // Reset form after successful submission
+      setFormData({
+        title: "",
+        description: "",
+        eventType: "",
+        categories: [],
+        startDate: "",
+        endDate: "",
+        dailyStart: "09:00",
+        dailyEnd: "18:00",
+        timezone: "Asia/Kolkata",
+        venue: "",
+        city: "",
+        address: "",
+        currency: "₹",
+        generalPrice: 0,
+        studentPrice: 0,
+        vipPrice: 0,
+        groupPrice: 0,
+        highlights: [],
+        tags: [],
+        dressCode: "Business Casual",
+        ageLimit: "18+",
+        featured: false,
+        vip: false,
+        spaceCosts: [
+          {
+            type: "Shell Space (Standard Booth)",
+            description: "Fully constructed booth with walls, flooring, basic lighting, and standard amenities",
+            pricePerSqm: 5000,
+            minArea: 9,
+            isFixed: true,
+          },
+          {
+            type: "Raw Space",
+            description: "Open floor space without any construction or amenities",
+            pricePerSqm: 2500,
+            minArea: 20,
+            isFixed: false,
+          },
+          {
+            type: "2 Side Open Space",
+            description: "Space with two sides open for better visibility and accessibility",
+            pricePerSqm: 3500,
+            minArea: 12,
+            isFixed: true,
+          },
+          {
+            type: "3 Side Open Space",
+            description: "Premium corner space with three sides open for maximum exposure",
+            pricePerSqm: 4200,
+            minArea: 15,
+            isFixed: true,
+          },
+          {
+            type: "4 Side Open Space",
+            description: "Island space with all four sides open for 360-degree visibility",
+            pricePerSqm: 5500,
+            minArea: 25,
+            isFixed: true,
+          },
+          {
+            type: "Mezzanine Charges",
+            description: "Additional upper level space for storage or display purposes",
+            pricePerSqm: 1500,
+            minArea: 10,
+            isFixed: true,
+          },
+          {
+            type: "Additional Power",
+            description: "Extra electrical power supply for high-consumption equipment",
+            pricePerUnit: 800,
+            unit: "KW",
+            isFixed: true,
+          },
+          {
+            type: "Compressed Air",
+            description: "Compressed air supply for machinery demonstration (6 bar pressure)",
+            pricePerUnit: 1200,
+            unit: "HP",
+            isFixed: true,
+          },
+        ],
+        images: [],
+        brochure: "",
+        layoutPlan: "",
+        featuredHotels: [],
+        travelPartners: [],
+        touristAttractions: [],
+        ageRestriction: "",
+        accessibility: "",
+        parking: "",
+        publicTransport: "",
+        foodBeverage: "",
+        wifi: "",
+        photography: "",
+        recording: "",
+        liveStreaming: "",
+        socialMedia: "",
+        networking: "",
+        certificates: "",
+        materials: "",
+        followUp: "",
+      })
+      setValidationErrors({})
+    } catch (error) {
+      console.error("[v0] Error publishing event:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to publish event",
+        variant: "destructive",
+      })
+    } finally {
+      setIsPublishing(false)
+    }
+  }
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (files) {
+      Array.from(files).forEach((file) => {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const result = e.target?.result as string
+          setFormData((prev) => ({
+            ...prev,
+            images: [...prev.images, result],
+          }))
+        }
+        reader.readAsDataURL(file)
+      })
+    }
+  }
+
+  const handleBrochureUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setFormData((prev) => ({ ...prev, brochure: file.name }))
+    }
+  }
+
+  const handleLayoutPlanUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setFormData((prev) => ({ ...prev, layoutPlan: file.name }))
+    }
+  }
+
+  const handleAddHotel = () => {
+    setShowHotelModal(true)
+  }
+
+  const handleAddPartner = () => {
+    setShowPartnerModal(true)
+  }
+
+  const handleAddAttraction = () => {
+    setShowAttractionModal(true)
+  }
+
+  const handleImageUploadModal = (file: File, type: "hotel" | "partner" | "attraction") => {
+    const imageUrl = URL.createObjectURL(file)
+    if (type === "hotel") {
+      setCurrentHotel((prev) => ({ ...prev, image: imageUrl }))
+    } else if (type === "partner") {
+      setCurrentPartner((prev) => ({ ...prev, image: imageUrl }))
+    } else if (type === "attraction") {
+      setCurrentAttraction((prev) => ({ ...prev, image: imageUrl }))
+    }
+  }
+
+  const saveHotel = () => {
+    if (currentHotel.name && currentHotel.category) {
+      setFormData((prev) => ({
+        ...prev,
+        featuredHotels: [...(prev.featuredHotels || []), currentHotel],
+      }))
+      setCurrentHotel({ name: "", category: "", rating: 5, image: "" })
+      setShowHotelModal(false)
+    }
+  }
+
+  const savePartner = () => {
+    if (currentPartner.name && currentPartner.category && currentPartner.description) {
+      setFormData((prev) => ({
+        ...prev,
+        travelPartners: [...(prev.travelPartners || []), currentPartner],
+      }))
+      setCurrentPartner({ name: "", category: "", rating: 5, image: "", description: "" })
+      setShowPartnerModal(false)
+    }
+  }
+
+  const saveAttraction = () => {
+    if (currentAttraction.name && currentAttraction.category && currentAttraction.description) {
+      setFormData((prev) => ({
+        ...prev,
+        touristAttractions: [...(prev.touristAttractions || []), currentAttraction],
+      }))
+      setCurrentAttraction({ name: "", category: "", rating: 5, image: "", description: "" })
+      setShowAttractionModal(false)
+    }
   }
 
   return (
     <div className="space-y-6">
+      <div className="bg-card border rounded-lg p-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium">Form Completion</span>
+          <span className="text-sm text-muted-foreground">{completionPercentage}%</span>
+        </div>
+        <Progress value={completionPercentage} className="h-2" />
+        <p className="text-xs text-muted-foreground mt-1">
+          {completionPercentage < 80 ? "Complete required fields to publish your event" : "Ready to publish!"}
+        </p>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Create New Event</h2>
           <p className="text-gray-600">Fill in the details to create your event</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={handleSaveDraft}>
+          <Button variant="outline" onClick={handleSaveDraft} disabled={isSubmitting}>
             <Save className="w-4 h-4 mr-2" />
-            Save Draft
+            {isSubmitting ? "Saving..." : "Save Draft"}
           </Button>
-          <Button onClick={handlePublishEvent}>
+          {/* Fixed publish button to use isPublishing state */}
+          <Button onClick={handlePublishEvent} disabled={isPublishing || completionPercentage < 80}>
             <Send className="w-4 h-4 mr-2" />
-            Publish Event
+            {isPublishing ? "Publishing..." : "Publish Event"}
           </Button>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="details">Event Details</TabsTrigger>
           <TabsTrigger value="pricing">Pricing & Space</TabsTrigger>
           <TabsTrigger value="media">Media & Content</TabsTrigger>
-          <TabsTrigger value="features">Features</TabsTrigger>
           <TabsTrigger value="preview">Preview</TabsTrigger>
         </TabsList>
 
@@ -319,7 +728,10 @@ export default function CreateEvent() {
         <TabsContent value="basic" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Event Information</CardTitle>
+              <CardTitle>Basic Information</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                All fields in this section are required for publishing your event.
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -331,6 +743,9 @@ export default function CreateEvent() {
                     onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                     placeholder="Enter event title"
                   />
+                  {showValidationErrors && (!formData.title || formData.title.trim() === "") && (
+                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                  )}
                 </div>
 
                 <div>
@@ -350,6 +765,9 @@ export default function CreateEvent() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {showValidationErrors && (!formData.eventType || formData.eventType.trim() === "") && (
+                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                  )}
                 </div>
 
                 <div>
@@ -377,6 +795,9 @@ export default function CreateEvent() {
                     placeholder="Describe your event"
                     rows={4}
                   />
+                  {showValidationErrors && (!formData.description || formData.description.trim() === "") && (
+                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -395,20 +816,26 @@ export default function CreateEvent() {
                   <Label htmlFor="startDate">Start Date *</Label>
                   <Input
                     id="startDate"
-                    type="date"
+                    type="datetime-local"
                     value={formData.startDate}
                     onChange={(e) => setFormData((prev) => ({ ...prev, startDate: e.target.value }))}
                   />
+                  {showValidationErrors && (!formData.startDate || formData.startDate.trim() === "") && (
+                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                  )}
                 </div>
 
                 <div>
                   <Label htmlFor="endDate">End Date *</Label>
                   <Input
                     id="endDate"
-                    type="date"
+                    type="datetime-local"
                     value={formData.endDate}
                     onChange={(e) => setFormData((prev) => ({ ...prev, endDate: e.target.value }))}
                   />
+                  {showValidationErrors && (!formData.endDate || formData.endDate.trim() === "") && (
+                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                  )}
                 </div>
 
                 <div>
@@ -469,6 +896,9 @@ export default function CreateEvent() {
                     onChange={(e) => setFormData((prev) => ({ ...prev, venue: e.target.value }))}
                     placeholder="Enter venue name"
                   />
+                  {showValidationErrors && (!formData.venue || formData.venue.trim() === "") && (
+                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                  )}
                 </div>
 
                 <div>
@@ -479,6 +909,9 @@ export default function CreateEvent() {
                     onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))}
                     placeholder="Enter city"
                   />
+                  {showValidationErrors && (!formData.city || formData.city.trim() === "") && (
+                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                  )}
                 </div>
 
                 <div className="md:col-span-2">
@@ -490,6 +923,9 @@ export default function CreateEvent() {
                     placeholder="Enter complete address"
                     rows={2}
                   />
+                  {showValidationErrors && (!formData.address || formData.address.trim() === "") && (
+                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -501,6 +937,9 @@ export default function CreateEvent() {
           <Card>
             <CardHeader>
               <CardTitle>Event Highlights</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Only Event Tags & Keywords are required for publishing in this section.
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-2">
@@ -527,27 +966,40 @@ export default function CreateEvent() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Event Tags & Keywords</CardTitle>
+              <CardTitle>Event Tags & Keywords *</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  placeholder="Add event tag"
-                  onKeyPress={(e) => e.key === "Enter" && addTag()}
-                />
-                <Button onClick={addTag}>
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {formData.tags.map((tag, index) => (
-                  <Badge key={index} variant="outline" className="flex items-center gap-1">
-                    #{tag}
-                    <X className="w-3 h-3 cursor-pointer" onClick={() => removeTag(index)} />
-                  </Badge>
-                ))}
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label>Event Tags & Keywords *</Label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {formData.tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                        {tag}
+                        <X className="w-3 h-3 cursor-pointer" onClick={() => removeTag(index)} />
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      placeholder="Add tags (press Enter)"
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault()
+                          addTag()
+                        }
+                      }}
+                    />
+                    <Button type="button" onClick={addTag} variant="outline">
+                      Add
+                    </Button>
+                  </div>
+                  {showValidationErrors && formData.tags.length === 0 && (
+                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -659,33 +1111,45 @@ export default function CreateEvent() {
                 <div>
                   <Label htmlFor="generalPrice">General Entry</Label>
                   <Input
-                    id="generalPrice"
                     type="number"
-                    value={formData.generalPrice}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, generalPrice: Number(e.target.value) }))}
                     placeholder="0"
+                    value={formData.generalPrice === 0 ? "" : formData.generalPrice}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        generalPrice: e.target.value === "" ? 0 : Number(e.target.value),
+                      }))
+                    }
                   />
                 </div>
 
                 <div>
                   <Label htmlFor="studentPrice">Student Price</Label>
                   <Input
-                    id="studentPrice"
                     type="number"
-                    value={formData.studentPrice}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, studentPrice: Number(e.target.value) }))}
                     placeholder="0"
+                    value={formData.studentPrice === 0 ? "" : formData.studentPrice}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        studentPrice: e.target.value === "" ? 0 : Number(e.target.value),
+                      }))
+                    }
                   />
                 </div>
 
                 <div>
                   <Label htmlFor="vipPrice">VIP Price</Label>
                   <Input
-                    id="vipPrice"
                     type="number"
-                    value={formData.vipPrice}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, vipPrice: Number(e.target.value) }))}
                     placeholder="0"
+                    value={formData.vipPrice === 0 ? "" : formData.vipPrice}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        vipPrice: e.target.value === "" ? 0 : Number(e.target.value),
+                      }))
+                    }
                   />
                 </div>
               </div>
@@ -819,8 +1283,8 @@ export default function CreateEvent() {
                                 <span className="text-sm text-gray-500">{formData.currency}</span>
                                 <Input
                                   type="number"
-                                  value={cost.pricePerSqm || 0}
-                                  onChange={(e) => updateSpaceCost(index, "pricePerSqm", Number(e.target.value))}
+                                  value={cost.pricePerSqm === 0 ? "" : cost.pricePerSqm}
+                                  onChange={(e) => updateSpaceCost(index, "pricePerSqm", Number(e.target.value) || 0)}
                                   placeholder="0"
                                 />
                               </div>
@@ -829,8 +1293,8 @@ export default function CreateEvent() {
                               <Label className="text-sm font-medium">Minimum Area (sq.m)</Label>
                               <Input
                                 type="number"
-                                value={cost.minArea || 0}
-                                onChange={(e) => updateSpaceCost(index, "minArea", Number(e.target.value))}
+                                value={cost.minArea === 0 ? "" : cost.minArea}
+                                onChange={(e) => updateSpaceCost(index, "minArea", Number(e.target.value) || 0)}
                                 placeholder="0"
                               />
                             </div>
@@ -873,6 +1337,29 @@ export default function CreateEvent() {
 
         {/* Media & Content Tab */}
         <TabsContent value="media" className="space-y-6">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageUpload}
+            accept="image/*"
+            multiple
+            className="hidden"
+          />
+          <input
+            type="file"
+            ref={brochureInputRef}
+            onChange={handleBrochureUpload}
+            accept=".pdf,.doc,.docx"
+            className="hidden"
+          />
+          <input
+            type="file"
+            ref={layoutPlanInputRef}
+            onChange={handleLayoutPlanUpload}
+            accept=".pdf,.jpg,.jpeg,.png"
+            className="hidden"
+          />
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -881,10 +1368,15 @@ export default function CreateEvent() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+              <div
+                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
                 <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                 <p className="text-gray-600 mb-2">Drag and drop images here, or click to browse</p>
-                <Button variant="outline">Choose Images</Button>
+                <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                  Choose Images
+                </Button>
               </div>
 
               {formData.images.length > 0 && (
@@ -927,12 +1419,12 @@ export default function CreateEvent() {
                 <Label>Event Brochure</Label>
                 <div className="flex gap-2 mt-1">
                   <Input
-                    value={formData.brochure}
+                    value={formData.brochure || ""}
                     onChange={(e) => setFormData((prev) => ({ ...prev, brochure: e.target.value }))}
                     placeholder="Upload brochure"
                     readOnly
                   />
-                  <Button variant="outline">
+                  <Button variant="outline" onClick={() => brochureInputRef.current?.click()}>
                     <Upload className="w-4 h-4" />
                   </Button>
                 </div>
@@ -942,63 +1434,15 @@ export default function CreateEvent() {
                 <Label>Layout Plan</Label>
                 <div className="flex gap-2 mt-1">
                   <Input
-                    value={formData.layoutPlan}
+                    value={formData.layoutPlan || ""}
                     onChange={(e) => setFormData((prev) => ({ ...prev, layoutPlan: e.target.value }))}
                     placeholder="Upload layout plan"
                     readOnly
                   />
-                  <Button variant="outline">
+                  <Button variant="outline" onClick={() => layoutPlanInputRef.current?.click()}>
                     <Upload className="w-4 h-4" />
                   </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Features Tab */}
-        <TabsContent value="features" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Featured Hotels</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <p>Add recommended hotels for attendees</p>
-                <Button variant="outline" className="mt-2 bg-transparent">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Hotel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Travel Partners</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <p>Add travel and transportation partners</p>
-                <Button variant="outline" className="mt-2 bg-transparent">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Partner
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Tourist Attractions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <p>Add local attractions and places to visit</p>
-                <Button variant="outline" className="mt-2 bg-transparent">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Attraction
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -1124,6 +1568,220 @@ export default function CreateEvent() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {showHotelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">Add Hotel</h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="hotel-name">Hotel Name</Label>
+                <Input
+                  id="hotel-name"
+                  value={currentHotel.name}
+                  onChange={(e) => setCurrentHotel((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="Enter hotel name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="hotel-category">Category</Label>
+                <Input
+                  id="hotel-category"
+                  value={currentHotel.category}
+                  onChange={(e) => setCurrentHotel((prev) => ({ ...prev, category: e.target.value }))}
+                  placeholder="e.g., Luxury, Budget, Business"
+                />
+              </div>
+              <div>
+                <Label htmlFor="hotel-rating">Rating</Label>
+                <Input
+                  id="hotel-rating"
+                  type="number"
+                  min="1"
+                  max="5"
+                  value={currentHotel.rating}
+                  onChange={(e) => setCurrentHotel((prev) => ({ ...prev, rating: Number(e.target.value) }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="hotel-image">Hotel Image</Label>
+                <Input
+                  id="hotel-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleImageUploadModal(file, "hotel")
+                  }}
+                />
+                {currentHotel.image && (
+                  <img
+                    src={currentHotel.image || "/placeholder.svg"}
+                    alt="Preview"
+                    className="mt-2 w-20 h-20 object-cover rounded"
+                  />
+                )}
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button variant="outline" onClick={() => setShowHotelModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={saveHotel}>Add Hotel</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPartnerModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">Add Travel Partner</h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="partner-name">Partner Name</Label>
+                <Input
+                  id="partner-name"
+                  value={currentPartner.name}
+                  onChange={(e) => setCurrentPartner((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="Enter partner name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="partner-category">Category</Label>
+                <Input
+                  id="partner-category"
+                  value={currentPartner.category}
+                  onChange={(e) => setCurrentPartner((prev) => ({ ...prev, category: e.target.value }))}
+                  placeholder="e.g., Airlines, Car Rental, Tours"
+                />
+              </div>
+              <div>
+                <Label htmlFor="partner-rating">Rating</Label>
+                <Input
+                  id="partner-rating"
+                  type="number"
+                  min="1"
+                  max="5"
+                  value={currentPartner.rating}
+                  onChange={(e) => setCurrentPartner((prev) => ({ ...prev, rating: Number(e.target.value) }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="partner-description">Description</Label>
+                <textarea
+                  id="partner-description"
+                  className="w-full p-2 border rounded"
+                  value={currentPartner.description}
+                  onChange={(e) => setCurrentPartner((prev) => ({ ...prev, description: e.target.value }))}
+                  placeholder="Enter partner description"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label htmlFor="partner-image">Partner Image</Label>
+                <Input
+                  id="partner-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleImageUploadModal(file, "partner")
+                  }}
+                />
+                {currentPartner.image && (
+                  <img
+                    src={currentPartner.image || "/placeholder.svg"}
+                    alt="Preview"
+                    className="mt-2 w-20 h-20 object-cover rounded"
+                  />
+                )}
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button variant="outline" onClick={() => setShowPartnerModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={savePartner}>Add Partner</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAttractionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">Add Tourist Attraction</h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="attraction-name">Attraction Name</Label>
+                <Input
+                  id="attraction-name"
+                  value={currentAttraction.name}
+                  onChange={(e) => setCurrentAttraction((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="Enter attraction name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="attraction-category">Category</Label>
+                <Input
+                  id="attraction-category"
+                  value={currentAttraction.category}
+                  onChange={(e) => setCurrentAttraction((prev) => ({ ...prev, category: e.target.value }))}
+                  placeholder="e.g., Museum, Park, Monument"
+                />
+              </div>
+              <div>
+                <Label htmlFor="attraction-rating">Rating</Label>
+                <Input
+                  id="attraction-rating"
+                  type="number"
+                  min="1"
+                  max="5"
+                  value={currentAttraction.rating}
+                  onChange={(e) => setCurrentAttraction((prev) => ({ ...prev, rating: Number(e.target.value) }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="attraction-description">Description</Label>
+                <textarea
+                  id="attraction-description"
+                  className="w-full p-2 border rounded"
+                  value={currentAttraction.description}
+                  onChange={(e) => setCurrentAttraction((prev) => ({ ...prev, description: e.target.value }))}
+                  placeholder="Enter attraction description"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label htmlFor="attraction-image">Attraction Image</Label>
+                <Input
+                  id="attraction-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleImageUploadModal(file, "attraction")
+                  }}
+                />
+                {currentAttraction.image && (
+                  <img
+                    src={currentAttraction.image || "/placeholder.svg"}
+                    alt="Preview"
+                    className="mt-2 w-20 h-20 object-cover rounded"
+                  />
+                )}
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button variant="outline" onClick={() => setShowAttractionModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={saveAttraction}>Add Attraction</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

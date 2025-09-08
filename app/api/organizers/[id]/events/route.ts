@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
 import { prisma } from "@/lib/prisma"
 import { EventStatus } from "@prisma/client"
-import { ObjectId } from "mongodb" // at top
+import { ObjectId } from "mongodb"
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -131,6 +131,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    if (!id || id === "undefined") {
+      return NextResponse.json({ error: "Invalid organizer ID" }, { status: 400 })
+    }
+
     // Check if user is authorized to create events for this organizer
     if (session.user?.id !== id && session.user?.role !== "ORGANIZER") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
@@ -138,13 +142,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     const body = await request.json()
 
-    // Create new event in database
     const newEvent = await prisma.event.create({
       data: {
-        id: new ObjectId().toHexString(), // 👈 add this
+        id: new ObjectId().toHexString(),
         title: body.title,
         description: body.description,
-        shortDescription: body.shortDescription,
+        shortDescription: body.shortDescription || null,
         slug:
           body.slug ??
           body.title
@@ -152,7 +155,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             .replace(/\s+/g, "-")
             .replace(/[^a-z0-9-]/g, ""),
         status: (body.status?.toUpperCase() as EventStatus) || EventStatus.DRAFT,
-        category: body.category,
+        category: body.category || null,
         tags: body.tags || [],
         startDate: new Date(body.startDate),
         endDate: new Date(body.endDate),
@@ -160,26 +163,26 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         registrationEnd: new Date(body.registrationEnd || body.endDate),
         timezone: body.timezone || "UTC",
         isVirtual: body.isVirtual || false,
-        virtualLink: body.virtualLink,
-        address: body.address,
-        location: body.location,
-        city: body.city,
-        state: body.state,
-        country: body.country,
-        zipCode: body.zipCode,
-        maxAttendees: body.maxAttendees,
+        virtualLink: body.virtualLink || null,
+        address: body.address || null,
+        location: body.location || null,
+        city: body.city || null,
+        state: body.state || null,
+        country: body.country || null,
+        zipCode: body.zipCode || null,
+        maxAttendees: body.maxAttendees || null,
         ticketTypes: body.ticketTypes || [],
         currency: body.currency || "USD",
         images: body.images || [],
-        bannerImage: body.bannerImage,
-        thumbnailImage: body.thumbnailImage,
+        bannerImage: body.bannerImage || null,
+        thumbnailImage: body.thumbnailImage || null,
         isPublic: body.isPublic !== false,
         requiresApproval: body.requiresApproval || false,
         allowWaitlist: body.allowWaitlist || false,
-        refundPolicy: body.refundPolicy,
-        metaTitle: body.metaTitle,
-        metaDescription: body.metaDescription,
-        organizerId: id,
+        refundPolicy: body.refundPolicy || null,
+        metaTitle: body.metaTitle || null,
+        metaDescription: body.metaDescription || null,
+        organizerId: id, // Ensure this uses the validated id parameter
       },
       select: {
         id: true,
