@@ -145,79 +145,81 @@ enum UserRole {
 
 // Event Management
 model Event {
-   id        String   @id @map("_id") @db.ObjectId
-  title             String
-  description       String
-  shortDescription  String?
-  slug              String   @unique
-  status            EventStatus @default(DRAFT)
-  category          String?
-  tags              String[]
-  eventType         String[]
+  id        String   @id @map("_id") @db.ObjectId
+  title     String
+  description String
+  shortDescription String?
+  slug      String   @unique
+  status    EventStatus @default(DRAFT)
+  category  String?
+  tags      String[]
+  eventType String[]
   
   // Dates and Times
-  startDate         DateTime
-  endDate           DateTime
+  startDate DateTime
+  endDate   DateTime
   registrationStart DateTime
-  registrationEnd   DateTime
-  timezone          String
+  registrationEnd DateTime
+  timezone  String
   
   // Location
-  venueId           String?  @db.ObjectId
-  venue             User?    @relation("EventVenue", fields: [venueId], references: [id])
-  isVirtual         Boolean  @default(false)
-  virtualLink       String?
-  address           String?
-  location          String?
-  city              String?
-  state             String?
-  country           String?
-  zipCode           String?
+  venueId   String?  @db.ObjectId
+  venue     User?    @relation("EventVenue", fields: [venueId], references: [id])
+  isVirtual Boolean  @default(false)
+  virtualLink String?
+  address   String?
+  location  String?
+  city      String?
+  state     String?
+  country   String?
+  zipCode   String?
   
   // Capacity and Pricing
-  maxAttendees      Int?
-  currentAttendees  Int      @default(0)
-  ticketTypes       TicketType[]
-  currency          String   @default("USD")
+  maxAttendees     Int?
+  currentAttendees Int @default(0)
+  ticketTypes      TicketType[]
+  currency         String @default("USD")  
   
   // Media
-  images            String[]
-  videos            String[]
-  documents         String[]
-  bannerImage       String?
-  thumbnailImage    String?
-  
-  // Settings
-  isPublic          Boolean  @default(true)
-  requiresApproval  Boolean  @default(false)
-  allowWaitlist     Boolean  @default(false)
-  refundPolicy      String?
-  
-  // SEO
-  metaTitle         String?
-  metaDescription   String?
-  
-  // Organizer
-  organizerId       String   @db.ObjectId
-  organizer         User     @relation("EventOrganizer", fields: [organizerId], references: [id])
-  
-  // Exhibition Spaces
-  exhibitionSpaces  ExhibitionSpace[]
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
-  // Relationships
-  registrations     EventRegistration[]
-  speakerSessions   SpeakerSession[]
-  exhibitorBooths   ExhibitorBooth[]
-  reviews           Review[]
-  analytics         EventAnalytics[]
-  campaigns         Campaign[]
+  images        String[]
+  videos        String[]
+  documents     String[]
+  bannerImage   String?
+  thumbnailImage String?
 
-  promotions   Promotion[] // ✅ back relation for event promotions
+  // Settings
+  isPublic         Boolean @default(true)
+  requiresApproval Boolean @default(false)
+  allowWaitlist    Boolean @default(false)
+  refundPolicy     String?
+
+  // SEO
+  metaTitle        String?
+  metaDescription  String?
+
+  // Organizer
+  organizerId String @db.ObjectId
+  organizer   User   @relation("EventOrganizer", fields: [organizerId], references: [id])
+
+  // Exhibition Spaces
+  exhibitionSpaces ExhibitionSpace[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  registrations   EventRegistration[]
+  speakerSessions SpeakerSession[]
+  exhibitorBooths ExhibitorBooth[]
+  reviews         Review[]
+  analytics       EventAnalytics[]
+  campaigns       Campaign[]
+
+  promotions Promotion[] // ✅ back relation for event promotions
+
   @@map("events")
 }
+
 
 enum EventStatus {
   DRAFT
