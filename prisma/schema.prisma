@@ -337,8 +337,8 @@ model Promotion {
   organizerId     String   @db.ObjectId
   organizer       User     @relation(fields: [organizerId], references: [id])
 
-  eventId         String   @db.ObjectId
-  event           Event    @relation(fields: [eventId], references: [id])
+  eventId   String?  @db.ObjectId
+  event     Event?   @relation(fields: [eventId], references: [id])
 
   packageType     String
   targetCategories String[]   // ✅ no @db.Array
