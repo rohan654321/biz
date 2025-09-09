@@ -3,6 +3,75 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 
+
+export async function GET(request: NextRequest) {
+  try {
+    console.log("[v0] GET /api/events/speaker-sessions called")
+
+    const { searchParams } = new URL(request.url)
+    const eventId = searchParams.get("eventId")
+    const speakerId = searchParams.get("speakerId")
+
+    // Require at least eventId or speakerId
+    if (!eventId && !speakerId) {
+      return NextResponse.json(
+        { success: false, error: "eventId or speakerId is required" },
+        { status: 400 }
+      )
+    }
+
+    const sessions = await prisma.speakerSession.findMany({
+      where: {
+        ...(eventId ? { eventId } : {}),
+        ...(speakerId ? { speakerId } : {}),
+      },
+      include: {
+        speaker: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            avatar: true,
+            company: true,
+            jobTitle: true,
+          },
+        },
+        event: {
+          select: {
+            id: true,
+            title: true,
+            startDate: true,
+            endDate: true,
+          },
+        },
+      },
+      orderBy: {
+        startTime: "asc",
+      },
+    })
+
+    if (!sessions || sessions.length === 0) {
+      return NextResponse.json(
+        { success: true, sessions: [], message: "No sessions found" },
+        { status: 200 }
+      )
+    }
+
+    return NextResponse.json(
+      { success: true, sessions },
+      { status: 200 }
+    )
+  } catch (error) {
+    console.error("Error fetching speaker sessions:", error)
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}
+
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)

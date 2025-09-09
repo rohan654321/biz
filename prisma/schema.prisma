@@ -240,6 +240,7 @@ type TicketType {
   isActive    Boolean @default(true)
 }
 
+// Updated ExhibitionSpace model in your schema.prisma
 model ExhibitionSpace {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   eventId         String   @db.ObjectId
@@ -248,20 +249,27 @@ model ExhibitionSpace {
   spaceType       ExhibitionSpaceType
   name            String
   description     String
-  dimensions      String
+  dimensions      String?
   area            Float
   location        String?
 
-  // Pricing
-  basePrice       Float
+  // Pricing - updated to match frontend
+  basePrice       Float    // Main price (per sqm or per unit)
+  pricePerSqm     Float?   // Specific price per square meter
+  minArea         Float?   // Minimum area required
   currency        String   @default("USD")
 
-  // Services
+  // Services - updated to match frontend data
   powerIncluded       Boolean  @default(false)
   additionalPowerRate Float?
   compressedAirRate   Float?
-
-  // Availability
+  
+  // Unit-based pricing (for services like power, compressed air)
+  unit            String?  // "KW", "HP", etc.
+  pricePerUnit    Float?   // Price per unit
+  
+  // Status and configuration
+  isFixed         Boolean  @default(false) // Whether this is a standard/fixed space type
   isAvailable     Boolean  @default(true)
   maxBooths       Int?
   bookedBooths    Int      @default(0)
@@ -278,7 +286,7 @@ model ExhibitionSpace {
   @@map("exhibition_spaces")
 }
 
-
+// You might also want to add these space types to your enum
 enum ExhibitionSpaceType {
   SHELL_SPACE
   RAW_SPACE
@@ -286,6 +294,9 @@ enum ExhibitionSpaceType {
   THREE_SIDE_OPEN
   FOUR_SIDE_OPEN
   MEZZANINE
+  ADDITIONAL_POWER    // New
+  COMPRESSED_AIR      // New
+  CUSTOM             // For user-defined space types
 }
 
 model ExhibitorBooth {

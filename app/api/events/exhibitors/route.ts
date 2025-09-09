@@ -118,3 +118,64 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
+
+
+export async function GET(request: NextRequest) {
+  try {
+    console.log("[v0] GET /api/events/exhibitors called")
+
+    const { searchParams } = new URL(request.url)
+    const eventId = searchParams.get("eventId")
+
+    if (!eventId) {
+      console.log("[v0] Missing eventId in query params")
+      return NextResponse.json(
+        { error: "eventId is required" },
+        { status: 400 }
+      )
+    }
+
+    console.log("[v0] Fetching booths for eventId:", eventId)
+
+    const booths = await prisma.exhibitorBooth.findMany({
+      where: { eventId },
+      include: {
+        exhibitor: {
+          select: {
+            firstName: true,
+            lastName: true,
+            company: true,
+            email: true,
+          },
+        },
+        event: {
+          select: {
+            id: true,
+            title: true,
+            startDate: true,
+            endDate: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc", // ✅ newest first
+      },
+    })
+
+    if (!booths || booths.length === 0) {
+      return NextResponse.json(
+        { message: "No exhibitor booths found for this event", booths: [] },
+        { status: 200 }
+      )
+    }
+
+    return NextResponse.json({ booths }, { status: 200 })
+  } catch (error) {
+    console.error("[v0] Error fetching exhibitor booths:", error)
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}
+

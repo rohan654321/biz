@@ -261,11 +261,11 @@ export default function OrganizerDashboardPage() {
       icon: BarChart3,
       id: "analytics",
     },
-    {
-      title: "Revenue",
-      icon: DollarSign,
-      id: "revenue",
-    },
+    // {
+    //   title: "Revenue",
+    //   icon: DollarSign,
+    //   id: "revenue",
+    // },
     {
       title: "Promotion",
       icon: Megaphone,
@@ -291,11 +291,11 @@ export default function OrganizerDashboardPage() {
     //   icon: Users,
     //   id: "venue",
     // },
-    {
-      title: "add venue",
-      icon: Users,
-      id: "addvenue",
-    },
+    // {
+    //   title: "add venue",
+    //   icon: Users,
+    //   id: "addvenue",
+    // },
     {
       title: "Messages",
       icon: MessageSquare,
