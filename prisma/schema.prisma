@@ -71,7 +71,7 @@ model User {
   sentMessages      Message[] @relation("MessageSender")
   receivedMessages  Message[] @relation("MessageReceiver")
   reviews           Review[]
-  payments          Payment[]
+  payments          Payment[] 
   notifications     Notification[]
   analytics         UserAnalytics[]
   settings          Settings?
