@@ -1,83 +1,63 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+// import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Calendar, Clock, MapPin, Users, Video, Mic, Monitor, Coffee } from "lucide-react"
 
-export default function MySessions() {
-  const [filter, setFilter] = useState("all")
+interface CoSpeaker {
+  id?: string
+  name: string
+  company?: string
+}
 
-  const sessions = [
-    {
-      id: 1,
-      eventName: "TechConf 2024",
-      sessionTitle: "The Future of Cloud Architecture",
-      date: "2024-03-15",
-      time: "10:00 AM - 11:00 AM",
-      location: "Main Hall A",
-      duration: "60 minutes",
-      format: "Keynote",
-      status: "confirmed",
-      attendees: 450,
-      coSpeakers: [],
-      description: "Exploring emerging trends in cloud architecture and their impact on enterprise systems.",
-    },
-    {
-      id: 2,
-      eventName: "AI Summit 2024",
-      sessionTitle: "Machine Learning in Production",
-      date: "2024-03-22",
-      time: "2:00 PM - 3:30 PM",
-      location: "Workshop Room B",
-      duration: "90 minutes",
-      format: "Workshop",
-      status: "confirmed",
-      attendees: 120,
-      coSpeakers: [
-        { name: "Sarah Johnson", company: "DataTech Inc" },
-        { name: "Mike Chen", company: "ML Solutions" },
-      ],
-      description: "Hands-on workshop covering best practices for deploying ML models in production environments.",
-    },
-    {
-      id: 3,
-      eventName: "DevOps Days",
-      sessionTitle: "Scaling DevOps Culture",
-      date: "2024-04-05",
-      time: "11:30 AM - 12:30 PM",
-      location: "Conference Hall C",
-      duration: "60 minutes",
-      format: "Panel Discussion",
-      status: "pending",
-      attendees: 200,
-      coSpeakers: [
-        { name: "Alex Rodriguez", company: "CloudOps Pro" },
-        { name: "Lisa Wang", company: "DevScale" },
-      ],
-      description: "Panel discussion on building and scaling DevOps culture in large organizations.",
-    },
-    {
-      id: 4,
-      eventName: "Innovation Week",
-      sessionTitle: "Digital Transformation Strategies",
-      date: "2024-04-18",
-      time: "9:00 AM - 10:00 AM",
-      location: "Auditorium",
-      duration: "60 minutes",
-      format: "Fireside Chat",
-      status: "awaiting_approval",
-      attendees: 300,
-      coSpeakers: [],
-      description: "Intimate conversation about successful digital transformation initiatives.",
-    },
-  ]
+interface Session {
+  id: string
+  title: string
+  description: string
+  status: string
+  sessionType: string
+  duration: number
+  startTime: string
+  endTime: string
+  room?: string
+  event: { title: string }
+  speaker: { firstName: string; lastName: string }
+  coSpeakers?: CoSpeaker[]
+}
+
+export default function MySessions({ speakerId }: { speakerId: string }) {
+  const [filter, setFilter] = useState("all")
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadSessions() {
+      try {
+        const params = new URLSearchParams({ speakerId }) // ✅ pass speakerId as query param
+        const res = await fetch(`/api/events/speakers?${params.toString()}`)
+        const data = await res.json()
+        if (data.success) {
+          setSessions(data.sessions)
+        }
+      } catch (error) {
+        console.error("Failed to fetch sessions:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (speakerId) {
+      loadSessions()
+    }
+  }, [speakerId])
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "confirmed":
+      case "SCHEDULED":
         return "bg-green-100 text-green-800"
       case "pending":
         return "bg-yellow-100 text-yellow-800"
@@ -90,10 +70,13 @@ export default function MySessions() {
 
   const getFormatIcon = (format: string) => {
     switch (format) {
+      case "KEYNOTE":
       case "Keynote":
         return <Mic className="h-4 w-4" />
+      case "WORKSHOP":
       case "Workshop":
         return <Monitor className="h-4 w-4" />
+      case "PANEL":
       case "Panel Discussion":
         return <Users className="h-4 w-4" />
       case "Fireside Chat":
@@ -105,8 +88,12 @@ export default function MySessions() {
 
   const filteredSessions = sessions.filter((session) => {
     if (filter === "all") return true
-    return session.status === filter
+    return session.status.toLowerCase() === filter
   })
+
+  if (loading) {
+    return <p className="text-gray-600">Loading sessions...</p>
+  }
 
   return (
     <div className="space-y-6">
@@ -121,10 +108,10 @@ export default function MySessions() {
             size="sm"
             onClick={() => setFilter("confirmed")}
           >
-            Confirmed ({sessions.filter((s) => s.status === "confirmed").length})
+            Confirmed ({sessions.filter((s) => s.status.toLowerCase() === "confirmed").length})
           </Button>
           <Button variant={filter === "pending" ? "default" : "outline"} size="sm" onClick={() => setFilter("pending")}>
-            Pending ({sessions.filter((s) => s.status === "pending").length})
+            Pending ({sessions.filter((s) => s.status.toLowerCase() === "pending").length})
           </Button>
         </div>
       </div>
@@ -136,17 +123,17 @@ export default function MySessions() {
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
-                    <h3 className="text-xl font-semibold text-gray-900">{session.sessionTitle}</h3>
+                    <h3 className="text-xl font-semibold text-gray-900">{session.title}</h3>
                     <Badge className={getStatusColor(session.status)}>
                       {session.status.replace("_", " ").toUpperCase()}
                     </Badge>
                   </div>
-                  <p className="text-lg text-blue-600 font-medium">{session.eventName}</p>
+                  <p className="text-lg text-blue-600 font-medium">{session.event.title}</p>
                   <p className="text-gray-600">{session.description}</p>
                 </div>
                 <div className="flex items-center space-x-2 text-gray-500">
-                  {getFormatIcon(session.format)}
-                  <span className="text-sm font-medium">{session.format}</span>
+                  {getFormatIcon(session.sessionType)}
+                  <span className="text-sm font-medium">{session.sessionType}</span>
                 </div>
               </div>
             </CardHeader>
@@ -154,73 +141,24 @@ export default function MySessions() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-center space-x-2 text-gray-600">
                   <Calendar className="h-4 w-4" />
-                  <span>{new Date(session.date).toLocaleDateString()}</span>
+                  <span>{new Date(session.startTime).toLocaleDateString()}</span>
                 </div>
                 <div className="flex items-center space-x-2 text-gray-600">
                   <Clock className="h-4 w-4" />
-                  <span>{session.time}</span>
+                  <span>
+                    {new Date(session.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} -{" "}
+                    {new Date(session.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2 text-gray-600">
                   <MapPin className="h-4 w-4" />
-                  <span>{session.location}</span>
+                  <span>{session.room || "TBD"}</span>
                 </div>
               </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2 text-gray-600">
-                    <Users className="h-4 w-4" />
-                    <span>{session.attendees} expected attendees</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-gray-600">
-                    <Clock className="h-4 w-4" />
-                    <span>{session.duration}</span>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm">
-                  View Details
-                </Button>
-              </div>
-
-              {session.coSpeakers.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-medium text-gray-900">Co-Speakers:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {session.coSpeakers.map((speaker, index) => (
-                      <div key={index} className="flex items-center space-x-2 bg-gray-50 rounded-lg px-3 py-2">
-                        <Avatar className="w-6 h-6">
-                          <AvatarFallback className="text-xs">
-                            {speaker.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="text-sm font-medium">{speaker.name}</p>
-                          <p className="text-xs text-gray-500">{speaker.company}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         ))}
       </div>
-
-      {filteredSessions.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No sessions found</h3>
-            <p className="text-gray-600">
-              {filter === "all" ? "You don't have any speaking sessions yet." : `No ${filter} sessions found.`}
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }

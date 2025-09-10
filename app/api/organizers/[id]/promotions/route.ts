@@ -17,11 +17,16 @@ export async function GET(_request: Request, { params }: { params: Promise<Param
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const promotions = await prisma.promotion.findMany({
-      where: { organizerId: id },
-      include: { event: true },
-      orderBy: { createdAt: "desc" },
-    })
+    const whereClause =
+  session.user.role === "EXHIBITOR"
+    ? { exhibitorId: id }
+    : { organizerId: id }
+
+const promotions = await prisma.promotion.findMany({
+  where: whereClause,
+  include: { event: true },
+  orderBy: { createdAt: "desc" },
+})
 
     const events = await prisma.event.findMany({
       where: { organizerId: id, status: "PUBLISHED" },
