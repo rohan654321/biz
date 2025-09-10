@@ -46,7 +46,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
   const [events, setEvents] = useState<Event[]>([])
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
+  const [statusFilter, setStatusFilter] = useState<"all" | "upcoming" | "ongoing" | "past">("all")
   const [typeFilter, setTypeFilter] = useState("all")
   const [loading, setLoading] = useState(true)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
@@ -199,7 +199,6 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
 
   const uniqueTypes = [...new Set(events.map((event) => event.eventType).filter(Boolean))]
 
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -223,8 +222,8 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
 
       {/* Filters and Search */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
+        <CardContent className="p-4 space-y-4">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -236,17 +235,8 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                 />
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="upcoming">Upcoming</SelectItem>
-                <SelectItem value="ongoing">Ongoing</SelectItem>
-                <SelectItem value="past">Past Events</SelectItem>
-              </SelectContent>
-            </Select>
+
+            {/* Type Filter Dropdown */}
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Filter by type" />
@@ -260,6 +250,20 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Status Filter Buttons */}
+          <div className="flex gap-2">
+            {["all", "upcoming", "ongoing", "past"].map((status) => (
+              <Button
+                key={status}
+                variant={statusFilter === status ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter(status as typeof statusFilter)}
+              >
+                {status === "all" ? "All" : getStatusLabel(status)}
+              </Button>
+            ))}
           </div>
         </CardContent>
       </Card>
