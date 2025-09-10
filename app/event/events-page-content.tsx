@@ -281,22 +281,23 @@ export default function EventsPageContent() {
     }
 
     if (selectedCategories.length > 0) {
-      filtered = filtered.filter((event) =>
-        event.categories.some((cat) =>
-          selectedCategories.some(
-            (selectedCat) =>
-              cat.toLowerCase().includes(selectedCat.toLowerCase()) ||
-              selectedCat.toLowerCase().includes(cat.toLowerCase()),
-          ),
-        ),
-      )
+     filtered = filtered.filter((event) =>
+  event.categories.some((cat) =>
+    selectedCategories.some(
+      (selectedCat) => cat.toLowerCase().trim() === selectedCat.toLowerCase().trim()
+    )
+  )
+)
+
       console.log("[v0] After category filter:", filtered.length)
-    } else if (selectedCategory) {
-      filtered = filtered.filter((event) =>
-        event.categories.some((cat) => cat.toLowerCase().includes(selectedCategory.toLowerCase())),
-      )
-      console.log("[v0] After single category filter:", filtered.length)
-    }
+    }  else if (selectedCategory) {
+  filtered = filtered.filter((event) =>
+    event.categories.some(
+      (cat) => cat.toLowerCase().trim() === selectedCategory.toLowerCase().trim()
+    )
+  )
+}
+
 
     // Related topics filter
     if (selectedRelatedTopics.length > 0) {
@@ -838,7 +839,7 @@ export default function EventsPageContent() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">{event.title}</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">{event.title}</h3>
                               <div className="flex items-center text-sm text-gray-600 mb-1">
                                 <Calendar className="w-4 h-4 mr-2" />
                                 <span>
@@ -932,7 +933,7 @@ export default function EventsPageContent() {
                         </div>
                       </div>
                       <CardContent className="p-4">
-                        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{event.title}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">{event.title}</h3>
                         <div className="flex items-center text-sm text-gray-600 mb-1">
                           <MapPin className="w-4 h-4 mr-2" />
                           <span>{event.location?.city || "Location TBD"}</span>

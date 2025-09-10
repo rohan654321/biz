@@ -8,7 +8,18 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { Calendar, MapPin, Users, DollarSign, Edit, Trash2, Eye, Search, Plus, Loader2 } from "lucide-react"
+import {
+  Calendar,
+  MapPin,
+  Users,
+  DollarSign,
+  Edit,
+  Trash2,
+  Eye,
+  Search,
+  Plus,
+  Loader2,
+} from "lucide-react"
 import Image from "next/image"
 
 interface Event {
@@ -51,18 +62,16 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
   const [loading, setLoading] = useState(true)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
 
+  const defaultImage = "/herosection-images/test.jpeg"
+
   const calculateEventStatus = (startDate: string, endDate: string): "upcoming" | "ongoing" | "past" => {
     const now = new Date()
     const start = new Date(startDate)
     const end = new Date(endDate)
 
-    if (now < start) {
-      return "upcoming"
-    } else if (now >= start && now <= end) {
-      return "ongoing"
-    } else {
-      return "past"
-    }
+    if (now < start) return "upcoming"
+    if (now >= start && now <= end) return "ongoing"
+    return "past"
   }
 
   const fetchEvents = async () => {
@@ -80,34 +89,22 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
         setEvents(eventsWithStatus)
         setFilteredEvents(eventsWithStatus)
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to fetch events",
-          variant: "destructive",
-        })
+        toast({ title: "Error", description: "Failed to fetch events", variant: "destructive" })
       }
     } catch (error) {
       console.error("Error fetching events:", error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch events",
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: "Failed to fetch events", variant: "destructive" })
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    if (organizerId) {
-      fetchEvents()
-    }
+    if (organizerId) fetchEvents()
   }, [organizerId])
 
-  // Filter events based on search and filters
   useEffect(() => {
     let filtered = events
-
     if (searchTerm) {
       filtered = filtered.filter(
         (event) =>
@@ -117,81 +114,42 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
           event.city.toLowerCase().includes(searchTerm.toLowerCase()),
       )
     }
-
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((event) => event.status === statusFilter)
-    }
-
-    if (typeFilter !== "all") {
-      filtered = filtered.filter((event) => event.eventType.toLowerCase() === typeFilter.toLowerCase())
-    }
-
+    if (statusFilter !== "all") filtered = filtered.filter((event) => event.status === statusFilter)
+    if (typeFilter !== "all") filtered = filtered.filter((event) => event.eventType.toLowerCase() === typeFilter.toLowerCase())
     setFilteredEvents(filtered)
   }, [events, searchTerm, statusFilter, typeFilter])
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "upcoming":
-        return "default"
-      case "ongoing":
-        return "secondary"
-      case "past":
-        return "outline"
-      default:
-        return "secondary"
+      case "upcoming": return "default"
+      case "ongoing": return "secondary"
+      case "past": return "outline"
+      default: return "secondary"
     }
   }
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case "upcoming":
-        return "Upcoming"
-      case "ongoing":
-        return "Ongoing"
-      case "past":
-        return "Past Event"
-      default:
-        return status
+      case "upcoming": return "Upcoming"
+      case "ongoing": return "Ongoing"
+      case "past": return "Past Event"
+      default: return status
     }
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
-  }
+  const formatCurrency = (amount: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount)
+  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
 
   const handleDeleteEvent = async (eventId: string) => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/organizers/${organizerId}/events/${eventId}`, {
-        method: "DELETE",
-      })
-
+      const response = await fetch(`/api/organizers/${organizerId}/events/${eventId}`, { method: "DELETE" })
       if (response.ok) {
-        toast({
-          title: "Event Deleted",
-          description: "Event has been successfully deleted.",
-        })
+        toast({ title: "Event Deleted", description: "Event has been successfully deleted." })
         setEvents(events.filter((event) => event.id !== eventId))
-      } else {
-        throw new Error("Failed to delete event")
-      }
+      } else throw new Error("Failed to delete event")
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete event. Please try again.",
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: "Failed to delete event. Please try again.", variant: "destructive" })
     } finally {
       setLoading(false)
     }
@@ -227,16 +185,9 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search events..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+                <Input placeholder="Search events..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
               </div>
             </div>
-
-            {/* Type Filter Dropdown */}
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Filter by type" />
@@ -251,16 +202,9 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
               </SelectContent>
             </Select>
           </div>
-
-          {/* Status Filter Buttons */}
           <div className="flex gap-2">
             {["all", "upcoming", "ongoing", "past"].map((status) => (
-              <Button
-                key={status}
-                variant={statusFilter === status ? "default" : "outline"}
-                size="sm"
-                onClick={() => setStatusFilter(status as typeof statusFilter)}
-              >
+              <Button key={status} variant={statusFilter === status ? "default" : "outline"} size="sm" onClick={() => setStatusFilter(status as typeof statusFilter)}>
                 {status === "all" ? "All" : getStatusLabel(status)}
               </Button>
             ))}
@@ -268,167 +212,123 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
         </CardContent>
       </Card>
 
-      {/* Events Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Events List - two cards per row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {filteredEvents.map((event) => (
-          <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="relative h-48">
-              <Image
-                src={event.bannerImage || "/placeholder.svg?height=200&width=400&query=event banner"}
-                alt={event.title}
-                fill
-                className="object-cover"
-              />
-              <div className="absolute top-4 right-4">
-                <Badge variant={getStatusColor(event.status || "upcoming")}>
-                  {getStatusLabel(event.status || "upcoming")}
-                </Badge>
+          <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-shadow w-full">
+            <div className="flex flex-col md:flex-row">
+              {/* Image on left */}
+              <div className="relative w-full md:w-1/3 h-48">
+                <Image src={event.bannerImage || defaultImage} alt={event.title} fill className="object-cover" />
+                <div className="absolute top-4 right-4">
+                  <Badge variant={getStatusColor(event.status || "upcoming")}>
+                    {getStatusLabel(event.status || "upcoming")}
+                  </Badge>
+                </div>
               </div>
+
+              {/* Content on right */}
+              <CardContent className="p-6 flex-1">
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="font-semibold text-xl line-clamp-1">{event.title}</h3>
+                    <p className="text-sm text-gray-600 line-clamp-2">{event.description}</p>
+                  </div>
+
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      <span>
+                        {formatDate(event.startDate)} - {formatDate(event.endDate)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      <span className="line-clamp-1">{event.venue}, {event.city}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      <span>{event.attendees || 0} attendees</span>
+                      {event.maxAttendees && <span className="text-gray-400">/ {event.maxAttendees}</span>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-4 h-4" />
+                      <span>{formatCurrency(event.generalPrice)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-3 border-t">
+                    <Badge variant="outline">{event.eventType}</Badge>
+                    <div className="flex items-center gap-1">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedEvent(event)}>
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>{selectedEvent?.title}</DialogTitle>
+                          </DialogHeader>
+                          {selectedEvent && (
+                            <div className="space-y-4">
+                              <div className="relative h-64 rounded-lg overflow-hidden">
+                                <Image src={selectedEvent.bannerImage || defaultImage} alt={selectedEvent.title} fill className="object-cover" />
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <h4 className="font-medium mb-2">Event Details</h4>
+                                  <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Status:</span>
+                                      <Badge variant={getStatusColor(selectedEvent.status || "upcoming")}>
+                                        {getStatusLabel(selectedEvent.status || "upcoming")}
+                                      </Badge>
+                                    </div>
+                                    <div className="flex justify-between"><span className="text-gray-600">Type:</span><span>{selectedEvent.eventType}</span></div>
+                                    <div className="flex justify-between"><span className="text-gray-600">Start Date:</span><span>{formatDate(selectedEvent.startDate)}</span></div>
+                                    <div className="flex justify-between"><span className="text-gray-600">End Date:</span><span>{formatDate(selectedEvent.endDate)}</span></div>
+                                    <div className="flex justify-between"><span className="text-gray-600">Location:</span><span className="text-right">{selectedEvent.venue}, {selectedEvent.city}</span></div>
+                                  </div>
+                                </div>
+                                <div>
+                                  <h4 className="font-medium mb-2">Pricing & Stats</h4>
+                                  <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between"><span className="text-gray-600">General:</span><span>{formatCurrency(selectedEvent.generalPrice)}</span></div>
+                                    <div className="flex justify-between"><span className="text-gray-600">VIP:</span><span>{formatCurrency(selectedEvent.vipPrice)}</span></div>
+                                    <div className="flex justify-between"><span className="text-gray-600">Premium:</span><span>{formatCurrency(selectedEvent.premiumPrice)}</span></div>
+                                    <div className="flex justify-between"><span className="text-gray-600">Attendees:</span><span>{selectedEvent.attendees || 0}</span></div>
+                                    <div className="flex justify-between"><span className="text-gray-600">Revenue:</span><span>{formatCurrency(selectedEvent.revenue || 0)}</span></div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div>
+                                <h4 className="font-medium mb-2">Description</h4>
+                                <p className="text-sm text-gray-600">{selectedEvent.description}</p>
+                              </div>
+                              {selectedEvent.tags && selectedEvent.tags.length > 0 && (
+                                <div>
+                                  <h4 className="font-medium mb-2">Tags</h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {selectedEvent.tags.map((tag, index) => (
+                                      <Badge key={index} variant="outline">{tag}</Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </DialogContent>
+                      </Dialog>
+                      <Button variant="ghost" size="sm"><Edit className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteEvent(event.id)} disabled={loading}>
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
             </div>
-
-            <CardContent className="p-4">
-              <div className="space-y-3">
-                <div>
-                  <h3 className="font-semibold text-lg line-clamp-1">{event.title}</h3>
-                  <p className="text-sm text-gray-600 line-clamp-2">{event.description}</p>
-                </div>
-
-                <div className="space-y-2 text-sm text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    <span>
-                      {formatDate(event.startDate)} - {formatDate(event.endDate)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    <span className="line-clamp-1">
-                      {event.venue}, {event.city}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    <span>{event.attendees || 0} attendees</span>
-                    {event.maxAttendees && <span className="text-gray-400">/ {event.maxAttendees}</span>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4" />
-                    <span>{formatCurrency(event.generalPrice)}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-3 border-t">
-                  <Badge variant="outline">{event.eventType}</Badge>
-                  <div className="flex items-center gap-1">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="ghost" size="sm" onClick={() => setSelectedEvent(event)}>
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>{selectedEvent?.title}</DialogTitle>
-                        </DialogHeader>
-                        {selectedEvent && (
-                          <div className="space-y-4">
-                            <div className="relative h-64 rounded-lg overflow-hidden">
-                              <Image
-                                src={
-                                  selectedEvent.bannerImage ||
-                                  "/placeholder.svg?height=300&width=600&query=event banner"
-                                }
-                                alt={selectedEvent.title}
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <h4 className="font-medium mb-2">Event Details</h4>
-                                <div className="space-y-2 text-sm">
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">Status:</span>
-                                    <Badge variant={getStatusColor(selectedEvent.status || "upcoming")}>
-                                      {getStatusLabel(selectedEvent.status || "upcoming")}
-                                    </Badge>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">Type:</span>
-                                    <span>{selectedEvent.eventType}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">Start Date:</span>
-                                    <span>{formatDate(selectedEvent.startDate)}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">End Date:</span>
-                                    <span>{formatDate(selectedEvent.endDate)}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">Location:</span>
-                                    <span className="text-right">
-                                      {selectedEvent.venue}, {selectedEvent.city}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div>
-                                <h4 className="font-medium mb-2">Pricing & Stats</h4>
-                                <div className="space-y-2 text-sm">
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">General:</span>
-                                    <span>{formatCurrency(selectedEvent.generalPrice)}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">VIP:</span>
-                                    <span>{formatCurrency(selectedEvent.vipPrice)}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">Premium:</span>
-                                    <span>{formatCurrency(selectedEvent.premiumPrice)}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">Attendees:</span>
-                                    <span>{selectedEvent.attendees || 0}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">Revenue:</span>
-                                    <span>{formatCurrency(selectedEvent.revenue || 0)}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            <div>
-                              <h4 className="font-medium mb-2">Description</h4>
-                              <p className="text-sm text-gray-600">{selectedEvent.description}</p>
-                            </div>
-                            {selectedEvent.tags && selectedEvent.tags.length > 0 && (
-                              <div>
-                                <h4 className="font-medium mb-2">Tags</h4>
-                                <div className="flex flex-wrap gap-2">
-                                  {selectedEvent.tags.map((tag, index) => (
-                                    <Badge key={index} variant="outline">
-                                      {tag}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </DialogContent>
-                    </Dialog>
-                    <Button variant="ghost" size="sm">
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDeleteEvent(event.id)} disabled={loading}>
-                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
           </Card>
         ))}
       </div>
