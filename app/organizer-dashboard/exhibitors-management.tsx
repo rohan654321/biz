@@ -8,10 +8,21 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Search, Download, Mail, Phone, MoreHorizontal, Users, Calendar, DollarSign, Eye } from "lucide-react"
+import {
+  Search,
+  Download,
+  Mail,
+  Phone,
+  MoreHorizontal,
+  Building,
+  Calendar,
+  DollarSign,
+  Eye,
+  MapPin,
+} from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
-interface Attendee {
+interface Exhibitor {
   id: string
   firstName: string
   lastName: string
@@ -20,28 +31,34 @@ interface Attendee {
   company?: string
   jobTitle?: string
   avatar?: string
+  booth: {
+    id: string
+    boothNumber: string
+    companyName: string
+    description?: string
+    totalCost: number
+    status: string
+    additionalPower: number
+    compressedAir: number
+    space: {
+      name: string
+      spaceType: string
+    }
+  }
   event: {
     id: string
     title: string
     startDate: string
   }
-  registration: {
-    id: string
-    status: string
-    ticketType: string
-    quantity: number
-    totalAmount: number
-    registeredAt: string
-  }
 }
 
-interface AttendeesManagementProps {
+interface ExhibitorsManagementProps {
   organizerId: string
 }
 
-export default function AttendeesManagement({ organizerId }: AttendeesManagementProps) {
-  const [attendees, setAttendees] = useState<Attendee[]>([])
-  const [filteredAttendees, setFilteredAttendees] = useState<Attendee[]>([])
+export default function ExhibitorsManagement({ organizerId }: ExhibitorsManagementProps) {
+  const [exhibitors, setExhibitors] = useState<Exhibitor[]>([])
+  const [filteredExhibitors, setFilteredExhibitors] = useState<Exhibitor[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedEvent, setSelectedEvent] = useState<string>("all")
@@ -49,31 +66,31 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
   const { toast } = useToast()
 
   // Stats
-  const totalAttendees = attendees.length
-  const confirmedAttendees = attendees.filter((a) => a.registration.status === "CONFIRMED").length
-  const totalRevenue = attendees.reduce((sum, a) => sum + a.registration.totalAmount, 0)
-  const uniqueEvents = [...new Set(attendees.map((a) => a.event.id))].length
+  const totalExhibitors = exhibitors.length
+  const confirmedBooths = exhibitors.filter((e) => e.booth.status === "CONFIRMED").length
+  const totalRevenue = exhibitors.reduce((sum, e) => sum + e.booth.totalCost, 0)
+  const uniqueEvents = [...new Set(exhibitors.map((e) => e.event.id))].length
 
   useEffect(() => {
-    fetchAttendees()
+    fetchExhibitors()
   }, [organizerId])
 
   useEffect(() => {
-    filterAttendees()
-  }, [attendees, searchTerm, selectedEvent, selectedStatus])
+    filterExhibitors()
+  }, [exhibitors, searchTerm, selectedEvent, selectedStatus])
 
- const fetchAttendees = async () => {
+  const fetchExhibitors = async () => {
   try {
     setLoading(true)
-    const response = await fetch(`/api/organizers/${organizerId}/leads/attendees`)
-    if (!response.ok) throw new Error("Failed to fetch attendees")
+    const response = await fetch(`/api/organizers/${organizerId}/leads/exhibitor`)
+    if (!response.ok) throw new Error("Failed to fetch exhibitors")
 
     const data = await response.json()
 
-    // Backend returns attendeeLeads, not attendees
-    setAttendees(
+    // Transform backend response into frontend shape
+    setExhibitors(
       data.attendeeLeads.map((lead: any) => ({
-        id: lead.id,
+        id: lead.user.id,
         firstName: lead.user.firstName,
         lastName: lead.user.lastName,
         email: lead.user.email,
@@ -81,26 +98,32 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
         company: lead.user.company,
         jobTitle: lead.user.jobTitle,
         avatar: lead.user.avatar,
+        booth: {
+          id: lead.id, // mapping eventLead as booth id
+          boothNumber: lead.notes || "N/A", // you can replace with real booth number field
+          companyName: lead.user.company || "Unknown",
+          description: "",
+          totalCost: 0, // backend doesn’t provide cost, set 0 or extend schema
+          status: lead.status || "BOOKED",
+          additionalPower: 0,
+          compressedAir: 0,
+          space: {
+            name: lead.event.title,
+            spaceType: "Standard", // default or map if you add field
+          },
+        },
         event: {
           id: lead.event.id,
           title: lead.event.title,
           startDate: lead.event.startDate,
         },
-        registration: {
-          id: lead.id,
-          status: lead.status,
-          ticketType: lead.notes || "N/A", // no ticket type in backend, map something
-          quantity: 1, // adjust if you have quantity stored elsewhere
-          totalAmount: 0, // backend doesn’t return amount, set default or extend schema
-          registeredAt: lead.createdAt,
-        },
       }))
     )
   } catch (error) {
-    console.error("Error fetching attendees:", error)
+    console.error("Error fetching exhibitors:", error)
     toast({
       title: "Error",
-      description: "Failed to load attendees data",
+      description: "Failed to load exhibitors data",
       variant: "destructive",
     })
   } finally {
@@ -109,57 +132,62 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
 }
 
 
-  const filterAttendees = () => {
-    let filtered = attendees
+  const filterExhibitors = () => {
+    let filtered = exhibitors
 
     if (searchTerm) {
       filtered = filtered.filter(
-        (attendee) =>
-          `${attendee.firstName} ${attendee.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          attendee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          attendee.company?.toLowerCase().includes(searchTerm.toLowerCase()),
+        (exhibitor) =>
+          `${exhibitor.firstName} ${exhibitor.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          exhibitor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          exhibitor.booth.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          exhibitor.booth.boothNumber.toLowerCase().includes(searchTerm.toLowerCase()),
       )
     }
 
     if (selectedEvent !== "all") {
-      filtered = filtered.filter((attendee) => attendee.event.id === selectedEvent)
+      filtered = filtered.filter((exhibitor) => exhibitor.event.id === selectedEvent)
     }
 
     if (selectedStatus !== "all") {
-      filtered = filtered.filter((attendee) => attendee.registration.status === selectedStatus)
+      filtered = filtered.filter((exhibitor) => exhibitor.booth.status === selectedStatus)
     }
 
-    setFilteredAttendees(filtered)
+    setFilteredExhibitors(filtered)
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "CONFIRMED":
         return "bg-green-100 text-green-800"
-      case "PENDING":
+      case "BOOKED":
+        return "bg-blue-100 text-blue-800"
+      case "SETUP":
         return "bg-yellow-100 text-yellow-800"
+      case "ACTIVE":
+        return "bg-purple-100 text-purple-800"
+      case "COMPLETED":
+        return "bg-gray-100 text-gray-800"
       case "CANCELLED":
         return "bg-red-100 text-red-800"
-      case "WAITLISTED":
-        return "bg-blue-100 text-blue-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
   }
 
-  const exportAttendees = () => {
+  const exportExhibitors = () => {
     const csvContent = [
-      ["Name", "Email", "Phone", "Company", "Event", "Status", "Ticket Type", "Amount", "Registration Date"],
-      ...filteredAttendees.map((attendee) => [
-        `${attendee.firstName} ${attendee.lastName}`,
-        attendee.email,
-        attendee.phone || "",
-        attendee.company || "",
-        attendee.event.title,
-        attendee.registration.status,
-        attendee.registration.ticketType,
-        attendee.registration.totalAmount,
-        new Date(attendee.registration.registeredAt).toLocaleDateString(),
+      ["Name", "Email", "Phone", "Company", "Booth Number", "Event", "Status", "Space Type", "Total Cost"],
+      ...filteredExhibitors.map((exhibitor) => [
+        `${exhibitor.firstName} ${exhibitor.lastName}`,
+        exhibitor.email,
+        exhibitor.phone || "",
+        exhibitor.booth.companyName,
+        exhibitor.booth.boothNumber,
+        exhibitor.event.title,
+        exhibitor.booth.status,
+        exhibitor.booth.space.spaceType,
+        exhibitor.booth.totalCost,
       ]),
     ]
       .map((row) => row.join(","))
@@ -169,7 +197,7 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = "attendees.csv"
+    a.download = "exhibitors.csv"
     a.click()
     window.URL.revokeObjectURL(url)
   }
@@ -178,7 +206,7 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Loading attendees...</span>
+        <span className="ml-2">Loading exhibitors...</span>
       </div>
     )
   }
@@ -188,10 +216,10 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">Attendees Management</h1>
-          <p className="text-gray-600">Manage and track your event attendees</p>
+          <h1 className="text-2xl font-bold">Exhibitors Management</h1>
+          <p className="text-gray-600">Manage and track your event exhibitors</p>
         </div>
-        <Button onClick={exportAttendees} className="flex items-center gap-2">
+        <Button onClick={exportExhibitors} className="flex items-center gap-2">
           <Download className="w-4 h-4" />
           Export CSV
         </Button>
@@ -202,10 +230,10 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-600" />
+              <Building className="w-5 h-5 text-blue-600" />
               <div>
-                <p className="text-sm text-gray-600">Total Attendees</p>
-                <p className="text-2xl font-bold">{totalAttendees}</p>
+                <p className="text-sm text-gray-600">Total Exhibitors</p>
+                <p className="text-2xl font-bold">{totalExhibitors}</p>
               </div>
             </div>
           </CardContent>
@@ -214,10 +242,10 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-green-600" />
+              <Building className="w-5 h-5 text-green-600" />
               <div>
-                <p className="text-sm text-gray-600">Confirmed</p>
-                <p className="text-2xl font-bold">{confirmedAttendees}</p>
+                <p className="text-sm text-gray-600">Confirmed Booths</p>
+                <p className="text-2xl font-bold">{confirmedBooths}</p>
               </div>
             </div>
           </CardContent>
@@ -256,7 +284,7 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
-                  placeholder="Search attendees..."
+                  placeholder="Search exhibitors..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -270,7 +298,7 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
               className="px-3 py-2 border rounded-md"
             >
               <option value="all">All Events</option>
-              {[...new Set(attendees.map((a) => ({ id: a.event.id, title: a.event.title })))].map((event) => (
+              {[...new Set(exhibitors.map((e) => ({ id: e.event.id, title: e.event.title })))].map((event) => (
                 <option key={event.id} value={event.id}>
                   {event.title}
                 </option>
@@ -283,89 +311,105 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
               className="px-3 py-2 border rounded-md"
             >
               <option value="all">All Status</option>
+              <option value="BOOKED">Booked</option>
               <option value="CONFIRMED">Confirmed</option>
-              <option value="PENDING">Pending</option>
+              <option value="SETUP">Setup</option>
+              <option value="ACTIVE">Active</option>
+              <option value="COMPLETED">Completed</option>
               <option value="CANCELLED">Cancelled</option>
-              <option value="WAITLISTED">Waitlisted</option>
             </select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Attendees Table */}
+      {/* Exhibitors Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Attendees ({filteredAttendees.length})</CardTitle>
+          <CardTitle>Exhibitors ({filteredExhibitors.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Attendee</TableHead>
+                <TableHead>Exhibitor</TableHead>
                 <TableHead>Contact</TableHead>
+                <TableHead>Booth Details</TableHead>
                 <TableHead>Event</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Ticket</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Registered</TableHead>
+                <TableHead>Services</TableHead>
+                <TableHead>Total Cost</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAttendees.map((attendee) => (
-                <TableRow key={attendee.id}>
+              {filteredExhibitors.map((exhibitor) => (
+                <TableRow key={exhibitor.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="w-8 h-8">
-                        <AvatarImage src={attendee.avatar || "/placeholder.svg"} />
+                        <AvatarImage src={exhibitor.avatar || "/placeholder.svg"} />
                         <AvatarFallback>
-                          {attendee.firstName[0]}
-                          {attendee.lastName[0]}
+                          {exhibitor.firstName[0]}
+                          {exhibitor.lastName[0]}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <p className="font-medium">
-                          {attendee.firstName} {attendee.lastName}
+                          {exhibitor.firstName} {exhibitor.lastName}
                         </p>
-                        {attendee.company && <p className="text-sm text-gray-600">{attendee.company}</p>}
-                        {attendee.jobTitle && <p className="text-xs text-gray-500">{attendee.jobTitle}</p>}
+                        <p className="text-sm text-gray-600">{exhibitor.booth.companyName}</p>
+                        {exhibitor.jobTitle && <p className="text-xs text-gray-500">{exhibitor.jobTitle}</p>}
                       </div>
                     </div>
                   </TableCell>
 
                   <TableCell>
                     <div className="space-y-1">
-                      <p className="text-sm">{attendee.email}</p>
-                      {attendee.phone && <p className="text-sm text-gray-600">{attendee.phone}</p>}
+                      <p className="text-sm">{exhibitor.email}</p>
+                      {exhibitor.phone && <p className="text-sm text-gray-600">{exhibitor.phone}</p>}
                     </div>
                   </TableCell>
 
                   <TableCell>
                     <div>
-                      <p className="font-medium text-sm">{attendee.event.title}</p>
-                      <p className="text-xs text-gray-600">{new Date(attendee.event.startDate).toLocaleDateString()}</p>
+                      <p className="font-medium text-sm flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        Booth {exhibitor.booth.boothNumber}
+                      </p>
+                      <p className="text-xs text-gray-600">{exhibitor.booth.space.name}</p>
+                      <p className="text-xs text-gray-500">{exhibitor.booth.space.spaceType}</p>
                     </div>
-                  </TableCell>
-
-                  <TableCell>
-                    <Badge className={getStatusColor(attendee.registration.status)}>
-                      {attendee.registration.status}
-                    </Badge>
                   </TableCell>
 
                   <TableCell>
                     <div>
-                      <p className="text-sm">{attendee.registration.ticketType}</p>
-                      <p className="text-xs text-gray-600">Qty: {attendee.registration.quantity}</p>
+                      <p className="font-medium text-sm">{exhibitor.event.title}</p>
+                      <p className="text-xs text-gray-600">
+                        {new Date(exhibitor.event.startDate).toLocaleDateString()}
+                      </p>
                     </div>
                   </TableCell>
 
                   <TableCell>
-                    <p className="font-medium">₹{attendee.registration.totalAmount.toLocaleString()}</p>
+                    <Badge className={getStatusColor(exhibitor.booth.status)}>{exhibitor.booth.status}</Badge>
                   </TableCell>
 
                   <TableCell>
-                    <p className="text-sm">{new Date(attendee.registration.registeredAt).toLocaleDateString()}</p>
+                    <div className="space-y-1">
+                      {exhibitor.booth.additionalPower > 0 && (
+                        <p className="text-xs">Power: {exhibitor.booth.additionalPower} KW</p>
+                      )}
+                      {exhibitor.booth.compressedAir > 0 && (
+                        <p className="text-xs">Air: {exhibitor.booth.compressedAir} HP</p>
+                      )}
+                      {exhibitor.booth.additionalPower === 0 && exhibitor.booth.compressedAir === 0 && (
+                        <p className="text-xs text-gray-500">Basic</p>
+                      )}
+                    </div>
+                  </TableCell>
+
+                  <TableCell>
+                    <p className="font-medium">₹{exhibitor.booth.totalCost.toLocaleString()}</p>
                   </TableCell>
 
                   <TableCell>
@@ -396,9 +440,9 @@ export default function AttendeesManagement({ organizerId }: AttendeesManagement
             </TableBody>
           </Table>
 
-          {filteredAttendees.length === 0 && (
+          {filteredExhibitors.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-gray-500">No attendees found matching your criteria</p>
+              <p className="text-gray-500">No exhibitors found matching your criteria</p>
             </div>
           )}
         </CardContent>

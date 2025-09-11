@@ -6,8 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Star, Phone, Mail, MapPin, Clock, IndianRupee } from "lucide-react"
-import { notFound } from "next/navigation"
+import { Star, Mail, MapPin, Clock, IndianRupee } from "lucide-react"
 import EventHero from "@/components/event-hero"
 import EventImageGallery from "@/components/event-image-gallery"
 import { Plus } from "lucide-react"
@@ -16,6 +15,9 @@ import { Bookmark } from "lucide-react"
 import { useEffect, useState } from "react"
 import ExhibitorsTab from "./exhibitors-tab"
 import SpeakersTab from "./speakers-tab"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 
 interface EventPageProps {
   params: Promise<{
@@ -27,43 +29,103 @@ export default function EventPage({ params }: EventPageProps) {
   const [event, setEvent] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { data: session } = useSession()
+  const router = useRouter()
+  const { toast } = useToast()
 
   useEffect(() => {
     async function fetchEvent() {
       try {
         setLoading(true)
         setError(null)
-        
-        // Await the params Promise to get the actual id
+
         const resolvedParams = await params
         const eventId = resolvedParams.id
-        
-        // ✅ FIXED: Call the correct endpoint for single event
-        const res = await fetch(`/api/events/${eventId}`);
-        
+
+        const res = await fetch(`/api/events/${eventId}`)
+
         if (!res.ok) {
           if (res.status === 404) {
-            setError('Event not found')
+            setError("Event not found")
             return
           }
           throw new Error(`HTTP error! status: ${res.status}`)
         }
-        
-        const data = await res.json();
-        
-        // ✅ FIXED: Your API returns { event: ... }, not { events: [...] }
-        setEvent(data.event);
 
+        const data = await res.json()
+
+        setEvent(data.event)
       } catch (err) {
-        console.error('Error fetching event:', err)
-        setError(err instanceof Error ? err.message : 'An error occurred')
+        console.error("Error fetching event:", err)
+        setError(err instanceof Error ? err.message : "An error occurred")
       } finally {
         setLoading(false)
       }
     }
-    
+
     fetchEvent()
   }, [params])
+
+const handleVisitClick = async () => {
+  if (!session) {
+    alert("Authentication Required\nPlease log in to express interest in this event");
+    router.push("/login");
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/events/${event.id}/leads`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type: "attendee",
+        userId: session.user.id,
+        eventId: event.id,
+      }),
+    });
+
+    if (response.ok) {
+      alert("Your visit request has been sent to the organizer successfully!");
+    } else {
+      throw new Error("Failed to record interest");
+    }
+  } catch (error) {
+    alert("Failed to record your interest. Please try again.");
+  }
+};
+
+const handleExhibitClick = async () => {
+  if (!session) {
+    alert("Authentication Required\nPlease log in to express interest in exhibiting");
+    router.push("/login");
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/events/${event.id}/leads`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type: "exhibitor",
+        userId: session.user.id,
+        eventId: event.id,
+      }),
+    });
+
+    if (response.ok) {
+      alert("Your exhibition request has been sent to the organizer successfully!");
+    } else {
+      throw new Error("Failed to record interest");
+    }
+  } catch (error) {
+    alert("Failed to record your interest. Please try again.");
+  }
+};
+
 
   if (loading) {
     return (
@@ -102,82 +164,77 @@ export default function EventPage({ params }: EventPageProps) {
     imageUrl: "/placeholder.svg?height=80&width=80&text=Profile",
   })
 
-  // ✅ FIXED: Format dates properly
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     })
   }
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
     })
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <EventHero event={event} />
-       
-       {/* Event Details Section */}
+
       <div className=" max-w-7xl mx-auto py-4">
         <div className="bg-white rounded-sm  p-6 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            {/* Event Title and Info */}
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-blue-900 mb-2">{event.title}</h1>
               <div className="flex items-center gap-2 text-gray-600 mb-3">
                 <MapPin className="w-4 h-4" />
-                {/* ✅ FIXED: Use actual event data */}
-                <span>{event.address || event.location || 'Location TBA'}</span>
+                <span>{event.address || event.location || "Location TBA"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center justify-center gap-4">
-                <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                  <Plus className="w-4 h-4" />
-                  Get Directions
-                </Button>
+                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    Get Directions
+                  </Button>
                   <div className="flex items-center">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="ml-1 font-medium">4.5</span>
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <span className="ml-1 font-medium">4.5</span>
+                  </div>
+                  <Button variant="ghost" size="sm">
+                    <Bookmark className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm">
+                    <Share2 className="w-4 h-4" />
+                  </Button>
                 </div>
-                <Button variant="ghost" size="sm">
-                  <Bookmark className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="sm">
-                  <Share2 className="w-4 h-4" />
-                </Button>
-              </div>
-
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex flex-col gap-4 pr-4 lg:pr-4">
               <p className="text-center text-gray-700 font-medium">Interested in this Event ?</p>
               <div className="flex gap-3 ">
-                <Button variant="outline" className="flex-1 border-gray-300 bg-transparent">
+                <Button variant="outline" className="flex-1 border-gray-300 bg-transparent" onClick={handleVisitClick}>
                   Visit
                 </Button>
-                <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 ">
-                  Exhibit</Button>
+                <Button
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
+                  onClick={handleExhibitClick}
+                >
+                  Exhibit
+                </Button>
               </div>
-              
             </div>
           </div>
         </div>
-       </div>
-      {/* Main Content */}
+      </div>
+
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Main Content */}
           <div className="flex-1">
             <Tabs defaultValue="about" className="w-full">
-              {/* Enhanced Tab Navigation */}
               <div className="bg-white rounded-lg mb-6 shadow-sm border border-gray-200">
                 <TabsList className="grid w-full grid-cols-9 h-auto p-0 bg-transparent">
                   <TabsTrigger
@@ -238,16 +295,14 @@ export default function EventPage({ params }: EventPageProps) {
               </div>
 
               <TabsContent value="about" className="space-y-6">
-                {/* Enhanced Image Gallery with Carousel */}
                 <EventImageGallery images={event.images || [event.bannerImage].filter(Boolean)} />
 
-                {/* Event Description */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       About the Event
                       <Badge variant="secondary" className="text-xs">
-                        {event.category || 'General'}
+                        {event.category || "General"}
                       </Badge>
                     </CardTitle>
                   </CardHeader>
@@ -259,7 +314,6 @@ export default function EventPage({ params }: EventPageProps) {
                   </CardContent>
                 </Card>
 
-                {/* Listed In Section */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-blue-700">Listed In</CardTitle>
@@ -273,14 +327,11 @@ export default function EventPage({ params }: EventPageProps) {
                         >
                           #{tag}
                         </button>
-                      )) || (
-                        <p className="text-gray-500">No tags available</p>
-                      )}
+                      )) || <p className="text-gray-500">No tags available</p>}
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Enhanced Event Details Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ">
                   <div className="hover:shadow-md transition-shadow border-2 rounded-lg">
                     <CardHeader className="bg-blue-100 rounded-t-lg p-4">
@@ -292,15 +343,11 @@ export default function EventPage({ params }: EventPageProps) {
                     <CardContent className="space-y-3 pt-4">
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Start Date:</span>
-                        <span className="font-semibold text-blue-600">
-                          {formatDate(event.startDate)}
-                        </span>
+                        <span className="font-semibold text-blue-600">{formatDate(event.startDate)}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">End Date:</span>
-                        <span className="font-semibold text-blue-600">
-                          {formatDate(event.endDate)}
-                        </span>
+                        <span className="font-semibold text-blue-600">{formatDate(event.endDate)}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Timezone:</span>
@@ -319,15 +366,11 @@ export default function EventPage({ params }: EventPageProps) {
                     <CardContent className="space-y-3 pt-4">
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Registration Start:</span>
-                        <span className="font-semibold text-blue-600">
-                          {formatDate(event.registrationStart)}
-                        </span>
+                        <span className="font-semibold text-blue-600">{formatDate(event.registrationStart)}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Registration End:</span>
-                        <span className="font-semibold text-blue-600">
-                          {formatDate(event.registrationEnd)}
-                        </span>
+                        <span className="font-semibold text-blue-600">{formatDate(event.registrationEnd)}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Status:</span>
@@ -343,13 +386,11 @@ export default function EventPage({ params }: EventPageProps) {
                       <CardTitle>Event Type</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-4">
-                      <p className="text-gray-700">
-                        {event.isVirtual ? 'Virtual Event' : 'Physical Event'}
-                      </p>
+                      <p className="text-gray-700">{event.isVirtual ? "Virtual Event" : "Physical Event"}</p>
                       {event.isVirtual && event.virtualLink && (
-                        <a 
-                          href={event.virtualLink} 
-                          target="_blank" 
+                        <a
+                          href={event.virtualLink}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:underline mt-2 block"
                         >
@@ -380,7 +421,6 @@ export default function EventPage({ params }: EventPageProps) {
                   </div>
                 </div>
 
-                {/* Organizer Section */}
                 <Card className="border border-blue-200">
                   <CardHeader>
                     <CardTitle className="text-blue-900 text-base">Organizer</CardTitle>
@@ -399,7 +439,7 @@ export default function EventPage({ params }: EventPageProps) {
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-blue-900 text-sm">
-                            {event.organizer?.firstName || 'Event Organizer'}
+                            {event.organizer?.firstName || "Event Organizer"}
                           </h3>
                           <span className="bg-red-500 text-white text-xs font-medium px-2 py-0.5 rounded">
                             Verified
@@ -412,7 +452,6 @@ export default function EventPage({ params }: EventPageProps) {
                   </CardContent>
                 </Card>
 
-                {/* Venue Map */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Venue Information</CardTitle>
@@ -423,11 +462,9 @@ export default function EventPage({ params }: EventPageProps) {
                         <MapPin className="w-12 h-12 mx-auto text-blue-500 mb-2" />
                         <p className="text-gray-700 font-medium">Event Venue</p>
                         <p className="text-sm text-gray-600 mt-1">
-                          {event.location || 'Venue details will be updated soon'}
+                          {event.location || "Venue details will be updated soon"}
                         </p>
-                        {event.address && (
-                          <p className="text-xs text-gray-500 mt-1">{event.address}</p>
-                        )}
+                        {event.address && <p className="text-xs text-gray-500 mt-1">{event.address}</p>}
                         <Button className="mt-3" size="sm">
                           Get Directions
                         </Button>
@@ -479,7 +516,6 @@ export default function EventPage({ params }: EventPageProps) {
                 </Card>
               </TabsContent>
 
-              {/* Other tabs remain the same... */}
               <TabsContent value="layout">
                 <Card>
                   <CardHeader>
@@ -517,23 +553,21 @@ export default function EventPage({ params }: EventPageProps) {
                   <CardContent>
                     <div className="space-y-4">
                       <div>
-                        <h4 className="font-semibold">{event.venue?.firstName || 'Venue Name'}</h4>
-                        <p className="text-gray-600">{event.address || 'Address not available'}</p>
+                        <h4 className="font-semibold">{event.venue?.firstName || "Venue Name"}</h4>
+                        <p className="text-gray-600">{event.address || "Address not available"}</p>
                         <p className="text-gray-600">
-                          {event.city && event.state ? `${event.city}, ${event.state}` : 'Location TBA'}
+                          {event.city && event.state ? `${event.city}, ${event.state}` : "Location TBA"}
                         </p>
-                        {event.country && (
-                          <p className="text-gray-600">{event.country}</p>
-                        )}
+                        {event.country && <p className="text-gray-600">{event.country}</p>}
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
 
-             <TabsContent value="speakers">
-  <SpeakersTab eventId={event.id} />
-</TabsContent>
+              <TabsContent value="speakers">
+                <SpeakersTab eventId={event.id} />
+              </TabsContent>
 
               <TabsContent value="organizer">
                 <Card>
@@ -545,16 +579,16 @@ export default function EventPage({ params }: EventPageProps) {
                       <Avatar className="w-16 h-16">
                         <AvatarImage src={event.organizer?.avatar || "/placeholder.svg"} />
                         <AvatarFallback className="text-lg">
-                          {event.organizer?.firstName?.charAt(0) || 'O'}
+                          {event.organizer?.firstName?.charAt(0) || "O"}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-lg">{event.organizer?.firstName || 'Event Organizer'}</h4>
+                        <h4 className="font-semibold text-lg">{event.organizer?.firstName || "Event Organizer"}</h4>
                         <p className="text-gray-600 mb-3">Professional event organizer and manager</p>
                         <div className="flex flex-wrap items-center gap-4">
                           <div className="flex items-center gap-2 text-sm">
                             <Mail className="w-4 h-4 text-green-600" />
-                            <span>{event.organizer?.email || 'Contact via platform'}</span>
+                            <span>{event.organizer?.email || "Contact via platform"}</span>
                           </div>
                         </div>
                       </div>
@@ -583,9 +617,7 @@ export default function EventPage({ params }: EventPageProps) {
             </Tabs>
           </div>
 
-          {/* Enhanced Sidebar */}
           <div className="lg:w-80 space-y-6">
-            {/* Featured Items */}
             <Card className="hover:shadow-md transition-shadow border-r-2  rounded-lg">
               <CardHeader>
                 <CardTitle className="text-lg">Featured Hotels</CardTitle>
@@ -595,7 +627,6 @@ export default function EventPage({ params }: EventPageProps) {
               </CardContent>
             </Card>
 
-            {/* Featured Travel Partners */}
             <Card className="hover:shadow-md transition-shadow border-r-2 rounded-lg">
               <CardHeader>
                 <CardTitle className="text-lg">Featured Travel Partners</CardTitle>
@@ -605,10 +636,9 @@ export default function EventPage({ params }: EventPageProps) {
               </CardContent>
             </Card>
 
-            {/* Places to Visit */}
             <Card className="hover:shadow-md transition-shadow border-r-2 rounded-lg">
               <CardHeader>
-                <CardTitle className="text-lg">Places to Visit in {event.city || 'the area'}</CardTitle>
+                <CardTitle className="text-lg">Places to Visit in {event.city || "the area"}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-gray-600">No tourist attractions available.</p>

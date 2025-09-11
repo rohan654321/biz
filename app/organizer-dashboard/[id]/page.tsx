@@ -40,11 +40,13 @@ import {
   Building,
   Mic,
   ClipboardList,
-  Star,
   MessageCircle,
   Reply,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
+import VisitorBadgeSettings from "../Visitor-Badge-Settings"
+// import ExhibitorsForEvent from "../ExhibitorsForEvent"
+import ExhibitorsEventWise from "../ExhibitorsEventWise"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,10 +68,12 @@ import OrganizerInfo from "../organizer-info"
 import RevenueManagement from "../revenue-management"
 import AddSpeaker from "../add-speaker"
 import AddExhibitor from "../add-exhibitor"
-// import BookVenue from "../book-venue"
+import ExhibitorsManagement from "../exhibitors-management"
 import AddVenue from "../add-venue"
 import ActivePromotions from "../ActivePromotion"
 import { ExhibitorManualProfessional } from "../exhibitor-manual/exhibitor-manual"
+import SpeakerSessionsTable from "../SpeakerSessionsTable"
+import ExhibitorsForEvent from "../ExhibitorsForEvent"
 
 interface OrganizerData {
   id: string
@@ -303,11 +307,11 @@ export default function OrganizerDashboardPage() {
           icon: Building,
           id: "exhibitors",
         },
-        {
-          title: "Sponsors",
-          icon: Star,
-          id: "sponsors",
-        },
+        // {
+        //   title: "Sponsors",
+        //   icon: Star,
+        //   id: "sponsors",
+        // },
       ],
     },
     {
@@ -353,16 +357,6 @@ export default function OrganizerDashboardPage() {
       ],
     },
     {
-
-      title: "ExhibitorManual",
-      icon: Plus,
-      id: "ExhibitorManual",
-    },
-    {
-      title: "Attendees",
-      icon: Users,
-      id: "attendees",
-    },{
       id: "speaker-management",
       label: "Speaker Management",
       items: [
@@ -387,7 +381,6 @@ export default function OrganizerDashboardPage() {
           id: "speaker",
         },
       ],
-
     },
     {
       id: "feedback",
@@ -405,7 +398,7 @@ export default function OrganizerDashboardPage() {
         },
       ],
     },
-        {
+    {
       id: "other",
       label: "Other",
       items: [
@@ -509,21 +502,12 @@ export default function OrganizerDashboardPage() {
         return <CreateEvent organizerId={organizerId} />
       case "active-promotions":
         return <ActivePromotions organizerId={organizerId} />
-        case "ExhibitorManual":
-        return <ExhibitorManualProfessional organizerId={organizerId} />
-        // case "ExhibitorManual":
-        // return <ExhibitorManual organizerId={organizerId} />
       case "addvenue":
         return <AddVenue organizerId={organizerId} />
       case "attendees":
-        return (
-          <AttendeesManagement
-            attendees={attendees}
-            onSendMessageClick={(): void => {
-              throw new Error("Function not implemented.")
-            }}
-          />
-        )
+        return <AttendeesManagement organizerId={organizerId} />
+      case "exhibitors":
+        return <ExhibitorsManagement organizerId={organizerId} />
       case "analytics":
         return analyticsData ? (
           <AnalyticsDashboard analyticsData={analyticsData} events={events} organizerId={organizerId} />
@@ -557,23 +541,21 @@ export default function OrganizerDashboardPage() {
       case "change-password":
         return <PlaceholderPage title="Change Password" />
       case "visitor-badge-settings":
-        return <PlaceholderPage title="Visitor Badge Settings" />
-      case "exhibitors":
-        return <PlaceholderPage title="Exhibitors" />
+        return <VisitorBadgeSettings />
       case "sponsors":
         return <PlaceholderPage title="Sponsors" />
       case "total-exhibitors":
-        return <PlaceholderPage title="Total Exhibitors" />
+          return <ExhibitorsForEvent />
       case "exhibitors-event-wise":
-        return <PlaceholderPage title="Exhibitors Event Wise" />
+        return <ExhibitorsEventWise />
       case "exhibitor-manual":
-        return <PlaceholderPage title="Exhibitor Manual" />
+        // return <ExhibitorManualProfessional organizerId={organizerId} />
       case "conference-agenda":
         return <PlaceholderPage title="Conference Agenda" />
       case "create-conference-agenda":
         return <PlaceholderPage title="Create Conference Agenda" />
       case "speakers":
-        return <PlaceholderPage title="Speakers" />
+        return <SpeakerSessionsTable organizerId={organizerId} />
       case "feedback":
         return <PlaceholderPage title="Feed Back" />
       case "feedback-reply":
@@ -631,7 +613,6 @@ export default function OrganizerDashboardPage() {
                             <item.icon className="w-4 h-4" />
                             <span>{item.title}</span>
                           </SidebarMenuButton>
-     
                         </SidebarMenuItem>
                       ))}
                     </SidebarMenu>
@@ -640,15 +621,13 @@ export default function OrganizerDashboardPage() {
               </SidebarGroup>
             ))}
           </SidebarContent>
- <Button
-  onClick={() => signOut({ callbackUrl: "/login" })}
-  className="bg-red-600 text-white border border-transparent rounded-none cursor-pointer"
->
-  <User className="mr-2 h-4 w-4" />
-  <span>Logout</span>
-</Button>
-
-
+          <Button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="bg-red-600 text-white border border-transparent rounded-none cursor-pointer"
+          >
+            <User className="mr-2 h-4 w-4" />
+            <span>Logout</span>
+          </Button>
         </Sidebar>
 
         <SidebarInset className="flex-1">
@@ -672,22 +651,21 @@ export default function OrganizerDashboardPage() {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-<DropdownMenuContent className="w-56" align="end" forceMount>
-  <DropdownMenuItem onClick={() => setActiveSection("info")}>
-    <User className="mr-2 h-4 w-4" />
-    <span>Company Profile</span>
-  </DropdownMenuItem>
-  <DropdownMenuItem onClick={() => setActiveSection("settings")}>
-    <Settings className="mr-2 h-4 w-4" />
-    <span>Change Password</span>
-  </DropdownMenuItem>
-  <DropdownMenuSeparator />
-  <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
-    <User className="mr-2 h-4 w-4" />
-    <span>Logout</span>
-  </DropdownMenuItem>
-</DropdownMenuContent>
-
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuItem onClick={() => setActiveSection("info")}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Company Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setActiveSection("settings")}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Change Password</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </header>

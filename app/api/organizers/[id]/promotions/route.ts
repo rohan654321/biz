@@ -23,7 +23,7 @@ export async function GET(
     // ✅ Fetch promotions for the given id (either exhibitorId or organizerId)
     const promotions = await prisma.promotion.findMany({
       where: {
-        OR: [{ exhibitorId: id }, { organizerId: id }],
+        OR: [ { organizerId: id }],
       },
       include: { event: true },
       orderBy: { createdAt: "desc" },
@@ -97,7 +97,7 @@ export async function POST(
         startDate,
         endDate,
         status: "PENDING",
-        exhibitorId: id, // store under exhibitor
+        // exhibitorId: id, // store under exhibitor
         organizerId: id, // also store under organizer (optional: depends on schema)
       },
       include: { event: true },

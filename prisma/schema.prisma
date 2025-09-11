@@ -82,6 +82,7 @@ model User {
   venueReviews Review[] @relation("VenueReviews")
   venueAnalytics VenueAnalytics[]
   meetingSpaces MeetingSpace[] 
+  leads           EventLead[]
   promotions   Promotion[] // ✅ back relation for event promotions
 
     // Relations for organizer-speaker
@@ -214,7 +215,7 @@ model Event {
   reviews         Review[]
   analytics       EventAnalytics[]
   campaigns       Campaign[]
-
+  leads           EventLead[]
   promotions Promotion[] // ✅ back relation for event promotions
 
   @@map("events")
@@ -873,4 +874,43 @@ model BroadcastRecipient {
   
   @@unique([broadcastId, userId])
   @@map("broadcast_recipients")
+}
+
+// Event Lead Management
+model EventLead {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId         String   @db.ObjectId
+  event           Event    @relation(fields: [eventId], references: [id])
+  userId          String   @db.ObjectId
+  user            User     @relation(fields: [userId], references: [id])
+  
+  type            LeadType // attendee, exhibitor, etc.
+  status          LeadStatus @default(NEW)
+  notes           String?
+  
+  contactedAt     DateTime?
+  followUpDate    DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([eventId, userId, type])
+  @@map("event_leads")
+}
+
+enum LeadType {
+  ATTENDEE
+  EXHIBITOR
+  SPEAKER
+  SPONSOR
+  PARTNER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  REJECTED
+  FOLLOW_UP
 }

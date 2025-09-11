@@ -3,7 +3,14 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 
-export async function GET(request: NextRequest, { params }: { params: { exhibitorId: string } }) {
+interface Params {
+  exhibitorId: string
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<Params> } // 👈 params is a Promise
+) {
   try {
     console.log("[v0] GET /api/exhibitors/[exhibitorId]/events called")
 
@@ -13,17 +20,18 @@ export async function GET(request: NextRequest, { params }: { params: { exhibito
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { exhibitorId } = params
+    const { exhibitorId } = await params // 👈 await here
     console.log("[v0] Fetching events for exhibitorId:", exhibitorId)
 
     if (!exhibitorId) {
-      return NextResponse.json({ error: "exhibitorId is required" }, { status: 400 })
+      return NextResponse.json(
+        { error: "exhibitorId is required" },
+        { status: 400 }
+      )
     }
 
     const booths = await prisma.exhibitorBooth.findMany({
-      where: {
-        exhibitorId: exhibitorId,
-      },
+      where: { exhibitorId },
       include: {
         event: {
           select: {
@@ -53,9 +61,7 @@ export async function GET(request: NextRequest, { params }: { params: { exhibito
           },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: { createdAt: "desc" },
     })
 
     const events = booths.map((booth) => ({
@@ -65,13 +71,13 @@ export async function GET(request: NextRequest, { params }: { params: { exhibito
       date: booth.event.startDate.toISOString().split("T")[0],
       endDate: booth.event.endDate.toISOString().split("T")[0],
       venue: booth.event.venue || "TBD",
-      boothSize: `${booth.spaceId}`, // Using spaceId as booth size for now
+      boothSize: `${booth.spaceId}`,
       boothNumber: booth.boothNumber,
       paymentStatus: booth.status === "BOOKED" ? "PAID" : "PENDING",
-      setupTime: "8:00 AM - 10:00 AM", // Default setup time
-      dismantleTime: "6:00 PM - 8:00 PM", // Default dismantle time
-      passes: 5, // Default passes
-      passesUsed: 0, // Default used passes
+      setupTime: "8:00 AM - 10:00 AM",
+      dismantleTime: "6:00 PM - 8:00 PM",
+      passes: 5,
+      passesUsed: 0,
       invoiceAmount: booth.totalCost,
       status: booth.event.status,
       specialRequests: booth.specialRequests,

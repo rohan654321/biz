@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
+interface Params {
+  id: string
+}
+
 // GET /api/events/exhibitors/[id]
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<Params> } // 👈 make params a Promise
 ) {
   try {
-    const exhibitorId = params.id
+    const { id: exhibitorId } = await context.params // 👈 await here
 
     if (!exhibitorId) {
       return NextResponse.json(
@@ -16,14 +20,13 @@ export async function GET(
       )
     }
 
-    // Fetch booths for this exhibitor with related event + organizer
     const booths = await prisma.exhibitorBooth.findMany({
       where: { exhibitorId },
       include: {
         event: {
           include: {
-            organizer: true, // get organizer details
-            venue: true, // get venue details if you have a Venue model
+            organizer: true,
+            venue: true,
           },
         },
       },
