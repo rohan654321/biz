@@ -53,6 +53,7 @@ import AddExhibitor from "../add-exhibitor"
 // import BookVenue from "../book-venue"
 import AddVenue from "../add-venue"
 import ActivePromotions from "../ActivePromotion"
+import { ExhibitorManualProfessional } from "../exhibitor-manual/exhibitor-manual"
 
 interface OrganizerData {
   id: string
@@ -252,6 +253,11 @@ export default function OrganizerDashboardPage() {
       id: "create-event",
     },
     {
+      title: "ExhibitorManual",
+      icon: Plus,
+      id: "ExhibitorManual",
+    },
+    {
       title: "Attendees",
       icon: Users,
       id: "attendees",
@@ -384,6 +390,10 @@ export default function OrganizerDashboardPage() {
         return <CreateEvent organizerId={organizerId} />
       case "active-promotions":
         return <ActivePromotions organizerId={organizerId} />
+        case "ExhibitorManual":
+        return <ExhibitorManualProfessional organizerId={organizerId} />
+        // case "ExhibitorManual":
+        // return <ExhibitorManual organizerId={organizerId} />
       case "addvenue":
         return <AddVenue organizerId={organizerId} />
       case "attendees":

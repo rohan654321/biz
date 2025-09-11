@@ -1,120 +1,88 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: { exhibitorId: string } }) {
   try {
+    console.log("[v0] GET /api/exhibitors/[exhibitorId]/events called")
+
     const session = await getServerSession(authOptions)
     if (!session) {
+      console.log("[v0] No session found")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
+    const { exhibitorId } = params
+    console.log("[v0] Fetching events for exhibitorId:", exhibitorId)
 
-    if (!id || id === "undefined") {
-      return NextResponse.json({ error: "Invalid exhibitor ID" }, { status: 400 })
+    if (!exhibitorId) {
+      return NextResponse.json({ error: "exhibitorId is required" }, { status: 400 })
     }
 
-    // Mock events data
-    const events = [
-      {
-        id: "event-1",
-        title: "Tech Conference 2024",
-        description: "Annual technology conference featuring the latest innovations",
-        startDate: "2024-03-15T09:00:00Z",
-        endDate: "2024-03-17T18:00:00Z",
-        location: "San Francisco, CA",
-        venue: "Moscone Convention Center",
-        status: "PUBLISHED",
-        registrationStatus: "CONFIRMED",
-        boothNumber: "A-123",
-        boothSize: "10x10",
-        requirements: ["Power outlet", "WiFi", "Display screen"],
-        attendeeCount: 2500,
-        category: "Technology",
-        image: "/tech-conference.png",
+    const booths = await prisma.exhibitorBooth.findMany({
+      where: {
+        exhibitorId: exhibitorId,
       },
-      {
-        id: "event-2",
-        title: "Innovation Summit",
-        description: "Summit focusing on breakthrough innovations and startups",
-        startDate: "2024-04-20T10:00:00Z",
-        endDate: "2024-04-22T17:00:00Z",
-        location: "New York, NY",
-        venue: "Jacob K. Javits Convention Center",
-        status: "PUBLISHED",
-        registrationStatus: "PENDING",
-        boothNumber: "B-456",
-        boothSize: "8x8",
-        requirements: ["Power outlet", "Internet connection"],
-        attendeeCount: 1800,
-        category: "Innovation",
-        image: "/innovation-summit.png",
+      include: {
+        event: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            startDate: true,
+            endDate: true,
+            venue: true,
+            status: true,
+            organizer: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                company: true,
+              },
+            },
+          },
+        },
+        exhibitor: {
+          select: {
+            firstName: true,
+            lastName: true,
+            company: true,
+            email: true,
+          },
+        },
       },
-      {
-        id: "event-3",
-        title: "Digital Marketing Expo",
-        description: "Comprehensive expo for digital marketing professionals",
-        startDate: "2024-05-10T08:00:00Z",
-        endDate: "2024-05-12T19:00:00Z",
-        location: "Las Vegas, NV",
-        venue: "Las Vegas Convention Center",
-        status: "DRAFT",
-        registrationStatus: "NOT_REGISTERED",
-        boothNumber: null,
-        boothSize: null,
-        requirements: [],
-        attendeeCount: 3200,
-        category: "Marketing",
-        image: "/digital-marketing-expo.png",
+      orderBy: {
+        createdAt: "desc",
       },
-    ]
-
-    return NextResponse.json({
-      success: true,
-      events,
     })
+
+    const events = booths.map((booth) => ({
+      id: booth.id,
+      eventId: booth.eventId,
+      eventName: booth.event.title,
+      date: booth.event.startDate.toISOString().split("T")[0],
+      endDate: booth.event.endDate.toISOString().split("T")[0],
+      venue: booth.event.venue || "TBD",
+      boothSize: `${booth.spaceId}`, // Using spaceId as booth size for now
+      boothNumber: booth.boothNumber,
+      paymentStatus: booth.status === "BOOKED" ? "PAID" : "PENDING",
+      setupTime: "8:00 AM - 10:00 AM", // Default setup time
+      dismantleTime: "6:00 PM - 8:00 PM", // Default dismantle time
+      passes: 5, // Default passes
+      passesUsed: 0, // Default used passes
+      invoiceAmount: booth.totalCost,
+      status: booth.event.status,
+      specialRequests: booth.specialRequests,
+      organizer: booth.event.organizer,
+    }))
+
+    console.log("[v0] Found", events.length, "events for exhibitor")
+
+    return NextResponse.json({ events }, { status: 200 })
   } catch (error) {
-    console.error("Error fetching exhibitor events:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
-  }
-}
-
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const { id } = await params
-    const body = await request.json()
-
-    if (!id || id === "undefined") {
-      return NextResponse.json({ error: "Invalid exhibitor ID" }, { status: 400 })
-    }
-
-    // Mock event registration
-    const registration = {
-      id: `reg-${Date.now()}`,
-      eventId: body.eventId,
-      exhibitorId: id,
-      boothNumber: body.boothNumber || `AUTO-${Math.floor(Math.random() * 1000)}`,
-      boothSize: body.boothSize || "10x10",
-      requirements: body.requirements || [],
-      status: "PENDING",
-      registeredAt: new Date().toISOString(),
-      paymentStatus: "PENDING",
-      totalCost: body.totalCost || 1500,
-    }
-
-    return NextResponse.json({
-      success: true,
-      registration,
-      message: "Successfully registered for event",
-    })
-  } catch (error) {
-    console.error("Error registering for event:", error)
+    console.error("[v0] Error fetching exhibitor events:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
