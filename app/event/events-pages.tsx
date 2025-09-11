@@ -1,30 +1,123 @@
 "use client"
-import { useState, useMemo, useEffect, useRef } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Search, Share2, MapPin, Calendar, Heart, Bookmark, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  Search,
+  Share2,
+  MapPin,
+  Calendar,
+  Heart,
+  Bookmark,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+} from "lucide-react"
 import Image from "next/image"
-import { getAllEvents, isEventPostponed, getOriginalEventDates } from "@/lib/data/events"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
+import { Suspense } from "react"
 
-export default function EventsPageContent() {
+// Loading component for the suspense boundary
+function EventsPageSkeleton() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
+          <div className="flex gap-6">
+            <div className="w-80 h-96 bg-gray-200 rounded"></div>
+            <div className="flex-1 space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-32 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+            <div className="w-80 h-96 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function EventsPage() {
+  return (
+    <Suspense fallback={<EventsPageSkeleton />}>
+      <EventsPageContent />
+    </Suspense>
+  )
+}
+
+interface Event {
+  timings: any
+  rating: any
+  id: string
+  title: string
+  description: string
+  startDate: string
+  endDate: string
+  registrationStart: string
+  registrationEnd: string
+  maxAttendees?: number
+  isPublic: boolean
+  organizerId: string
+  venueId: string
+  categories: string[]
+  tags: string[]
+  images: { url: string }[]
+  location: {
+    city: string
+    venue: string
+    country?: string
+  }
+  organizer: {
+    id: string
+    firstName: string
+    avatar?: string
+  }
+  venue: {
+    id: string
+    firstName: string
+    location: string
+    venueCity: string
+    venueState: string
+    venueCountry: string
+  }
+  _count: {
+    registrations: number
+  }
+  spotsRemaining?: number | null
+  isRegistrationOpen: boolean
+}
+
+interface ApiResponse {
+  events: Event[]
+}
+
+function EventsPageContent() {
   const [activeTab, setActiveTab] = useState("All Events")
   const [selectedFormat, setSelectedFormat] = useState("All Formats")
   const [selectedLocation, setSelectedLocation] = useState("")
   const searchParams = useSearchParams()
   const categoryFromUrl = searchParams.get("category")
   const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl || "")
+
+  const [events, setEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [viewMode, setViewMode] = useState("Trending")
   const [selectedDateRange, setSelectedDateRange] = useState("")
   const [priceRange, setPriceRange] = useState("")
   const [rating, setRating] = useState("")
-  
+
   // New sidebar state
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [formatOpen, setFormatOpen] = useState(false)
@@ -35,28 +128,44 @@ export default function EventsPageContent() {
   const [categorySearch, setCategorySearch] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedRelatedTopics, setSelectedRelatedTopics] = useState<string[]>([])
-  
+
   // Auto-scroll state for featured events
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isHovered, setIsHovered] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
-  
+
   const router = useRouter()
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const response = await fetch("/api/events")
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch events")
+      }
+
+      const data: ApiResponse = await response.json()
+      setEvents(data.events)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
+      console.error("Error fetching events:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchEvents()
+  }, [])
 
   useEffect(() => {
     if (categoryFromUrl) {
       setSelectedCategory(categoryFromUrl)
     }
-    // Add location parameter handling
-    const locationFromUrl = searchParams.get("location")
-    if (locationFromUrl) {
-      setSelectedLocation(locationFromUrl)
-    }
-    // Add country parameter handling
-    const countryFromUrl = searchParams.get("country")
-    if (countryFromUrl) {
-      setSelectedLocation(countryFromUrl) // Use same location filter for countries
-    }
+
     // Add venue parameter handling
     const venueFromUrl = searchParams.get("venue")
     if (venueFromUrl) {
@@ -64,28 +173,37 @@ export default function EventsPageContent() {
     }
   }, [categoryFromUrl, searchParams])
 
-  const allEvents = getAllEvents()
   const itemsPerPage = 6
 
   // Get unique categories, locations, and other filter options from data
   const categories = useMemo(() => {
     const categoryMap = new Map()
-    allEvents.forEach((event) => {
-      event.categories.forEach((cat) => {
-        categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1)
-      })
+    events.forEach((event) => {
+      if (event.categories && Array.isArray(event.categories)) {
+        event.categories.forEach((cat) => {
+          categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1)
+        })
+      }
     })
     return Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count }))
-  }, [allEvents])
+  }, [events])
 
   const locations = useMemo(() => {
     const locationMap = new Map()
-    allEvents.forEach((event) => {
-      const city = event.location.city
-      locationMap.set(city, (locationMap.get(city) || 0) + 1)
+    events.forEach((event) => {
+      // Add city
+      if (event.venue?.venueCity) {
+        const city = event.venue.venueCity
+        locationMap.set(city, (locationMap.get(city) || 0) + 1)
+      }
+      // Add country
+      if (event.venue?.venueCountry) {
+        const country = event.venue.venueCountry
+        locationMap.set(country, (locationMap.get(country) || 0) + 1)
+      }
     })
     return Array.from(locationMap.entries()).map(([name, count]) => ({ name, count }))
-  }, [allEvents])
+  }, [events])
 
   // Enhanced categories with search functionality
   const filteredCategories = useMemo(() => {
@@ -95,57 +213,112 @@ export default function EventsPageContent() {
   // Create a mapping of categories to their related topics
   const categoryRelatedTopics = useMemo(() => {
     const mapping: Record<string, string[]> = {
-      'Technology': ['AI & Machine Learning', 'Blockchain', 'Cloud Computing', 'Cybersecurity', 'IoT', 'Data Science'],
-      'Healthcare': ['Medical Devices', 'Telemedicine', 'Pharmaceuticals', 'Digital Health', 'Biotechnology', 'Mental Health'],
-      'Marketing': ['Content Marketing', 'Social Media', 'Email Marketing', 'Influencer Marketing', 'Brand Strategy', 'Analytics'],
-      'Business Event': ['Entrepreneurship', 'Leadership', 'Finance', 'Strategy', 'Operations', 'HR Management'],
-      'Conference': ['Networking', 'Keynote Speakers', 'Panel Discussions', 'Workshops', 'Industry Insights', 'Professional Development'],
-      'Expo': ['Product Launches', 'Trade Shows', 'B2B Networking', 'Industry Trends', 'Innovation Showcase', 'Market Research'],
-      'Workshop': ['Hands-on Training', 'Skill Development', 'Certification', 'Interactive Learning', 'Best Practices', 'Tools & Techniques'],
-      'Startup': ['Funding', 'Pitch Competitions', 'Accelerators', 'Venture Capital', 'Product Development', 'Market Validation'],
-      'Environment': ['Climate Change', 'Renewable Energy', 'Sustainability', 'Green Technology', 'Conservation', 'Environmental Policy'],
-      'Education': ['E-learning', 'EdTech', 'Curriculum Development', 'Student Engagement', 'Online Education', 'Educational Research']
+      Technology: ["AI & Machine Learning", "Blockchain", "Cloud Computing", "Cybersecurity", "IoT", "Data Science"],
+      Healthcare: [
+        "Medical Devices",
+        "Telemedicine",
+        "Pharmaceuticals",
+        "Digital Health",
+        "Biotechnology",
+        "Mental Health",
+      ],
+      Marketing: [
+        "Content Marketing",
+        "Social Media",
+        "Email Marketing",
+        "Influencer Marketing",
+        "Brand Strategy",
+        "Analytics",
+      ],
+      "Business Event": ["Entrepreneurship", "Leadership", "Finance", "Strategy", "Operations", "HR Management"],
+      Conference: [
+        "Networking",
+        "Keynote Speakers",
+        "Panel Discussions",
+        "Workshops",
+        "Industry Insights",
+        "Professional Development",
+      ],
+      Expo: [
+        "Product Launches",
+        "Trade Shows",
+        "B2B Networking",
+        "Industry Trends",
+        "Innovation Showcase",
+        "Market Research",
+      ],
+      Workshop: [
+        "Hands-on Training",
+        "Skill Development",
+        "Certification",
+        "Interactive Learning",
+        "Best Practices",
+        "Tools & Techniques",
+      ],
+      Startup: [
+        "Funding",
+        "Pitch Competitions",
+        "Accelerators",
+        "Venture Capital",
+        "Product Development",
+        "Market Validation",
+      ],
+      Environment: [
+        "Climate Change",
+        "Renewable Energy",
+        "Sustainability",
+        "Green Technology",
+        "Conservation",
+        "Environmental Policy",
+      ],
+      Education: [
+        "E-learning",
+        "EdTech",
+        "Curriculum Development",
+        "Student Engagement",
+        "Online Education",
+        "Educational Research",
+      ],
     }
     return mapping
   }, [])
 
   // Get related topics based on selected categories
   const relatedTopics = useMemo(() => {
-    const activeCategories = selectedCategories.length > 0 
-      ? selectedCategories 
-      : categoryFromUrl 
-        ? [categoryFromUrl]
-        : []
-    
+    const activeCategories =
+      selectedCategories.length > 0 ? selectedCategories : categoryFromUrl ? [categoryFromUrl] : []
+
     if (activeCategories.length === 0) {
       // If no categories selected, show general related topics
       return [
-        { name: 'Networking', count: 150 },
-        { name: 'Professional Development', count: 120 },
-        { name: 'Industry Insights', count: 100 },
-        { name: 'Innovation', count: 90 },
-        { name: 'Best Practices', count: 80 },
-        { name: 'Market Trends', count: 75 }
+        { name: "Networking", count: 150 },
+        { name: "Professional Development", count: 120 },
+        { name: "Industry Insights", count: 100 },
+        { name: "Innovation", count: 90 },
+        { name: "Best Practices", count: 80 },
+        { name: "Market Trends", count: 75 },
       ]
     }
-    
+
     // Get related topics for selected categories
     const relatedSet = new Set<string>()
-    activeCategories.forEach(category => {
+    activeCategories.forEach((category) => {
       const related = categoryRelatedTopics[category] || []
-      related.forEach(topic => relatedSet.add(topic))
+      related.forEach((topic) => relatedSet.add(topic))
     })
-    
+
     // Convert to array with mock counts
-    return Array.from(relatedSet).map(topic => ({
-      name: topic,
-      count: Math.floor(Math.random() * 100) + 50 // Mock count between 50-150
-    })).sort((a, b) => b.count - a.count) // Sort by count descending
+    return Array.from(relatedSet)
+      .map((topic) => ({
+        name: topic,
+        count: Math.floor(Math.random() * 100) + 50, // Mock count between 50-150
+      }))
+      .sort((a, b) => b.count - a.count) // Sort by count descending
   }, [selectedCategories, categoryFromUrl, categoryRelatedTopics])
 
   // Helper function to check if event is in date range
   const isEventInDateRange = (event: any, dateRange: string) => {
-    const eventDate = new Date(event.timings.startDate)
+    const eventDate = new Date(event.startDate)
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
@@ -172,7 +345,7 @@ export default function EventsPageContent() {
 
   // Helper function to check if event matches tab filter
   const isEventInTab = (event: any, tab: string) => {
-    const eventDate = new Date(event.timings.startDate)
+    const eventDate = new Date(event.startDate)
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
@@ -194,10 +367,29 @@ export default function EventsPageContent() {
 
   // Filter events based on selected criteria
   const filteredEvents = useMemo(() => {
-    let filtered = allEvents
+    let filtered = events
 
     // Tab filter
-    filtered = filtered.filter((event) => isEventInTab(event, activeTab))
+    filtered = filtered.filter((event) => {
+      const now = new Date()
+      const eventStart = new Date(event.startDate)
+      const eventEnd = new Date(event.endDate)
+
+      switch (activeTab) {
+        case "Upcoming":
+          return eventStart > now
+        case "Past":
+          return eventEnd < now
+        case "This Week":
+          const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+          return eventStart >= now && eventStart <= weekFromNow
+        case "This Month":
+          const monthFromNow = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate())
+          return eventStart >= now && eventStart <= monthFromNow
+        default:
+          return true
+      }
+    })
 
     // Search filter - enhanced
     if (searchQuery) {
@@ -208,13 +400,12 @@ export default function EventsPageContent() {
           event.description.toLowerCase().includes(query) ||
           event.tags.some((tag) => tag.toLowerCase().includes(query)) ||
           event.categories.some((cat) => cat.toLowerCase().includes(query)) ||
-          event.location.city.toLowerCase().includes(query) ||
-          event.location.venue.toLowerCase().includes(query) ||
-          event.location.country?.toLowerCase().includes(query)
+          event.venue?.venueCity?.toLowerCase().includes(query) ||
+          event.venue?.venueCountry?.toLowerCase().includes(query),
       )
     }
 
-    // Category filter (enhanced)
+    // Category filter
     if (selectedCategories.length > 0) {
       filtered = filtered.filter((event) => event.categories.some((cat) => selectedCategories.includes(cat)))
     } else if (selectedCategory) {
@@ -223,106 +414,24 @@ export default function EventsPageContent() {
       )
     }
 
-    // Related topics filter - updated logic
-    if (selectedRelatedTopics.length > 0) {
-      // Filter events that have tags or categories matching the selected related topics
-      filtered = filtered.filter((event) => 
-        selectedRelatedTopics.some(topic => 
-          event.tags.some(tag => tag.toLowerCase().includes(topic.toLowerCase())) ||
-          event.categories.some(cat => {
-            const relatedForCat = categoryRelatedTopics[cat] || []
-            return relatedForCat.some(related => related.toLowerCase().includes(topic.toLowerCase()))
-          }) ||
-          event.description.toLowerCase().includes(topic.toLowerCase()) ||
-          event.title.toLowerCase().includes(topic.toLowerCase())
-        )
-      )
-    }
-
-    // Location filter (works for cities, countries, and venues)
+    // Location filter
     if (selectedLocation) {
       filtered = filtered.filter(
         (event) =>
-          event.location.city.toLowerCase().includes(selectedLocation.toLowerCase()) ||
-          event.location.country?.toLowerCase().includes(selectedLocation.toLowerCase()) ||
-          event.location.venue.toLowerCase().includes(selectedLocation.toLowerCase()),
+          event.venue?.venueCity?.toLowerCase().includes(selectedLocation.toLowerCase()) ||
+          event.venue?.venueCountry?.toLowerCase().includes(selectedLocation.toLowerCase()),
       )
     }
 
-    // Format filter - improved logic
-    if (selectedFormat && selectedFormat !== "All Formats") {
-      filtered = filtered.filter((event) => {
-        // Direct category match
-        if (event.categories.some((cat) => cat.toLowerCase() === selectedFormat.toLowerCase())) {
-          return true
-        }
-        // Partial match for compound formats
-        return event.categories.some((cat) => 
-          cat.toLowerCase().includes(selectedFormat.toLowerCase().replace(' ', '').toLowerCase())
-        )
-      })
-    }
-
-    // Date range filter
-    if (selectedDateRange) {
-      filtered = filtered.filter((event) => isEventInDateRange(event, selectedDateRange))
-    }
-
-    // Price range filter
-    if (priceRange) {
-      filtered = filtered.filter((event) => {
-        const price = event.pricing.general
-        switch (priceRange) {
-          case "free":
-            return price === 0
-          case "under-1000":
-            return price < 1000
-          case "1000-5000":
-            return price >= 1000 && price <= 5000
-          case "above-5000":
-            return price > 5000
-          default:
-            return true
-        }
-      })
-    }
-
-    // Rating filter
-    if (rating) {
-      const minRating = Number.parseFloat(rating)
-      filtered = filtered.filter((event) => event.rating.average >= minRating)
-    }
-
-    // Sort based on view mode
-    if (viewMode === "Trending") {
-      // filtered.sort((a, b) => b.followers - a.followers)
-    } else if (viewMode === "Date") {
-      filtered.sort((a, b) => new Date(a.timings.startDate).getTime() - new Date(b.timings.startDate).getTime())
-    }
-
     return filtered
-  }, [
-    allEvents,
-    activeTab,
-    searchQuery,
-    selectedCategory,
-    selectedCategories,
-    selectedRelatedTopics,
-    selectedLocation,
-    selectedFormat,
-    selectedDateRange,
-    priceRange,
-    rating,
-    viewMode,
-    categoryRelatedTopics,
-  ])
+  }, [events, activeTab, searchQuery, selectedCategories, selectedCategory, selectedLocation])
 
   // Pagination
   const totalPages = Math.ceil(filteredEvents.length / itemsPerPage)
   const paginatedEvents = filteredEvents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   // Featured events (events with featured flag)
-  const featuredEvents = allEvents.filter((event) => event.featured)
+  const featuredEvents = events.filter((event) => event.tags.includes("featured"))
 
   // Auto-scroll effect for featured events
   useEffect(() => {
@@ -384,9 +493,9 @@ export default function EventsPageContent() {
     setSelectedDateRange("")
     setActiveTab("All Events")
     setCurrentPage(1)
-    
+
     // Navigate to clean /event URL
-    router.push('/event')
+    router.push("/event")
   }
 
   // Navigation functions for featured events
@@ -426,6 +535,40 @@ export default function EventsPageContent() {
     rating,
   ])
 
+  // Mock functions for postponed events and original dates
+  const isEventPostponed = (eventId: string) => {
+    // Replace with actual logic to check if event is postponed
+    return false
+  }
+
+  const getOriginalEventDates = (eventId: string) => {
+    // Replace with actual logic to fetch original event dates
+    return {
+      startDate: null,
+      endDate: null,
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin" />
+        <span className="ml-2">Loading events...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <p className="text-red-500 mb-4">Error: {error}</p>
+        <Button onClick={fetchEvents} variant="outline">
+          Try Again
+        </Button>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Main Content */}
@@ -434,26 +577,24 @@ export default function EventsPageContent() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {categoryFromUrl 
-                ? `${categoryFromUrl} Events` 
-                : selectedCategories.length > 0 
-                  ? `${selectedCategories.join(', ')} Events`
+              {categoryFromUrl
+                ? `${categoryFromUrl} Events`
+                : selectedCategories.length > 0
+                  ? `${selectedCategories.join(", ")} Events`
                   : selectedLocation
                     ? `Events in ${selectedLocation}`
                     : activeTab === "All Events"
                       ? "All Events"
-                      : activeTab
-              }
+                      : activeTab}
             </h1>
             <p className="text-gray-600">
-              {categoryFromUrl 
+              {categoryFromUrl
                 ? `Discover amazing ${categoryFromUrl.toLowerCase()} events happening around you`
                 : selectedCategories.length > 0
-                  ? `Discover amazing ${selectedCategories.join(', ').toLowerCase()} events happening around you`
+                  ? `Discover amazing ${selectedCategories.join(", ").toLowerCase()} events happening around you`
                   : selectedLocation
                     ? `Discover amazing events happening in ${selectedLocation}`
-                    : "Discover amazing events happening around you"
-              }
+                    : "Discover amazing events happening around you"}
             </p>
           </div>
           <div className="flex items-center space-x-4">
@@ -972,7 +1113,7 @@ export default function EventsPageContent() {
                                       </span>
                                     ) : (
                                       <span className={isPostponed ? "text-gray-400" : ""}>
-                                        {formatDate(event.timings.startDate)} - {formatDate(event.timings.endDate)}
+                                        {formatDate(event.startDate)} - {formatDate(event.endDate)}
                                       </span>
                                     )}
                                   </div>
@@ -1029,7 +1170,7 @@ export default function EventsPageContent() {
                       variant="outline"
                       size="sm"
                       onClick={goToPrevSlide}
-                      className="p-2"
+                      className="p-2 bg-transparent"
                       disabled={isTransitioning}
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -1038,15 +1179,15 @@ export default function EventsPageContent() {
                       variant="outline"
                       size="sm"
                       onClick={goToNextSlide}
-                      className="p-2"
+                      className="p-2 bg-transparent"
                       disabled={isTransitioning}
                     >
                       <ChevronRight className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
-                
-                <div 
+
+                <div
                   className="relative overflow-hidden"
                   onMouseEnter={() => setIsHovered(true)}
                   onMouseLeave={() => setIsHovered(false)}
@@ -1065,10 +1206,7 @@ export default function EventsPageContent() {
                           const isPostponed = isEventPostponed(event.id)
                           const originalDates = getOriginalEventDates(event.id)
                           return (
-                            <div
-                              key={event.id}
-                              className="flex-1 min-w-0"
-                            >
+                            <div key={event.id} className="flex-1 min-w-0">
                               <Link href={`/event/${event.id}`} className="block h-full">
                                 <div className="relative bg-white rounded-sm shadow-md overflow-hidden hover:shadow-lg transition-shadow h-full">
                                   <div className="relative h-48 w-full">
@@ -1089,9 +1227,7 @@ export default function EventsPageContent() {
                                     <h3 className="font-semibold text-base text-gray-800 mb-2 line-clamp-2 leading-tight">
                                       {event.title}
                                     </h3>
-                                    <p className="text-xs text-gray-600 mb-3 line-clamp-2">
-                                      {event.description}
-                                    </p>
+                                    <p className="text-xs text-gray-600 mb-3 line-clamp-2">{event.description}</p>
                                     <div className="space-y-2 mb-3">
                                       <div className="flex items-center text-xs text-gray-600">
                                         <MapPin className="w-3 h-3 mr-1 text-blue-500" />
@@ -1099,10 +1235,12 @@ export default function EventsPageContent() {
                                       </div>
                                       <div className="flex items-center text-xs">
                                         <Calendar className="w-3 h-3 mr-1 text-green-500" />
-                                        <span className={`font-medium ${isPostponed ? "text-gray-400 line-through" : "text-blue-600"}`}>
+                                        <span
+                                          className={`font-medium ${isPostponed ? "text-gray-400 line-through" : "text-blue-600"}`}
+                                        >
                                           {isPostponed && originalDates.startDate
                                             ? formatDate(originalDates.startDate)
-                                            : formatDate(event.timings.startDate)}
+                                            : formatDate(event.startDate)}
                                         </span>
                                       </div>
                                     </div>
@@ -1116,9 +1254,9 @@ export default function EventsPageContent() {
                                     <div className="flex items-center justify-between">
                                       <div className="flex flex-wrap gap-1">
                                         {event.categories.slice(0, 1).map((category, idx) => (
-                                          <Badge 
-                                            key={idx} 
-                                            variant="secondary" 
+                                          <Badge
+                                            key={idx}
+                                            variant="secondary"
                                             className="text-xs bg-gray-100 text-gray-700"
                                           >
                                             {category}
@@ -1138,15 +1276,15 @@ export default function EventsPageContent() {
                           )
                         })}
                         {/* Fill empty slots if less than 3 cards in the last group */}
-                        {featuredEvents.slice(slideIndex * 3, (slideIndex + 1) * 3).length < 3 && 
-                          Array.from({ length: 3 - featuredEvents.slice(slideIndex * 3, (slideIndex + 1) * 3).length }, (_, emptyIndex) => (
-                            <div key={`empty-${emptyIndex}`} className="flex-1 min-w-0" />
-                          ))
-                        }
+                        {featuredEvents.slice(slideIndex * 3, (slideIndex + 1) * 3).length < 3 &&
+                          Array.from(
+                            { length: 3 - featuredEvents.slice(slideIndex * 3, (slideIndex + 1) * 3).length },
+                            (_, emptyIndex) => <div key={`empty-${emptyIndex}`} className="flex-1 min-w-0" />,
+                          )}
                       </div>
                     ))}
                   </div>
-                  
+
                   {/* Navigation Dots */}
                   <div className="flex justify-center mt-4 space-x-2">
                     {Array.from({ length: Math.ceil(featuredEvents.length / 3) }, (_, index) => (
@@ -1155,14 +1293,12 @@ export default function EventsPageContent() {
                         onClick={() => goToSlide(index)}
                         disabled={isTransitioning}
                         className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                          index === currentSlide 
-                            ? 'bg-blue-600 scale-110' 
-                            : 'bg-gray-300 hover:bg-gray-400'
+                          index === currentSlide ? "bg-blue-600 scale-110" : "bg-gray-300 hover:bg-gray-400"
                         }`}
                       />
                     ))}
                   </div>
-                  
+
                   {/* Slide Counter */}
                   <div className="text-center mt-2">
                     <span className="text-xs text-gray-500">
@@ -1193,7 +1329,7 @@ export default function EventsPageContent() {
 
             {/* Event List */}
             <div className="space-y-4">
-              {allEvents.slice(0, 3).map((event) => (
+              {events.slice(0, 3).map((event) => (
                 <Card key={event.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex gap-3">
@@ -1206,8 +1342,8 @@ export default function EventsPageContent() {
                       />
                       <div className="flex-1">
                         <h4 className="font-medium text-sm text-gray-900 mb-1">{event.title}</h4>
-                        <p className="text-xs text-gray-600 mb-1">{formatDate(event.timings.startDate)}</p>
-                        <p className="text-xs text-gray-600 mb-2">{event.location.city}</p>
+                        <p className="text-xs text-gray-600 mb-1">{new Date(event.startDate).toLocaleDateString()}</p>
+                        <p className="text-xs text-gray-600 mb-2">{event.venue?.venueCity}</p>
                         <div className="flex items-center justify-between">
                           <div className="flex space-x-1">
                             {event.categories.slice(0, 2).map((category, idx) => (
@@ -1223,7 +1359,7 @@ export default function EventsPageContent() {
                       </Button>
                     </div>
                   </CardContent>
-                </Card> 
+                </Card>
               ))}
             </div>
           </div>

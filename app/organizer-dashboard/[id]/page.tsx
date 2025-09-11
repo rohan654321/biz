@@ -34,8 +34,24 @@ import {
   User,
   Loader2,
   TrendingUp,
+  ChevronDown,
+  ChevronRight,
+  Badge,
+  Building,
+  Mic,
+  ClipboardList,
+  Star,
+  MessageCircle,
+  Reply,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 // Import all section components
 import DashboardOverview from "../dashboard-overview"
 import MyEvents from "../my-events"
@@ -117,6 +133,7 @@ export default function OrganizerDashboardPage() {
   const params = useParams()
   const { toast } = useToast()
   const [activeSection, setActiveSection] = useState("dashboard")
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([])
   const [organizerData, setOrganizerData] = useState<OrganizerData | null>(null)
   const [events, setEvents] = useState<Event[]>([])
   const [attendees, setAttendees] = useState<Attendee[]>([])
@@ -127,7 +144,6 @@ export default function OrganizerDashboardPage() {
 
   const organizerId = params.id as string
 
-  // Fetch organizer data
   useEffect(() => {
     const fetchOrganizerData = async () => {
       try {
@@ -154,7 +170,6 @@ export default function OrganizerDashboardPage() {
     }
   }, [organizerId, toast])
 
-  // Fetch events data
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -172,7 +187,6 @@ export default function OrganizerDashboardPage() {
     }
   }, [organizerId])
 
-  // Fetch attendees data
   useEffect(() => {
     const fetchAttendees = async () => {
       try {
@@ -190,7 +204,6 @@ export default function OrganizerDashboardPage() {
     }
   }, [organizerId])
 
-  // Fetch analytics data
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
@@ -208,7 +221,6 @@ export default function OrganizerDashboardPage() {
     }
   }, [organizerId])
 
-  // Fetch revenue data
   useEffect(() => {
     const fetchRevenue = async () => {
       try {
@@ -226,33 +238,122 @@ export default function OrganizerDashboardPage() {
     }
   }, [organizerId])
 
-  const sidebarItems = [
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups((prev) => (prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]))
+  }
+
+  const PlaceholderPage = ({ title }: { title: string }) => (
+    <div className="flex items-center justify-center h-64">
+      <div className="text-center">
+        <h2 className="text-2xl font-semibold mb-4">{title}</h2>
+        <p className="text-gray-600">Page will update shortly</p>
+      </div>
+    </div>
+  )
+
+  const sidebarGroups = [
     {
-      title: "Dashboard",
-      icon: LayoutDashboard,
-      id: "dashboard",
+      id: "main",
+      label: "Main",
+      items: [
+        {
+          title: "Dashboard",
+          icon: LayoutDashboard,
+          id: "dashboard",
+        },
+        {
+          title: "My Info",
+          icon: User,
+          id: "info",
+        },
+      ],
     },
     {
-      title: "My Info",
-      icon: User,
-      id: "info",
+      id: "event-management",
+      label: "Event Management",
+      items: [
+        {
+          title: "My Events",
+          icon: Calendar,
+          id: "events",
+        },
+        {
+          title: "Create Event",
+          icon: Plus,
+          id: "create-event",
+        },
+      ],
     },
     {
-      title: "My Events",
-      icon: Calendar,
-      id: "events",
+      id: "lead-management",
+      label: "Lead Management",
+      items: [
+        {
+          title: "Attendees",
+          icon: Users,
+          id: "attendees",
+        },
+        {
+          title: "Visitor Badge Settings",
+          icon: Badge,
+          id: "visitor-badge-settings",
+        },
+        {
+          title: "Exhibitors",
+          icon: Building,
+          id: "exhibitors",
+        },
+        {
+          title: "Sponsors",
+          icon: Star,
+          id: "sponsors",
+        },
+      ],
     },
     {
-      title: "Active Promotions",
-      icon: TrendingUp, // or Megaphone if you prefer
-      id: "active-promotions",
+      id: "marketing-campaign",
+      label: "Marketing Campaign",
+      items: [
+        {
+          title: "Promotion",
+          icon: Megaphone,
+          id: "promotion",
+        },
+        {
+          title: "Active Promotion",
+          icon: TrendingUp,
+          id: "active-promotions",
+        },
+      ],
     },
     {
-      title: "Create Event",
-      icon: Plus,
-      id: "create-event",
+      id: "exhibitor-management",
+      label: "Exhibitor Management",
+      items: [
+        {
+          title: "Total Exhibitors",
+          icon: Building,
+          id: "total-exhibitors",
+        },
+        {
+          title: "Exhibitors Event Wise",
+          icon: Calendar,
+          id: "exhibitors-event-wise",
+        },
+        {
+          title: "Add Exhibitor",
+          icon: Plus,
+          id: "exhibitor",
+        },
+        {
+          title: "Exhibitor Manual",
+          icon: ClipboardList,
+          id: "exhibitor-manual",
+        },
+      ],
     },
     {
+
       title: "ExhibitorManual",
       icon: Plus,
       id: "ExhibitorManual",
@@ -261,56 +362,74 @@ export default function OrganizerDashboardPage() {
       title: "Attendees",
       icon: Users,
       id: "attendees",
+    },{
+      id: "speaker-management",
+      label: "Speaker Management",
+      items: [
+        {
+          title: "Conference Agenda",
+          icon: ClipboardList,
+          id: "conference-agenda",
+        },
+        {
+          title: "Create Conference Agenda",
+          icon: Plus,
+          id: "create-conference-agenda",
+        },
+        {
+          title: "Speakers",
+          icon: Mic,
+          id: "speakers",
+        },
+        {
+          title: "Add Speaker",
+          icon: Plus,
+          id: "speaker",
+        },
+      ],
+
     },
     {
-      title: "Analytics",
-      icon: BarChart3,
-      id: "analytics",
+      id: "feedback",
+      label: "Feedback",
+      items: [
+        {
+          title: "Feed Back",
+          icon: MessageCircle,
+          id: "feedback",
+        },
+        {
+          title: "Feed back reply",
+          icon: Reply,
+          id: "feedback-reply",
+        },
+      ],
     },
-    // {
-    //   title: "Revenue",
-    //   icon: DollarSign,
-    //   id: "revenue",
-    // },
-    {
-      title: "Promotion",
-      icon: Megaphone,
-      id: "promotion",
-    },
-    {
-      title: "My Plan",
-      icon: Crown,
-      id: "my-plan",
-    },
-    {
-      title: "Add speaker",
-      icon: Users,
-      id: "speaker",
-    },
-    {
-      title: "Add exhibitor",
-      icon: Users,
-      id: "exhibitor",
-    },
-    // {
-    //   title:"book venue",
-    //   icon: Users,
-    //   id: "venue",
-    // },
-    // {
-    //   title: "add venue",
-    //   icon: Users,
-    //   id: "addvenue",
-    // },
-    {
-      title: "Messages",
-      icon: MessageSquare,
-      id: "messages",
-    },
-    {
-      title: "Settings",
-      icon: Settings,
-      id: "settings",
+        {
+      id: "other",
+      label: "Other",
+      items: [
+        {
+          title: "Messages",
+          icon: MessageSquare,
+          id: "messages",
+        },
+        {
+          title: "Analytics",
+          icon: BarChart3,
+          id: "analytics",
+        },
+        {
+          title: "My Plan",
+          icon: Crown,
+          id: "my-plan",
+        },
+        {
+          title: "Settings",
+          icon: Settings,
+          id: "settings",
+        },
+      ],
     },
   ]
 
@@ -427,38 +546,41 @@ export default function OrganizerDashboardPage() {
         return <AddSpeaker organizerId={organizerId} />
       case "exhibitor":
         return <AddExhibitor organizerId={organizerId} />
-      // case "venue":
-      //   return <BookVenue organizerId={organizerId} />
       case "my-plan":
         return <MyPlan organizerId={organizerId} />
       case "messages":
         return <MessagesCenter organizerId={organizerId} />
       case "settings":
         return <SettingsPanel organizerData={organizerData} />
-
+      case "company-profile":
+        return <PlaceholderPage title="Company Profile" />
+      case "change-password":
+        return <PlaceholderPage title="Change Password" />
+      case "visitor-badge-settings":
+        return <PlaceholderPage title="Visitor Badge Settings" />
+      case "exhibitors":
+        return <PlaceholderPage title="Exhibitors" />
+      case "sponsors":
+        return <PlaceholderPage title="Sponsors" />
+      case "total-exhibitors":
+        return <PlaceholderPage title="Total Exhibitors" />
+      case "exhibitors-event-wise":
+        return <PlaceholderPage title="Exhibitors Event Wise" />
+      case "exhibitor-manual":
+        return <PlaceholderPage title="Exhibitor Manual" />
+      case "conference-agenda":
+        return <PlaceholderPage title="Conference Agenda" />
+      case "create-conference-agenda":
+        return <PlaceholderPage title="Create Conference Agenda" />
+      case "speakers":
+        return <PlaceholderPage title="Speakers" />
+      case "feedback":
+        return <PlaceholderPage title="Feed Back" />
+      case "feedback-reply":
+        return <PlaceholderPage title="Feed back reply" />
       default:
         return <div>Select a section from the sidebar</div>
     }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin" />
-        <span className="ml-2">Loading dashboard...</span>
-      </div>
-    )
-  }
-
-  if (error || !organizerData) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error || "Failed to load organizer data"}</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -468,47 +590,65 @@ export default function OrganizerDashboardPage() {
           <SidebarHeader className="border-b p-4">
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10">
-                <AvatarImage src={organizerData.avatar || "/placeholder.svg"} />
+                <AvatarImage src={organizerData?.avatar || "/placeholder.svg"} />
                 <AvatarFallback>
-                  {organizerData.name
-                    .split(" ")
+                  {organizerData?.name
+                    ?.split(" ")
                     .map((n) => n[0])
-                    .join("")}
+                    .join("") || "?"}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <div className="font-semibold">{organizerData.company}</div>
+                <div className="font-semibold">{organizerData?.company || "Loading..."}</div>
                 <div className="text-sm text-gray-600">Event Organizer</div>
               </div>
             </div>
           </SidebarHeader>
           <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Organizer Dashboard</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {sidebarItems.map((item) => (
-                    <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton
-                        onClick={() => setActiveSection(item.id)}
-                        isActive={activeSection === item.id}
-                        className="w-full justify-start"
-                      >
-                        <item.icon className="w-4 h-4" />
-                        <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                  <Button
-                    onClick={() => signOut({ callbackUrl: "/login" })}
-                    className="w-full bg-red-500 hover:bg-red-600 text-white my-10"
-                  >
-                    Logout
-                  </Button>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+            {sidebarGroups.map((group) => (
+              <SidebarGroup key={group.id}>
+                <SidebarGroupLabel
+                  className="cursor-pointer flex items-center justify-between hover:bg-gray-100 px-2 py-1 rounded"
+                  onClick={() => toggleGroup(group.id)}
+                >
+                  <span>{group.label}</span>
+                  {expandedGroups.includes(group.id) ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </SidebarGroupLabel>
+                {expandedGroups.includes(group.id) && (
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {group.items.map((item) => (
+                        <SidebarMenuItem key={item.id}>
+                          <SidebarMenuButton
+                            onClick={() => setActiveSection(item.id)}
+                            isActive={activeSection === item.id}
+                            className="w-full justify-start pl-6"
+                          >
+                            <item.icon className="w-4 h-4" />
+                            <span>{item.title}</span>
+                          </SidebarMenuButton>
+     
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                )}
+              </SidebarGroup>
+            ))}
           </SidebarContent>
+ <Button
+  onClick={() => signOut({ callbackUrl: "/login" })}
+  className="bg-red-600 text-white border border-transparent rounded-none cursor-pointer"
+>
+  <User className="mr-2 h-4 w-4" />
+  <span>Logout</span>
+</Button>
+
+
         </Sidebar>
 
         <SidebarInset className="flex-1">
@@ -518,15 +658,37 @@ export default function OrganizerDashboardPage() {
               <Button variant="ghost" size="sm">
                 <Bell className="w-4 h-4" />
               </Button>
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={organizerData.avatar || "/placeholder.svg"} />
-                <AvatarFallback>
-                  {organizerData.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </AvatarFallback>
-              </Avatar>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={organizerData?.avatar || "/placeholder.svg"} />
+                      <AvatarFallback>
+                        {organizerData?.name
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("") || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+<DropdownMenuContent className="w-56" align="end" forceMount>
+  <DropdownMenuItem onClick={() => setActiveSection("info")}>
+    <User className="mr-2 h-4 w-4" />
+    <span>Company Profile</span>
+  </DropdownMenuItem>
+  <DropdownMenuItem onClick={() => setActiveSection("settings")}>
+    <Settings className="mr-2 h-4 w-4" />
+    <span>Change Password</span>
+  </DropdownMenuItem>
+  <DropdownMenuSeparator />
+  <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
+    <User className="mr-2 h-4 w-4" />
+    <span>Logout</span>
+  </DropdownMenuItem>
+</DropdownMenuContent>
+
+              </DropdownMenu>
             </div>
           </header>
           <div className="flex-1 p-6">{renderContent()}</div>
