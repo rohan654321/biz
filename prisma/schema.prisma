@@ -161,8 +161,8 @@ model Event {
   eventType String[]
 
   // New flags
-  isFeatured Boolean @default(false)
-  isVIP      Boolean @default(false)  
+  isFeatured Boolean? @default(false)
+  isVIP      Boolean? @default(false)  
   
   // Dates and Times
   startDate DateTime

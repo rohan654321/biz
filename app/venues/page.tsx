@@ -1,14 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
-  Search,
   MapPin,
-  Users,
   Star,
   Heart,
   Share2,
@@ -17,53 +15,89 @@ import {
   Coffee,
   Shield,
   Camera,
-  Phone,
-  Mail,
-  Globe,
-  Clock,
   Building2,
   Users2,
   Utensils,
   Trophy,
   Music,
+  Loader2,
 } from "lucide-react"
-import { getAllVenues } from "@/lib/data/events"
+
+interface Venue {
+  id: string
+  venueName: string
+  logo: string
+  contactPerson: string
+  email: string
+  mobile: string
+  address: string
+  website: string
+  description: string
+  maxCapacity: number
+  totalHalls: number
+  totalEvents: number
+  activeBookings: number
+  averageRating: number
+  totalReviews: number
+  amenities: string[]
+  meetingSpaces: any[]
+  isVerified: boolean
+}
 
 export default function VenuesPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCities, setSelectedCities] = useState<string[]>([])
   const [selectedCountries, setSelectedCountries] = useState<string[]>([])
   const [selectedCollections, setSelectedCollections] = useState<string[]>([])
+  const [venues, setVenues] = useState<Venue[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
-  // Mock venues data
-  const venues = getAllVenues() ;
+  useEffect(() => {
+    fetchVenues()
+  }, [selectedCities, selectedCountries, searchQuery])
 
-const popularCities = [
-  "Bangalore",
-  "Hyderabad",
-  "Chennai",
-  "Pune",
-  "Gurgaon",
-  "Noida",
-  "Mumbai",
-]
+  const fetchVenues = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/venue-manager")
+      if (!response.ok) {
+        throw new Error("Failed to fetch venues")
+      }
 
+      const data = await response.json()
+      if (data.success && Array.isArray(data.venues)) {
+        setVenues(data.venues)
+      } else {
+        setVenues([])
+      }
+      setError(null)
+    } catch (err) {
+      setError("Failed to load venues. Please try again.")
+      setVenues([])
+      console.error("Error fetching venues:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const popularCities = ["Bangalore", "Hyderabad", "Chennai", "Pune", "Gurgaon", "Noida", "Mumbai"]
 
   const popularCountries = [
-  { name: "United States", flag: "🇺🇸" },
-  { name: "India", flag: "🇮🇳" },
-  { name: "United Kingdom", flag: "🇬🇧" },
-  { name: "Canada", flag: "🇨🇦" },
-  { name: "Australia", flag: "🇦🇺" },
-  { name: "Germany", flag: "🇩🇪" },
-  { name: "France", flag: "🇫🇷" },
-  { name: "Japan", flag: "🇯🇵" },
-  { name: "Brazil", flag: "🇧🇷" },
-  { name: "South Korea", flag: "🇰🇷" },
-  { name: "Italy", flag: "🇮🇹" },
-  { name: "South Africa", flag: "🇿🇦" }
-]
-
+    { name: "United States", flag: "🇺🇸" },
+    { name: "India", flag: "🇮🇳" },
+    { name: "United Kingdom", flag: "🇬🇧" },
+    { name: "Canada", flag: "🇨🇦" },
+    { name: "Australia", flag: "🇦🇺" },
+    { name: "Germany", flag: "🇩🇪" },
+    { name: "France", flag: "🇫🇷" },
+    { name: "Japan", flag: "🇯🇵" },
+    { name: "Brazil", flag: "🇧🇷" },
+    { name: "South Korea", flag: "🇰🇷" },
+    { name: "Italy", flag: "🇮🇹" },
+    { name: "South Africa", flag: "🇿🇦" },
+  ]
 
   const collections = [
     { name: "Hotels & Resorts", icon: Building2 },
@@ -122,18 +156,48 @@ const popularCities = [
     )
   }
 
-  const filteredVenues = venues.filter((venue) => {
-    const matchesSearch =
-      venue.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      venue.location.address.toLowerCase().includes(searchQuery.toLowerCase()) 
-      // venue.type.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredVenues = Array.isArray(venues)
+    ? venues.filter((venue) => {
+        const matchesSearch =
+          venue.venueName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          venue.address.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesCity = selectedCities.length === 0 || selectedCities.includes(venue.location.city)
-    const matchesCountry = selectedCountries.length === 0 || selectedCountries.includes(venue.location.country)
-    // const matchesCollection = selectedCollections.length === 0 || selectedCollections.includes(venue..collection)
+        const matchesCity =
+          selectedCities.length === 0 ||
+          selectedCities.some((city) => venue.address.toLowerCase().includes(city.toLowerCase()))
+        const matchesCountry =
+          selectedCountries.length === 0 ||
+          selectedCountries.some((country) => venue.address.toLowerCase().includes(country.toLowerCase()))
 
-    return matchesSearch && matchesCity && matchesCountry 
-  })
+        return matchesSearch && matchesCity && matchesCountry
+      })
+    : []
+
+  const handleVenueClick = (venueId: string) => {
+    router.push(`/venue/${venueId}`)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading venues...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={fetchVenues}>Try Again</Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -145,22 +209,7 @@ const popularCities = [
               <h1 className="text-3xl font-bold text-gray-900">Find Perfect Venues</h1>
               <p className="text-gray-600 mt-1">Discover amazing venues for your next event</p>
             </div>
-            {/* <div className="flex items-center space-x-3">
-              <Button className="bg-blue-600 hover:bg-blue-700">List Your Venue</Button>
-            </div> */}
           </div>
-
-          {/* Search Bar
-          <div className="relative max-w-2xl">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <Input
-              type="text"
-              placeholder="Search venues by name, location, or type..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12"
-            />
-          </div> */}
         </div>
       </div>
 
@@ -171,6 +220,17 @@ const popularCities = [
           <div className="w-80 flex-shrink-0">
             <div className="bg-white rounded-lg border p-6 sticky top-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Discover Venues</h2>
+
+              {/* Search Input */}
+              <div className="mb-6">
+                <input
+                  type="text"
+                  placeholder="Search venues..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
 
               {/* Popular Cities */}
               <div className="mb-8">
@@ -266,13 +326,21 @@ const popularCities = [
             {/* Venues Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredVenues.map((venue) => (
-                <div key={venue.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group rounded-sm border-1">
+                <div
+                  key={venue.id}
+                  className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group rounded-sm border-1 cursor-pointer"
+                  onClick={() => handleVenueClick(venue.id)}
+                >
                   <div className="relative">
                     <img
-                      src={venue.images[0] || "/placeholder.svg"}
-                      alt={venue.name}
+                      src={venue.logo || "/city/c2.jpg"} // your default image path
+                      alt={venue.venueName}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        e.currentTarget.src = "/city/c2.jpg" // fallback image
+                      }}
                     />
+
                     <div className="absolute top-3 left-3">
                       {venue.isVerified && <Badge className="bg-orange-500 text-white">Featured</Badge>}
                     </div>
@@ -284,55 +352,37 @@ const popularCities = [
                         <Share2 className="w-4 h-4" />
                       </Button>
                     </div>
-                    <div className="absolute bottom-3 right-3">
-                      {/* <Badge
-                        className={`${
-                          venue.availability === "Available" ? "bg-green-500 text-white" : "bg-red-500 text-white"
-                        }`}
-                      >
-                        {venue.availability[0]}
-                      </Badge> */}
-                    </div>
                   </div>
 
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{venue.name}</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{venue.venueName}</h3>
                       <div className="flex items-center space-x-1">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm font-medium">{venue.rating.average}</span>
-                        <span className="text-sm text-gray-500">({venue.reviews.length})</span>
+                        <span className="text-sm font-medium">{venue.averageRating.toFixed(1)}</span>
+                        <span className="text-sm text-gray-500">({venue.totalReviews})</span>
                       </div>
                     </div>
 
                     <div className="flex items-center text-gray-600 mb-2">
                       <MapPin className="w-4 h-4 mr-1" />
-                      <span className="text-sm">{venue.location.address}</span>
+                      <span className="text-sm">{venue.address}</span>
                     </div>
-
-                  
                   </CardContent>
                 </div>
               ))}
             </div>
 
-            {/* Load More */}
-            {filteredVenues.length > 0 && (
-              <div className="text-center mt-12">
-                <Button variant="outline" className="bg-transparent">
-                  Load More Venues
-                </Button>
-              </div>
-            )}
-
             {/* No Results */}
-            {filteredVenues.length === 0 && (
+            {filteredVenues.length === 0 && !loading && (
               <div className="text-center py-12">
                 <div className="max-w-md mx-auto">
                   <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">No venues found</h3>
                   <p className="text-gray-600 mb-6">
-                    Try adjusting your search criteria or browse all available venues.
+                    {searchQuery || selectedCities.length > 0 || selectedCountries.length > 0
+                      ? "Try adjusting your search criteria or browse all available venues."
+                      : "No venues are currently available in the database."}
                   </p>
                   <Button
                     onClick={() => {

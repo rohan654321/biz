@@ -7,7 +7,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     // Validate ID
     if (!id || id === "undefined") {
-      return NextResponse.json({ success: false, error: "Invalid venuemanager ID" }, { status: 400 })
+      return NextResponse.json({ success: false, error: "Invalid venue manager ID" }, { status: 400 })
     }
 
     // Query database with meeting spaces included
@@ -22,31 +22,70 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     })
 
     if (!venueManager) {
-      return NextResponse.json({ success: false, error: "venuemanager not found" }, { status: 404 })
+      return NextResponse.json({ success: false, error: "Venue manager not found" }, { status: 404 })
     }
 
-    // Return profile
-    return NextResponse.json({
-      success: true,
-      venue: {
+    const transformedVenue = {
+      id: venueManager.id,
+      name: venueManager.company || "Unnamed Venue",
+      description: venueManager.bio || "No description available",
+      manager: {
         id: venueManager.id,
-        venueName: venueManager.company || "",
-        logo: venueManager.avatar || "",
-        contactPerson: `${venueManager.firstName} ${venueManager.lastName}`.trim(),
+        name: `${venueManager.firstName} ${venueManager.lastName}`.trim(),
         email: venueManager.email,
-        mobile: venueManager.phone || "",
-        address: venueManager.location || "",
+        phone: venueManager.phone || "",
+        avatar: venueManager.avatar || "",
+        isVerified: true,
+        bio: venueManager.bio || "",
         website: venueManager.website || "",
-        description: venueManager.bio || "",
-        maxCapacity: venueManager.maxCapacity || 0,
-        totalHalls: venueManager.totalHalls || 0,
-        totalEvents: venueManager.totalEvents || 0,
-        activeBookings: venueManager.activeBookings || 0,
+      },
+      location: {
+        address: venueManager.location || "",
+        city: venueManager.location?.split(",")[1]?.trim() || "",
+        state: venueManager.location?.split(",")[2]?.trim() || "",
+        country: venueManager.location?.split(",")[3]?.trim() || "",
+        zipCode: "",
+        coordinates: {
+          lat: 0,
+          lng: 0,
+        },
+      },
+      contact: {
+        phone: venueManager.phone || "",
+        email: venueManager.email,
+        website: venueManager.website || "",
+      },
+      capacity: {
+        total: venueManager.maxCapacity || 0,
+        halls: venueManager.totalHalls || 0,
+      },
+      pricing: {
+        basePrice: 1000, // Default base price
+        currency: "$",
+      },
+      stats: {
         averageRating: venueManager.averageRating || 0,
         totalReviews: venueManager.totalReviews || 0,
-        amenities: venueManager.amenities || [],
-        meetingSpaces: venueManager.meetingSpaces || [], // Now properly structured
+        activeBookings: venueManager.activeBookings || 0,
       },
+      amenities: venueManager.amenities || [],
+      images: [venueManager.avatar || "/placeholder.svg?height=400&width=800&text=Venue+Image"],
+      videos: [],
+      floorPlans: [],
+      virtualTour: "",
+      meetingSpaces: venueManager.meetingSpaces || [],
+      reviews: [], // Empty for now
+      bookings: [], // Empty for now
+      events: [], // Empty for now
+      organizer: null,
+      createdAt: venueManager.createdAt?.toISOString() || new Date().toISOString(),
+      updatedAt: venueManager.updatedAt?.toISOString() || new Date().toISOString(),
+    }
+
+    // Return transformed data structure
+    return NextResponse.json({
+      success: true,
+      data: transformedVenue,
     })
   } catch (error) {
     console.error("Error in venue API:", error)
