@@ -67,7 +67,7 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/exhibitors/${exhibitorId}/events`, {
+      const response = await fetch(`/api/events/exhibitors/${exhibitorId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -79,7 +79,38 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
       }
 
       const data = await response.json()
-      setEvents(data.events || [])
+
+      if (data.success && data.data?.events) {
+        const transformedEvents = data.data.events.map((eventData: any) => ({
+          id: eventData.booth.id,
+          eventId: eventData.event.id,
+          eventName: eventData.event.title,
+          date: new Date(eventData.event.startDate).toLocaleDateString(),
+          endDate: new Date(eventData.event.endDate).toLocaleDateString(),
+          venue: eventData.event.venue?.name || "TBD",
+          boothSize: eventData.booth.size || "Standard",
+          boothNumber: eventData.booth.boothNumber || "TBD",
+          paymentStatus: eventData.booth.paymentStatus || "PENDING",
+          setupTime: eventData.event.setupTime,
+          dismantleTime: eventData.event.dismantleTime,
+          passes: eventData.booth.passes || 2,
+          passesUsed: eventData.booth.passesUsed || 0,
+          invoiceAmount: eventData.booth.price || 0,
+          status: eventData.event.status,
+          specialRequests: eventData.booth.specialRequests,
+          organizer: eventData.event.organizer
+            ? {
+                id: eventData.event.organizer.id,
+                firstName: eventData.event.organizer.firstName,
+                lastName: eventData.event.organizer.lastName,
+                company: eventData.event.organizer.company || "",
+              }
+            : undefined,
+        }))
+        setEvents(transformedEvents)
+      } else {
+        setEvents([])
+      }
     } catch (err) {
       console.error("Error fetching events:", err)
       setError(err instanceof Error ? err.message : "An error occurred")

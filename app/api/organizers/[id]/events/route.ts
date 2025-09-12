@@ -110,14 +110,14 @@ export async function GET(
   }
 }
 
-// ✅ POST Handler
+// ✅ POST Handler - Fixed version
 export async function POST(
   request: Request, 
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
-    const { id } = await params // Await the params promise
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -169,10 +169,11 @@ export async function POST(
         metaDescription: body.metaDescription || null,
         organizerId: id,
 
-        // ✅ nested exhibitionSpaces
+        // ✅ Fixed: Added required spaceType field
         exhibitionSpaces: body.exhibitionSpaces
           ? {
               create: body.exhibitionSpaces.map((space: any) => ({
+                spaceType: space.spaceType || "CUSTOM", // Required field
                 name: space.name,
                 description: space.description,
                 basePrice: space.basePrice,
@@ -182,6 +183,9 @@ export async function POST(
                 additionalPowerRate: space.additionalPowerRate,
                 compressedAirRate: space.compressedAirRate,
                 unit: space.unit,
+                area: space.area || 0, // Also adding area field which is required
+                isAvailable: space.isAvailable !== false,
+                maxBooths: space.maxBooths || null,
               })),
             }
           : undefined,

@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Search, Share2, MapPin, Calendar, Heart, ChevronDown, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import Image from "next/image"
 import { useSearchParams, useRouter } from "next/navigation"
+import Link from "next/link"
 
 interface Event {
   id: string
@@ -821,6 +822,7 @@ export default function EventsPageContent() {
                 </div>
               ) : (
                 paginatedEvents.map((event) => (
+                  <Link key={event.id} href={`/event/${event.id}`} className="block">
                   <Card key={event.id} className="hover:shadow-md transition-shadow bg-white border border-gray-100">
                     <CardContent className="p-6">
                       <div className="flex gap-4">
@@ -884,6 +886,7 @@ export default function EventsPageContent() {
                       </div>
                     </CardContent>
                   </Card>
+                  </Link>
                 ))
               )}
             </div>

@@ -8,7 +8,10 @@ interface Params {
   id: string
 }
 
-export async function GET(_request: Request, { params }: { params: Promise<Params> }) {
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<Params> }
+) {
   try {
     const session = await getServerSession(authOptions)
     const { id } = await params
@@ -17,17 +20,16 @@ export async function GET(_request: Request, { params }: { params: Promise<Param
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const whereClause =
-  session.user.role === "EXHIBITOR"
-    ? { exhibitorId: id }
-    : { organizerId: id }
+    // ✅ Fetch promotions for the given id (either exhibitorId or organizerId)
+    const promotions = await prisma.promotion.findMany({
+      where: {
+        OR: [ { organizerId: id }],
+      },
+      include: { event: true },
+      orderBy: { createdAt: "desc" },
+    })
 
-const promotions = await prisma.promotion.findMany({
-  where: whereClause,
-  include: { event: true },
-  orderBy: { createdAt: "desc" },
-})
-
+    // ✅ Fetch all events for the given organizerId
     const events = await prisma.event.findMany({
       where: { organizerId: id, status: "PUBLISHED" },
       select: {
@@ -56,14 +58,20 @@ const promotions = await prisma.promotion.findMany({
       revenue: 0,
     }))
 
-    return NextResponse.json({ promotions, events })
+    return NextResponse.json({ promotions, events: transformedEvents })
   } catch (error) {
     console.error("Error fetching promotions:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }
 
-export async function POST(request: Request, { params }: { params: Promise<Params> }) {
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<Params> }
+) {
   try {
     const session = await getServerSession(authOptions)
     const { id } = await params
@@ -78,9 +86,9 @@ export async function POST(request: Request, { params }: { params: Promise<Param
     const startDate = new Date()
     const endDate = new Date(startDate.getTime() + duration * 24 * 60 * 60 * 1000)
 
+    // ✅ Always allow both exhibitorId and organizerId to be set
     const promotion = await prisma.promotion.create({
       data: {
-        organizerId: id,
         eventId,
         packageType,
         targetCategories,
@@ -89,6 +97,8 @@ export async function POST(request: Request, { params }: { params: Promise<Param
         startDate,
         endDate,
         status: "PENDING",
+        // exhibitorId: id, // store under exhibitor
+        organizerId: id, // also store under organizer (optional: depends on schema)
       },
       include: { event: true },
     })
@@ -99,6 +109,9 @@ export async function POST(request: Request, { params }: { params: Promise<Param
     })
   } catch (error) {
     console.error("Error creating promotion:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }
