@@ -47,6 +47,8 @@ import { signOut } from "next-auth/react"
 import VisitorBadgeSettings from "../Visitor-Badge-Settings"
 // import ExhibitorsForEvent from "../ExhibitorsForEvent"
 import ExhibitorsEventWise from "../ExhibitorsEventWise"
+import ConferenceAgenda from "../ConferenceAgenda"
+import CreateConferenceAgenda from "../create-conference-agenda"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -428,35 +430,35 @@ export default function OrganizerDashboardPage() {
 
   const dashboardStats = organizerData
     ? [
-        {
-          title: "Total Events",
-          value: organizerData.totalEvents.toString(),
-          change: "+12%",
-          trend: "up" as const,
-          icon: Calendar,
-        },
-        {
-          title: "Active Events",
-          value: organizerData.activeEvents.toString(),
-          change: "+3",
-          trend: "up" as const,
-          icon: Calendar,
-        },
-        {
-          title: "Total Attendees",
-          value: `${(organizerData.totalAttendees / 1000).toFixed(1)}K`,
-          change: "+18%",
-          trend: "up" as const,
-          icon: Users,
-        },
-        {
-          title: "Revenue",
-          value: `₹${(organizerData.totalRevenue / 100000).toFixed(1)}L`,
-          change: "+25%",
-          trend: "up" as const,
-          icon: DollarSign,
-        },
-      ]
+      {
+        title: "Total Events",
+        value: organizerData.totalEvents.toString(),
+        change: "+12%",
+        trend: "up" as const,
+        icon: Calendar,
+      },
+      {
+        title: "Active Events",
+        value: organizerData.activeEvents.toString(),
+        change: "+3",
+        trend: "up" as const,
+        icon: Calendar,
+      },
+      {
+        title: "Total Attendees",
+        value: `${(organizerData.totalAttendees / 1000).toFixed(1)}K`,
+        change: "+18%",
+        trend: "up" as const,
+        icon: Users,
+      },
+      {
+        title: "Revenue",
+        value: `₹${(organizerData.totalRevenue / 100000).toFixed(1)}L`,
+        change: "+25%",
+        trend: "up" as const,
+        icon: DollarSign,
+      },
+    ]
     : []
 
   const renderContent = () => {
@@ -545,15 +547,15 @@ export default function OrganizerDashboardPage() {
       case "sponsors":
         return <PlaceholderPage title="Sponsors" />
       case "total-exhibitors":
-          return <ExhibitorsForEvent />
+        return <ExhibitorsForEvent />
       case "exhibitors-event-wise":
         return <ExhibitorsEventWise />
       case "exhibitor-manual":
-        // return <ExhibitorManualProfessional organizerId={organizerId} />
-      case "conference-agenda":
-        return <PlaceholderPage title="Conference Agenda" />
-      case "create-conference-agenda":
-        return <PlaceholderPage title="Create Conference Agenda" />
+      // return <ExhibitorManualProfessional organizerId={organizerId} />
+      // case "conference-agenda":
+      //   return <ConferenceAgenda organizerId={organizerId} />
+      // case "create-conference-agenda":
+      //   return <CreateConferenceAgenda organizerId={organizerId} onSuccess={() => setActiveSection("conference-agenda")} onCancel={() => setActiveSection("conference-agenda")} />
       case "speakers":
         return <SpeakerSessionsTable organizerId={organizerId} />
       case "feedback":

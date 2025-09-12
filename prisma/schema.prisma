@@ -85,6 +85,10 @@ model User {
   leads           EventLead[]
   promotions   Promotion[] // ✅ back relation for event promotions
 
+  // Add these for connections 👇
+  connectionsSent    Connection[] @relation("ConnectionSender")
+  connectionsReceived Connection[] @relation("ConnectionReceiver")
+
     // Relations for organizer-speaker
   organizerId String? @db.ObjectId
   organizer   User?   @relation("OrganizerSpeakers", fields: [organizerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -621,6 +625,9 @@ enum NotificationType {
   MESSAGE_RECEIVED
   BOOKING_CONFIRMATION
   SYSTEM_UPDATE
+  CONNECTION_REQUEST   // 👈 add this
+  CONNECTION_ACCEPTED  // 👈 (optional, future use)
+  CONNECTION_UPDATE   // 👈 add this
 }
 
 enum NotificationChannel {
@@ -917,4 +924,30 @@ enum LeadStatus {
   CONVERTED
   REJECTED
   FOLLOW_UP
+}
+
+// Connection System
+model Connection {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId        String   @db.ObjectId
+  sender          User     @relation("ConnectionSender", fields: [senderId], references: [id])
+  receiverId      String   @db.ObjectId
+  receiver        User     @relation("ConnectionReceiver", fields: [receiverId], references: [id])
+  status          ConnectionStatus @default(PENDING)
+  message         String?
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  acceptedAt      DateTime?
+  
+  @@unique([senderId, receiverId])
+  @@map("connections")
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  BLOCKED
 }
