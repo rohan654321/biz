@@ -1,6 +1,91 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const city = searchParams.get("city")
+    const country = searchParams.get("country")
+    const search = searchParams.get("search")
+
+    const venues = await prisma.user.findMany({
+      where: {
+        AND: [
+          { role: "VENUE_MANAGER" },
+          { isActive: true },
+          city ? { location: { contains: city, mode: "insensitive" } } : {},
+          search
+            ? {
+                OR: [
+                  { company: { contains: search, mode: "insensitive" } },
+                  { location: { contains: search, mode: "insensitive" } },
+                  { bio: { contains: search, mode: "insensitive" } },
+                ],
+              }
+            : {},
+        ],
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        company: true, // This is the venue name
+        bio: true, // This is the description
+        location: true, // This is the address
+        phone: true,
+        email: true,
+        maxCapacity: true,
+        totalHalls: true,
+        averageRating: true,
+        totalReviews: true,
+        avatar: true, // This is the logo
+        amenities: true,
+        createdAt: true,
+        isVerified: true,
+        venueCurrency: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    })
+
+    const venuesWithRating = venues.map((venue) => ({
+      id: venue.id,
+      name: venue.company || "Unnamed Venue", // Using company as venue name
+      description: venue.bio || "",
+      location: {
+        address: venue.location || "",
+        city: "", // Extract from location if needed
+        state: "",
+        country: "",
+      },
+      capacity: venue.maxCapacity || 0,
+      basePrice: 0, // Default since not in current schema
+      currency: venue.venueCurrency || "USD",
+      rating: {
+        average: venue.averageRating || 0,
+        count: venue.totalReviews || 0,
+      },
+      images: venue.avatar ? [venue.avatar] : [], // Using avatar as main image
+      amenities: venue.amenities || [],
+      isVerified: venue.isVerified || false,
+      manager: {
+        name: `${venue.firstName} ${venue.lastName}`.trim(),
+        phone: venue.phone || "",
+        email: venue.email,
+      },
+      totalHalls: venue.totalHalls || 0,
+      createdAt: venue.createdAt,
+    }))
+
+    console.log("[v0] Found venues:", venuesWithRating.length)
+    return NextResponse.json(venuesWithRating)
+  } catch (error) {
+    console.error("[v0] Error fetching venues:", error)
+    return NextResponse.json({ error: "Failed to fetch venues" }, { status: 500 })
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()

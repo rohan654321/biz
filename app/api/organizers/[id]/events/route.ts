@@ -1,17 +1,14 @@
-// app/api/organizers/[id]/events/route.ts
-
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
-import { prisma } from "@/lib/prisma"
+import { PrismaClient } from "@prisma/client"
 import { EventStatus } from "@prisma/client"
 import { ObjectId } from "mongodb"
 
+const prisma = new PrismaClient()
+
 // ✅ GET Handler
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     const { id } = await params // Await the params promise
@@ -111,10 +108,7 @@ export async function GET(
 }
 
 // ✅ POST Handler - Fixed version
-export async function POST(
-  request: Request, 
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     const { id } = await params
@@ -139,7 +133,12 @@ export async function POST(
         title: body.title,
         description: body.description,
         shortDescription: body.shortDescription || null,
-        slug: body.slug ?? body.title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
+        slug:
+          body.slug ??
+          body.title
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9-]/g, ""),
         status: (body.status?.toUpperCase() as EventStatus) || EventStatus.DRAFT,
         category: body.category || null,
         tags: body.tags || [],
@@ -167,13 +166,17 @@ export async function POST(
         refundPolicy: body.refundPolicy || null,
         metaTitle: body.metaTitle || null,
         metaDescription: body.metaDescription || null,
+        
+        // // ✅ Add isFeatured and isVIP here
+        // isFeatured: body.isFeatured || false,
+        // isVIP: body.isVIP || false,
+
         organizerId: id,
 
-        // ✅ Fixed: Added required spaceType field
         exhibitionSpaces: body.exhibitionSpaces
           ? {
               create: body.exhibitionSpaces.map((space: any) => ({
-                spaceType: space.spaceType || "CUSTOM", // Required field
+                spaceType: space.spaceType || "CUSTOM",
                 name: space.name,
                 description: space.description,
                 basePrice: space.basePrice,
@@ -183,7 +186,7 @@ export async function POST(
                 additionalPowerRate: space.additionalPowerRate,
                 compressedAirRate: space.compressedAirRate,
                 unit: space.unit,
-                area: space.area || 0, // Also adding area field which is required
+                area: space.area || 0,
                 isAvailable: space.isAvailable !== false,
                 maxBooths: space.maxBooths || null,
               })),
