@@ -32,6 +32,8 @@ import RatingsReviews from "./ratings-reviews"
 import LegalDocumentation from "./legal-documentation"
 import VenueSettings from "./venue-settings"
 import { promise } from "zod"
+import { MeetingSpace } from "@prisma/client"
+import { ConnectionsSection } from "../dashboard/connections-section"
 
 type VenueData = {
   id: string
