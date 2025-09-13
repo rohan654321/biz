@@ -35,6 +35,7 @@ import AppointmentScheduling from "./appointment-scheduling"
 import AnalyticsReports from "./analytics-reports"
 // import PromotionsMarketing from "./promotions-marketing"
 import ExhibitorSettings from "./settings"
+import { ConnectionsSection } from "@/app/dashboard/connections-section"
 
 interface ExhibitorData {
   id: string
@@ -182,6 +183,7 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     { id: "products", label: "Products", icon: Package },
     { id: "leads", label: "Leads", icon: Users },
     { id: "messages", label: "messages", icon: Users },
+    { id: "connection", label: "connection", icon: Users },
     { id: "appointments", label: "Appointments", icon: Calendar },
     { id: "analytics", label: "Analytics", icon: TrendingUp },
     { id: "promotions", label: "Promotions", icon: Star },
@@ -398,6 +400,7 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
           {activeTab === "events" && <EventParticipation exhibitorId={exhibitor.id} />}
           {activeTab === "products" && <ProductListing exhibitorId={exhibitor.id} />}
           {activeTab === "messages" && <MessagesCenter organizerId={exhibitor.id}  />}
+          {activeTab === "connection" && <ConnectionsSection  userId={exhibitor.id}/>}
           {activeTab === "leads" && <LeadManagement exhibitorId={exhibitor.id} />}
           {activeTab === "appointments" && <AppointmentScheduling exhibitorId={exhibitor.id} />}
           {activeTab === "analytics" && <AnalyticsReports exhibitorId={exhibitor.id} />}

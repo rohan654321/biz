@@ -10,6 +10,8 @@ export async function GET(
   try {
     const { id } = await params
     const session = await getServerSession(authOptions)
+    const { searchParams } = new URL(request.url)
+    const statusFilter = searchParams.get('status')
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -18,21 +20,29 @@ export async function GET(
     const userId = id
 
     // Users can only view their own connections unless they're admin
-    if (session.user.id !== userId && session.user.role !== "admin" && session.user.role !== "superadmin") {
+    if (session.user.id !== userId && session.user.role !== "admin" && session.user.role !== "superadmin" && session.user.role !== "organizer") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    // Build the where clause with optional status filter
+    const whereClause: any = {
+      OR: [
+        { senderId: userId },
+        { receiverId: userId }
+      ]
+    }
+
+    // Add status filter if provided
+    if (statusFilter) {
+      whereClause.status = statusFilter
+    } else {
+      // Default to showing all connections except rejected/blocked if no filter specified
+      whereClause.status = { notIn: ["REJECTED", "BLOCKED"] }
     }
 
     // Get user's connections (both sent and received)
     const connections = await prisma.connection.findMany({
-      where: {
-        OR: [
-          { senderId: userId },
-          { receiverId: userId }
-        ],
-        status: {
-          in: ["PENDING", "ACCEPTED"]
-        }
-      },
+      where: whereClause,
       include: {
         sender: {
           select: {
@@ -41,7 +51,9 @@ export async function GET(
             lastName: true,
             jobTitle: true,
             company: true,
-            avatar: true
+            avatar: true,
+            role: true,
+            lastLogin: true
           }
         },
         receiver: {
@@ -51,7 +63,9 @@ export async function GET(
             lastName: true,
             jobTitle: true,
             company: true,
-            avatar: true
+            avatar: true,
+            role: true,
+            lastLogin: true
           }
         }
       },
@@ -60,21 +74,35 @@ export async function GET(
       }
     })
 
-    // Format the connections for the frontend
+    // Format the connections for the frontend with proper status mapping
     const formattedConnections = connections.map(conn => {
       const otherUser = conn.senderId === userId ? conn.receiver : conn.sender
-      const status = conn.status === "ACCEPTED" ? "connected" : 
-                    conn.senderId === userId ? "pending" : "request_received"
+      const isSender = conn.senderId === userId
       
+      // Correct status mapping based on perspective
+      let status
+      if (conn.status === "ACCEPTED") {
+        status = "connected"
+      } else if (conn.status === "PENDING") {
+        status = isSender ? "pending" : "request_received"
+      } else if (conn.status === "REJECTED") {
+        status = "rejected"
+      } else if (conn.status === "BLOCKED") {
+        status = "blocked"
+      }
+
       return {
-        id: conn.id,
+        id: otherUser.id,
         firstName: otherUser.firstName,
         lastName: otherUser.lastName,
         jobTitle: otherUser.jobTitle,
         company: otherUser.company,
         avatar: otherUser.avatar,
+        role: otherUser.role,
+        lastLogin: otherUser.lastLogin,
         status: status,
-        connectionId: conn.id
+        connectionId: conn.id,
+        isOutgoing: isSender // Add this to help frontend identify outgoing requests
       }
     })
 
@@ -84,7 +112,6 @@ export async function GET(
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
-
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -114,9 +141,10 @@ export async function POST(
       }
     })
 
+
     if (existingConnection) {
       return NextResponse.json(
-        { error: "Connection already exists" }, 
+        { error: "Connection already exists" },
         { status: 400 }
       )
     }
@@ -159,7 +187,7 @@ export async function POST(
       }
     })
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       connection: {
         id: connection.id,
         firstName: connection.receiver.firstName,

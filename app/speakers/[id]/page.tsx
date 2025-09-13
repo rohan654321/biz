@@ -3,6 +3,47 @@ import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from "react-icons/fa"
+import { useEffect, useState } from "react"
+
+interface SpeakerProfile {
+  fullName: string
+  designation: string
+  company: string
+  email: string
+  phone: string
+  linkedin: string
+  website: string
+  location: string
+  bio: string
+  speakingExperience: string
+  avatar?: string
+}
+
+interface Speaker {
+  id: string
+  name: string
+  title: string
+  image: string
+  bio: string
+  dateOfBirth: string
+  mobileNumber: string
+  location: string
+  website: string
+  socialLinks: {
+    facebook: string
+    twitter: string
+    instagram: string
+    linkedin: string
+  }
+}
+
+interface Event {
+  id: string
+  title: string
+  date: string
+  location: string
+  image: string
+}
 
 interface SpeakerPageProps {
   params: Promise<{
@@ -10,79 +51,126 @@ interface SpeakerPageProps {
   }>
 }
 
-export default async function SpeakerPage({ params }: SpeakerPageProps) {
-  const { id } = await params
+export default function SpeakerPage({ params }: SpeakerPageProps) {
+  const [speaker, setSpeaker] = useState<Speaker | null>(null)
+  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([])
+  const [pastEvents, setPastEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock speaker data
-  const speaker = {
-    id: id,
-    name: "Ramesh S",
-    title: "CEO & Co-Founder",
-    image: "/placeholder.svg?height=200&width=200&text=Ramesh+S",
-    bio: "Texworld Apparel Sourcing Paris is a prominent tradeshow taking place at the Paris Le Bourget Exhibition Centre in Paris, France. Organized by Messe Frankfurt France S.A.S, this event attracts a diverse audience from countries such as the USA and Pakistan, showcasing the global reach of the fashion and apparel industry.Texworld Apparel Sourcing Paris is a prominent tradeshow taking place at the Paris Le Bourget Exhibition Centre in Paris, France. Organized by Messe Frankfurt France S.A.S, this event attracts a diverse audience from countries such as the USA and Pakistan, showcasing the global reach of the fashion and apparel industry. Texworld Apparel Sourcing Paris is a prominent tradeshow taking place at the Paris Le Bourget Exhibition Centre in Paris, France. Organized by Messe Frankfurt France S.A.S.",
-    dateOfBirth: "September 10 1980",
-    mobileNumber: "+91 9999787865",
-    location : "city,country",
-    website : "link",
-    socialLinks: {
-      facebook: "https://facebook.com",
-      twitter: "https://twitter.com",
-      instagram: "https://instagram.com",
-      linkedin: "https://linkedin.com",
-    },
-  }
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true)
+        const { id } = await params
+        
+        // Fetch speaker data
+        const speakerResponse = await fetch(`/api/speakers/${id}`)
+        if (!speakerResponse.ok) {
+          throw new Error('Failed to fetch speaker data')
+        }
+        
+        const speakerData = await speakerResponse.json()
+        
+        if (speakerData.success) {
+          // Transform API data to match frontend expectations
+          const speakerProfile: SpeakerProfile = speakerData.profile
+          setSpeaker({
+            id,
+            name: speakerProfile.fullName,
+            title: speakerProfile.designation,
+            image: speakerProfile.avatar || "/placeholder.svg?height=200&width=200&text=Speaker",
+            bio: speakerProfile.bio,
+            dateOfBirth: "", // Not in your schema
+            mobileNumber: speakerProfile.phone,
+            location: speakerProfile.location,
+            website: speakerProfile.website,
+            socialLinks: {
+              facebook: speakerProfile.linkedin || "#",
+              twitter: "#",
+              instagram: "#",
+              linkedin: speakerProfile.linkedin || "#"
+            }
+          })
+        } else {
+          throw new Error(speakerData.error || 'Failed to load speaker data')
+        }
 
-  const upcomingEvents = [
-    {
-      id: 1,
-      title: "Fitness Fest 2025",
-      date: "Thu 04 - Sat 06 June 2025",
-      location: "Bangalore, India",
-      image: "/placeholder.svg?height=120&width=180&text=Fitness+Event",
-    },
-    {
-      id: 2,
-      title: "Fitness Fest 2025",
-      date: "Thu 04 - Sat 06 June 2025",
-      location: "Bangalore, India",
-      image: "/placeholder.svg?height=120&width=180&text=Fitness+Event",
-    },
-    {
-      id: 3,
-      title: "Fitness Fest 2025",
-      date: "Thu 04 - Sat 06 June 2025",
-      location: "Bangalore, India",
-      image: "/placeholder.svg?height=120&width=180&text=Fitness+Event",
-    },
-    {
-      id: 4,
-      title: "Fitness Fest 2025",
-      date: "Thu 04 - Sat 06 June 2025",
-      location: "Bangalore, India",
-      image: "/placeholder.svg?height=120&width=180&text=Fitness+Event",
-    },
-  ]
+        // Fetch events for this speaker
+        const eventsResponse = await fetch(`/api/speakers/${id}/events`)
+        if (eventsResponse.ok) {
+          const eventsData = await eventsResponse.json()
+          if (eventsData.success) {
+            setUpcomingEvents(eventsData.upcoming || [])
+            setPastEvents(eventsData.past || [])
+          }
+        } else {
+          // Fallback to mock data if events API is not implemented yet
+          setUpcomingEvents([
+            {
+              id: "1",
+              title: "Fitness Fest 2025",
+              date: "Thu 04 - Sat 06 June 2025",
+              location: "Bangalore, India",
+              image: "/placeholder.svg?height=120&width=180&text=Fitness+Event",
+            },
+            {
+              id: "2",
+              title: "Fitness Fest 2025",
+              date: "Thu 04 - Sat 06 June 2025",
+              location: "Bangalore, India",
+              image: "/placeholder.svg?height=120&width=180&text=Fitness+Event",
+            },
+          ])
+          setPastEvents([
+            {
+              id: "3",
+              title: "Tech Summit 2024",
+              date: "Mon 15 - Wed 17 Jan 2024",
+              location: "Mumbai, India",
+              image: "/placeholder.svg?height=120&width=180&text=Tech+Summit",
+            },
+            {
+              id: "4",
+              title: "Business Expo 2024",
+              date: "Fri 20 - Sun 22 Mar 2024",
+              location: "Delhi, India",
+              image: "/placeholder.svg?height=120&width=180&text=Business+Expo",
+            },
+          ])
+        }
 
-  const pastEvents = [
-    {
-      id: 5,
-      title: "Tech Summit 2024",
-      date: "Mon 15 - Wed 17 Jan 2024",
-      location: "Mumbai, India",
-      image: "/placeholder.svg?height=120&width=180&text=Tech+Summit",
-    },
-    {
-      id: 6,
-      title: "Business Expo 2024",
-      date: "Fri 20 - Sun 22 Mar 2024",
-      location: "Delhi, India",
-      image: "/placeholder.svg?height=120&width=180&text=Business+Expo",
-    },
-  ]
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred')
+        console.error('Error fetching speaker data:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [params])
+
+  if (loading) return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="text-blue-900 text-xl">Loading speaker profile...</div>
+    </div>
+  )
+  
+  if (error) return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="text-red-600 text-xl">Error: {error}</div>
+    </div>
+  )
+  
+  if (!speaker) return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="text-red-600 text-xl">Speaker not found</div>
+    </div>
+  )
 
   return (
     <>
-      {/* <Navbar /> */}
       <div className="min-h-screen bg-white">
         {/* Hero Section */}
         <div className="relative">
@@ -101,12 +189,12 @@ export default async function SpeakerPage({ params }: SpeakerPageProps) {
           <div className="relative z-10 max-w-7xl mx-auto px-4 py-12">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start bg-white">
               {/* Speaker Profile */}
-              <div className="flex flex-col items-center text-center p-2 ">
+              <div className="flex flex-col items-center text-center p-2">
                 {/* Profile Image with Orange Border */}
                 <div className="relative mb-6">
                   <div className="w-48 h-48 rounded-full border-8 border-orange-500 overflow-hidden bg-white p-2">
                     <Image
-                      src={speaker.image || "/placeholder.svg"}
+                      src={speaker.image}
                       alt={speaker.name}
                       width={200}
                       height={200}
@@ -196,54 +284,66 @@ export default async function SpeakerPage({ params }: SpeakerPageProps) {
 
             {/* Upcoming Events */}
             <TabsContent value="upcoming">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {upcomingEvents.map((event) => (
-                  <Card key={event.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-0">
-                      <div className="relative">
-                        <Image
-                          src={event.image || "/placeholder.svg"}
-                          alt={event.title}
-                          width={300}
-                          height={180}
-                          className="w-full h-32 object-cover rounded-t-lg"
-                        />
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-semibold text-gray-900 mb-2">{event.title}</h3>
-                        <p className="text-sm text-gray-600 mb-1">{event.date}</p>
-                        <p className="text-sm text-gray-600">{event.location}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              {upcomingEvents.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {upcomingEvents.map((event) => (
+                    <Card key={event.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-0">
+                        <div className="relative">
+                          <Image
+                            src={event.image}
+                            alt={event.title}
+                            width={300}
+                            height={180}
+                            className="w-full h-32 object-cover rounded-t-lg"
+                          />
+                        </div>
+                        <div className="p-4">
+                          <h3 className="font-semibold text-gray-900 mb-2">{event.title}</h3>
+                          <p className="text-sm text-gray-600 mb-1">{event.date}</p>
+                          <p className="text-sm text-gray-600">{event.location}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No upcoming events scheduled
+                </div>
+              )}
             </TabsContent>
 
             {/* Past Events */}
             <TabsContent value="past">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {pastEvents.map((event) => (
-                  <Card key={event.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-0">
-                      <div className="relative">
-                        <Image
-                          src={event.image || "/placeholder.svg"}
-                          alt={event.title}
-                          width={300}
-                          height={180}
-                          className="w-full h-32 object-cover rounded-t-lg"
-                        />
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-semibold text-gray-900 mb-2">{event.title}</h3>
-                        <p className="text-sm text-gray-600 mb-1">{event.date}</p>
-                        <p className="text-sm text-gray-600">{event.location}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              {pastEvents.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {pastEvents.map((event) => (
+                    <Card key={event.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-0">
+                        <div className="relative">
+                          <Image
+                            src={event.image}
+                            alt={event.title}
+                            width={300}
+                            height={180}
+                            className="w-full h-32 object-cover rounded-t-lg"
+                          />
+                        </div>
+                        <div className="p-4">
+                          <h3 className="font-semibold text-gray-900 mb-2">{event.title}</h3>
+                          <p className="text-sm text-gray-600 mb-1">{event.date}</p>
+                          <p className="text-sm text-gray-600">{event.location}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No past events found
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>

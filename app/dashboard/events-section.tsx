@@ -8,8 +8,13 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Calendar, MapPin, Plus, Users, Heart, Eye, Store, MessageCircle } from "lucide-react"
+import { Calendar as CalendarIcon, MapPin, Plus, Users, Heart, Eye, Store, MessageCircle, Filter, X } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { format } from "date-fns"
 
 interface Event {
   id: string
@@ -52,6 +57,14 @@ export function EventsSection({ userId }: EventsSectionProps) {
   const [interestedEvents, setInterestedEvents] = useState<Event[]>([])
   const [interestedLoading, setInterestedLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [dateFilter, setDateFilter] = useState<{
+    from: Date | undefined
+    to: Date | undefined
+  }>({
+    from: undefined,
+    to: undefined
+  })
+  const [showCalendarFilter, setShowCalendarFilter] = useState(false)
 
   // Use session user ID if no userId prop is provided
   const targetUserId = userId || session?.user?.id
@@ -136,6 +149,43 @@ export function EventsSection({ userId }: EventsSectionProps) {
     return new Date(startDate) > new Date()
   }
 
+  // Filter events based on selected date range
+  const filterEventsByDate = (events: Event[]) => {
+    if (!dateFilter.from && !dateFilter.to) return events
+    
+    return events.filter(event => {
+      const eventStartDate = new Date(event.startDate)
+      const eventEndDate = new Date(event.endDate)
+      
+      // If only from date is selected
+      if (dateFilter.from && !dateFilter.to) {
+        return eventStartDate >= dateFilter.from || eventEndDate >= dateFilter.from
+      }
+      
+      // If only to date is selected
+      if (!dateFilter.from && dateFilter.to) {
+        return eventStartDate <= dateFilter.to || eventEndDate <= dateFilter.to
+      }
+      
+      // If both from and to dates are selected
+      if (dateFilter.from && dateFilter.to) {
+        return (
+          (eventStartDate >= dateFilter.from && eventStartDate <= dateFilter.to) ||
+          (eventEndDate >= dateFilter.from && eventEndDate <= dateFilter.to) ||
+          (eventStartDate <= dateFilter.from && eventEndDate >= dateFilter.to)
+        )
+      }
+      
+      return true
+    })
+  }
+
+  const clearDateFilter = () => {
+    setDateFilter({ from: undefined, to: undefined })
+  }
+
+  const filteredEvents = filterEventsByDate(interestedEvents)
+
   if (status === "loading" || interestedLoading) {
     return (
       <div className="space-y-6">
@@ -176,22 +226,116 @@ export function EventsSection({ userId }: EventsSectionProps) {
         </Button>
       </div>
 
+      {/* Calendar Filter Section */}
+      <div className="flex flex-col gap-4 p-4 border rounded-lg bg-gray-50">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium">Filter by Date</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCalendarFilter(!showCalendarFilter)}
+            className="flex items-center gap-2"
+          >
+            <Filter className="w-4 h-4" />
+            {showCalendarFilter ? 'Hide Filter' : 'Show Filter'}
+          </Button>
+        </div>
+
+        {showCalendarFilter && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
+              <Calendar
+                mode="range"
+                selected={{
+                  from: dateFilter.from,
+                  to: dateFilter.to
+                }}
+                onSelect={(range) => {
+                  setDateFilter({
+                    from: range?.from,
+                    to: range?.to
+                  })
+                }}
+                className="rounded-md border"
+              />
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="from-date">From Date</Label>
+                <Input
+                  id="from-date"
+                  type="date"
+                  value={dateFilter.from ? format(dateFilter.from, 'yyyy-MM-dd') : ''}
+                  onChange={(e) => {
+                    const date = e.target.value ? new Date(e.target.value) : undefined
+                    setDateFilter(prev => ({ ...prev, from: date }))
+                  }}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="to-date">To Date</Label>
+                <Input
+                  id="to-date"
+                  type="date"
+                  value={dateFilter.to ? format(dateFilter.to, 'yyyy-MM-dd') : ''}
+                  onChange={(e) => {
+                    const date = e.target.value ? new Date(e.target.value) : undefined
+                    setDateFilter(prev => ({ ...prev, to: date }))
+                  }}
+                />
+              </div>
+              
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={clearDateFilter}
+                  className="flex items-center gap-2"
+                  disabled={!dateFilter.from && !dateFilter.to}
+                >
+                  <X className="w-4 h-4" />
+                  Clear Filter
+                </Button>
+                
+                <Button 
+                  variant="default"
+                  onClick={() => setShowCalendarFilter(false)}
+                >
+                  Apply Filter
+                </Button>
+              </div>
+              
+              {(dateFilter.from || dateFilter.to) && (
+                <div className="text-sm text-gray-600 mt-2">
+                  <p>Showing events from: {dateFilter.from ? formatDate(dateFilter.from.toISOString()) : 'any date'}</p>
+                  <p>to: {dateFilter.to ? formatDate(dateFilter.to.toISOString()) : 'any date'}</p>
+                  <p className="font-medium mt-1">
+                    {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''} match your filter
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       <Tabs defaultValue="all" className="w-full">
-        {/* <TabsList>
+        <TabsList>
           <TabsTrigger value="all">
-            All Interests ({interestedEvents.length})
+            All Interests ({filteredEvents.length})
           </TabsTrigger>
           <TabsTrigger value="upcoming">
-            Upcoming ({interestedEvents.filter(e => isUpcoming(e.startDate)).length})
+            Upcoming ({filteredEvents.filter(e => isUpcoming(e.startDate)).length})
           </TabsTrigger>
           <TabsTrigger value="followup">
-            Follow-up ({interestedEvents.filter(e => e.followUpDate && new Date(e.followUpDate) >= new Date()).length})
+            Follow-up ({filteredEvents.filter(e => e.followUpDate && new Date(e.followUpDate) >= new Date()).length})
           </TabsTrigger>
-        </TabsList> */}
+        </TabsList>
 
         <TabsContent value="all" className="space-y-4">
-          {interestedEvents.length > 0 ? (
-            interestedEvents.map((event) => (
+          {filteredEvents.length > 0 ? (
+            filteredEvents.map((event) => (
               <Card key={event.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
@@ -216,7 +360,7 @@ export function EventsSection({ userId }: EventsSectionProps) {
 
                       <div className="flex items-center gap-4 text-gray-600 text-sm mb-2 flex-wrap">
                         <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
+                          <CalendarIcon className="w-4 h-4" />
                           {formatDate(event.startDate)} - {formatDate(event.endDate)}
                         </div>
 
@@ -277,9 +421,15 @@ export function EventsSection({ userId }: EventsSectionProps) {
             <Card>
               <CardContent className="p-6 text-center">
                 <Heart className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p className="text-gray-600 mb-4">No interested events yet.</p>
+                <p className="text-gray-600 mb-4">
+                  {dateFilter.from || dateFilter.to 
+                    ? "No events match your filter criteria." 
+                    : "No interested events yet."}
+                </p>
                 <p className="text-sm text-gray-500">
-                  Visit event pages and click "I'm Interested" to track events here.
+                  {dateFilter.from || dateFilter.to 
+                    ? "Try adjusting your date range filter."
+                    : "Visit event pages and click \"I'm Interested\" to track events here."}
                 </p>
               </CardContent>
             </Card>
@@ -287,10 +437,9 @@ export function EventsSection({ userId }: EventsSectionProps) {
         </TabsContent>
 
         <TabsContent value="upcoming" className="space-y-4">
-          {interestedEvents.filter(e => isUpcoming(e.startDate)).map((event) => (
+          {filteredEvents.filter(e => isUpcoming(e.startDate)).map((event) => (
             <Card key={event.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
-                {/* Same card content as above */}
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2 flex-wrap">
@@ -302,7 +451,7 @@ export function EventsSection({ userId }: EventsSectionProps) {
                     </div>
                     <div className="flex items-center gap-4 text-gray-600 text-sm">
                       <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
+                        <CalendarIcon className="w-4 h-4" />
                         {formatDate(event.startDate)}
                       </div>
                       {event.location && (
@@ -313,7 +462,13 @@ export function EventsSection({ userId }: EventsSectionProps) {
                       )}
                     </div>
                   </div>
-                  <Button variant="outline" size="sm">View Event</Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => router.push(`/event/${event.id}`)}
+                  >
+                    View Event
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -321,7 +476,7 @@ export function EventsSection({ userId }: EventsSectionProps) {
         </TabsContent>
 
         <TabsContent value="followup" className="space-y-4">
-          {interestedEvents.filter(e => e.followUpDate && new Date(e.followUpDate) >= new Date()).map((event) => (
+          {filteredEvents.filter(e => e.followUpDate && new Date(e.followUpDate) >= new Date()).map((event) => (
             <Card key={event.id} className="hover:shadow-md transition-shadow border-orange-200">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">

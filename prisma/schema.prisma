@@ -928,20 +928,22 @@ enum LeadStatus {
 
 // Connection System
 model Connection {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  senderId        String   @db.ObjectId
-  sender          User     @relation("ConnectionSender", fields: [senderId], references: [id])
-  receiverId      String   @db.ObjectId
-  receiver        User     @relation("ConnectionReceiver", fields: [receiverId], references: [id])
-  status          ConnectionStatus @default(PENDING)
-  message         String?
-  
-  // Timestamps
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  acceptedAt      DateTime?
-  
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId    String   @db.ObjectId
+  receiverId  String   @db.ObjectId
+  message     String?
+  status      ConnectionStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  acceptedAt  DateTime?
+
+  sender      User     @relation("ConnectionSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User     @relation("ConnectionReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
   @@unique([senderId, receiverId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([status])
   @@map("connections")
 }
 

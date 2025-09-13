@@ -32,15 +32,9 @@ import RatingsReviews from "./ratings-reviews"
 import LegalDocumentation from "./legal-documentation"
 import VenueSettings from "./venue-settings"
 import { promise } from "zod"
-type MeetingSpace = {
-  id: string
-  name: string
-  capacity: number
-  amenities: string[]
-}
 
 type VenueData = {
-   id: string
+  id: string
   venueName: string
   logo: string
   contactPerson: string
@@ -94,57 +88,57 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
     fetchVenueData()
   }, [userId, status, session, router, toast])
 
-const fetchVenueData = async () => {
-  try {
-    setLoading(true)
-    setError(null)
+  const fetchVenueData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
 
-    const response = await fetch(`/api/venue-manager/${userId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error("User not found")
-      }
-      if (response.status === 403) {
-        throw new Error("Access denied")
-      }
-      throw new Error("Failed to fetch user data")
-    }
-
-    const data = await response.json()
-    
-    // Handle both possible response structures
-    if (data.user && data.user.venue) {
-      setVenueData(data.user.venue)
-    } else if (data.venue) {
-      setVenueData(data.venue)
-    } else if (data.user) {
-      setVenueData(data.user)
-    } else {
-      throw new Error("Invalid data structure in response")
-    }
-    
-  } catch (err) {
-    console.error("Error fetching user data:", err)
-    setError(err instanceof Error ? err.message : "An error occurred")
-
-    if (err instanceof Error && (err.message === "Access denied" || err.message === "User not found")) {
-      toast({
-        title: "Error",
-        description: err.message,
-        variant: "destructive",
+      const response = await fetch(`/api/venue-manager/${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       })
-      router.push("/login")
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("User not found")
+        }
+        if (response.status === 403) {
+          throw new Error("Access denied")
+        }
+        throw new Error("Failed to fetch user data")
+      }
+
+      const data = await response.json()
+
+      // Handle both possible response structures
+      if (data.user && data.user.venue) {
+        setVenueData(data.user.venue)
+      } else if (data.venue) {
+        setVenueData(data.venue)
+      } else if (data.user) {
+        setVenueData(data.user)
+      } else {
+        throw new Error("Invalid data structure in response")
+      }
+
+    } catch (err) {
+      console.error("Error fetching user data:", err)
+      setError(err instanceof Error ? err.message : "An error occurred")
+
+      if (err instanceof Error && (err.message === "Access denied" || err.message === "User not found")) {
+        toast({
+          title: "Error",
+          description: err.message,
+          variant: "destructive",
+        })
+        router.push("/login")
+      }
+    } finally {
+      setLoading(false)
     }
-  } finally {
-    setLoading(false)
   }
-}
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -208,6 +202,11 @@ const fetchVenueData = async () => {
       id: "communication",
     },
     {
+      title: "connection",
+      icon: MessageSquare,
+      id: "connection",
+    },
+    {
       title: "Ratings & Reviews",
       icon: Star,
       id: "ratings-reviews",
@@ -233,9 +232,10 @@ const fetchVenueData = async () => {
       case "booking-system":
         return <BookingSystem />
       case "communication":
-      // venue-layout.tsx
-return <CommunicationCenter params={{ id: userId }} />
-
+        // venue-layout.tsx
+        return <CommunicationCenter params={{ id: userId }} />
+      case "connection":
+        return <ConnectionsSection userId={venueData.id} />
       case "ratings-reviews":
         return <RatingsReviews />
       case "legal-documentation":

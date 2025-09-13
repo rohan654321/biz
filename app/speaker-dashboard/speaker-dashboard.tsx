@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { signOut } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ConnectionsSection } from "@/app/dashboard/connections-section"
 import {
   Building2,
   Calendar,
@@ -180,6 +181,7 @@ export function ExhibitorDashboard({userId}: UserDashboardProps) {
     { id: "mysessions", label: "mysessions", icon: Package },
     { id: "materials", label: "materials", icon: Users },
     { id: "feedback", label: "feedback", icon: Calendar },
+    { id: "connection", label: "connection", icon: TrendingUp },
     { id: "message", label: "message", icon: TrendingUp },
     // { id: "promotions", label: "Promotions", icon: Star },
     { id: "settings", label: "Settings", icon: Settings },
@@ -262,6 +264,7 @@ export function ExhibitorDashboard({userId}: UserDashboardProps) {
           {activeTab === "materials" && <PresentationMaterials />}
           {activeTab === "feedback" && <FeedbackRatings />}
           {activeTab === "message" && <MessagesCenter organizerId={exhibitor.id}  />}
+           {activeTab === "connection" &&<ConnectionsSection  userId={exhibitor.id}/>}
           {/* {activeTab === "analytics" && < />} */}
           {/* {activeTab === "promotions" && < />} */}
           {activeTab === "settings" && <SpeakerSettings />}

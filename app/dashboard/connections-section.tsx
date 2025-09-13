@@ -64,72 +64,68 @@ export function ConnectionsSection({ userId }: ConnectionsSectionProps) {
     }
   }
 
-  const handleConnectionAction = async (targetId: string, action: 'accept' | 'reject' | 'connect' | 'cancel') => {
-    try {
-      if (action === 'connect') {
-        // For connect action, use the POST endpoint
-        const response = await fetch(`/api/users/${userId}/connections`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ receiverId: targetId }),
-        })
+ const handleConnectionAction = async (targetId: string, action: 'accept' | 'reject' | 'connect' | 'cancel') => {
+  try {
+    if (action === 'connect') {
+      // For connect action, use the POST endpoint
+      const response = await fetch(`/api/users/${userId}/connections`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ receiverId: targetId }),
+      })
 
-        if (!response.ok) {
-          throw new Error(`Failed to send connection request`)
-        }
-
-        const data = await response.json()
-        // Add the new pending connection to the list
-        setConnections(prev => [...prev, data.connection])
-        setSearchResults(prev => prev.filter(user => user.id !== targetId))
-      } else {
-        // For other actions, find the connectionId first
-        const connection = connections.find(conn => 
-          (action === 'accept' || action === 'reject') ? 
-          conn.id === targetId : // For accept/reject, targetId is the connection id
-          conn.connectionId === targetId // For cancel, targetId is the connectionId
-        )
-        
-        if (!connection) {
-          throw new Error("Connection not found")
-        }
-
-        const connectionId = connection.connectionId || connection.id
-        
-        const response = await fetch(`/api/users/${userId}/connections/${connectionId}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ action }),
-        })
-
-        if (!response.ok) {
-          throw new Error(`Failed to ${action} connection`)
-        }
-
-        // Update the connection status locally
-        setConnections(prev => {
-          if (action === 'accept' || action === 'reject') {
-            // Remove from list if accepting or rejecting a request
-            return prev.filter(conn => conn.connectionId !== connectionId && conn.id !== connectionId)
-          } else if (action === 'cancel') {
-            // Update status when canceling a request
-            return prev.map(conn => 
-              (conn.connectionId === connectionId || conn.id === connectionId) ? 
-              { ...conn, status: 'connected' } : conn
-            )
-          }
-          return prev
-        })
+      if (!response.ok) {
+        throw new Error(`Failed to send connection request`)
       }
-    } catch (err) {
-      console.error(`Error performing ${action} on connection:`, err)
-      setError(err instanceof Error ? err.message : "An error occurred")
+
+      const data = await response.json()
+      // Add the new pending connection to the list
+      setConnections(prev => [...prev, data.connection])
+      setSearchResults(prev => prev.filter(user => user.id !== targetId))
+    } else {
+      // For other actions, find the connection by connectionId
+      const connection = connections.find(conn => 
+        conn.connectionId === targetId || conn.id === targetId
+      )
+      
+      if (!connection) {
+        throw new Error("Connection not found")
+      }
+
+      const connectionId = connection.connectionId
+      
+      const response = await fetch(`/api/users/${userId}/connections/${connectionId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to ${action} connection`)
+      }
+
+      // Update the connection status locally
+      if (action === 'accept' || action === 'reject') {
+        // Remove from list when accepting or rejecting a request
+        setConnections(prev => prev.filter(conn => 
+          conn.connectionId !== connectionId && conn.id !== connectionId
+        ))
+      } else if (action === 'cancel') {
+        // Remove from list when canceling a request
+        setConnections(prev => prev.filter(conn => 
+          conn.connectionId !== connectionId && conn.id !== connectionId
+        ))
+      }
     }
+  } catch (err) {
+    console.error(`Error performing ${action} on connection:`, err)
+    setError(err instanceof Error ? err.message : "An error occurred")
   }
+}
 
   const searchUsers = async (query: string) => {
     if (!query.trim()) {
@@ -159,14 +155,19 @@ export function ConnectionsSection({ userId }: ConnectionsSectionProps) {
   }
 
   const filteredConnections = connections.filter(
-    (connection) =>
-      (connection.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      connection.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      connection.company?.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (activeTab === 'connections' ? connection.status === 'connected' : connection.status === 'request_received')
-  )
+  (connection) =>
+    (connection.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    connection.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    connection.company?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    (activeTab === 'connections' ? 
+      connection.status === 'connected' : 
+      connection.status === 'request_received')
+)
 
-  const pendingConnections = connections.filter(conn => conn.status === 'pending')
+// Get pending connections (outgoing requests)
+const pendingConnections = connections.filter(conn => 
+  conn.status === 'pending' && activeTab === 'connections'
+) 
 
   if (loading) {
     return (
