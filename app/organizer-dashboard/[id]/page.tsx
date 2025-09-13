@@ -49,6 +49,7 @@ import VisitorBadgeSettings from "../Visitor-Badge-Settings"
 import ExhibitorsEventWise from "../ExhibitorsEventWise"
 import ConferenceAgenda from "../ConferenceAgenda"
 import CreateConferenceAgenda from "../create-conference-agenda"
+import { ConnectionsSection } from "@/app/dashboard/connections-section"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -405,6 +406,11 @@ export default function OrganizerDashboardPage() {
       label: "Other",
       items: [
         {
+          title: "connections",
+          icon: MessageSquare,
+          id: "connections",
+        },
+        {
           title: "Messages",
           icon: MessageSquare,
           id: "messages",
@@ -560,6 +566,8 @@ export default function OrganizerDashboardPage() {
         return <SpeakerSessionsTable organizerId={organizerId} />
       case "feedback":
         return <PlaceholderPage title="Feed Back" />
+        case "connections":
+        return <ConnectionsSection  userId={organizerId}/>
       case "feedback-reply":
         return <PlaceholderPage title="Feed back reply" />
       default:

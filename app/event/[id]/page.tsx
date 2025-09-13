@@ -66,66 +66,95 @@ export default function EventPage({ params }: EventPageProps) {
     fetchEvent()
   }, [params])
 
-const handleVisitClick = async () => {
-  if (!session) {
-    alert("Authentication Required\nPlease log in to express interest in this event");
-    router.push("/login");
-    return;
-  }
-
-  try {
-    const response = await fetch(`/api/events/${event.id}/leads`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        type: "attendee",
-        userId: session.user.id,
-        eventId: event.id,
-      }),
-    });
-
-    if (response.ok) {
-      alert("Your visit request has been sent to the organizer successfully!");
-    } else {
-      throw new Error("Failed to record interest");
+  const handleVisitClick = async () => {
+    if (!session) {
+      alert("Authentication Required\nPlease log in to express interest in this event");
+      router.push("/login");
+      return;
     }
-  } catch (error) {
-    alert("Failed to record your interest. Please try again.");
-  }
-};
 
-const handleExhibitClick = async () => {
-  if (!session) {
-    alert("Authentication Required\nPlease log in to express interest in exhibiting");
-    router.push("/login");
-    return;
-  }
+    try {
+      const response = await fetch(`/api/events/${event.id}/leads`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "attendee",
+          userId: session.user.id,
+          eventId: event.id,
+        }),
+      });
 
-  try {
-    const response = await fetch(`/api/events/${event.id}/leads`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        type: "exhibitor",
-        userId: session.user.id,
-        eventId: event.id,
-      }),
-    });
-
-    if (response.ok) {
-      alert("Your exhibition request has been sent to the organizer successfully!");
-    } else {
-      throw new Error("Failed to record interest");
+      if (response.ok) {
+        alert("Your visit request has been sent to the organizer successfully!");
+      } else {
+        throw new Error("Failed to record interest");
+      }
+    } catch (error) {
+      alert("Failed to record your interest. Please try again.");
     }
-  } catch (error) {
-    alert("Failed to record your interest. Please try again.");
-  }
-};
+  };
 
+  const handleExhibitClick = async () => {
+    if (!session) {
+      alert("Authentication Required\nPlease log in to express interest in exhibiting");
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/events/${event.id}/leads`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "exhibitor",
+          userId: session.user.id,
+          eventId: event.id,
+        }),
+      });
+
+      if (response.ok) {
+        alert("Your exhibition request has been sent to the organizer successfully!");
+      } else {
+        throw new Error("Failed to record interest");
+      }
+    } catch (error) {
+      alert("Failed to record your interest. Please try again.");
+    }
+  };
+
+  const handleSponsorClick = async () => {
+    if (!session) {
+      alert("Authentication Required\nPlease log in to express interest in sponsoring");
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/events/${event.id}/leads`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "sponsor",
+          userId: session.user.id,
+          eventId: event.id,
+        }),
+      });
+
+      if (response.ok) {
+        alert("Your sponsorship request has been sent to the organizer successfully!");
+      } else {
+        throw new Error("Failed to record interest");
+      }
+    } catch (error) {
+      alert("Failed to record your interest. Please try again.");
+    }
+  };
 
   if (loading) {
     return (
@@ -215,15 +244,22 @@ const handleExhibitClick = async () => {
 
             <div className="flex flex-col gap-4 pr-4 lg:pr-4">
               <p className="text-center text-gray-700 font-medium">Interested in this Event ?</p>
-              <div className="flex gap-3 ">
+              <div className="flex gap-3 flex-col sm:flex-row">
                 <Button variant="outline" className="flex-1 border-gray-300 bg-transparent" onClick={handleVisitClick}>
                   Visit
                 </Button>
                 <Button
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
+                  variant="outline"
+                  className="flex-1 border-blue-300 bg-transparent text-blue-600 hover:text-blue-700"
                   onClick={handleExhibitClick}
                 >
                   Exhibit
+                </Button>
+                <Button
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
+                  onClick={handleSponsorClick}
+                >
+                  Sponsor
                 </Button>
               </div>
             </div>

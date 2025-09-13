@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -93,15 +93,94 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
   const [deleteMessageId, setDeleteMessageId] = useState<string | null>(null)
   const [deleteConversationId, setDeleteConversationId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [isOnline, setIsOnline] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const ws = useRef<WebSocket | null>(null)
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+  }, [])
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+  }, [messages, scrollToBottom])
+
+  // WebSocket connection for real-time updates
+  useEffect(() => {
+    const connectWebSocket = () => {
+      try {
+        ws.current = new WebSocket(`${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001'}/messages?userId=${organizerId}`)
+        
+        ws.current.onopen = () => {
+          console.log("WebSocket connected")
+          setIsOnline(true)
+        }
+        
+        ws.current.onmessage = (event) => {
+          const data = JSON.parse(event.data)
+          
+          if (data.type === 'NEW_MESSAGE') {
+            setMessages(prev => [...prev, data.message])
+            
+            // Update conversations list with new message
+            setConversations(prev => {
+              const existingConvIndex = prev.findIndex(conv => conv.contactId === data.message.senderId)
+              if (existingConvIndex !== -1) {
+                const updatedConvs = [...prev]
+                updatedConvs[existingConvIndex] = {
+                  ...updatedConvs[existingConvIndex],
+                  lastMessage: data.message.content,
+                  lastMessageTime: data.message.createdAt,
+                  unreadCount: selectedContact === data.message.senderId ? 
+                    0 : updatedConvs[existingConvIndex].unreadCount + 1
+                }
+                return updatedConvs
+              }
+              return prev
+            })
+          }
+          
+          if (data.type === 'MESSAGE_READ') {
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === data.messageId ? {...msg, isRead: true} : msg
+              )
+            )
+          }
+          
+          if (data.type === 'USER_STATUS') {
+            setConnections(prev => 
+              prev.map(conn => 
+                conn.id === data.userId ? {...conn, isOnline: data.isOnline} : conn
+              )
+            )
+          }
+        }
+        
+        ws.current.onclose = () => {
+          console.log("WebSocket disconnected")
+          setIsOnline(false)
+          // Attempt to reconnect after 3 seconds
+          setTimeout(connectWebSocket, 3000)
+        }
+        
+        ws.current.onerror = (error) => {
+          console.error("WebSocket error:", error)
+          setIsOnline(false)
+        }
+      } catch (error) {
+        console.error("Failed to connect WebSocket:", error)
+      }
+    }
+    
+    connectWebSocket()
+    
+    return () => {
+      if (ws.current) {
+        ws.current.close()
+      }
+    }
+  }, [organizerId, selectedContact])
 
   useEffect(() => {
     fetchConversations()
@@ -111,6 +190,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
   useEffect(() => {
     if (selectedContact) {
       fetchMessages(selectedContact)
+      markMessagesAsRead(selectedContact)
     }
   }, [selectedContact])
 
@@ -135,17 +215,29 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
 
   const fetchConnections = async () => {
     try {
-      const response = await fetch(`/api/organizers/${organizerId}/connections`)
-      if (!response.ok) throw new Error("Failed to fetch connections")
+      setLoading(true)
+      const response = await fetch(`/api/users/${organizerId}/connections`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch connections")
+      }
+
       const data = await response.json()
       setConnections(data.connections || [])
-    } catch (error) {
-      console.error("Error fetching connections:", error)
+    } catch (err) {
+      console.error("Error fetching connections:", err)
       toast({
         title: "Error",
         description: "Failed to load connections",
         variant: "destructive",
       })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -168,46 +260,125 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
     }
   }
 
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedContact) return
-
+  const markMessagesAsRead = async (contactId: string) => {
     try {
-      setSending(true)
-      const response = await fetch(`/api/organizers/${organizerId}/messages`, {
+      const response = await fetch(`/api/organizers/${organizerId}/messages/read`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          contactId: selectedContact,
-          content: newMessage.trim(),
-        }),
+        body: JSON.stringify({ contactId }),
       })
 
-      if (!response.ok) throw new Error("Failed to send message")
-
-      const data = await response.json()
-      setMessages((prev) => [...prev, data.message])
-      setNewMessage("")
-
-      // Update conversations list
-      fetchConversations()
-
-      toast({
-        title: "Success",
-        description: "Message sent successfully",
-      })
+      if (!response.ok) throw new Error("Failed to mark messages as read")
+      
+      // Update local state
+      setMessages(prev => prev.map(msg => ({...msg, isRead: true})))
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.contactId === contactId ? {...conv, unreadCount: 0} : conv
+        )
+      )
+      
+      // Send read receipt via WebSocket if available
+      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+        ws.current.send(JSON.stringify({
+          type: "MESSAGES_READ",
+          contactId,
+          userId: organizerId
+        }))
+      }
     } catch (error) {
-      console.error("Error sending message:", error)
-      toast({
-        title: "Error",
-        description: "Failed to send message",
-        variant: "destructive",
-      })
-    } finally {
-      setSending(false)
+      console.error("Error marking messages as read:", error)
     }
   }
+
+ const sendMessage = async () => {
+  if (!newMessage.trim() || !selectedContact) return
+
+  // Declare tempId outside the try block so it's accessible in catch
+  const tempId = Date.now().toString()
+  
+  try {
+    setSending(true)
+    
+    // Optimistically add message to UI
+    const optimisticMessage: Message = {
+      id: tempId,
+      senderId: organizerId,
+      receiverId: selectedContact,
+      content: newMessage.trim(),
+      createdAt: new Date().toISOString(),
+      isRead: false,
+      sender: {
+        firstName: "You",
+        lastName: "",
+        avatar: "/placeholder.svg"
+      }
+    }
+    
+    setMessages(prev => [...prev, optimisticMessage])
+    setNewMessage("")
+    
+    // Update conversations list optimistically
+    setConversations(prev => {
+      const existingConvIndex = prev.findIndex(conv => conv.contactId === selectedContact)
+      if (existingConvIndex !== -1) {
+        const updatedConvs = [...prev]
+        updatedConvs[existingConvIndex] = {
+          ...updatedConvs[existingConvIndex],
+          lastMessage: newMessage.trim(),
+          lastMessageTime: new Date().toISOString()
+        }
+        return updatedConvs
+      }
+      return prev
+    })
+
+    // Send via API
+    const response = await fetch(`/api/organizers/${organizerId}/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contactId: selectedContact,
+        content: newMessage.trim(),
+      }),
+    })
+
+    if (!response.ok) throw new Error("Failed to send message")
+
+    const data = await response.json()
+    
+    // Replace optimistic message with real one
+    setMessages(prev => prev.map(msg => msg.id === tempId ? data.message : msg))
+    
+    // Send via WebSocket if available
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify({
+        type: "NEW_MESSAGE",
+        message: data.message
+      }))
+    }
+
+    toast({
+      title: "Success",
+      description: "Message sent successfully",
+    })
+  } catch (error) {
+    console.error("Error sending message:", error)
+    // Remove optimistic message on error
+    setMessages(prev => prev.filter(msg => msg.id !== tempId))
+    toast({
+      title: "Error",
+      description: "Failed to send message",
+      variant: "destructive",
+    })
+  } finally {
+    setSending(false)
+  }
+}
 
   const startNewChat = (connection: Connection) => {
     setSelectedContact(connection.id)
@@ -296,15 +467,6 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
     }
   }
 
-  const filteredConnections = connections.filter(
-    (connection) =>
-      `${connection.firstName} ${connection.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      connection.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      connection.email.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
-
-  const selectedContactInfo = getSelectedContactInfo()
-
   const deleteMessage = async (messageId: string) => {
     try {
       setDeleting(true)
@@ -372,8 +534,23 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
     }
   }
 
+  const filteredConnections = connections.filter(
+    (connection) =>
+      `${connection.firstName} ${connection.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      connection.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      connection.email.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
+
+  const selectedContactInfo = getSelectedContactInfo()
+
   return (
     <div className="h-[600px] flex border rounded-lg overflow-hidden bg-white">
+      {/* Connection Status Indicator */}
+      <div className={`absolute top-2 right-2 flex items-center z-10 ${isOnline ? 'text-green-500' : 'text-red-500'}`}>
+        <div className={`w-2 h-2 rounded-full mr-1 ${isOnline ? 'bg-green-500' : 'bg-red-500'}`} />
+        <span className="text-xs">{isOnline ? 'Online' : 'Offline'}</span>
+      </div>
+      
       {/* Conversations Sidebar */}
       <div className="w-1/3 border-r flex flex-col">
         {/* Header */}
@@ -385,7 +562,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
             </h3>
             <Dialog open={showNewChat} onOpenChange={setShowNewChat}>
               <DialogTrigger asChild>
-                <Button size="sm" className="h-8 w-8 p-0">
+                <Button size="sm" className="h-8 w-8 p-0" aria-label="Start new chat">
                   <Plus className="w-4 h-4" />
                 </Button>
               </DialogTrigger>
@@ -404,6 +581,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10"
+                      aria-label="Search connections"
                     />
                   </div>
                   <ScrollArea className="h-64">
@@ -413,6 +591,10 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                           key={connection.id}
                           className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
                           onClick={() => startNewChat(connection)}
+                          onKeyPress={(e) => e.key === 'Enter' && startNewChat(connection)}
+                          tabIndex={0}
+                          role="button"
+                          aria-label={`Start chat with ${connection.firstName} ${connection.lastName}`}
                         >
                           <div className="relative">
                             <Image
@@ -453,7 +635,11 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input placeholder="Search chats..." className="pl-10 h-9" />
+            <Input 
+              placeholder="Search chats..." 
+              className="pl-10 h-9" 
+              aria-label="Search chats"
+            />
           </div>
         </div>
 
@@ -462,6 +648,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+              <span className="sr-only">Loading conversations</span>
             </div>
           ) : conversations.length === 0 ? (
             <div className="text-center py-8 px-4">
@@ -478,7 +665,14 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                     selectedContact === conversation.contactId ? "bg-blue-50 border-r-2 border-blue-500" : ""
                   }`}
                 >
-                  <div className="flex items-start gap-3" onClick={() => setSelectedContact(conversation.contactId)}>
+                  <div 
+                    className="flex items-start gap-3" 
+                    onClick={() => setSelectedContact(conversation.contactId)}
+                    onKeyPress={(e) => e.key === 'Enter' && setSelectedContact(conversation.contactId)}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Open conversation with ${conversation.contact?.firstName} ${conversation.contact?.lastName}`}
+                  >
                     <Image
                       src={conversation.contact?.avatar || "/placeholder.svg?height=40&width=40"}
                       alt="Contact"
@@ -514,6 +708,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                       e.stopPropagation()
                       setDeleteConversationId(conversation.contactId)
                     }}
+                    aria-label="Delete conversation"
                   >
                     <X className="w-3 h-3 text-gray-400 hover:text-red-500" />
                   </Button>
@@ -547,20 +742,22 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                       <Badge className={`text-xs ${getRoleBadgeColor(selectedContactInfo.role)}`}>
                         {selectedContactInfo.role}
                       </Badge>
-                      <span className="text-sm text-gray-500">Offline</span>
+                      <span className="text-sm text-gray-500">
+                        {connections.find(c => c.id === selectedContact)?.isOnline ? 'Online' : 'Offline'}
+                      </span>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" aria-label="Call">
                     <Phone className="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" aria-label="Video call">
                     <Video className="w-4 h-4" />
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" aria-label="More options">
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -583,6 +780,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
               {loading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                  <span className="sr-only">Loading messages</span>
                 </div>
               ) : messages.length === 0 ? (
                 <div className="text-center py-8">
@@ -597,13 +795,13 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                       key={message.id}
                       className={`group flex ${message.senderId === organizerId ? "justify-end" : "justify-start"}`}
                     >
-                      <div className="relative">
+                      <div className="relative max-w-xs lg:max-w-md">
                         <div
-                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                          className={`px-4 py-2 rounded-lg ${
                             message.senderId === organizerId ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"
                           }`}
                         >
-                          <p className="text-sm">{message.content}</p>
+                          <p className="text-sm break-words">{message.content}</p>
                           <div
                             className={`flex items-center justify-end gap-1 mt-1 ${
                               message.senderId === organizerId ? "text-blue-100" : "text-gray-500"
@@ -611,7 +809,9 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                           >
                             <span className="text-xs">{formatTime(message.createdAt)}</span>
                             {message.senderId === organizerId &&
-                              (message.isRead ? <CheckCheck className="w-3 h-3" /> : <Check className="w-3 h-3" />)}
+                              (message.isRead ? 
+                                <CheckCheck className="w-3 h-3" aria-label="Message read" /> : 
+                                <Check className="w-3 h-3" aria-label="Message sent" />)}
                           </div>
                         </div>
                         {/* Delete button for messages */}
@@ -621,6 +821,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                             size="sm"
                             className="absolute -top-2 -left-8 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                             onClick={() => setDeleteMessageId(message.id)}
+                            aria-label="Delete message"
                           >
                             <Trash2 className="w-3 h-3 text-gray-400 hover:text-red-500" />
                           </Button>
@@ -642,8 +843,13 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                   placeholder="Type a message..."
                   onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
                   disabled={sending}
+                  aria-label="Type a message"
                 />
-                <Button onClick={sendMessage} disabled={!newMessage.trim() || sending}>
+                <Button 
+                  onClick={sendMessage} 
+                  disabled={!newMessage.trim() || sending}
+                  aria-label="Send message"
+                >
                   {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </Button>
               </div>
@@ -655,7 +861,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
               <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
               <p className="text-gray-500 mb-4">Choose from your existing conversations or start a new one</p>
-              <Button onClick={() => setShowNewChat(true)}>
+              <Button onClick={() => setShowNewChat(true)} aria-label="Start new chat">
                 <Plus className="w-4 h-4 mr-2" />
                 Start New Chat
               </Button>
