@@ -28,6 +28,7 @@ interface VenueData {
   averageRating: number
   totalReviews: number
   amenities: string[]
+  meetingSpaces: any[]
 }
 
 interface VenueProfileProps {
@@ -41,21 +42,21 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
   useEffect(() => {
     const fetchVenue = async () => {
       try {
-        const res = await fetch(`/api/venue-manager/${venueData.id}`);
-        const data = await res.json();
+        const res = await fetch(`/api/venue-manager/${venueData.id}`)
+        const data = await res.json()
         if (data.success) {
-          setProfileData(data.venue);
-          setAmenities(data.venue.amenities || []); // ✅ sync
-          setMeetingSpaces(data.venue.meetingSpaces || [])
+          const venue = data.user?.venue || data.venue
+          setProfileData(venue)
+          setAmenities(venue?.amenities || []) // ✅ sync
+          setMeetingSpaces(venue?.meetingSpaces || [])
         }
       } catch (err) {
-        console.error(err);
+        console.error(err)
       }
-    };
+    }
 
-    fetchVenue();
-  }, [venueData.id]);
-
+    fetchVenue()
+  }, [venueData.id])
 
   const [images, setImages] = useState([
     "/placeholder.svg?height=300&width=400&text=Main+Hall",
@@ -112,7 +113,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
   })
 
   const handleSave = async () => {
-    if (!profileData) return;
+    if (!profileData) return
 
     try {
       const res = await fetch(`/api/venue-manager/${venueData.id}`, {
@@ -124,26 +125,26 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           ...profileData,
           amenities, // ✅ push updated amenities too
         }),
-      });
+      })
 
-      const data = await res.json();
+      const data = await res.json()
 
       if (data.success) {
-        setProfileData(data.venue); // refresh with server response
-        setIsEditing(false);
+        setProfileData(data.venue) // refresh with server response
+        setIsEditing(false)
       } else {
-        console.error("Failed to update venue:", data.error);
+        console.error("Failed to update venue:", data.error)
       }
     } catch (err) {
-      console.error("Error updating venue:", err);
+      console.error("Error updating venue:", err)
     }
-  };
+  }
 
   const handleAddAmenity = async () => {
-    if (!newAmenity.trim()) return;
+    if (!newAmenity.trim()) return
 
     try {
-      const updated = [...amenities, newAmenity.trim()];
+      const updated = [...amenities, newAmenity.trim()]
 
       const res = await fetch(`/api/venue-manager/${venueData.id}`, {
         method: "PUT",
@@ -154,50 +155,49 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           ...profileData,
           amenities: updated,
         }),
-      });
+      })
 
-      const data = await res.json();
+      const data = await res.json()
 
       if (data.success) {
-        setAmenities(data.venue.amenities); // refresh from DB response
-        setProfileData(data.venue);
-        setNewAmenity("");
+        setAmenities(data.venue.amenities) // refresh from DB response
+        setProfileData(data.venue)
+        setNewAmenity("")
       } else {
-        console.error("Failed to add amenity:", data.error);
+        console.error("Failed to add amenity:", data.error)
       }
     } catch (err) {
-      console.error("Error adding amenity:", err);
+      console.error("Error adding amenity:", err)
     }
-  };
+  }
 
   const handleRemoveAmenity = async (index: number) => {
-  const updatedAmenities = amenities.filter((_, i) => i !== index);
+    const updatedAmenities = amenities.filter((_, i) => i !== index)
 
-  try {
-    const res = await fetch(`/api/venue-manager/${venueData.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...profileData,
-        amenities: updatedAmenities,
-      }),
-    });
+    try {
+      const res = await fetch(`/api/venue-manager/${venueData.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...profileData,
+          amenities: updatedAmenities,
+        }),
+      })
 
-    const data = await res.json();
-    if (data.success) {
-      setAmenities(data.venue.amenities);
-      setProfileData(data.venue);
-    } else {
-      console.error("Failed to remove amenity:", data.error);
+      const data = await res.json()
+      if (data.success) {
+        setAmenities(data.venue.amenities)
+        setProfileData(data.venue)
+      } else {
+        console.error("Failed to remove amenity:", data.error)
+      }
+    } catch (err) {
+      console.error("Error removing amenity:", err)
     }
-  } catch (err) {
-    console.error("Error removing amenity:", err);
   }
-};
-
 
   const handleAddSpace = async () => {
-    if (!newSpace.name.trim()) return;
+    if (!newSpace.name.trim()) return
 
     const updatedSpaces = [
       ...meetingSpaces,
@@ -207,9 +207,9 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
         capacity: Number(newSpace.capacity),
         area: Number(newSpace.area),
         hourlyRate: Number(newSpace.hourlyRate),
-        features: newSpace.features.split(",").map(f => f.trim()),
+        features: newSpace.features.split(",").map((f) => f.trim()),
       },
-    ];
+    ]
 
     try {
       const res = await fetch(`/api/venue-manager/${venueData.id}`, {
@@ -219,47 +219,45 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           ...profileData,
           meetingSpaces: updatedSpaces,
         }),
-      });
+      })
 
-      const data = await res.json();
+      const data = await res.json()
       if (data.success) {
-        setMeetingSpaces(data.venue.meetingSpaces);
-        setProfileData(data.venue);
-        setNewSpace({ name: "", capacity: "", area: "", hourlyRate: "", features: "" });
+        setMeetingSpaces(data.venue.meetingSpaces)
+        setProfileData(data.venue)
+        setNewSpace({ name: "", capacity: "", area: "", hourlyRate: "", features: "" })
       } else {
-        console.error("Failed to add space:", data.error);
+        console.error("Failed to add space:", data.error)
       }
     } catch (err) {
-      console.error("Error adding space:", err);
+      console.error("Error adding space:", err)
     }
-  };
-
-
-const handleRemoveSpace = async (id: string) => {
-  const updatedSpaces = meetingSpaces.filter((space) => space.id !== id);
-
-  try {
-    const res = await fetch(`/api/venue-manager/${venueData.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...profileData,
-        meetingSpaces: updatedSpaces,
-      }),
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      setMeetingSpaces(data.venue.meetingSpaces);
-      setProfileData(data.venue);
-    } else {
-      console.error("Failed to remove space:", data.error);
-    }
-  } catch (err) {
-    console.error("Error removing space:", err);
   }
-};
 
+  const handleRemoveSpace = async (id: string) => {
+    const updatedSpaces = meetingSpaces.filter((space) => space.id !== id)
+
+    try {
+      const res = await fetch(`/api/venue-manager/${venueData.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...profileData,
+          meetingSpaces: updatedSpaces,
+        }),
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        setMeetingSpaces(data.venue.meetingSpaces)
+        setProfileData(data.venue)
+      } else {
+        console.error("Failed to remove space:", data.error)
+      }
+    } catch (err) {
+      console.error("Error removing space:", err)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -334,10 +332,13 @@ const handleRemoveSpace = async (id: string) => {
                           id="contact-person"
                           value={profileData?.contactPerson}
                           onChange={(e) =>
-                            setProfileData(prev => ({
-                              ...(prev ?? {}),
-                              contactPerson: e.target.value,
-                            }) as VenueData)
+                            setProfileData(
+                              (prev) =>
+                                ({
+                                  ...(prev ?? {}),
+                                  contactPerson: e.target.value,
+                                }) as VenueData,
+                            )
                           }
                         />
                       ) : (
@@ -353,10 +354,13 @@ const handleRemoveSpace = async (id: string) => {
                           type="email"
                           value={profileData?.email}
                           onChange={(e) =>
-                            setProfileData(prev => ({
-                              ...(prev ?? {}),
-                              email: e.target.value,
-                            }) as VenueData)
+                            setProfileData(
+                              (prev) =>
+                                ({
+                                  ...(prev ?? {}),
+                                  email: e.target.value,
+                                }) as VenueData,
+                            )
                           }
                         />
                       ) : (
@@ -371,10 +375,13 @@ const handleRemoveSpace = async (id: string) => {
                           id="mobile"
                           value={profileData?.mobile}
                           onChange={(e) =>
-                            setProfileData(prev => ({
-                              ...(prev ?? {}),
-                              mobile: e.target.value,
-                            }) as VenueData)
+                            setProfileData(
+                              (prev) =>
+                                ({
+                                  ...(prev ?? {}),
+                                  mobile: e.target.value,
+                                }) as VenueData,
+                            )
                           }
                         />
                       ) : (
@@ -389,10 +396,13 @@ const handleRemoveSpace = async (id: string) => {
                           id="website"
                           value={profileData?.website}
                           onChange={(e) =>
-                            setProfileData(prev => ({
-                              ...(prev ?? {}),
-                              website: e.target.value,
-                            }) as VenueData)
+                            setProfileData(
+                              (prev) =>
+                                ({
+                                  ...(prev ?? {}),
+                                  website: e.target.value,
+                                }) as VenueData,
+                            )
                           }
                         />
                       ) : (
@@ -407,10 +417,13 @@ const handleRemoveSpace = async (id: string) => {
                           id="address"
                           value={profileData?.address}
                           onChange={(e) =>
-                            setProfileData(prev => ({
-                              ...(prev ?? {}),
-                              address: e.target.value,
-                            }) as VenueData)
+                            setProfileData(
+                              (prev) =>
+                                ({
+                                  ...(prev ?? {}),
+                                  address: e.target.value,
+                                }) as VenueData,
+                            )
                           }
                         />
                       ) : (
@@ -427,10 +440,13 @@ const handleRemoveSpace = async (id: string) => {
                         rows={4}
                         value={profileData?.description}
                         onChange={(e) =>
-                          setProfileData(prev => ({
-                            ...(prev ?? {}),
-                            description: e.target.value,
-                          }) as VenueData)
+                          setProfileData(
+                            (prev) =>
+                              ({
+                                ...(prev ?? {}),
+                                description: e.target.value,
+                              }) as VenueData,
+                          )
                         }
                         placeholder="Describe your venue, its unique features, and what makes it special..."
                       />
@@ -510,8 +526,9 @@ const handleRemoveSpace = async (id: string) => {
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-5 h-5 ${i < Math.floor(venueData.averageRating) ? "text-yellow-400 fill-current" : "text-gray-300"
-                          }`}
+                        className={`w-5 h-5 ${
+                          i < Math.floor(venueData.averageRating) ? "text-yellow-400 fill-current" : "text-gray-300"
+                        }`}
                       />
                     ))}
                   </div>
@@ -680,7 +697,6 @@ const handleRemoveSpace = async (id: string) => {
                             {feature}
                           </Badge>
                         ))}
-
                       </div>
                     </div>
                   </div>
@@ -749,7 +765,7 @@ const handleRemoveSpace = async (id: string) => {
                     <Input
                       id="google-maps-url"
                       placeholder="https://www.google.com/maps/embed?pb=..."
-                      defaultValue="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3769.8!2d72.8406!3d19.1796!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1"
+                      defaultValue="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3769.8!2d72.8406!3d19.1796!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTnCsDEwJzQ4LjAiTiA3MsKwNTAnMjQuMCJF!5e0!3m2!1sen!2sin!4v1234567890123"
                     />
                   ) : (
                     <div className="aspect-video rounded-lg overflow-hidden border">
@@ -864,10 +880,7 @@ const handleRemoveSpace = async (id: string) => {
               </CardContent>
             </Card>
           </div>
-
-
         </TabsContent>
-
 
         {/* Floor Plans Management */}
         <TabsContent value="floorplan" className="space-y-6">

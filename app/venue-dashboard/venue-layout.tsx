@@ -32,6 +32,12 @@ import RatingsReviews from "./ratings-reviews"
 import LegalDocumentation from "./legal-documentation"
 import VenueSettings from "./venue-settings"
 import { promise } from "zod"
+type MeetingSpace = {
+  id: string
+  name: string
+  capacity: number
+  amenities: string[]
+}
 
 type VenueData = {
    id: string
@@ -50,6 +56,7 @@ type VenueData = {
   averageRating: number
   totalReviews: number
   amenities: string[]
+  meetingSpaces: MeetingSpace[]
 }
 
 interface UserDashboardProps {

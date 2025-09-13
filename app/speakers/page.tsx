@@ -1,21 +1,51 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal } from "react"
 import { Button } from "@/components/ui/button"
-// import { Input } from "@/components/ui/input"
+import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Search, ChevronDown, Heart, User, Star, MapPin, Calendar, CheckCircle } from "lucide-react"
-import { speakers, getAllEvents, getEventsBySpeaker } from "@/lib/data/events"
+import { Search, ChevronDown, Heart, User, Star, CheckCircle, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { fetchSpeakers, type Speaker } from "@/lib/api/speakers"
 
 export default function SpeakersPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
   const [selectedExpertise, setSelectedExpertise] = useState("")
-  const [sortBy, setSortBy] = useState("followers") // followers, rating, events
+  const [sortBy, setSortBy] = useState("createdAt") // Changed from followers to createdAt
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  const [speakers, setSpeakers] = useState<Speaker[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 0,
+  })
   const router = useRouter()
+
+  useEffect(() => {
+    const loadSpeakers = async () => {
+      try {
+        setLoading(true)
+        const response = await fetchSpeakers({
+          page: pagination.page,
+          limit: 50, // Load more speakers for better UX
+          search: searchQuery || undefined,
+        })
+        setSpeakers(response.speakers)
+        setPagination(response.pagination)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load speakers")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadSpeakers()
+  }, [searchQuery]) // Re-fetch when search changes
 
   const toggleFavorite = (speakerId: string) => {
     const newFavorites = new Set(favorites)
@@ -27,44 +57,35 @@ export default function SpeakersPage() {
     setFavorites(newFavorites)
   }
 
-  // Get all events to calculate speaker statistics
-  const allEvents = getAllEvents()
-
-  // Enhanced speaker data with event statistics
   const enhancedSpeakers = useMemo(() => {
-    return speakers.map((speaker) => {
-      const { upcoming, past } = getEventsBySpeaker(speaker.id)
-      const totalEvents = upcoming.length + past.length
-      const upcomingEvents = upcoming.length
-
-      // Get unique categories from speaker's events
-      const eventCategories = [...upcoming, ...past]
-        .flatMap((event) => event.categories)
-        .filter((category, index, arr) => arr.indexOf(category) === index)
-
-      return {
-        ...speaker,
-        totalEvents,
-        upcomingEvents,
-        eventCategories,
-        nextEvent: upcoming[0] || null,
-      }
-    })
+    return speakers.map((speaker) => ({
+      ...speaker,
+      name: `${speaker.firstName} ${speaker.lastName}`.trim(),
+      title: speaker.jobTitle || "Speaker",
+      expertise: speaker.specialties || [],
+      image: speaker.avatar,
+      isVerified: true, // You can add this field to your schema if needed
+      rating: { average: 4.5 }, // Mock rating - you can implement this later
+      followers: Math.floor(Math.random() * 10000), // Mock followers
+      totalEvents: Math.floor(Math.random() * 50), // Mock events
+      upcomingEvents: Math.floor(Math.random() * 10),
+      eventCategories: speaker.specialties || [],
+    }))
   }, [speakers])
 
   // Get unique expertise areas and categories for filters
   const allExpertise = useMemo(() => {
     const expertiseSet = new Set<string>()
-    speakers.forEach((speaker) => {
-      speaker.expertise.forEach((skill) => expertiseSet.add(skill))
+    enhancedSpeakers.forEach((speaker) => {
+      speaker.expertise.forEach((skill: string) => expertiseSet.add(skill))
     })
     return Array.from(expertiseSet).sort()
-  }, [])
+  }, [enhancedSpeakers])
 
   const allCategories = useMemo(() => {
     const categorySet = new Set<string>()
     enhancedSpeakers.forEach((speaker) => {
-      speaker.eventCategories.forEach((category) => categorySet.add(category))
+      speaker.eventCategories.forEach((category: string) => categorySet.add(category))
     })
     return Array.from(categorySet).sort()
   }, [enhancedSpeakers])
@@ -73,20 +94,9 @@ export default function SpeakersPage() {
   const filteredSpeakers = useMemo(() => {
     let filtered = enhancedSpeakers
 
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (speaker) =>
-          speaker.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          speaker.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          speaker.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          speaker.expertise.some((skill) => skill.toLowerCase().includes(searchQuery.toLowerCase())),
-      )
-    }
-
     // Category filter
     if (selectedCategory) {
-      filtered = filtered.filter((speaker) => speaker.eventCategories.some((category) => category === selectedCategory))
+      filtered = filtered.filter((speaker) => speaker.eventCategories.some((category: string) => category === selectedCategory))
     }
 
     // Expertise filter
@@ -102,50 +112,67 @@ export default function SpeakersPage() {
         case "events":
           return b.totalEvents - a.totalEvents
         case "followers":
-        default:
           return b.followers - a.followers
+        case "createdAt":
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       }
     })
 
     return filtered
-  }, [enhancedSpeakers, searchQuery, selectedCategory, selectedExpertise, sortBy])
+  }, [enhancedSpeakers, selectedCategory, selectedExpertise, sortBy])
 
   const handleSpeakerClick = (speakerId: string) => {
     router.push(`/speakers/${speakerId}`)
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "2-digit",
-    })
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading speakers...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error: {error}</p>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      {/* <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white">
-          <div className="max-w-7xl mx-auto px-4 py-12">
-            <div className="text-center">
-              <h1 className="text-4xl font-bold mb-4">Top Speakers</h1>
-              <p className="text-xl text-blue-100 mb-8">
-                Discover industry experts and thought leaders from around the world
-              </p>
+      {/* Header with Search */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white">
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold mb-4">Top Speakers</h1>
+            <p className="text-xl text-blue-100 mb-8">
+              Discover industry experts and thought leaders from around the world
+            </p>
 
-              Search Bar
-              <div className="max-w-2xl mx-auto relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
-                  type="text"
-                  placeholder="Search speakers by name, expertise, or company..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 py-3 text-lg bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder-white/70"
-                />
-              </div>
+            {/* Search Bar */}
+            <div className="max-w-2xl mx-auto relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Input
+                type="text"
+                placeholder="Search speakers by name, expertise, or company..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 py-3 text-lg bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder-white/70"
+              />
             </div>
           </div>
-        </div> */}
+        </div>
+      </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -165,9 +192,12 @@ export default function SpeakersPage() {
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">
-                {(
-                  filteredSpeakers.reduce((sum, speaker) => sum + speaker.rating.average, 0) / filteredSpeakers.length
-                ).toFixed(1)}
+                {filteredSpeakers.length > 0
+                  ? (
+                      filteredSpeakers.reduce((sum, speaker) => sum + speaker.rating.average, 0) /
+                      filteredSpeakers.length
+                    ).toFixed(1)
+                  : "0.0"}
               </div>
               <div className="text-sm text-gray-600">Avg Rating</div>
             </div>
@@ -216,6 +246,7 @@ export default function SpeakersPage() {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="appearance-none bg-white border border-gray-300 rounded-md px-4 py-2 pr-8 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
+                <option value="createdAt">Sort by Newest</option>
                 <option value="followers">Sort by Followers</option>
                 <option value="rating">Sort by Rating</option>
                 <option value="events">Sort by Events</option>
@@ -283,10 +314,9 @@ export default function SpeakersPage() {
                   className="absolute top-2 right-2 p-1 hover:bg-gray-100 rounded-full z-10"
                 >
                   <Heart
-                    className={`w-4 h-4 ${favorites.has(speaker.id)
-                      ? "fill-red-500 text-red-500"
-                      : "text-gray-400 hover:text-red-500"
-                      }`}
+                    className={`w-4 h-4 ${
+                      favorites.has(speaker.id) ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-500"
+                    }`}
                   />
                 </button>
 
@@ -295,8 +325,12 @@ export default function SpeakersPage() {
                   <Avatar className="w-20 h-20 border-2 border-blue-100">
                     <AvatarImage src={speaker.image || "/placeholder.svg"} alt={speaker.name} />
                     <AvatarFallback className="text-sm font-semibold bg-blue-100 text-blue-600">
-                      {speaker.name.split(" ").map((n) => n[0]).join("")}
-                    </AvatarFallback>
+  {speaker.name
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")}
+</AvatarFallback>
+
                   </Avatar>
                   {speaker.isVerified && (
                     <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5 shadow">
@@ -311,9 +345,7 @@ export default function SpeakersPage() {
                   <div>
                     <h3 className="text-sm font-semibold text-blue-600">{speaker.name}</h3>
                     <p className="text-xs text-gray-500">{speaker.title}</p>
-                    {speaker.company && (
-                      <p className="text-xs text-blue-500">{speaker.company}</p>
-                    )}
+                    {speaker.company && <p className="text-xs text-blue-500">{speaker.company}</p>}
                   </div>
 
                   {/* Stats */}
@@ -328,11 +360,8 @@ export default function SpeakersPage() {
 
                   {/* Tags */}
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {speaker.expertise.slice(0, 2).map((skill, index) => (
-                      <Badge
-                        key={index}
-                        className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700"
-                      >
+                    {speaker.expertise.slice(0, 2).map((skill: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined, index: Key | null | undefined) => (
+                      <Badge key={index} className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700">
                         {skill}
                       </Badge>
                     ))}
@@ -343,24 +372,18 @@ export default function SpeakersPage() {
                     )}
                   </div>
                 </div>
-                <div>
-                 
               </div>
-            </div>
             ))}
-           
           </div>
-          
         )}
 
-        {/* Load More Button - Future Enhancement */}
+        {/* Pagination Info */}
         {filteredSpeakers.length > 0 && (
           <div className="flex justify-center mt-12">
             <div className="text-center">
               <p className="text-gray-600 mb-4">
-                Showing {filteredSpeakers.length} of {speakers.length} speakers
+                Showing {filteredSpeakers.length} of {pagination.total} speakers
               </p>
-              {/* Future: Add pagination or load more functionality */}
             </div>
           </div>
         )}
