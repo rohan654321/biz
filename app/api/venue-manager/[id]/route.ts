@@ -25,74 +25,35 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ success: false, error: "Venue manager not found" }, { status: 404 })
     }
 
-    const transformedVenue = {
-      id: venueManager.id,
-      name: venueManager.company || "Unnamed Venue",
-      description: venueManager.bio || "No description available",
-      manager: {
-        id: venueManager.id,
-        name: `${venueManager.firstName} ${venueManager.lastName}`.trim(),
-        email: venueManager.email,
-        phone: venueManager.phone || "",
-        avatar: venueManager.avatar || "",
-        isVerified: true,
-        bio: venueManager.bio || "",
-        website: venueManager.website || "",
-      },
-      location: {
-        address: venueManager.location || "",
-        city: venueManager.location?.split(",")[1]?.trim() || "",
-        state: venueManager.location?.split(",")[2]?.trim() || "",
-        country: venueManager.location?.split(",")[3]?.trim() || "",
-        zipCode: "",
-        coordinates: {
-          lat: 0,
-          lng: 0,
-        },
-      },
-      contact: {
-        phone: venueManager.phone || "",
-        email: venueManager.email,
-        website: venueManager.website || "",
-      },
-      capacity: {
-        total: venueManager.maxCapacity || 0,
-        halls: venueManager.totalHalls || 0,
-      },
-      pricing: {
-        basePrice: 1000, // Default base price
-        currency: "$",
-      },
-      stats: {
-        averageRating: venueManager.averageRating || 0,
-        totalReviews: venueManager.totalReviews || 0,
-        activeBookings: venueManager.activeBookings || 0,
-      },
-      amenities: venueManager.amenities || [],
-      images: [venueManager.avatar || "/placeholder.svg?height=400&width=800&text=Venue+Image"],
-      videos: [],
-      floorPlans: [],
-      virtualTour: "",
-      meetingSpaces: venueManager.meetingSpaces || [],
-      reviews: [], // Empty for now
-      bookings: [], // Empty for now
-      events: [], // Empty for now
-      organizer: null,
-      createdAt: venueManager.createdAt?.toISOString() || new Date().toISOString(),
-      updatedAt: venueManager.updatedAt?.toISOString() || new Date().toISOString(),
-    }
-
-    // Return transformed data structure
+    // Return data in the structure expected by the frontend
     return NextResponse.json({
       success: true,
-      data: transformedVenue,
+      user: {
+        venue: {
+          id: venueManager.id,
+          venueName: venueManager.company || "Unnamed Venue",
+          logo: venueManager.avatar || "/placeholder.svg",
+          contactPerson: `${venueManager.firstName} ${venueManager.lastName}`.trim(),
+          email: venueManager.email,
+          mobile: venueManager.phone || "",
+          address: venueManager.location || "",
+          website: venueManager.website || "",
+          description: venueManager.bio || "No description available",
+          maxCapacity: venueManager.maxCapacity || 0,
+          totalHalls: venueManager.totalHalls || 0,
+          totalEvents: 0, // You might need to calculate this
+          activeBookings: venueManager.activeBookings || 0,
+          averageRating: venueManager.averageRating || 0,
+          totalReviews: venueManager.totalReviews || 0,
+          amenities: venueManager.amenities || [],
+        }
+      }
     })
   } catch (error) {
     console.error("Error in venue API:", error)
     return NextResponse.json({ success: false, error: "Internal venue error" }, { status: 500 })
   }
 }
-
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params

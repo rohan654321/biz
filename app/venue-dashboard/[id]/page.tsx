@@ -7,14 +7,14 @@ export default async function DashboardPage({ params }: { params: Promise<{ id: 
   const { id } = await params
   const session = await getServerSession(authOptions)
 
-  // if (!session) {
-  //   redirect("/login")
-  // }
+  if (!session) {
+    redirect("/login")
+  }
 
   // Check if user is trying to access their own dashboard or if they're admin
-  // if (session.user.id !== id && session.user.role !== "VENUE_MANAGER") {
-  //   redirect("/login")
-  // }
+  if (session.user.id !== id && session.user.role !== "VENUE_MANAGER") {
+    redirect("/login")
+  }
 
   return <VenueDashboardPage userId={id} />
 }
