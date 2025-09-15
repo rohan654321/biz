@@ -3,21 +3,28 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 
+// GET handler – fetch speaker by ID
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
 
-    // Validate ID
+    console.log(`GET speaker with id: ${id}`)
+
     if (!id || id === "undefined") {
       return NextResponse.json({ success: false, error: "Invalid speaker ID" }, { status: 400 })
     }
-    
-    // Query database
+
+    if (id.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(id)) {
+      return NextResponse.json({ success: false, error: "Invalid speaker ID format" }, { status: 400 })
+    }
+
+    await prisma.$connect()
+    console.log("Database connected")
+
     const speaker = await prisma.user.findFirst({
       where: {
         id,
         role: "SPEAKER",
-        
       },
     })
 
@@ -37,7 +44,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         website: speaker.website || "",
         location: speaker.location || "",
         bio: speaker.bio || "",
-        speakingExperience: speaker.speakingExperience || "", // Make sure this field exists in your schema
+        speakingExperience: speaker.speakingExperience || "",
       },
     })
   } catch (error) {
@@ -46,14 +53,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
+// PUT handler – update speaker by ID
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const body = await req.json()
-    
-    console.log("Received data:", body) // Debug log
 
-    // Split fullName → firstName + lastName
+    if (id.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(id)) {
+      return NextResponse.json({ success: false, error: "Invalid speaker ID format" }, { status: 400 })
+    }
+
+    console.log("Received data:", body)
+
     const [firstName, ...lastNameParts] = body.fullName?.split(" ") || []
     const lastName = lastNameParts.join(" ")
 
@@ -70,11 +81,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         website: body.website || "",
         location: body.location || "",
         bio: body.bio || "",
-        speakingExperience: body.speakingExperience || "", // Make sure this field exists in your schema
+        speakingExperience: body.speakingExperience || "",
       },
     })
 
-    // Return the exact structure that frontend expects
     return NextResponse.json({
       success: true,
       profile: {
@@ -92,14 +102,18 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     })
   } catch (error) {
     console.error("PUT /api/speakers/[id] error:", error)
-    return NextResponse.json({ 
-      success: false, 
-      message: "Failed to update profile",
-      error: error instanceof Error ? error.message : "Unknown error" 
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to update profile",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
 
+// POST handler – create a new speaker
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -126,12 +140,10 @@ export async function POST(request: NextRequest) {
       speakingExperience,
     } = body
 
-    // Validate required fields
     if (!firstName || !lastName || !email) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 })
     }
 
-    // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email },
     })
@@ -158,7 +170,7 @@ export async function POST(request: NextRequest) {
         certifications: certifications || [],
         speakingExperience,
         role: "SPEAKER",
-        password: "temp_password", // This should be handled properly in production
+        password: "temp_password", // Handle properly in production!
         isActive: true,
       },
     })

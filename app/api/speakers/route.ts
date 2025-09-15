@@ -44,12 +44,21 @@ export async function GET(request: NextRequest) {
           },
         },
         {
+          jobTitle: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
           specialties: {
-            hasSome: [search],
+            has: search,
           },
         },
       ]
     }
+
+    await prisma.$connect()
+    console.log("Database connected for speakers list")
 
     const [speakers, total] = await Promise.all([
       prisma.user.findMany({
@@ -82,6 +91,8 @@ export async function GET(request: NextRequest) {
       }),
       prisma.user.count({ where }),
     ])
+
+    console.log(`Found ${speakers.length} speakers out of ${total} total`)
 
     return NextResponse.json({
       success: true,

@@ -1,18 +1,32 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { MoreHorizontal } from "lucide-react"
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { on } from "events"
-import { getAllOrganizers } from "@/lib/data/events"
-
-
-const organizers = getAllOrganizers()
+import Link from "next/link"
 
 export default function FeaturedOrganizers() {
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const [isHovering, setIsHovering] = useState(false)
+  const [organizers, setOrganizers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    async function fetchOrganizer() {
+      try {
+        const res = await fetch("/api/organizers")
+        if (!res.ok) throw new Error("Failed to fetch organizers")
+        const data = await res.json()
+        setOrganizers(data.organizers)
+      } catch (err) {
+        console.error("Error fetching organizers:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchOrganizer()
+  }, [])
 
   useEffect(() => {
     if (!scrollRef.current || isHovering) return
@@ -36,12 +50,12 @@ export default function FeaturedOrganizers() {
     scrollRef.current?.scrollBy({ left: amount, behavior: "smooth" })
   }
 
-  const router = useRouter()
 
-   const handleViewAllClick = () => {
-    // Navigate to all events
-    router.push("/organizer")
-  }
+
+  // Skip first 3 and take next 10 organizers
+  const visibleOrganizers = organizers.slice(3, 13)
+
+  if (loading) return <p className="text-center py-10">Loading organizers...</p>
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
@@ -80,7 +94,6 @@ export default function FeaturedOrganizers() {
             scrollbarWidth: "none", // Firefox
             msOverflowStyle: "none", // IE/Edge
           }}
-          
         >
           <style jsx>{`
             div::-webkit-scrollbar {
@@ -88,7 +101,7 @@ export default function FeaturedOrganizers() {
             }
           `}</style>
 
-          {organizers.map((organizer:any) => (
+          {visibleOrganizers.map((organizer: any) => (
             <div
               onClick={() => router.push(`/organizer/${organizer.id}`)}
               key={organizer.id}
@@ -96,7 +109,7 @@ export default function FeaturedOrganizers() {
             >
               <div className="flex items-center justify-center h-10 mb-4">
                 <img
-                  src={organizer.image}
+                  src={organizer.image || "/herosection-images/land.jpg"}
                   alt={organizer.name}
                   className="max-h-full max-w-full object-contain"
                 />
@@ -104,16 +117,22 @@ export default function FeaturedOrganizers() {
               <div className="text-center">
                 <h3 className="font-semibold text-gray-900 text-sm mb-1">{organizer.name}</h3>
                 <p className="text-xs text-gray-500">{organizer.description}</p>
-                <p className="text-xs text-gray-500">{organizer.events} events</p>
+                <p className="text-xs text-gray-500">{organizer.eventsOrganized ?? 0} events</p>
               </div>
             </div>
           ))}
-          <button 
-              onClick={handleViewAllClick}
-            className="aspect-[3/2] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 flex flex-col items-center justify-center group p-14">
-              <MoreHorizontal className="w-8 h-8 text-gray-400 group-hover:text-blue-500 mb-2" />
-              <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600">View All</span>
-            </button>
+
+          {/* View All Button */}
+          <Link href="/organizers">
+          <button
+            className="aspect-[3/2] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 flex flex-col items-center justify-center group p-14"
+          >
+            <MoreHorizontal className="w-8 h-8 text-gray-400 group-hover:text-blue-500 mb-2" />
+            
+            
+            <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600">View All</span>
+          </button>
+          </Link>
         </div>
       </div>
     </div>

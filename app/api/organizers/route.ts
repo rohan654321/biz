@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+// import { organizers } from "@/lib/data/events"
 
 export async function GET() {
   try {
@@ -80,3 +81,68 @@ export async function GET() {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
+export async function POST(req: Request) {
+  try {
+    const body = await req.json()
+    if(!Array.isArray(body) || body.length === 0){
+      return NextResponse.json(
+        {error: "Request body must be a non-empty array of organizers"},
+        {status: 400}
+      )
+    }
+    const createdOrganizers = []
+    for(const org of body){
+       const {
+         email,
+         phone,
+         website,
+         location,
+         name, // coming from your dataset
+         description,
+         headquarters,
+         founded,
+         teamSize,
+         specialties,
+         avatar,
+    } = org
+    if(!email || !name){
+      continue;
+    }
+       const newOrganizer = await prisma.user.create({
+      data: {
+        firstName: "", // or null if allowed
+        lastName: "",  // or null if allowed
+        email,
+        phone: phone || "",
+        avatar: avatar || "/images/signupimg.png",
+        website: website || "",
+        location: location || "",
+        organizationName: name, // map `name` → DB `organizationName`
+        description: description || "",
+        headquarters: headquarters || "",
+        founded: founded || null,
+        teamSize: teamSize || null,
+        specialties: specialties || [],
+        role: "ORGANIZER",
+        isVerified: false, // optional default
+      },
+    });
+    createdOrganizers.push(newOrganizer);
+    if(createdOrganizers.length === 0){
+      return NextResponse.json(
+        {error:"No Valid Organizers to create"},{
+          status:400
+        }
+      );
+    }
+        return NextResponse.json({ organizer: newOrganizer }, { status: 201 })
+  }
+ } catch (error) {
+    console.error("Error creating organizer: ", error)
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    )
+  }
+}
+
