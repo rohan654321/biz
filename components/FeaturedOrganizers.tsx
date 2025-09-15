@@ -53,7 +53,7 @@ export default function FeaturedOrganizers() {
 
 
   // Skip first 3 and take next 10 organizers
-  const visibleOrganizers = organizers.slice(3, 13)
+  const visibleOrganizers = organizers
 
   if (loading) return <p className="text-center py-10">Loading organizers...</p>
 
