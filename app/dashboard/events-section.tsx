@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Calendar as CalendarIcon, MapPin, Plus, Users, Heart, Eye, Store, MessageCircle, Filter, X } from "lucide-react"
+import { Calendar as CalendarIcon, MapPin, Plus, Users, Heart, Eye,Bookmark, Store, MessageCircle, Filter, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -66,8 +66,43 @@ export function EventsSection({ userId }: EventsSectionProps) {
   })
   const [showCalendarFilter, setShowCalendarFilter] = useState(false)
 
+  // Add this to your EventsSection component
+const [savedEvents, setSavedEvents] = useState<Event[]>([])
+const [savedLoading, setSavedLoading] = useState(true)
+
+
   // Use session user ID if no userId prop is provided
   const targetUserId = userId || session?.user?.id
+
+// Add this useEffect to fetch saved events
+useEffect(() => {
+  if (status === "loading") return
+  if (!targetUserId) return
+  
+  fetchSavedEvents()
+}, [targetUserId, status])
+
+const fetchSavedEvents = async () => {
+  if (!targetUserId) return
+
+  try {
+    setSavedLoading(true)
+    const response = await fetch(`/api/users/${targetUserId}/saved-events`)
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch saved events")
+    }
+
+    const data = await response.json()
+    setSavedEvents(data.events || [])
+  } catch (err) {
+    console.error("Error fetching saved events:", err)
+    setError(err instanceof Error ? err.message : "Error loading saved events")
+  } finally {
+    setSavedLoading(false)
+  }
+}
+
 
   useEffect(() => {
     if (status === "loading") return
@@ -322,16 +357,19 @@ export function EventsSection({ userId }: EventsSectionProps) {
 
       <Tabs defaultValue="all" className="w-full">
         <TabsList>
-          <TabsTrigger value="all">
-            All Interests ({filteredEvents.length})
-          </TabsTrigger>
-          <TabsTrigger value="upcoming">
-            Upcoming ({filteredEvents.filter(e => isUpcoming(e.startDate)).length})
-          </TabsTrigger>
-          <TabsTrigger value="followup">
-            Follow-up ({filteredEvents.filter(e => e.followUpDate && new Date(e.followUpDate) >= new Date()).length})
-          </TabsTrigger>
-        </TabsList>
+    <TabsTrigger value="all">
+      All Interests ({filteredEvents.length})
+    </TabsTrigger>
+    <TabsTrigger value="saved">
+      Saved ({savedEvents.length})
+    </TabsTrigger>
+    <TabsTrigger value="upcoming">
+      Upcoming ({filteredEvents.filter(e => isUpcoming(e.startDate)).length})
+    </TabsTrigger>
+    <TabsTrigger value="followup">
+      Follow-up ({filteredEvents.filter(e => e.followUpDate && new Date(e.followUpDate) >= new Date()).length})
+    </TabsTrigger>
+  </TabsList>
 
         <TabsContent value="all" className="space-y-4">
           {filteredEvents.length > 0 ? (
@@ -500,6 +538,37 @@ export function EventsSection({ userId }: EventsSectionProps) {
             </Card>
           ))}
         </TabsContent>
+
+          {/* Add this new tab content */}
+  <TabsContent value="saved" className="space-y-4">
+    {savedEvents.length > 0 ? (
+      savedEvents.map((event) => (
+        <Card key={event.id} className="hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2 flex-wrap">
+                  <h3 className="text-lg font-semibold">{event.title}</h3>
+                  <Badge variant="secondary">Saved</Badge>
+                </div>
+                {/* ... rest of event card content ... */}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))
+    ) : (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <Bookmark className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+          <p className="text-gray-600 mb-4">No saved events yet.</p>
+          <p className="text-sm text-gray-500">
+            Click the bookmark icon on event pages to save them here.
+          </p>
+        </CardContent>
+      </Card>
+    )}
+  </TabsContent>
       </Tabs>
     </div>
   )
