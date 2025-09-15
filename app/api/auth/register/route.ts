@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
         email: validatedData.email,
         password: hashedPassword,
         phone: validatedData.phone,
-        role: validatedData.role as any,
+        role: validatedData.role as any,   
         company: validatedData.company,
         jobTitle: validatedData.jobTitle,
         website: validatedData.website,

@@ -1,21 +1,37 @@
 // components/ExploreVenues.tsx
 "use client"
-
+import {useState, useEffect} from "react"
 import { Star, MapPin } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { getAllVenues } from "@/lib/data/events" // <-- must be client-safe
+import { getAllVenues } from "@/lib/data/events"
+import Link from "next/link"
 
 const venues = getAllVenues()
 
 export default function ExploreVenues() {
+  const [organizers, setOrganizers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
+
+  useEffect(() => {
+    async function fetchOrganizersVenue(){
+      try{
+        const res = await fetch("api/organizers/venues")
+        if(!res.ok) throw new Error("Failed to get data")
+        const data = await res.json()
+        setOrganizers(data)
+      }catch(err){
+        console.error("Error fetching organizer: ", err)
+      }finally{
+        setLoading(false)
+      }
+    }
+    fetchOrganizersVenue()
+  }, [])
+  if(loading) return <p>Loading .......</p>
 
   const handleVenueClick = (venue: (typeof venues)[number]) => {
     router.push(`/venue/${venue.id}`)
-  }
-
-  const handleViewAllClick = () => {
-    router.push("/venue")
   }
 
   return (
@@ -27,16 +43,16 @@ export default function ExploreVenues() {
 
         <div className="p-2">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
-            {venues.map((venue: any) => (
+            {Array.isArray(organizers) && organizers.map((venue: any, index:number) => (
               <button
-                key={venue.id}
+                key={`${venue.id}-${index}`}
                 onClick={() => handleVenueClick(venue)}
                 className="group rounded-sm p-3 bg-white transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg text-left"
               >
                 <div className="space-y-1">
                   <div className="h-[200px] rounded-sm overflow-hidden">
                     <img
-                      src={venue.images?.[0] || "/placeholder.svg"}
+                      src={venue.image?.length && venue.image[0] !== "/placeholder.svg" ? venue.images[0] : "city/c1.jpg"}
                       alt={venue.name}
                       className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-200"
                     />
@@ -83,12 +99,14 @@ export default function ExploreVenues() {
           </div>
 
           <div className="text-center">
-            <button
-              onClick={handleViewAllClick}
+            <Link href="/venues">
+                        <button
               className="px-8 py-3 bg-[#002C71] text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium shadow-md hover:shadow-lg"
             >
               View All
             </button>
+            </Link>
+
           </div>
         </div>
       </div>

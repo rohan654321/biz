@@ -32,7 +32,8 @@ import RatingsReviews from "./ratings-reviews"
 import LegalDocumentation from "./legal-documentation"
 import VenueSettings from "./venue-settings"
 import { promise } from "zod"
-import { ConnectionsSection } from "@/app/dashboard/connections-section"
+import { MeetingSpace } from "@prisma/client"
+import { ConnectionsSection } from "../dashboard/connections-section"
 
 type VenueData = {
   id: string
@@ -51,6 +52,7 @@ type VenueData = {
   averageRating: number
   totalReviews: number
   amenities: string[]
+  meetingSpaces: MeetingSpace[]
 }
 
 interface UserDashboardProps {
