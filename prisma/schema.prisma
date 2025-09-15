@@ -84,6 +84,7 @@ model User {
   meetingSpaces MeetingSpace[] 
   leads           EventLead[]
   promotions   Promotion[] // ✅ back relation for event promotions
+  savedEvents SavedEvent[] // Add this line
 
   // Add these for connections 👇
   connectionsSent    Connection[] @relation("ConnectionSender")
@@ -225,6 +226,7 @@ model Event {
   campaigns       Campaign[]
   leads           EventLead[]
   promotions Promotion[] // ✅ back relation for event promotions
+   savedEvents SavedEvent[] // Add this line
 
   @@map("events")
 }
@@ -952,4 +954,17 @@ enum ConnectionStatus {
   ACCEPTED
   REJECTED
   BLOCKED
+}
+
+// Add new model for saved events
+model SavedEvent {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId   String   @db.ObjectId
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  savedAt   DateTime @default(now())
+  
+  @@unique([userId, eventId])
+  @@map("saved_events")
 }

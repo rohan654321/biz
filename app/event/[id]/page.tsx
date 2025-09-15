@@ -26,9 +26,13 @@ interface EventPageProps {
 }
 
 export default function EventPage({ params }: EventPageProps) {
+  // ALL useState calls must be at the top, before any conditional logic
   const [event, setEvent] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isSaved, setIsSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  
   const { data: session } = useSession()
   const router = useRouter()
   const { toast } = useToast()
@@ -65,6 +69,63 @@ export default function EventPage({ params }: EventPageProps) {
 
     fetchEvent()
   }, [params])
+
+  // Check if event is saved on load
+  useEffect(() => {
+    if (event?.id && session?.user?.id) {
+      checkIfSaved()
+    }
+  }, [event?.id, session?.user?.id])
+
+  const checkIfSaved = async () => {
+    try {
+      const response = await fetch(`/api/events/${event.id}/save`)
+      if (response.ok) {
+        const data = await response.json()
+        setIsSaved(data.isSaved)
+      }
+    } catch (error) {
+      console.error("Error checking saved status:", error)
+    }
+  }
+
+  const handleSaveEvent = async () => {
+    if (!session) {
+      alert("Please log in to save events")
+      router.push("/login")
+      return
+    }
+
+    setSaving(true)
+    try {
+      const method = isSaved ? "DELETE" : "POST"
+      const response = await fetch(`/api/events/${event.id}/save`, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (response.ok) {
+        setIsSaved(!isSaved)
+        toast({
+          title: isSaved ? "Event removed" : "Event saved",
+          description: isSaved 
+            ? "Event removed from your saved list" 
+            : "Event added to your saved events",
+        })
+      }
+    } catch (error) {
+      console.error("Error saving event:", error)
+      toast({
+        title: "Error",
+        description: "Failed to save event",
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const handleVisitClick = async () => {
     if (!session) {
@@ -232,8 +293,15 @@ export default function EventPage({ params }: EventPageProps) {
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                     <span className="ml-1 font-medium">4.5</span>
                   </div>
-                  <Button variant="ghost" size="sm">
-                    <Bookmark className="w-4 h-4" />
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={handleSaveEvent}
+                    disabled={saving}
+                    className={isSaved ? "text-blue-600" : ""}
+                  >
+                    <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
+                    {isSaved ? "Saved" : "Save"}
                   </Button>
                   <Button variant="ghost" size="sm">
                     <Share2 className="w-4 h-4" />
