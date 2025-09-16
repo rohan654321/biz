@@ -18,7 +18,6 @@ import SpeakersTab from "./speakers-tab"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import StarRatingCard from "@/components/star-rating-card"
 import AddReviewCard from "@/components/AddReviewCard"
 
 interface EventPageProps {
@@ -34,6 +33,8 @@ export default function EventPage({ params }: EventPageProps) {
   const [error, setError] = useState<string | null>(null)
   const [isSaved, setIsSaved] = useState(false)
   const [saving, setSaving] = useState(false)
+   const [averageRating, setAverageRating] = useState(0) // Add this state
+  const [totalReviews, setTotalReviews] = useState(0) // Add this state
 
   const { data: session } = useSession()
   const router = useRouter()
@@ -61,6 +62,8 @@ export default function EventPage({ params }: EventPageProps) {
         const data = await res.json()
 
         setEvent(data.event)
+        setAverageRating(data.event.averageRating || 0)
+        setTotalReviews(data.event.totalReviews || 0)
       } catch (err) {
         console.error("Error fetching event:", err)
         setError(err instanceof Error ? err.message : "An error occurred")
@@ -255,13 +258,29 @@ export default function EventPage({ params }: EventPageProps) {
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center justify-center gap-4">
-                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      const query = encodeURIComponent(event.address || event.location || "Location");
+                      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank");
+                    }}
+                  >
                     <Plus className="w-4 h-4" />
                     Get Directions
                   </Button>
+
                   <div className="flex items-center">
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="ml-1 font-medium">4.5</span>
+                    <span className="ml-1 font-medium">
+                      {averageRating > 0 ? averageRating.toFixed(1) : 'No ratings'}
+                    </span>
+                    {totalReviews > 0 && (
+                      <span className="ml-1 text-sm text-gray-500">
+                        ({totalReviews} review{totalReviews !== 1 ? 's' : ''})
+                      </span>
+                    )}
                   </div>
                   <Button
                     variant="ghost"
@@ -273,8 +292,24 @@ export default function EventPage({ params }: EventPageProps) {
                     <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
                     {isSaved ? "Saved" : "Save"}
                   </Button>
-                  <Button variant="ghost" size="sm">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({
+                          title: event.title,
+                          text: "Check out this event!",
+                          url: window.location.href,
+                        })
+                          .catch((err) => console.error("Error sharing:", err));
+                      } else {
+                        alert("Sharing is not supported in this browser.");
+                      }
+                    }}
+                  >
                     <Share2 className="w-4 h-4" />
+                    Share
                   </Button>
                 </div>
               </div>
@@ -540,7 +575,7 @@ export default function EventPage({ params }: EventPageProps) {
                     </div>
                   </CardContent>
                 </Card>
-                <AddReviewCard eventId={event.id} userId={session?.user?.id} />
+                <AddReviewCard eventId={event.id} />
               </TabsContent>
 
               <TabsContent value="exhibitors">
@@ -632,7 +667,7 @@ export default function EventPage({ params }: EventPageProps) {
                     </div>
                   </CardContent>
                 </Card>
-                
+
               </TabsContent>
 
               <TabsContent value="speakers">
@@ -673,14 +708,7 @@ export default function EventPage({ params }: EventPageProps) {
                     <CardTitle>Reviews</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                        <span className="font-bold text-xl">4.5</span>
-                      </div>
-                      <span className="text-gray-600">out of 5 stars</span>
-                    </div>
-                    <p className="text-gray-600">Event reviews will be displayed here.</p>
+                    <AddReviewCard eventId={event.id} />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -714,7 +742,7 @@ export default function EventPage({ params }: EventPageProps) {
                 <p className="text-gray-600">No tourist attractions available.</p>
               </CardContent>
             </Card>
-            <StarRatingCard/>
+
           </div>
         </div>
       </div>

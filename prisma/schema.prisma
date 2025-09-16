@@ -217,6 +217,10 @@ model Event {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Add these for ratings
+  averageRating   Float    @default(0)
+  totalReviews    Int      @default(0)
+
   // Relationships
   registrations   EventRegistration[]
   speakerSessions SpeakerSession[]
@@ -691,6 +695,7 @@ enum CampaignStatus {
 }
 
 // Review System - updated to handle venue reviews through User
+// Add this to your existing Review model to include rating
 model Review {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   userId          String   @db.ObjectId
@@ -702,6 +707,7 @@ model Review {
   venueId         String?  @db.ObjectId
   venue           User?    @relation("VenueReviews", fields: [venueId], references: [id])
   
+  // Rating information (added to existing model)
   rating          Int      // 1-5
   title           String?
   comment         String?
@@ -715,6 +721,8 @@ model Review {
 
   @@map("reviews")
 }
+
+// Remove the separate Rating model since we've incorporated rating into Review
 
 
 // Analytics
@@ -969,9 +977,9 @@ model SavedEvent {
   @@map("saved_events")
 }
 
-model Rating {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  rating    Int
-  feedback  String?
-  createdAt DateTime @default(now())
-}
+// model Rating {
+//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+//   rating    Int
+//   feedback  String?
+//   createdAt DateTime @default(now())
+// }
