@@ -14,6 +14,7 @@ export interface UserData {
   instagram?: string
   company?: string
   jobTitle?: string
+  interests?: string[]
   location?: {
     address: string
     city: string

@@ -26,6 +26,13 @@ import {
 } from "lucide-react"
 import { DynamicCalendar } from "@/components/DynamicCalendar"
 import { UserData } from "@/types/user"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 // interface UserData {
 //   id: string
@@ -57,25 +64,47 @@ interface ProfileSectionProps {
   userData: UserData
   onUpdate: (data: Partial<UserData>) => void
 }
-
+const INTEREST_OPTIONS = [
+  "Confirence",
+  "Automation",
+  "Education Training",
+  "Medical & Pharma",
+  "It & Technology",
+  "Banking & Finance",
+  "Business Services",
+]
+interface FormData {
+  firstName: string
+  lastName: string
+  phone: string
+  bio: string
+  website: string
+  company: string
+  jobTitle: string
+  linkedin: string
+  twitter: string
+  instagram: string
+  interests: string[]   // <-- explicitly a string array
+}
 export function ProfileSection({ userData, onUpdate }: ProfileSectionProps) {
   // Initialize form data only once with useMemo to prevent recreation on every render
-  const initialFormData = {
-    firstName: userData.firstName,
-    lastName: userData.lastName,
-    phone: userData.phone || "",
-    bio: userData.bio || "",
-    website: userData.website || "",
-    company: userData.company || "",
-    jobTitle: userData.jobTitle || "",
-    location: userData.location || "",
-    linkedin: userData.linkedin || "",
-    twitter: userData.twitter || "",
-    instagram: userData.instagram || "",
-  }
+const initialFormData: FormData = {
+  firstName: userData.firstName,
+  lastName: userData.lastName,
+  phone: userData.phone || "",
+  bio: userData.bio || "",
+  website: userData.website || "",
+  company: userData.company || "",
+  jobTitle: userData.jobTitle || "",
+  linkedin: userData.linkedin || "",
+  twitter: userData.twitter || "",
+  instagram: userData.instagram || "",
+  interests: userData.interests || [],   // <-- NEW
+}
+
 
   const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState(initialFormData)
+  const [formData, setFormData] = useState<FormData>(initialFormData)
 
   // Update form data only when userData changes
   useEffect(() => {
@@ -87,11 +116,11 @@ export function ProfileSection({ userData, onUpdate }: ProfileSectionProps) {
       website: userData.website || "",
       company: userData.company || "",
       jobTitle: userData.jobTitle || "",
-      location: userData.location || "",
+      // location: userData.location || "",
       linkedin: userData.linkedin || "",
       twitter: userData.twitter || "",
       instagram: userData.instagram || "",
-    })
+interests: userData.interests || [],    })
   }, [userData]) // Only run when userData changes
 
   const handleSave = useCallback(() => {
@@ -108,10 +137,10 @@ export function ProfileSection({ userData, onUpdate }: ProfileSectionProps) {
       website: userData.website || "",
       company: userData.company || "",
       jobTitle: userData.jobTitle || "",
-      location: userData.location || "",
       linkedin: userData.linkedin || "",
       twitter: userData.twitter || "",
       instagram: userData.instagram || "",
+      interests: userData.interests || [], 
     })
     setIsEditing(false)
   }, [userData])
@@ -322,23 +351,50 @@ export function ProfileSection({ userData, onUpdate }: ProfileSectionProps) {
                       }
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
-                <Input
-  id="location"
-  value={
-    typeof formData.location === "string"
-      ? formData.location
-      : formData.location
-      ? `${formData.location.address}, ${formData.location.city}, ${formData.location.state}, ${formData.location.country}`
-      : ""
-  }
-  onChange={(e) =>
-    setFormData({ ...formData, location: e.target.value })
-  }
-/>
+       <div className="space-y-2">
+  <Label htmlFor="interests">Interests</Label>
+  <Select
+    onValueChange={(value) => {
+      if (!formData.interests.includes(value)) {
+        setFormData({
+          ...formData,
+          interests: [...formData.interests, value],
+        })
+      }
+    }}
+  >
+    <SelectTrigger>
+      <SelectValue placeholder="Select interest" />
+    </SelectTrigger>
+    <SelectContent>
+      {INTEREST_OPTIONS.map((option) => (
+        <SelectItem key={option} value={option}>
+          {option}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
 
-                  </div>
+  {/* Show selected interests as removable badges */}
+  <div className="flex gap-2 flex-wrap mt-2">
+    {formData.interests.map((int, idx) => (
+      <Badge
+        key={idx}
+        variant="secondary"
+        className="cursor-pointer"
+        onClick={() =>
+          setFormData({
+            ...formData,
+            interests: formData.interests.filter((i) => i !== int),
+          })
+        }
+      >
+        {int} ✕
+      </Badge>
+    ))}
+  </div>
+</div>
+
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="bio">Bio</Label>
@@ -391,18 +447,22 @@ export function ProfileSection({ userData, onUpdate }: ProfileSectionProps) {
                   <span className="font-medium">Position</span>
                   <span className="ml-auto">{userData.jobTitle || "CEO & Co-Founder"}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <MapPin size={16} className="text-gray-500" />
-                  <span className="font-medium">Location</span>
-                  <span>
-  {typeof userData.location === "string"
-    ? userData.location
-    : userData.location
-    ? `${userData.location.address}, ${userData.location.city}, ${userData.location.state}, ${userData.location.country}`
-    : "N/A"}
-</span>
+       <div className="flex items-center gap-2">
+  <UserIcon size={16} className="text-gray-500" />
+  <span className="font-medium">Interests</span>
+<div className="ml-auto flex gap-2 flex-wrap">
+  {(userData.interests && userData.interests.length > 0
+    ? userData.interests
+    : ["Conference", "Automation"] // fallback
+  )?.map((int, idx) => (
+    <Badge key={idx} variant="secondary">
+      {int}
+    </Badge>
+  ))}
+</div>
 
-                </div>
+</div>
+
                 <div className="flex items-start gap-2 mt-4">
                   <UserIcon size={16} className="text-gray-500 mt-1" />
                   <div>

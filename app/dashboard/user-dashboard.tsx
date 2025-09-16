@@ -31,6 +31,7 @@ import { ConnectionsSection } from "./connections-section"
 import MessagesSection from "@/app/organizer-dashboard/messages-center"
 import { SettingsSection } from "./settings-section"
 import { UserData } from "@/types/user"
+import TravelAccommodation from "./TravelAccommodation"
 
 
 interface UserDashboardProps {
@@ -68,7 +69,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { toast } = useToast()
-  
+
 
   const [activeSection, setActiveSection] = useState("profile")
   const [openMenus, setOpenMenus] = useState<string[]>(["dashboard"])
@@ -115,7 +116,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
     }
     switch (activeSection) {
       case "profile":
-        return <ProfileSection userData={userData!} onUpdate={() => {}} />
+        return <ProfileSection userData={userData!} onUpdate={() => { }} />
       case "events":
         return <EventsSection userId={userId} />
       case "connections":
@@ -123,7 +124,9 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       case "messages":
         return <MessagesSection organizerId={userId} />
       case "settings":
-        return <SettingsSection userData={userData!} onUpdate={() => {}} />
+        return <SettingsSection userData={userData!} onUpdate={() => { }} />
+      case "travel":
+        return <TravelAccommodation/>
       default:
         return <p>Select a section</p>
     }
@@ -164,33 +167,32 @@ export function UserDashboard({ userId }: UserDashboardProps) {
           {/* Menu */}
           <nav className="p-4 text-sm space-y-2">
             {/* Dashboard */}
-{/* Dashboard */}
-<div>
-  <button
-    className="flex items-center justify-between w-full py-2 font-medium"
-    onClick={() => toggleMenu("dashboard")}
-  >
-    <span className="flex items-center gap-2">
-      <LayoutDashboard size={16} /> Dashboard
-    </span>
-    {openMenus.includes("dashboard") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-  </button>
+            {/* Dashboard */}
+            <div>
+              <button
+                className="flex items-center justify-between w-full py-2 font-medium"
+                onClick={() => toggleMenu("dashboard")}
+              >
+                <span className="flex items-center gap-2">
+                  <LayoutDashboard size={16} /> Dashboard
+                </span>
+                {openMenus.includes("dashboard") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              </button>
 
-  {openMenus.includes("dashboard") && (
-    <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
-      <li
-        onClick={() => setActiveSection("profile")}
-        className={`cursor-pointer pl-3 py-1 border-l-4 ${
-          activeSection === "profile"
-            ? "border-blue-500 text-blue-600 font-medium"
-            : "border-transparent hover:text-blue-600"
-        }`}
-      >
-        Profile
-      </li>
-    </ul>
-  )}
-</div>
+              {openMenus.includes("dashboard") && (
+                <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
+                  <li
+                    onClick={() => setActiveSection("profile")}
+                    className={`cursor-pointer pl-3 py-1 border-l-4 ${activeSection === "profile"
+                        ? "border-blue-500 text-blue-600 font-medium"
+                        : "border-transparent hover:text-blue-600"
+                      }`}
+                  >
+                    Profile
+                  </li>
+                </ul>
+              )}
+            </div>
 
 
             {/* Event */}
@@ -208,11 +210,10 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                 <ul className="ml-2 mt-2 space-y-2 border-l">
                   <li
                     onClick={() => setActiveSection("events")}
-                    className={`cursor-pointer pl-3 py-1 border-l-4 ${
-                      activeSection === "events"
+                    className={`cursor-pointer pl-3 py-1 border-l-4 ${activeSection === "events"
                         ? "border-blue-500 text-blue-600 font-medium"
                         : "border-transparent hover:text-blue-600"
-                    }`}
+                      }`}
                   >
                     Registered Events
                   </li>
@@ -279,11 +280,10 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                   </li> */}
                   <li
                     onClick={() => setActiveSection("connections")}
-                    className={`cursor-pointer pl-3 py-1 border-l-4 ${
-                      activeSection === "connections"
+                    className={`cursor-pointer pl-3 py-1 border-l-4 ${activeSection === "connections"
                         ? "border-blue-500 text-blue-600 font-medium"
                         : "border-transparent hover:text-blue-600"
-                    }`}
+                      }`}
                   >
                     My Connections
                   </li>
@@ -295,18 +295,17 @@ export function UserDashboard({ userId }: UserDashboardProps) {
             <div>
               <button
                 onClick={() => setActiveSection("messages")}
-                className={`flex items-center gap-2 w-full py-2 font-medium border-l-4 ${
-                  activeSection === "messages"
+                className={`flex items-center gap-2 w-full py-2 font-medium border-l-4 ${activeSection === "messages"
                     ? "border-blue-500 text-blue-600 font-medium"
                     : "border-transparent hover:text-blue-600"
-                }`}
+                  }`}
               >
                 <MessageSquare size={16} /> Messages
               </button>
             </div>
 
             {/* Event Planning Tools */}
-            {/* <div>
+            <div>
               <button
                 className="flex items-center justify-between w-full py-2 font-medium"
                 onClick={() => toggleMenu("tools")}
@@ -318,28 +317,35 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               </button>
               {openMenus.includes("tools") && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li className="cursor-pointer pl-3 py-1 border-l-4 border-transparent hover:text-blue-600">
+                  {/* <li className="cursor-pointer pl-3 py-1 border-l-4 border-transparent hover:text-blue-600">
                     My Schedule
                   </li>
                   <li className="cursor-pointer pl-3 py-1 border-l-4 border-transparent hover:text-blue-600">
                     <Map size={14} className="inline mr-1" /> Venue Map / Floor Plan
-                  </li>
-                  <li className="cursor-pointer pl-3 py-1 border-l-4 border-transparent hover:text-blue-600">
-                    Travel & Accommodation
-                  </li>
+                  </li> */}
+                 <li
+  onClick={() => setActiveSection("travel")}
+  className={`cursor-pointer pl-3 py-1 border-l-4 ${
+    activeSection === "travel"
+      ? "border-blue-500 text-blue-600 font-medium"
+      : "border-transparent hover:text-blue-600"
+  }`}
+>
+  Travel & Accommodation
+</li>
+
                 </ul>
               )}
-            </div> */}
+            </div>
 
             {/* Settings */}
             <div>
               <button
                 onClick={() => setActiveSection("settings")}
-                className={`flex items-center gap-2 w-full py-2 font-medium border-l-4 ${
-                  activeSection === "settings"
+                className={`flex items-center gap-2 w-full py-2 font-medium border-l-4 ${activeSection === "settings"
                     ? "border-blue-500 text-blue-600 font-medium"
                     : "border-transparent hover:text-blue-600"
-                }`}
+                  }`}
               >
                 <Settings size={16} /> Settings
               </button>

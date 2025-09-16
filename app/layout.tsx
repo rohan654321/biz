@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import LayoutWrapper from "@/components/LayoutWrapper"
 import { ToastContainer } from "react-toastify"
+import Navbar from "@/components/navbar"
+import { Footer } from "react-day-picker"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
