@@ -25,32 +25,33 @@ import {
   CalendarDays,
 } from "lucide-react"
 import { DynamicCalendar } from "@/components/DynamicCalendar"
+import { UserData } from "@/types/user"
 
-interface UserData {
-  id: string
-  email: string
-  firstName: string
-  lastName: string
-  phone?: string
-  avatar?: string
-  role: string
-  bio?: string
-  website?: string
-  linkedin?: string
-  twitter?: string
-  instagram?: string
-  company?: string
-  jobTitle?: string
-  location?: string
-  isVerified: boolean
-  createdAt: string
-  lastLogin?: string
-  _count?: {
-    eventsAttended: number
-    eventsOrganized: number
-    connections: number
-  }
-}
+// interface UserData {
+//   id: string
+//   email: string
+//   firstName: string
+//   lastName: string
+//   phone?: string
+//   avatar?: string
+//   role: string
+//   bio?: string
+//   website?: string
+//   linkedin?: string
+//   twitter?: string
+//   instagram?: string
+//   company?: string
+//   jobTitle?: string
+//   location?: string
+//   isVerified: boolean
+//   createdAt: string
+//   lastLogin?: string
+//   _count?: {
+//     eventsAttended: number
+//     eventsOrganized: number
+//     connections: number
+//   }
+// }
 
 interface ProfileSectionProps {
   userData: UserData
@@ -323,13 +324,20 @@ export function ProfileSection({ userData, onUpdate }: ProfileSectionProps) {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="location">Location</Label>
-                    <Input
-                      id="location"
-                      value={formData.location}
-                      onChange={(e) =>
-                        setFormData({ ...formData, location: e.target.value })
-                      }
-                    />
+                <Input
+  id="location"
+  value={
+    typeof formData.location === "string"
+      ? formData.location
+      : formData.location
+      ? `${formData.location.address}, ${formData.location.city}, ${formData.location.state}, ${formData.location.country}`
+      : ""
+  }
+  onChange={(e) =>
+    setFormData({ ...formData, location: e.target.value })
+  }
+/>
+
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -386,7 +394,14 @@ export function ProfileSection({ userData, onUpdate }: ProfileSectionProps) {
                 <div className="flex items-center gap-2">
                   <MapPin size={16} className="text-gray-500" />
                   <span className="font-medium">Location</span>
-                  <span className="ml-auto">{userData.location || "San Francisco, CA"}</span>
+                  <span>
+  {typeof userData.location === "string"
+    ? userData.location
+    : userData.location
+    ? `${userData.location.address}, ${userData.location.city}, ${userData.location.state}, ${userData.location.country}`
+    : "N/A"}
+</span>
+
                 </div>
                 <div className="flex items-start gap-2 mt-4">
                   <UserIcon size={16} className="text-gray-500 mt-1" />
