@@ -176,7 +176,7 @@ export function ProfileSection({ userData, onUpdate }: ProfileSectionProps) {
                   <Badge variant="secondary" className="mt-1">
                     Verified
                   </Badge>
-                )}
+                )} 
               </div>
             </div>
             
