@@ -968,3 +968,10 @@ model SavedEvent {
   @@unique([userId, eventId])
   @@map("saved_events")
 }
+
+model Rating {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  rating    Int
+  feedback  String?
+  createdAt DateTime @default(now())
+}

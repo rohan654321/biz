@@ -28,23 +28,23 @@ export default function FeaturedOrganizers() {
     fetchOrganizer()
   }, [])
 
-  useEffect(() => {
-    if (!scrollRef.current || isHovering) return
+  // useEffect(() => {
+  //   if (!scrollRef.current || isHovering) return
 
-    const scrollContainer = scrollRef.current
-    const scrollStep = 1
-    const interval = setInterval(() => {
-      scrollContainer.scrollLeft += scrollStep
-      if (
-        scrollContainer.scrollLeft + scrollContainer.clientWidth >=
-        scrollContainer.scrollWidth
-      ) {
-        scrollContainer.scrollLeft = 0
-      }
-    }, 20)
+  //   const scrollContainer = scrollRef.current
+  //   const scrollStep = 1
+  //   const interval = setInterval(() => {
+  //     scrollContainer.scrollLeft += scrollStep
+  //     if (
+  //       scrollContainer.scrollLeft + scrollContainer.clientWidth >=
+  //       scrollContainer.scrollWidth
+  //     ) {
+  //       scrollContainer.scrollLeft = 0
+  //     }
+  //   }, 20)
 
-    return () => clearInterval(interval)
-  }, [isHovering])
+  //   return () => clearInterval(interval)
+  // }, [isHovering])
 
   const scrollByAmount = (amount: number) => {
     scrollRef.current?.scrollBy({ left: amount, behavior: "smooth" })
@@ -72,19 +72,25 @@ export default function FeaturedOrganizers() {
         onMouseLeave={() => setIsHovering(false)}
       >
         {/* Navigation Buttons */}
-        <button
-          onClick={() => scrollByAmount(-300)}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/90 rounded-full shadow hover:bg-white transition-all hidden group-hover:block"
-        >
-          <ChevronLeft className="w-5 h-5 text-gray-700" />
-        </button>
+{/* Navigation Buttons */}
+<button
+  onClick={() => scrollByAmount(-300)}
+  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 
+             bg-white/90 rounded-full shadow hover:bg-white 
+             transition-all opacity-0 group-hover:opacity-100"
+>
+  <ChevronLeft className="w-5 h-5 text-gray-700" />
+</button>
 
-        <button
-          onClick={() => scrollByAmount(300)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/90 rounded-full shadow hover:bg-white transition-all hidden group-hover:block"
-        >
-          <ChevronRight className="w-5 h-5 text-gray-700" />
-        </button>
+<button
+  onClick={() => scrollByAmount(300)}
+  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 
+             bg-white/90 rounded-full shadow hover:bg-white 
+             transition-all opacity-0 group-hover:opacity-100"
+>
+  <ChevronRight className="w-5 h-5 text-gray-700" />
+</button>
+
 
         {/* Scrollable Container */}
         <div
