@@ -18,6 +18,8 @@ import SpeakersTab from "./speakers-tab"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import StarRatingCard from "@/components/star-rating-card"
+import AddReviewCard from "@/components/AddReviewCard"
 
 interface EventPageProps {
   params: Promise<{
@@ -32,7 +34,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [error, setError] = useState<string | null>(null)
   const [isSaved, setIsSaved] = useState(false)
   const [saving, setSaving] = useState(false)
-  
+
   const { data: session } = useSession()
   const router = useRouter()
   const { toast } = useToast()
@@ -110,9 +112,7 @@ export default function EventPage({ params }: EventPageProps) {
         setIsSaved(!isSaved)
         toast({
           title: isSaved ? "Event removed" : "Event saved",
-          description: isSaved 
-            ? "Event removed from your saved list" 
-            : "Event added to your saved events",
+          description: isSaved ? "Event removed from your saved list" : "Event added to your saved events",
         })
       }
     } catch (error) {
@@ -129,9 +129,9 @@ export default function EventPage({ params }: EventPageProps) {
 
   const handleVisitClick = async () => {
     if (!session) {
-      alert("Authentication Required\nPlease log in to express interest in this event");
-      router.push("/login");
-      return;
+      alert("Authentication Required\nPlease log in to express interest in this event")
+      router.push("/login")
+      return
     }
 
     try {
@@ -145,23 +145,23 @@ export default function EventPage({ params }: EventPageProps) {
           userId: session.user.id,
           eventId: event.id,
         }),
-      });
+      })
 
       if (response.ok) {
-        alert("Your visit request has been sent to the organizer successfully!");
+        alert("Your visit request has been sent to the organizer successfully!")
       } else {
-        throw new Error("Failed to record interest");
+        throw new Error("Failed to record interest")
       }
     } catch (error) {
-      alert("Failed to record your interest. Please try again.");
+      alert("Failed to record your interest. Please try again.")
     }
-  };
+  }
 
   const handleExhibitClick = async () => {
     if (!session) {
-      alert("Authentication Required\nPlease log in to express interest in exhibiting");
-      router.push("/login");
-      return;
+      alert("Authentication Required\nPlease log in to express interest in exhibiting")
+      router.push("/login")
+      return
     }
 
     try {
@@ -175,47 +175,17 @@ export default function EventPage({ params }: EventPageProps) {
           userId: session.user.id,
           eventId: event.id,
         }),
-      });
+      })
 
       if (response.ok) {
-        alert("Your exhibition request has been sent to the organizer successfully!");
+        alert("Your exhibition request has been sent to the organizer successfully!")
       } else {
-        throw new Error("Failed to record interest");
+        throw new Error("Failed to record interest")
       }
     } catch (error) {
-      alert("Failed to record your interest. Please try again.");
+      alert("Failed to record your interest. Please try again.")
     }
-  };
-
-  const handleSponsorClick = async () => {
-    if (!session) {
-      alert("Authentication Required\nPlease log in to express interest in sponsoring");
-      router.push("/login");
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/events/${event.id}/leads`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type: "sponsor",
-          userId: session.user.id,
-          eventId: event.id,
-        }),
-      });
-
-      if (response.ok) {
-        alert("Your sponsorship request has been sent to the organizer successfully!");
-      } else {
-        throw new Error("Failed to record interest");
-      }
-    } catch (error) {
-      alert("Failed to record your interest. Please try again.");
-    }
-  };
+  }
 
   if (loading) {
     return (
@@ -293,8 +263,8 @@ export default function EventPage({ params }: EventPageProps) {
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                     <span className="ml-1 font-medium">4.5</span>
                   </div>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={handleSaveEvent}
                     disabled={saving}
@@ -322,12 +292,6 @@ export default function EventPage({ params }: EventPageProps) {
                   onClick={handleExhibitClick}
                 >
                   Exhibit
-                </Button>
-                <Button
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
-                  onClick={handleSponsorClick}
-                >
-                  Sponsor
                 </Button>
               </div>
             </div>
@@ -576,6 +540,7 @@ export default function EventPage({ params }: EventPageProps) {
                     </div>
                   </CardContent>
                 </Card>
+                <AddReviewCard eventId={event.id} userId={session?.user?.id} />
               </TabsContent>
 
               <TabsContent value="exhibitors">
@@ -667,6 +632,7 @@ export default function EventPage({ params }: EventPageProps) {
                     </div>
                   </CardContent>
                 </Card>
+                
               </TabsContent>
 
               <TabsContent value="speakers">
@@ -748,6 +714,7 @@ export default function EventPage({ params }: EventPageProps) {
                 <p className="text-gray-600">No tourist attractions available.</p>
               </CardContent>
             </Card>
+            <StarRatingCard/>
           </div>
         </div>
       </div>
