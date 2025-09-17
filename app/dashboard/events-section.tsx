@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { format } from "date-fns"
 
-interface Event {
+export interface Event {
   id: string
   title: string
   startDate: string

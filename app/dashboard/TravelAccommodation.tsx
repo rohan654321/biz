@@ -253,7 +253,7 @@ const TravelAccommodation: React.FC = () => {
     return ( <div>
         <p>Page will update Shortly</p>
     </div>
-  );
+  );          
 };
 
 export default TravelAccommodation;

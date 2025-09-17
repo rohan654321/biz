@@ -20,7 +20,10 @@ import {
   Star,
   Map,
   Heart,
-  List
+  List,
+  Sidebar as SidebarIcon,
+  User,
+  Bell
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
@@ -32,50 +35,75 @@ import MessagesSection from "@/app/organizer-dashboard/messages-center"
 import { SettingsSection } from "./settings-section"
 import { UserData } from "@/types/user"
 import TravelAccommodation from "./TravelAccommodation"
-
+import { PastEvents } from "./PastEvents"
+import { SavedEvents } from "./SavedEvents"
+import { UpcomingEvents } from "./UpcomingEvents"
+// import { SidebarHeader, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface UserDashboardProps {
   userId: string
 }
 
-// interface UserData {
-//   id: string
-//   email: string
-//   firstName: string
-//   lastName: string
-//   phone?: string
-//   avatar?: string
-//   role: string
-//   bio?: string
-//   website?: string
-//   linkedin?: string
-//   twitter?: string
-//   company?: string
-//   jobTitle?: string
-//   location?: string   // <-- FIXED (was object)
-//   isVerified: boolean
-//   createdAt: string
-//   lastLogin?: string
-//   _count?: {
-//     eventsAttended: number
-//     eventsOrganized: number
-//     connections: number
-//   }
-// }
-
-
+interface OrganizerData {
+  id: string
+  name: string
+  email: string
+  phone: string
+  location: string
+  website: string
+  description: string
+  avatar: string
+  totalEvents: number
+  activeEvents: number
+  totalAttendees: number
+  totalRevenue: number
+  founded: string
+  company: string
+  teamSize: string
+  headquarters: string
+  specialties: string[]
+  achievements: string[]
+  certifications: string[]
+}
 
 export function UserDashboard({ userId }: UserDashboardProps) {
+    const sidebarGroups = [
+    {
+      id: "main",
+      label: "Main",
+      items: [
+        {
+          title: "Dashboard",
+          icon: LayoutDashboard,
+          id: "dashboard",
+        },
+        {
+          title: "My Info",
+          icon: User,
+          id: "info",
+        },
+      ],
+    },
+    ]
   const { data: session, status } = useSession()
   const router = useRouter()
   const { toast } = useToast()
 
-
   const [activeSection, setActiveSection] = useState("profile")
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([])
+  const [organizerData, setOrganizerData] = useState<OrganizerData | null>(null)
   const [openMenus, setOpenMenus] = useState<string[]>(["dashboard"])
   const [userData, setUserData] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   useEffect(() => {
     if (status === "loading") return
@@ -119,6 +147,12 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         return <ProfileSection userData={userData!} onUpdate={() => { }} />
       case "events":
         return <EventsSection userId={userId} />
+      case "past-events":
+        return <PastEvents userId={userId} />
+      case "wishlist":
+        return <SavedEvents userId={userId} />
+      case "passes":
+        return <UpcomingEvents userId={userId} events={[]} />
       case "connections":
         return <ConnectionsSection userId={userId} />
       case "messages":
@@ -132,6 +166,10 @@ export function UserDashboard({ userId }: UserDashboardProps) {
     }
   }
 
+  // const toggleGroup = (groupId: string) => {
+  //   setExpandedGroups((prev) => (prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]))
+  // }
+
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -143,7 +181,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r flex flex-col justify-between">
+      <aside className={`${isSidebarCollapsed ? 'w-16' : 'w-64'} bg-white border-r flex flex-col justify-between transition-all duration-300`}>
         <div>
           {/* Profile Header */}
           <div className="flex items-center gap-3 p-4 border-b">
@@ -154,19 +192,20 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                 {userData?.lastName?.[0] || ""}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <p className="font-semibold">
-                {userData?.firstName} {userData?.lastName}
-              </p>
-              <p className="text-xs text-gray-500">
-                {userData?.jobTitle || userData?.role || "User"}
-              </p>
-            </div>
+            {!isSidebarCollapsed && (
+              <div>
+                <p className="font-semibold">
+                  {userData?.firstName} {userData?.lastName}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {userData?.jobTitle || userData?.role || "User"}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Menu */}
           <nav className="p-4 text-sm space-y-2">
-            {/* Dashboard */}
             {/* Dashboard */}
             <div>
               <button
@@ -174,12 +213,15 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                 onClick={() => toggleMenu("dashboard")}
               >
                 <span className="flex items-center gap-2">
-                  <LayoutDashboard size={16} /> Dashboard
+                  <LayoutDashboard size={16} /> 
+                  {!isSidebarCollapsed && "Dashboard"}
                 </span>
-                {openMenus.includes("dashboard") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                {!isSidebarCollapsed && (
+                  openMenus.includes("dashboard") ? <ChevronDown size={16} /> : <ChevronRight size={16} />
+                )}
               </button>
 
-              {openMenus.includes("dashboard") && (
+              {openMenus.includes("dashboard") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
                   <li
                     onClick={() => setActiveSection("profile")}
@@ -194,7 +236,6 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               )}
             </div>
 
-
             {/* Event */}
             <div>
               <button
@@ -202,62 +243,72 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                 onClick={() => toggleMenu("event")}
               >
                 <span className="flex items-center gap-2">
-                  <Calendar size={16} /> Event
+                  <Calendar size={16} /> 
+                  {!isSidebarCollapsed && "Event"}
                 </span>
-                {openMenus.includes("event") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                {!isSidebarCollapsed && (
+                  openMenus.includes("event") ? <ChevronDown size={16} /> : <ChevronRight size={16} />
+                )}
               </button>
-              {openMenus.includes("event") && (
-                <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li
-                    onClick={() => setActiveSection("events")}
-                    className={`cursor-pointer pl-3 py-1 border-l-4 ${activeSection === "events"
-                        ? "border-blue-500 text-blue-600 font-medium"
-                        : "border-transparent hover:text-blue-600"
-                      }`}
-                  >
-                    Registered Events
-                  </li>
-                  {/* <li className="cursor-pointer pl-3 py-1 border-l-4 border-transparent hover:text-blue-600">
-                    Past Events Attended
-                  </li>
-                  <li className="cursor-pointer pl-3 py-1 border-l-4 border-transparent hover:text-blue-600">
-                    Wishlist
-                  </li>
-                  <li className="cursor-pointer pl-3 py-1 border-l-4 border-transparent hover:text-blue-600">
-                    Passes
-                  </li>
-                  <li className="cursor-pointer pl-3 py-1 border-l-4 border-transparent hover:text-blue-600">
-                    Badge / QR Code
-                  </li> */}
-                </ul>
-              )}
-            </div>
+            {openMenus.includes("event") && !isSidebarCollapsed && (
+              <ul className="ml-2 mt-2 space-y-2 border-l">
+                <li
+                  onClick={() => setActiveSection("events")}
+                  className={`cursor-pointer pl-3 py-1 border-l-4 ${
+                    activeSection === "events"
+                      ? "border-blue-500 text-blue-600 font-medium"
+                      : "border-transparent hover:text-blue-600"
+                  }`}
+                >
+                  Registered Events
+                </li>
 
-            {/* Exhibitors */}
-            {/* <div>
-              <button
-                className="flex items-center justify-between w-full py-2 font-medium"
-                onClick={() => toggleMenu("exhibitors")}
-              >
-                <span className="flex items-center gap-2">
-                  <Store size={16} /> Exhibitors
-                </span>
-                {openMenus.includes("exhibitors") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              </button>
-              {openMenus.includes("exhibitors") && (
-                <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li className="cursor-pointer pl-3 py-1 border-l-4 border-transparent hover:text-blue-600">
-                    All Exhibitors
-                  </li>
-                  <li className="cursor-pointer pl-3 py-1 border-l-4 border-transparent hover:text-blue-600">
-                    <Heart size={14} className="inline mr-1" /> Favourites
-                  </li>
-                  <li className="cursor-pointer pl-3 py-1 border-l-4 border-transparent hover:text-blue-600">
-                    <Star size={14} className="inline mr-1" /> Recommendation
-                  </li>
-                </ul>
-              )}
-            </div> */}
+                <li
+                  onClick={() => setActiveSection("past-events")}
+                  className={`cursor-pointer pl-3 py-1 border-l-4 ${
+                    activeSection === "past-events"
+                      ? "border-blue-500 text-blue-600 font-medium"
+                      : "border-transparent hover:text-blue-600"
+                  }`}
+                >
+                  Past Events Attended
+                </li>
+
+                <li
+                  onClick={() => setActiveSection("wishlist")}
+                  className={`cursor-pointer pl-3 py-1 border-l-4 ${
+                    activeSection === "wishlist"
+                      ? "border-blue-500 text-blue-600 font-medium"
+                      : "border-transparent hover:text-blue-600"
+                  }`}
+                >
+                  Wishlist
+                </li>
+
+                <li
+                  onClick={() => setActiveSection("passes")}
+                  className={`cursor-pointer pl-3 py-1 border-l-4 ${
+                    activeSection === "passes"
+                      ? "border-blue-500 text-blue-600 font-medium"
+                      : "border-transparent hover:text-blue-600"
+                  }`}
+                >
+                  Passes
+                </li>
+
+                <li
+                  onClick={() => setActiveSection("qr")}
+                  className={`cursor-pointer pl-3 py-1 border-l-4 ${
+                    activeSection === "qr"
+                      ? "border-blue-500 text-blue-600 font-medium"
+                      : "border-transparent hover:text-blue-600"
+                  }`}
+                >
+                  Badge / QR Code
+                </li>
+              </ul>
+            )}
+            </div>
 
             {/* Networking */}
             <div>
@@ -266,18 +317,15 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                 onClick={() => toggleMenu("networking")}
               >
                 <span className="flex items-center gap-2">
-                  <Network size={16} /> Networking
+                  <Network size={16} /> 
+                  {!isSidebarCollapsed && "Networking"}
                 </span>
-                {openMenus.includes("networking") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                {!isSidebarCollapsed && (
+                  openMenus.includes("networking") ? <ChevronDown size={16} /> : <ChevronRight size={16} />
+                )}
               </button>
-              {openMenus.includes("networking") && (
+              {openMenus.includes("networking") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
-                  {/* <li className="cursor-pointer pl-3 py-1 border-l-4 border-transparent hover:text-blue-600">
-                    Exhibitor Connect
-                  </li>
-                  <li className="cursor-pointer pl-3 py-1 border-l-4 border-transparent hover:text-blue-600">
-                    Suggested Exhibitor
-                  </li> */}
                   <li
                     onClick={() => setActiveSection("connections")}
                     className={`cursor-pointer pl-3 py-1 border-l-4 ${activeSection === "connections"
@@ -295,12 +343,13 @@ export function UserDashboard({ userId }: UserDashboardProps) {
             <div>
               <button
                 onClick={() => setActiveSection("messages")}
-                className={`flex items-center gap-2 w-full py-2 font-medium border-l-4 ${activeSection === "messages"
+                className={`flex items-center gap-2 w-full py-2 font-medium ${activeSection === "messages"
                     ? "border-blue-500 text-blue-600 font-medium"
                     : "border-transparent hover:text-blue-600"
                   }`}
               >
-                <MessageSquare size={16} /> Messages
+                <MessageSquare size={16} /> 
+                {!isSidebarCollapsed && "Messages"}
               </button>
             </div>
 
@@ -311,29 +360,25 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                 onClick={() => toggleMenu("tools")}
               >
                 <span className="flex items-center gap-2">
-                  <List size={16} /> Event Planning Tools
+                  <List size={16} /> 
+                  {!isSidebarCollapsed && "Event Planning Tools"}
                 </span>
-                {openMenus.includes("tools") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                {!isSidebarCollapsed && (
+                  openMenus.includes("tools") ? <ChevronDown size={16} /> : <ChevronRight size={16} />
+                )}
               </button>
-              {openMenus.includes("tools") && (
+              {openMenus.includes("tools") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
-                  {/* <li className="cursor-pointer pl-3 py-1 border-l-4 border-transparent hover:text-blue-600">
-                    My Schedule
+                  <li
+                    onClick={() => setActiveSection("travel")}
+                    className={`cursor-pointer pl-3 py-1 border-l-4 ${
+                      activeSection === "travel"
+                        ? "border-blue-500 text-blue-600 font-medium"
+                        : "border-transparent hover:text-blue-600"
+                    }`}
+                  >
+                    Travel & Accommodation
                   </li>
-                  <li className="cursor-pointer pl-3 py-1 border-l-4 border-transparent hover:text-blue-600">
-                    <Map size={14} className="inline mr-1" /> Venue Map / Floor Plan
-                  </li> */}
-                 <li
-  onClick={() => setActiveSection("travel")}
-  className={`cursor-pointer pl-3 py-1 border-l-4 ${
-    activeSection === "travel"
-      ? "border-blue-500 text-blue-600 font-medium"
-      : "border-transparent hover:text-blue-600"
-  }`}
->
-  Travel & Accommodation
-</li>
-
                 </ul>
               )}
             </div>
@@ -342,30 +387,105 @@ export function UserDashboard({ userId }: UserDashboardProps) {
             <div>
               <button
                 onClick={() => setActiveSection("settings")}
-                className={`flex items-center gap-2 w-full py-2 font-medium border-l-4 ${activeSection === "settings"
+                className={`flex items-center gap-2 w-full py-2 font-medium ${activeSection === "settings"
                     ? "border-blue-500 text-blue-600 font-medium"
                     : "border-transparent hover:text-blue-600"
                   }`}
               >
-                <Settings size={16} /> Settings
+                <Settings size={16} /> 
+                {!isSidebarCollapsed && "Settings"}
               </button>
             </div>
           </nav>
         </div>
 
-        {/* Logout */}
-        <div className="p-4">
+        {/* Collapse Toggle and Logout */}
+        <div className="p-4 space-y-2">
+          <Button
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="w-full flex items-center gap-2 mb-2"
+            variant="outline"
+          >
+            <SidebarIcon size={16} />
+            {!isSidebarCollapsed && "Collapse"}
+          </Button>
           <Button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="w-full flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white"
           >
-            <LogOut size={16} /> Logout
+            <LogOut size={16} /> 
+            {!isSidebarCollapsed && "Logout"}
           </Button>
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 p-6">{renderContent()}</main>
+      {/* Main content with top navigation */}
+      <div className="flex-1 flex flex-col">
+        {/* Top Navigation Bar */}
+        <header className="flex h-16 items-center gap-2 border-b px-4 bg-white">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="md:hidden"
+          >
+            <SidebarIcon className="w-4 h-4" />
+          </Button>
+          
+          <div className="flex-1">
+            <h1 className="text-xl font-semibold">
+              {activeSection === "profile" && "My Profile"}
+              {activeSection === "events" && "Registered Events"}
+              {activeSection === "past-events" && "Past Events Attended"}
+              {activeSection === "wishlist" && "Wishlist"}
+              {activeSection === "passes" && "My Passes"}
+              {activeSection === "connections" && "My Connections"}
+              {activeSection === "messages" && "Messages"}
+              {activeSection === "settings" && "Settings"}
+              {activeSection === "travel" && "Travel & Accommodation"}
+              {activeSection === "qr" && "Badge / QR Code"}
+            </h1>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm">
+              <Bell className="w-4 h-4" />
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={userData?.avatar || "/placeholder.svg"} />
+                    <AvatarFallback>
+                      {userData?.firstName?.[0] || "U"}
+                      {userData?.lastName?.[0] || ""}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuItem onClick={() => setActiveSection("profile")}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>My Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveSection("settings")}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </header>
+
+        {/* Main content */}
+        <main className="flex-1 p-6 overflow-auto">{renderContent()}</main>
+      </div>
     </div>
   )
 }
