@@ -180,7 +180,7 @@ export function ExhibitorDashboard({userId}: UserDashboardProps) {
     // { id: "events", label: "Events", icon: Calendar },
     { id: "mysessions", label: "mysessions", icon: Package },
     { id: "materials", label: "materials", icon: Users },
-    { id: "feedback", label: "feedback", icon: Calendar },
+    // { id: "feedback", label: "feedback", icon: Calendar },
     { id: "connection", label: "connection", icon: TrendingUp },
     { id: "message", label: "message", icon: TrendingUp },
     // { id: "promotions", label: "Promotions", icon: Star },
@@ -262,7 +262,7 @@ export function ExhibitorDashboard({userId}: UserDashboardProps) {
           {activeTab === "myprofile" && <MyProfile speakerId={exhibitor.id} />}
           {activeTab === "mysessions" && <MySessions speakerId={exhibitor.id} />}
           {activeTab === "materials" && <PresentationMaterials />}
-          {activeTab === "feedback" && <FeedbackRatings />}
+          {/* {activeTab === "feedback" && <FeedbackRatings />} */}
           {activeTab === "message" && <MessagesCenter organizerId={exhibitor.id}  />}
            {activeTab === "connection" &&<ConnectionsSection  userId={exhibitor.id}/>}
           {/* {activeTab === "analytics" && < />} */}

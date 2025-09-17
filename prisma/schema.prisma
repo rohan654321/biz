@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -85,7 +88,7 @@ model User {
   leads           EventLead[]
   promotions   Promotion[] // ✅ back relation for event promotions
   savedEvents SavedEvent[] // Add this line
-
+  replies ReviewReply[]
   // Add these for connections 👇
   connectionsSent    Connection[] @relation("ConnectionSender")
   connectionsReceived Connection[] @relation("ConnectionReceiver")
@@ -131,11 +134,12 @@ model User {
   latitude          Float?
   longitude         Float?
 
-    // ✅ store array of objects here
-  // venueBookings     VenueBooking[]   @relation("VenueBookingsAsManager")
-
   //speaker
    speakingExperience String?
+
+  // Appointment relationships
+  appointmentsRequested Appointment[] @relation("AppointmentRequester")
+  appointmentsReceived  Appointment[] @relation("AppointmentExhibitor")
 
   @@map("users")
 } 
@@ -231,10 +235,10 @@ model Event {
   leads           EventLead[]
   promotions Promotion[] // ✅ back relation for event promotions
    savedEvents SavedEvent[] // Add this line
+   appointments Appointment[] // Add appointments relation
 
   @@map("events")
 }
-
 
 enum EventStatus {
   DRAFT
@@ -253,6 +257,96 @@ type TicketType {
   quantity    Int
   sold        Int @default(0)
   isActive    Boolean @default(true)
+}
+
+// Appointment Management Model
+model Appointment {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Event and participants
+  eventId         String   @db.ObjectId
+  event           Event    @relation(fields: [eventId], references: [id])
+  requesterId     String   @db.ObjectId
+  requester       User     @relation("AppointmentRequester", fields: [requesterId], references: [id])
+  exhibitorId     String   @db.ObjectId
+  exhibitor       User     @relation("AppointmentExhibitor", fields: [exhibitorId], references: [id])
+  
+  // Meeting details
+  title           String
+  description     String?
+  type            AppointmentType @default(CONSULTATION)
+  status          AppointmentStatus @default(PENDING)
+  priority        AppointmentPriority @default(MEDIUM)
+  
+  // Scheduling
+  requestedDate   DateTime
+  requestedTime   String   // "10:00", "14:30", etc.
+  duration        Int      // in minutes
+  confirmedDate   DateTime?
+  confirmedTime   String?
+  
+  // Location and meeting details  
+  meetingType     MeetingType @default(IN_PERSON)
+  location        String?
+  meetingLink     String?
+  
+  // Additional information
+  purpose         String?
+  agenda          String[]
+  notes           String?
+  outcome         String?
+  
+  // Tracking
+  reminderSent    Boolean  @default(false)
+  followUpRequired Boolean @default(true)
+  
+  // Metadata
+  requesterCompany String?
+  requesterTitle   String?
+  requesterPhone   String?
+  requesterEmail   String?
+  
+  // Cancellation
+  cancellationReason String?
+  cancelledBy        String? // "requester" or "exhibitor"
+  cancelledAt        DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("appointments")
+}
+
+enum AppointmentType {
+  PRODUCT_DEMO
+  CONSULTATION
+  FOLLOW_UP
+  NETWORKING
+  TECHNICAL_DISCUSSION
+  PARTNERSHIP_DISCUSSION
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+  NO_SHOW
+}
+
+enum AppointmentPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum MeetingType {
+  IN_PERSON
+  VIRTUAL
+  PHONE
+  HYBRID
 }
 
 // Updated ExhibitionSpace model in your schema.prisma
@@ -374,9 +468,6 @@ model Promotion {
   @@map("promotions")
 }
 
-
-
-
 model MeetingSpace {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
@@ -389,7 +480,6 @@ model MeetingSpace {
   
   @@map("meeting_spaces")
 }
-
 
 // Speaker Management
 model SpeakerSession {
@@ -440,7 +530,6 @@ enum SessionStatus {
   COMPLETED
   CANCELLED
 }
-
 
 enum BoothStatus {
   BOOKED
@@ -526,6 +615,7 @@ enum BookingStatus {
   CANCELLED
   COMPLETED
   REFUNDED
+  PARTIALLY_REFUNDED
 }
 
 // Payment Management
@@ -634,6 +724,10 @@ enum NotificationType {
   CONNECTION_REQUEST   // 👈 add this
   CONNECTION_ACCEPTED  // 👈 (optional, future use)
   CONNECTION_UPDATE   // 👈 add this
+  APPOINTMENT_REQUEST  // New for appointments
+  APPOINTMENT_CONFIRMED
+  APPOINTMENT_CANCELLED
+  APPOINTMENT_REMINDER
 }
 
 enum NotificationChannel {
@@ -706,7 +800,7 @@ model Review {
   event           Event?   @relation(fields: [eventId], references: [id])
   venueId         String?  @db.ObjectId
   venue           User?    @relation("VenueReviews", fields: [venueId], references: [id])
-  
+  replies ReviewReply[]
   // Rating information (added to existing model)
   rating          Int      // 1-5
   title           String?
@@ -721,9 +815,6 @@ model Review {
 
   @@map("reviews")
 }
-
-// Remove the separate Rating model since we've incorporated rating into Review
-
 
 // Analytics
 model Analytics {
@@ -851,7 +942,7 @@ model Settings {
   timezone          String  @default("UTC")
   
   createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  updatedAt       DateTime @updatedAt
 
   @@map("settings")
 }
@@ -977,9 +1068,19 @@ model SavedEvent {
   @@map("saved_events")
 }
 
-// model Rating {
-//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-//   rating    Int
-//   feedback  String?
-//   createdAt DateTime @default(now())
-// }
+model ReviewReply {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  reviewId  String   @db.ObjectId
+  review    Review   @relation(fields: [reviewId], references: [id])
+
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+
+  content   String
+  isOrganizerReply Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("review_replies")
+}

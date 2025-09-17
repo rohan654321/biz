@@ -3,8 +3,22 @@
 import { useState, useEffect } from "react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Star } from "lucide-react"
+import { Star, MessageCircle, Send } from "lucide-react"
 import { format } from "date-fns"
+import { useSession } from "next-auth/react"
+
+interface ReviewReply {
+  id: string
+  content: string
+  createdAt: string
+  isOrganizerReply: boolean
+  user: {
+    id: string
+    firstName: string
+    lastName: string
+    avatar?: string
+  }
+}
 
 interface Review {
   id: string
@@ -18,13 +32,15 @@ interface Review {
     lastName: string
     avatar?: string
   }
+  replies?: ReviewReply[]
 }
 
 interface ReviewsProps {
   eventId: string
+  isOrganizer?: boolean
 }
 
-export default function Reviews({ eventId }: ReviewsProps) {
+export default function Reviews({ eventId, isOrganizer = false }: ReviewsProps) {
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -39,8 +55,36 @@ export default function Reviews({ eventId }: ReviewsProps) {
       }
       
       const data = await res.json()
-      setReviews(data)
+      console.log('Fetched reviews:', data) // Debug log
+      
+      // Always fetch replies for each review (not just for organizers)
+      const reviewsWithReplies = await Promise.all(
+        data.map(async (review: Review) => {
+          try {
+            console.log(`Fetching replies for review ${review.id}`) // Debug log
+            const repliesRes = await fetch(`/api/reviews/${review.id}/replies`)
+            console.log(`Replies response status for review ${review.id}:`, repliesRes.status) // Debug log
+            
+            if (repliesRes.ok) {
+              const repliesData = await repliesRes.json()
+              console.log(`Replies data for review ${review.id}:`, repliesData) // Debug log
+              return { ...review, replies: repliesData.replies || [] }
+            } else {
+              // Log the error response
+              const errorText = await repliesRes.text()
+              console.error(`Error fetching replies for review ${review.id}:`, repliesRes.status, errorText)
+            }
+          } catch (error) {
+            console.error(`Error fetching replies for review ${review.id}:`, error)
+          }
+          return { ...review, replies: [] }
+        })
+      )
+      
+      console.log('Reviews with replies:', reviewsWithReplies) // Debug log
+      setReviews(reviewsWithReplies)
     } catch (err) {
+      console.error('Error in fetchReviews:', err) // Debug log
       setError(err instanceof Error ? err.message : 'Failed to fetch reviews')
     } finally {
       setLoading(false)
@@ -52,7 +96,11 @@ export default function Reviews({ eventId }: ReviewsProps) {
   }, [eventId])
 
   const handleReviewAdded = () => {
-    // Refresh reviews after adding a new one
+    fetchReviews()
+  }
+
+  const handleReplyAdded = (reviewId: string) => {
+    // Refresh specific review's replies or all reviews
     fetchReviews()
   }
 
@@ -78,8 +126,10 @@ export default function Reviews({ eventId }: ReviewsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Add Review Form */}
-      <AddReviewCard eventId={eventId} onReviewAdded={handleReviewAdded} />
+      {/* Add Review Form - only show for non-organizers */}
+      {!isOrganizer && (
+        <AddReviewCard eventId={eventId} onReviewAdded={handleReviewAdded} />
+      )}
       
       {/* Reviews List */}
       {reviews.length === 0 ? (
@@ -94,7 +144,12 @@ export default function Reviews({ eventId }: ReviewsProps) {
         <div className="space-y-4">
           <h3 className="text-xl font-semibold">Reviews ({reviews.length})</h3>
           {reviews.map((review) => (
-            <ReviewCard key={review.id} review={review} />
+            <ReviewCard 
+              key={review.id} 
+              review={review} 
+              isOrganizer={isOrganizer}
+              onReplyAdded={handleReplyAdded}
+            />
           ))}
         </div>
       )}
@@ -102,8 +157,23 @@ export default function Reviews({ eventId }: ReviewsProps) {
   )
 }
 
-// Review Card Component
-function ReviewCard({ review }: { review: Review }) {
+// Review Card Component with Replies
+function ReviewCard({ 
+  review, 
+  isOrganizer = false, 
+  onReplyAdded 
+}: { 
+  review: Review
+  isOrganizer?: boolean
+  onReplyAdded: (reviewId: string) => void
+}) {
+  const [showReplies, setShowReplies] = useState(false)
+  const [showReplyForm, setShowReplyForm] = useState(false)
+
+  const hasReplies = review.replies && review.replies.length > 0
+  
+  console.log(`Review ${review.id} has replies:`, hasReplies, review.replies) // Debug log
+
   return (
     <Card>
       <CardContent className="p-6">
@@ -152,13 +222,189 @@ function ReviewCard({ review }: { review: Review }) {
           <h5 className="font-semibold text-lg mb-2">{review.title}</h5>
         )}
         
-        <p className="text-gray-700">{review.comment}</p>
+        <p className="text-gray-700 mb-4">{review.comment}</p>
+
+        {/* Reply Actions - Show for everyone, but only organizers can add replies */}
+        <div className="flex items-center gap-3 pt-3 border-t">
+          {/* Always show replies button if there are replies */}
+          {hasReplies && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowReplies(!showReplies)}
+              className="flex items-center gap-2"
+            >
+              <MessageCircle size={16} />
+              {showReplies ? 'Hide' : 'Show'} Replies ({review.replies?.length})
+            </Button>
+          )}
+          
+          {/* Only show reply form for organizers */}
+          {isOrganizer && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowReplyForm(!showReplyForm)}
+              className="flex items-center gap-2"
+            >
+              <Send size={16} />
+              {showReplyForm ? 'Cancel' : 'Reply'}
+            </Button>
+          )}
+
+          {/* Debug info - remove in production */}
+          <span className="text-xs text-gray-400 ml-auto">
+            Replies: {review.replies?.length || 0} | Organizer: {isOrganizer ? 'Yes' : 'No'}
+          </span>
+        </div>
+
+        {/* Reply Form */}
+        {showReplyForm && isOrganizer && (
+          <ReplyForm
+            reviewId={review.id}
+            onReplySubmitted={(reviewId) => {
+              setShowReplyForm(false)
+              onReplyAdded(reviewId)
+            }}
+          />
+        )}
+
+        {/* Replies List - Always show if there are replies and user clicked show */}
+        {showReplies && hasReplies && (
+          <div className="mt-4 space-y-3 bg-gray-50 p-4 rounded-lg">
+            <h6 className="font-medium text-sm text-gray-700">Replies:</h6>
+            {review.replies?.map((reply) => (
+              <ReplyCard key={reply.id} reply={reply} />
+            ))}
+          </div>
+        )}
+
+        {/* Debug section - remove in production */}
+        <details className="mt-4 text-xs text-gray-500">
+          <summary>Debug Info</summary>
+          <pre>{JSON.stringify({ 
+            reviewId: review.id, 
+            repliesCount: review.replies?.length || 0,
+            hasReplies,
+            showReplies,
+            isOrganizer,
+            replies: review.replies 
+          }, null, 2)}</pre>
+        </details>
       </CardContent>
     </Card>
   )
 }
 
-// Updated AddReviewCard Component
+// Reply Card Component
+function ReplyCard({ reply }: { reply: ReviewReply }) {
+  return (
+    <div className="bg-white p-3 rounded border-l-4 border-blue-200">
+      <div className="flex items-start gap-3">
+        {reply.user.avatar ? (
+          <img
+            src={reply.user.avatar}
+            alt={`${reply.user.firstName} ${reply.user.lastName}`}
+            className="w-8 h-8 rounded-full"
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+            <span className="text-xs font-medium">
+              {reply.user.firstName[0]}{reply.user.lastName[0]}
+            </span>
+          </div>
+        )}
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <h5 className="font-medium text-sm">
+              {reply.user.firstName} {reply.user.lastName}
+            </h5>
+            {reply.isOrganizerReply && (
+              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                Organizer
+              </span>
+            )}
+            <span className="text-xs text-gray-500">
+              {format(new Date(reply.createdAt), 'MMM dd, yyyy')}
+            </span>
+          </div>
+          <p className="text-sm text-gray-700">{reply.content}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Reply Form Component
+function ReplyForm({ 
+  reviewId, 
+  onReplySubmitted 
+}: { 
+  reviewId: string
+  onReplySubmitted: (reviewId: string) => void 
+}) {
+  const [content, setContent] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!content.trim()) return
+
+    setIsSubmitting(true)
+    try {
+      console.log(`Submitting reply for review ${reviewId}:`, content) // Debug log
+      
+      const res = await fetch(`/api/reviews/${reviewId}/replies`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      })
+
+      console.log('Reply submission response:', res.status) // Debug log
+
+      if (res.ok) {
+        const responseData = await res.json()
+        console.log('Reply created:', responseData) // Debug log
+        setContent("")
+        onReplySubmitted(reviewId)
+      } else {
+        const error = await res.json()
+        console.error('Reply submission error:', error) // Debug log
+        alert(`❌ ${error.error || "Failed to add reply"}`)
+      }
+    } catch (err) {
+      console.error('Reply submission exception:', err)
+      alert("⚠️ Something went wrong")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-4 p-4 bg-gray-50 rounded-lg">
+      <textarea
+        placeholder="Write your reply as the organizer..."
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+        rows={3}
+        required
+      />
+      <div className="flex gap-2 mt-3">
+        <Button
+          type="submit"
+          disabled={isSubmitting || !content.trim()}
+          size="sm"
+          className="bg-blue-600 text-white hover:bg-blue-700"
+        >
+          {isSubmitting ? "Sending..." : "Send Reply"}
+        </Button>
+      </div>
+    </form>
+  )
+}
+
+// AddReviewCard Component (unchanged)
 interface AddReviewCardProps {
   eventId: string
   onReviewAdded: () => void
@@ -188,7 +434,7 @@ function AddReviewCard({ eventId, onReviewAdded }: AddReviewCardProps) {
         setRating(0)
         setTitle("")
         setFeedback("")
-        onReviewAdded() // Refresh the reviews list
+        onReviewAdded()
       } else {
         const error = await res.json()
         alert(`❌ ${error.error || "Failed to add review"}`)
@@ -208,7 +454,6 @@ function AddReviewCard({ eventId, onReviewAdded }: AddReviewCardProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Rating Stars */}
           <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
@@ -234,7 +479,6 @@ function AddReviewCard({ eventId, onReviewAdded }: AddReviewCardProps) {
             </span>
           </div>
 
-          {/* Review Title */}
           <input
             type="text"
             placeholder="Review title (optional)"
@@ -243,7 +487,6 @@ function AddReviewCard({ eventId, onReviewAdded }: AddReviewCardProps) {
             className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
 
-          {/* Review Comment */}
           <textarea
             placeholder="Write your review..."
             value={feedback}
