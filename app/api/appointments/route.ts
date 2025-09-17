@@ -3,49 +3,110 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { prisma } from "@/lib/prisma"
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest) {
   try {
-    const { id: exhibitorId } = await params
-
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const url = new URL(request.url)
+    const exhibitorId = url.searchParams.get("exhibitorId")
     const requesterId = url.searchParams.get("requesterId")
     const eventId = url.searchParams.get("eventId")
+
+    if (!exhibitorId && !requesterId && !eventId) {
+      return NextResponse.json({ error: "Missing required parameters" }, { status: 400 })
+    }
 
     let appointments: any[] = []
 
     try {
-      // Get appointments for exhibitor
-      appointments = await prisma.appointment.findMany({
-        where: { exhibitorId },
-        include: {
-          requester: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-              phone: true,
-              company: true,
-              jobTitle: true,
-              avatar: true,
+      if (exhibitorId) {
+        // Get appointments for exhibitor
+        appointments = await prisma.appointment.findMany({
+          where: { exhibitorId },
+          include: {
+            requester: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                phone: true,
+                company: true,
+                jobTitle: true,
+                avatar: true,
+              },
+            },
+            event: {
+              select: {
+                id: true,
+                title: true,
+                startDate: true,
+                endDate: true,
+              },
             },
           },
-          event: {
-            select: {
-              id: true,
-              title: true,
-              startDate: true,
-              endDate: true,
+          orderBy: { createdAt: "desc" },
+        })
+      } else if (requesterId) {
+        // Get appointments for requester
+        appointments = await prisma.appointment.findMany({
+          where: { requesterId },
+          include: {
+            exhibitor: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                company: true,
+                avatar: true,
+              },
+            },
+            event: {
+              select: {
+                id: true,
+                title: true,
+                startDate: true,
+                endDate: true,
+              },
             },
           },
-        },
-        orderBy: { createdAt: "desc" },
-      })
+          orderBy: { createdAt: "desc" },
+        })
+      } else if (eventId) {
+        // Get all appointments for event
+        appointments = await prisma.appointment.findMany({
+          where: { eventId },
+          include: {
+            requester: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                phone: true,
+                company: true,
+                jobTitle: true,
+                avatar: true,
+              },
+            },
+            exhibitor: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                company: true,
+                avatar: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        })
+      }
     } catch (dbError) {
       console.error("Database error:", dbError)
       appointments = []
@@ -94,15 +155,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: NextRequest) {
   try {
-    console.log("POST /api/exhibitors/[id]/appointments called")
-
-    const { id: exhibitorId } = await params
-
+    console.log("POST /api/appointments called")
     const session = await getServerSession(authOptions)
     console.log("Session:", session)
-
+    
     if (!session?.user?.id) {
       console.log("No session or user ID found")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -110,9 +168,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const body = await request.json()
     console.log("Request body:", body)
-
+    
     const {
       eventId,
+      exhibitorId,
       requesterId,
       title,
       description,
@@ -137,16 +196,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (!title) missing.push("title")
       if (!requestedDate) missing.push("requestedDate")
       if (!requestedTime) missing.push("requestedTime")
-
+      
       console.log("Missing required fields:", missing)
-      return NextResponse.json(
-        {
-          error: "Missing required fields",
-          missing,
-          received: { eventId, exhibitorId, requesterId, title, requestedDate, requestedTime },
-        },
-        { status: 400 },
-      )
+      return NextResponse.json({ 
+        error: "Missing required fields", 
+        missing,
+        received: { eventId, exhibitorId, requesterId, title, requestedDate, requestedTime }
+      }, { status: 400 })
     }
 
     // Validate date format
@@ -161,7 +217,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       console.log("Checking if event exists:", eventId)
       const event = await prisma.event.findUnique({
         where: { id: eventId },
-        select: { id: true, title: true },
+        select: { id: true, title: true }
       })
 
       if (!event) {
@@ -187,14 +243,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         }),
         prisma.user.findUnique({
           where: { id: exhibitorId },
-          select: {
-            id: true,
-            firstName: true,
+          select: { 
+            id: true, 
+            firstName: true, 
             lastName: true,
             email: true,
-            company: true,
+            company: true 
           },
-        }),
+        })
       ])
 
       if (!requester) {
@@ -218,19 +274,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           requestedDate: parsedDate,
           requestedTime,
           status: {
-            not: "CANCELLED",
-          },
-        },
+            not: "CANCELLED"
+          }
+        }
       })
 
       if (existingAppointment) {
         console.log("Appointment already exists:", existingAppointment.id)
-        return NextResponse.json(
-          {
-            error: "An appointment already exists for this time slot",
-          },
-          { status: 409 },
-        )
+        return NextResponse.json({ 
+          error: "An appointment already exists for this time slot" 
+        }, { status: 409 })
       }
 
       // Create the appointment
@@ -315,56 +368,44 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         appointment,
         message: "Appointment request sent successfully!",
       })
+
     } catch (dbError: any) {
       console.error("Database error details:", {
         message: dbError.message,
         code: dbError.code,
-        meta: dbError.meta,
+        meta: dbError.meta
       })
-
+      
       // Handle specific Prisma errors
-      if (dbError.code === "P2002") {
-        return NextResponse.json(
-          {
-            error: "A duplicate appointment already exists",
-          },
-          { status: 409 },
-        )
+      if (dbError.code === 'P2002') {
+        return NextResponse.json({ 
+          error: "A duplicate appointment already exists" 
+        }, { status: 409 })
       }
-
-      if (dbError.code === "P2025") {
-        return NextResponse.json(
-          {
-            error: "Referenced record not found",
-          },
-          { status: 404 },
-        )
+      
+      if (dbError.code === 'P2025') {
+        return NextResponse.json({ 
+          error: "Referenced record not found" 
+        }, { status: 404 })
       }
-
-      return NextResponse.json(
-        {
-          error: "Failed to create appointment",
-          details: dbError.message,
-        },
-        { status: 500 },
-      )
+      
+      return NextResponse.json({ 
+        error: "Failed to create appointment",
+        details: dbError.message 
+      }, { status: 500 })
     }
+    
   } catch (error: any) {
     console.error("Error creating appointment:", error)
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error.message,
-      },
-      { status: 500 },
-    )
+    return NextResponse.json({ 
+      error: "Internal server error",
+      details: error.message 
+    }, { status: 500 })
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(request: NextRequest) {
   try {
-    const { id: exhibitorId } = await params
-
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -382,8 +423,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       where: { id: appointmentId },
       include: {
         requester: { select: { id: true } },
-        exhibitor: { select: { id: true } },
-      },
+        exhibitor: { select: { id: true } }
+      }
     })
 
     if (!existingAppointment) {
@@ -391,8 +432,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Check if user has permission to update this appointment
-    const canUpdate =
-      existingAppointment.requesterId === session.user.id || existingAppointment.exhibitorId === session.user.id
+    const canUpdate = existingAppointment.requesterId === session.user.id || 
+                     existingAppointment.exhibitorId === session.user.id
 
     if (!canUpdate) {
       return NextResponse.json({ error: "Permission denied" }, { status: 403 })

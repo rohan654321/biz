@@ -1,229 +1,178 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
-import { prisma } from "@/lib/prisma"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const {id : exhibitorId} =await params
+    const { id } = await params
 
-    if (!exhibitorId) {
-      return NextResponse.json({ error: "Exhibitor ID is required" }, { status: 400 })
+    if (!id || id === "undefined") {
+      return NextResponse.json({ error: "Invalid exhibitor ID" }, { status: 400 })
     }
 
-    try {
-      const appointments = await prisma.appointment.findMany({
-        where: { exhibitorId },
-        include: {
-          requester: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-              phone: true,
-              company: true,
-              jobTitle: true,
-              avatar: true,
-            },
-          },
-          event: {
-            select: {
-              id: true,
-              title: true,
-              startDate: true,
-              endDate: true,
-            },
-          },
+    // Mock appointments data
+    const appointments = [
+      {
+        id: "apt-1",
+        status: "CONFIRMED",
+        type: "PRODUCT_DEMO",
+        title: "Smart Display System Demo",
+        scheduledAt: "2024-03-20T14:00:00Z",
+        duration: 60,
+        location: "Booth A-123, Tech Conference 2024",
+        meetingLink: null,
+        notes: "Product demonstration for TechCorp Solutions. Focus on enterprise features and ROI.",
+        reminderSent: true,
+        createdAt: "2024-02-20T10:30:00Z",
+        updatedAt: "2024-02-21T09:15:00Z",
+        visitor: {
+          id: "visitor-1",
+          firstName: "John",
+          lastName: "Smith",
+          email: "john.smith@techcorp.com",
+          phone: "+1-555-0123",
+          company: "TechCorp Solutions",
+          jobTitle: "IT Director",
+          avatar: "/professional-man.png",
         },
-        orderBy: { createdAt: "desc" },
-      })
-
-      // Transform to match expected format
-      const formattedAppointments = appointments.map((appointment: any) => ({
-        id: appointment.id,
-        visitorName: appointment.requester
-          ? `${appointment.requester.firstName || ""} ${appointment.requester.lastName || ""}`.trim()
-          : "Unknown Visitor",
-        visitorEmail: appointment.requester?.email || appointment.requesterEmail || "",
-        visitorPhone: appointment.requester?.phone || appointment.requesterPhone || "",
-        company: appointment.requester?.company || appointment.requesterCompany || "Unknown",
-        designation: appointment.requester?.jobTitle || appointment.requesterTitle || "Unknown",
-        requestedDate: appointment.requestedDate
-          ? new Date(appointment.requestedDate).toISOString().split("T")[0]
-          : new Date().toISOString().split("T")[0],
-        requestedTime: appointment.requestedTime || "09:00",
-        duration: `${appointment.duration || 60} minutes`,
-        purpose: appointment.purpose || appointment.description || "General meeting",
-        status: appointment.status || "PENDING",
-        priority: appointment.priority || "MEDIUM",
-        profileViews: Math.floor(Math.random() * 50) + 1, // Mock data for now
-        previousMeetings: Math.floor(Math.random() * 5), // Mock data for now
-        notes: appointment.notes || "",
-        meetingLink: appointment.meetingLink || "",
-        location: appointment.location || "",
-      }))
-
-      return NextResponse.json({
-        success: true,
-        appointments: formattedAppointments,
-        total: formattedAppointments.length,
-      })
-    } catch (dbError) {
-      console.error("Database error:", dbError)
-      return NextResponse.json(
-        {
-          error: "Failed to fetch appointments",
-          appointments: [],
-          total: 0,
+        agenda: ["Product overview and key features", "Live demonstration", "Q&A session", "Pricing discussion"],
+      },
+      {
+        id: "apt-2",
+        status: "PENDING",
+        type: "CONSULTATION",
+        title: "Software Platform Consultation",
+        scheduledAt: "2024-03-22T10:30:00Z",
+        duration: 45,
+        location: "Virtual Meeting",
+        meetingLink: "https://meet.example.com/abc-123",
+        notes: "Initial consultation for software implementation. Discuss requirements and timeline.",
+        reminderSent: false,
+        createdAt: "2024-02-21T16:45:00Z",
+        updatedAt: "2024-02-21T16:45:00Z",
+        visitor: {
+          id: "visitor-2",
+          firstName: "Sarah",
+          lastName: "Johnson",
+          email: "sarah.j@innovatebiz.com",
+          phone: "+1-555-0456",
+          company: "Innovate Business Solutions",
+          jobTitle: "Operations Manager",
+          avatar: "/professional-woman-diverse.png",
         },
-        { status: 500 },
-      )
-    }
+        agenda: [
+          "Business requirements analysis",
+          "Software capabilities overview",
+          "Implementation timeline",
+          "Support and training options",
+        ],
+      },
+      {
+        id: "apt-3",
+        status: "COMPLETED",
+        type: "FOLLOW_UP",
+        title: "Post-Purchase Follow-up",
+        scheduledAt: "2024-02-15T15:00:00Z",
+        duration: 30,
+        location: "Phone Call",
+        meetingLink: null,
+        notes: "Follow-up call after software purchase. Ensure smooth onboarding and address any questions.",
+        reminderSent: true,
+        createdAt: "2024-02-10T11:20:00Z",
+        updatedAt: "2024-02-15T15:30:00Z",
+        visitor: {
+          id: "visitor-4",
+          firstName: "Lisa",
+          lastName: "Chen",
+          email: "lisa.chen@startupxyz.com",
+          phone: "+1-555-0321",
+          company: "StartupXYZ",
+          jobTitle: "Founder & CEO",
+          avatar: "/professional-asian-woman.png",
+        },
+        agenda: ["Onboarding progress check", "Feature walkthrough", "Training schedule", "Next steps"],
+        outcome: "Successful onboarding completed. Customer satisfied with the platform.",
+      },
+      {
+        id: "apt-4",
+        status: "CANCELLED",
+        type: "PRODUCT_DEMO",
+        title: "Exhibition Booth Demo",
+        scheduledAt: "2024-02-25T11:00:00Z",
+        duration: 45,
+        location: "Showroom",
+        meetingLink: null,
+        notes: "Demo cancelled by client due to scheduling conflict. Rescheduling for next week.",
+        reminderSent: false,
+        createdAt: "2024-02-18T14:15:00Z",
+        updatedAt: "2024-02-24T09:30:00Z",
+        visitor: {
+          id: "visitor-5",
+          firstName: "Robert",
+          lastName: "Wilson",
+          email: "robert.w@eventmanagers.com",
+          phone: "+1-555-0654",
+          company: "Event Managers Inc",
+          jobTitle: "Senior Event Planner",
+          avatar: "/professional-man-suit.png",
+        },
+        agenda: ["Booth setup demonstration", "Material quality review", "Pricing options"],
+        cancellationReason: "Client scheduling conflict",
+      },
+    ]
+
+    return NextResponse.json({
+      success: true,
+      appointments,
+    })
   } catch (error) {
     console.error("Error fetching appointments:", error)
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        appointments: [],
-        total: 0,
-      },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const {id : exhibitorId} =await params
+    const { id } = await params
     const body = await request.json()
 
-    const {
-      eventId,
-      requesterId,
-      title,
-      description,
-      type = "CONSULTATION",
-      requestedDate,
-      requestedTime,
-      duration = 60,
-      meetingType = "IN_PERSON",
-      location,
-      purpose,
-      agenda = [],
-      notes = "",
-      priority = "MEDIUM",
-    } = body
-
-    // Validate required fields
-    if (!eventId || !requesterId || !title || !requestedDate || !requestedTime) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    if (!id || id === "undefined") {
+      return NextResponse.json({ error: "Invalid exhibitor ID" }, { status: 400 })
     }
 
-    try {
-      // Get requester details for metadata
-      const requester = await prisma.user.findUnique({
-        where: { id: requesterId },
-        select: {
-          firstName: true,
-          lastName: true,
-          email: true,
-          phone: true,
-          company: true,
-          jobTitle: true,
-        },
-      })
-
-      if (!requester) {
-        return NextResponse.json({ error: "Requester not found" }, { status: 404 })
-      }
-
-      const appointment = await prisma.appointment.create({
-        data: {
-          eventId,
-          exhibitorId,
-          requesterId,
-          title,
-          description,
-          type,
-          requestedDate: new Date(requestedDate),
-          requestedTime,
-          duration: Number(duration),
-          meetingType,
-          location,
-          purpose,
-          agenda,
-          notes,
-          priority,
-          // Store requester metadata
-          requesterCompany: requester.company,
-          requesterTitle: requester.jobTitle,
-          requesterPhone: requester.phone,
-          requesterEmail: requester.email,
-        },
-        include: {
-          requester: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-              company: true,
-              avatar: true,
-            },
-          },
-          exhibitor: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-              company: true,
-              avatar: true,
-            },
-          },
-        },
-      })
-
-      // Create notification for exhibitor
-      try {
-        await prisma.notification.create({
-          data: {
-            userId: exhibitorId,
-            type: "APPOINTMENT_REQUEST",
-            title: "New Meeting Request",
-            message: `${requester.firstName} ${requester.lastName} has requested a meeting: ${title}`,
-            metadata: {
-              appointmentId: appointment.id,
-              eventId,
-              requesterId,
-            },
-          },
-        })
-      } catch (notificationError) {
-        console.error("Error creating notification:", notificationError)
-        // Continue even if notification fails
-      }
-
-      return NextResponse.json({
-        success: true,
-        appointment,
-        message: "Appointment request sent successfully!",
-      })
-    } catch (dbError) {
-      console.error("Database error:", dbError)
-      return NextResponse.json({ error: "Failed to create appointment" }, { status: 500 })
+    // Mock appointment creation
+    const newAppointment = {
+      id: `apt-${Date.now()}`,
+      status: "PENDING",
+      type: body.type,
+      title: body.title,
+      scheduledAt: body.scheduledAt,
+      duration: body.duration || 60,
+      location: body.location,
+      meetingLink: body.meetingLink,
+      notes: body.notes,
+      reminderSent: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      visitor: body.visitor,
+      agenda: body.agenda || [],
     }
+
+    return NextResponse.json({
+      success: true,
+      appointment: newAppointment,
+      message: "Appointment scheduled successfully",
+    })
   } catch (error) {
     console.error("Error creating appointment:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -233,90 +182,69 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const {id : exhibitorId} =await params
+    const { id } = await params
     const body = await request.json()
-    const { appointmentId, status, notes, confirmedDate, confirmedTime, outcome, cancellationReason } = body
+
+    if (!id || id === "undefined") {
+      return NextResponse.json({ error: "Invalid exhibitor ID" }, { status: 400 })
+    }
+
+    // Mock appointment update
+    const updatedAppointment = {
+      id: body.appointmentId,
+      status: body.status,
+      title: body.title,
+      scheduledAt: body.scheduledAt,
+      duration: body.duration,
+      location: body.location,
+      meetingLink: body.meetingLink,
+      notes: body.notes,
+      agenda: body.agenda,
+      updatedAt: new Date().toISOString(),
+      outcome: body.outcome,
+      cancellationReason: body.cancellationReason,
+    }
+
+    return NextResponse.json({
+      success: true,
+      appointment: updatedAppointment,
+      message: "Appointment updated successfully",
+    })
+  } catch (error) {
+    console.error("Error updating appointment:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { id } = await params
+    const { searchParams } = new URL(request.url)
+    const appointmentId = searchParams.get("appointmentId")
+
+    if (!id || id === "undefined") {
+      return NextResponse.json({ error: "Invalid exhibitor ID" }, { status: 400 })
+    }
 
     if (!appointmentId) {
       return NextResponse.json({ error: "Appointment ID is required" }, { status: 400 })
     }
 
-    const updateData: any = {
-      updatedAt: new Date(),
-    }
-
-    if (status) updateData.status = status
-    if (notes !== undefined) updateData.notes = notes
-    if (outcome) updateData.outcome = outcome
-    if (cancellationReason) updateData.cancellationReason = cancellationReason
-    if (confirmedDate) updateData.confirmedDate = new Date(confirmedDate)
-    if (confirmedTime) updateData.confirmedTime = confirmedTime
-
-    // Handle status-specific updates
-    if (status === "CANCELLED") {
-      updateData.cancelledBy = session.user.id
-      updateData.cancelledAt = new Date()
-    }
-
-    try {
-      const appointment = await prisma.appointment.update({
-        where: {
-          id: appointmentId,
-          exhibitorId: exhibitorId, // Ensure the appointment belongs to this exhibitor
-        },
-        data: updateData,
-        include: {
-          requester: true,
-          exhibitor: true,
-        },
-      })
-
-      // Create notifications based on status change
-      try {
-        if (status === "CONFIRMED") {
-          await prisma.notification.create({
-            data: {
-              userId: appointment.requesterId,
-              type: "APPOINTMENT_CONFIRMED",
-              title: "Meeting Confirmed",
-              message: `Your meeting "${appointment.title}" has been confirmed`,
-              metadata: { appointmentId: appointment.id },
-            },
-          })
-        } else if (status === "CANCELLED") {
-          const notificationUserId =
-            session.user.id === appointment.requesterId ? appointment.exhibitorId : appointment.requesterId
-
-          await prisma.notification.create({
-            data: {
-              userId: notificationUserId,
-              type: "APPOINTMENT_CANCELLED",
-              title: "Meeting Cancelled",
-              message: `The meeting "${appointment.title}" has been cancelled`,
-              metadata: { appointmentId: appointment.id },
-            },
-          })
-        }
-      } catch (notificationError) {
-        console.error("Error creating notification:", notificationError)
-        // Continue even if notification fails
-      }
-
-      return NextResponse.json({
-        success: true,
-        appointment,
-        message: "Appointment updated successfully!",
-      })
-    } catch (dbError) {
-      console.error("Database error:", dbError)
-      return NextResponse.json({ error: "Failed to update appointment" }, { status: 500 })
-    }
+    return NextResponse.json({
+      success: true,
+      message: "Appointment cancelled successfully",
+    })
   } catch (error) {
-    console.error("Error updating appointment:", error)
+    console.error("Error cancelling appointment:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
