@@ -8,36 +8,37 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
+import { UserData } from "@/types/user"
 
-interface UserData {
-  id: string
-  email: string
-  firstName: string
-  lastName: string
-  phone?: string
-  avatar?: string
-  role: string
-  bio?: string
-  website?: string
-  linkedin?: string
-  twitter?: string
-  company?: string
-  jobTitle?: string
-  location?: {
-    address: string
-    city: string
-    state: string
-    country: string
-  }
-  isVerified: boolean
-  createdAt: string
-  lastLogin?: string
-  _count?: {
-    eventsAttended: number
-    eventsOrganized: number
-    connections: number
-  }
-}
+// interface UserData {
+//   id: string
+//   email: string
+//   firstName: string
+//   lastName: string
+//   phone?: string
+//   avatar?: string
+//   role: string
+//   bio?: string
+//   website?: string
+//   linkedin?: string
+//   twitter?: string
+//   company?: string
+//   jobTitle?: string
+//   location?: {
+//     address: string
+//     city: string
+//     state: string
+//     country: string
+//   }
+//   isVerified: boolean
+//   createdAt: string
+//   lastLogin?: string
+//   _count?: {
+//     eventsAttended: number
+//     eventsOrganized: number
+//     connections: number
+//   }
+// }
 
 interface SettingsSectionProps {
   userData: UserData
