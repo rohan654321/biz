@@ -46,6 +46,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { ExhibitorAppointments } from "./AllExhibitors"
+import { Favourites } from "./Favourites"
+import { Recommendations } from "./Recommendations"
 
 interface UserDashboardProps {
   userId: string
@@ -135,36 +138,47 @@ export function UserDashboard({ userId }: UserDashboardProps) {
     )
   }
 
-  const renderContent = () => {
-    if (loading) {
-      return <Skeleton className="h-64 w-full" />
-    }
-    if (error) {
-      return <p className="text-red-600">{error}</p>
-    }
-    switch (activeSection) {
-      case "profile":
-        return <ProfileSection userData={userData!} onUpdate={() => { }} />
-      case "events":
-        return <EventsSection userId={userId} />
-      case "past-events":
-        return <PastEvents userId={userId} />
-      case "wishlist":
-        return <SavedEvents userId={userId} />
-      case "passes":
-        return <UpcomingEvents userId={userId} events={[]} />
-      case "connections":
-        return <ConnectionsSection userId={userId} />
-      case "messages":
-        return <MessagesSection organizerId={userId} />
-      case "settings":
-        return <SettingsSection userData={userData!} onUpdate={() => { }} />
-      case "travel":
-        return <TravelAccommodation/>
-      default:
-        return <p>Select a section</p>
-    }
+const renderContent = () => {
+  if (loading) {
+    return <Skeleton className="h-64 w-full" />
   }
+  if (error) {
+    return <p className="text-red-600">{error}</p>
+  }
+  switch (activeSection) {
+    case "profile":
+      return <ProfileSection 
+  userData={userData!} 
+  onUpdate={() => { }} 
+  organizerId={userData?.id || ""} 
+/>
+    case "events":
+      return <EventsSection userId={userId} />
+    case "past-events":
+      return <PastEvents userId={userId} />
+    case "wishlist":
+      return <SavedEvents userId={userId} />
+    case "passes":
+      return <UpcomingEvents userId={userId} events={[]} />
+    case "connections":
+      return <ConnectionsSection userId={userId} />
+    case "messages":
+      return <MessagesSection organizerId={userId} />
+    case "settings":
+      return <SettingsSection userData={userData!} onUpdate={() => { }} />
+    case "travel":
+      return <TravelAccommodation/>
+    // Add the exhibitor sections
+    case "all-exhibitors":
+      return <ExhibitorAppointments />
+    case "favourites":
+      return <Favourites />
+    case "recommendations":
+      return <Recommendations />
+    default:
+      return <p>Select a section</p>
+  }
+}
 
   // const toggleGroup = (groupId: string) => {
   //   setExpandedGroups((prev) => (prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]))
@@ -338,6 +352,59 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                 </ul>
               )}
             </div>
+                      {/* Exhibitor */}
+<div>
+  <button
+    className="flex items-center justify-between w-full py-2 font-medium"
+    onClick={() => toggleMenu("exhibitor")}
+  >
+    <span className="flex items-center gap-2">
+      <Store size={16} /> 
+      {!isSidebarCollapsed && "Exhibitor"}
+    </span>
+    {!isSidebarCollapsed && (
+      openMenus.includes("exhibitor") ? <ChevronDown size={16} /> : <ChevronRight size={16} />
+    )}
+  </button>
+  {openMenus.includes("exhibitor") && !isSidebarCollapsed && (
+    <ul className="ml-2 mt-2 space-y-2 border-l">
+      <li
+        onClick={() => setActiveSection("all-exhibitors")}
+        className={`cursor-pointer pl-3 py-1 border-l-4 ${
+          activeSection === "all-exhibitors"
+            ? "border-blue-500 text-blue-600 font-medium"
+            : "border-transparent hover:text-blue-600"
+        }`}
+      >
+        Exhibitor Appointments
+      </li>
+
+      <li
+        onClick={() => setActiveSection("favourites")}
+        className={`cursor-pointer pl-3 py-1 border-l-4 ${
+          activeSection === "favourites"
+            ? "border-blue-500 text-blue-600 font-medium"
+            : "border-transparent hover:text-blue-600"
+        }`}
+      >
+        Favourites
+      </li>
+
+      <li
+        onClick={() => setActiveSection("recommendations")}
+        className={`cursor-pointer pl-3 py-1 border-l-4 ${
+          activeSection === "recommendations"
+            ? "border-blue-500 text-blue-600 font-medium"
+            : "border-transparent hover:text-blue-600"
+        }`}
+      >
+        Recommendations
+      </li>
+    </ul>
+  )}
+</div>
+
+            
 
             {/* Messages */}
             <div>
@@ -432,20 +499,24 @@ export function UserDashboard({ userId }: UserDashboardProps) {
             <SidebarIcon className="w-4 h-4" />
           </Button>
           
-          <div className="flex-1">
-            <h1 className="text-xl font-semibold">
-              {activeSection === "profile" && "My Profile"}
-              {activeSection === "events" && "Registered Events"}
-              {activeSection === "past-events" && "Past Events Attended"}
-              {activeSection === "wishlist" && "Wishlist"}
-              {activeSection === "passes" && "My Passes"}
-              {activeSection === "connections" && "My Connections"}
-              {activeSection === "messages" && "Messages"}
-              {activeSection === "settings" && "Settings"}
-              {activeSection === "travel" && "Travel & Accommodation"}
-              {activeSection === "qr" && "Badge / QR Code"}
-            </h1>
-          </div>
+         <div className="flex-1">
+  <h1 className="text-xl font-semibold">
+    {activeSection === "profile" && "My Profile"}
+    {activeSection === "events" && "Registered Events"}
+    {activeSection === "past-events" && "Past Events Attended"}
+    {activeSection === "wishlist" && "Wishlist"}
+    {activeSection === "passes" && "My Passes"}
+    {activeSection === "connections" && "My Connections"}
+    {activeSection === "messages" && "Messages"}
+    {activeSection === "settings" && "Settings"}
+    {activeSection === "travel" && "Travel & Accommodation"}
+    {activeSection === "qr" && "Badge / QR Code"}
+    {/* Add exhibitor titles */}
+    {activeSection === "all-exhibitors" && "All Exhibitors"}
+    {activeSection === "favourites" && "Favorite Exhibitors"}
+    {activeSection === "recommendations" && "Recommended Exhibitors"}
+  </h1>
+</div>
           
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm">

@@ -12,7 +12,6 @@ import {
   Edit,
   Mail,
   Phone,
-  MapPin,
   Globe,
   Save,
   X,
@@ -34,36 +33,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-// interface UserData {
-//   id: string
-//   email: string
-//   firstName: string
-//   lastName: string
-//   phone?: string
-//   avatar?: string
-//   role: string
-//   bio?: string
-//   website?: string
-//   linkedin?: string
-//   twitter?: string
-//   instagram?: string
-//   company?: string
-//   jobTitle?: string
-//   location?: string
-//   isVerified: boolean
-//   createdAt: string
-//   lastLogin?: string
-//   _count?: {
-//     eventsAttended: number
-//     eventsOrganized: number
-//     connections: number
-//   }
-// }
-
 interface ProfileSectionProps {
   userData: UserData
+  organizerId: string
   onUpdate: (data: Partial<UserData>) => void
 }
+
 const INTEREST_OPTIONS = [
   "Confirence",
   "Automation",
@@ -73,6 +48,7 @@ const INTEREST_OPTIONS = [
   "Banking & Finance",
   "Business Services",
 ]
+
 interface FormData {
   firstName: string
   lastName: string
@@ -84,44 +60,38 @@ interface FormData {
   linkedin: string
   twitter: string
   instagram: string
-  interests: string[]   // <-- explicitly a string array
+  interests: string[]
 }
-export function ProfileSection({ userData, onUpdate }: ProfileSectionProps) {
-  // Initialize form data only once with useMemo to prevent recreation on every render
-const initialFormData: FormData = {
-  firstName: userData.firstName,
-  lastName: userData.lastName,
-  phone: userData.phone || "",
-  bio: userData.bio || "",
-  website: userData.website || "",
-  company: userData.company || "",
-  jobTitle: userData.jobTitle || "",
-  linkedin: userData.linkedin || "",
-  twitter: userData.twitter || "",
-  instagram: userData.instagram || "",
-  interests: userData.interests || [],   // <-- NEW
+interface Event {
+  id: string
+  title: string
+  description: string
+  date: string
+  organizer?: string
 }
-
+export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSectionProps) {
+  const initialFormData: FormData = {
+    firstName: userData.firstName,
+    lastName: userData.lastName,
+    phone: userData.phone || "",
+    bio: userData.bio || "",
+    website: userData.website || "",
+    company: userData.company || "",
+    jobTitle: userData.jobTitle || "",
+    linkedin: userData.linkedin || "",
+    twitter: userData.twitter || "",
+    instagram: userData.instagram || "",
+    interests: userData.interests || [],
+  }
 
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState<FormData>(initialFormData)
+    const [events, setEvents] = useState<Event[]>([])
+  const [loadingEvents, setLoadingEvents] = useState(false)
 
-  // Update form data only when userData changes
   useEffect(() => {
-    setFormData({
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      phone: userData.phone || "",
-      bio: userData.bio || "",
-      website: userData.website || "",
-      company: userData.company || "",
-      jobTitle: userData.jobTitle || "",
-      // location: userData.location || "",
-      linkedin: userData.linkedin || "",
-      twitter: userData.twitter || "",
-      instagram: userData.instagram || "",
-interests: userData.interests || [],    })
-  }, [userData]) // Only run when userData changes
+    setFormData(initialFormData)
+  }, [userData])
 
   const handleSave = useCallback(() => {
     onUpdate(formData)
@@ -129,40 +99,52 @@ interests: userData.interests || [],    })
   }, [formData, onUpdate])
 
   const handleCancel = useCallback(() => {
-    setFormData({
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      phone: userData.phone || "",
-      bio: userData.bio || "",
-      website: userData.website || "",
-      company: userData.company || "",
-      jobTitle: userData.jobTitle || "",
-      linkedin: userData.linkedin || "",
-      twitter: userData.twitter || "",
-      instagram: userData.instagram || "",
-      interests: userData.interests || [], 
-    })
+    setFormData(initialFormData)
     setIsEditing(false)
   }, [userData])
 
-  // Memoize calendar data to prevent recreation on every render
-  const calendarData = [
-    { week: 26, days: [8, 9, 10, 11, 12, 13, 14] },
-    { week: 27, days: [15, 16, 17, 18, 19, 20, 21] },
-    { week: 28, days: [22, 23, 24, 25, 26, 27, 28] },
-    { week: 29, days: [29, 30, 31, 1, 2, 3, 4] },
-  ]
-
-  // Memoize inbox messages
   const inboxMessages = [1, 2, 3, 4]
+ // Fetch interested events
+// In ProfileSection component
+// In ProfileSection component
+useEffect(() => {
+  async function fetchEvents() {
+    try {
+      setLoadingEvents(true)
+      // Fetch from the general events endpoint
+      const res = await fetch(`/api/events/recent`)
+      
+      if (!res.ok) throw new Error("Failed to fetch events")
+      
+      const data = await res.json()
 
+      // Ensure events is always an array
+      if (Array.isArray(data)) {
+        setEvents(data)
+      } else {
+        setEvents([])
+      }
+    } catch (err) {
+      console.error("Error fetching recent events:", err)
+      setEvents([])
+    } finally {
+      setLoadingEvents(false)
+    }
+  }
+
+  fetchEvents()
+}, []) // Empty dependency array since we're not depending on user data
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
         {!isEditing ? (
-          <Button variant="outline" onClick={() => setIsEditing(true)} className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setIsEditing(true)}
+            className="flex items-center gap-2"
+          >
             <Edit className="w-4 h-4" />
             Edit Profile
           </Button>
@@ -184,9 +166,9 @@ interests: userData.interests || [],    })
         )}
       </div>
 
-      {/* Top section */}
+      {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Card */}
+        {/* Profile Card (Left) */}
         <Card className="lg:col-span-1">
           <CardContent className="p-6">
             <div className="flex items-center gap-4 mb-6">
@@ -201,16 +183,18 @@ interests: userData.interests || [],    })
                 <h2 className="text-xl font-semibold">
                   {userData.firstName} {userData.lastName}
                 </h2>
-                <p className="text-gray-600">{userData.jobTitle || userData.role}</p>
+                <p className="text-gray-600">
+                  {userData.jobTitle || userData.role}
+                </p>
                 {userData.isVerified && (
                   <Badge variant="secondary" className="mt-1">
                     Verified
                   </Badge>
-                )} 
+                )}
               </div>
             </div>
-            
-            {/* Social Media Links */}
+
+            {/* Social Links */}
             <div className="flex justify-center gap-3 mb-6">
               <a
                 href={userData.linkedin || "#"}
@@ -245,161 +229,108 @@ interests: userData.interests || [],    })
                 <Globe size={18} />
               </a>
             </div>
-            
-            {/* <div className="grid grid-cols-2 gap-4 text-center">
-              <div className="bg-blue-50 p-3 rounded-lg">
-                <div className="font-semibold text-lg">
-                  {userData._count?.connections || 3320}
-                </div>
-                <div className="text-sm text-gray-600">Connections</div>
-              </div>
-              <div className="bg-green-50 p-3 rounded-lg">
-                <div className="font-semibold text-lg">
-                  {userData._count?.eventsAttended || 40}
-                </div>
-                <div className="text-sm text-gray-600">Events</div>
-              </div>
-            </div> */}
           </CardContent>
-        </Card>
 
-        {/* Stats Cards */}
-        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card className="bg-yellow-200 h-32 flex items-center justify-center">
-            <div className="text-center p-4">
-              <Calendar className="w-8 h-8 mx-auto mb-2" />
-              <h3 className="font-semibold">Upcoming Events</h3>
-              <p className="text-sm">5 events this month</p>
-            </div>
-          </Card>
-          <Card className="bg-blue-200 h-32 flex items-center justify-center">
-            <div className="text-center p-4">
-              <CalendarDays className="w-8 h-8 mx-auto mb-2" />
-              <h3 className="font-semibold">Events</h3>
-              <p className="text-sm">{userData._count?.eventsAttended || 40} events</p>
-            </div>
-          </Card>
-  <Card className="bg-red-300 h-32 flex items-center justify-center">
-  <div className="text-center p-4">
-    <UserIcon className="w-8 h-8 mx-auto mb-2" />
-    <h3 className="font-semibold">Connections</h3>
-    <p className="text-sm">{userData._count?.connections || 3320} total</p>
-  </div>
-</Card>
-
-        </div>
-      </div>
-
-      {/* Bottom Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Detailed Information */}
-        <Card>
           <CardHeader className="pb-3">
             <CardTitle>Detailed Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             {isEditing ? (
-              <div className="space-y-4">
+              <>
+                {/* Editable fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
+                  <div>
+                    <Label>First Name</Label>
                     <Input
-                      id="firstName"
                       value={formData.firstName}
                       onChange={(e) =>
                         setFormData({ ...formData, firstName: e.target.value })
                       }
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
+                  <div>
+                    <Label>Last Name</Label>
                     <Input
-                      id="lastName"
                       value={formData.lastName}
                       onChange={(e) =>
                         setFormData({ ...formData, lastName: e.target.value })
                       }
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Contact Number</Label>
+                  <div>
+                    <Label>Contact Number</Label>
                     <Input
-                      id="phone"
                       value={formData.phone}
                       onChange={(e) =>
                         setFormData({ ...formData, phone: e.target.value })
                       }
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="jobTitle">Position</Label>
+                  <div>
+                    <Label>Position</Label>
                     <Input
-                      id="jobTitle"
                       value={formData.jobTitle}
                       onChange={(e) =>
                         setFormData({ ...formData, jobTitle: e.target.value })
                       }
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="company">Company</Label>
+                  <div>
+                    <Label>Company</Label>
                     <Input
-                      id="company"
                       value={formData.company}
                       onChange={(e) =>
                         setFormData({ ...formData, company: e.target.value })
                       }
                     />
                   </div>
-       <div className="space-y-2">
-  <Label htmlFor="interests">Interests</Label>
-  <Select
-    onValueChange={(value) => {
-      if (!formData.interests.includes(value)) {
-        setFormData({
-          ...formData,
-          interests: [...formData.interests, value],
-        })
-      }
-    }}
-  >
-    <SelectTrigger>
-      <SelectValue placeholder="Select interest" />
-    </SelectTrigger>
-    <SelectContent>
-      {INTEREST_OPTIONS.map((option) => (
-        <SelectItem key={option} value={option}>
-          {option}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
-
-  {/* Show selected interests as removable badges */}
-  <div className="flex gap-2 flex-wrap mt-2">
-    {formData.interests.map((int, idx) => (
-      <Badge
-        key={idx}
-        variant="secondary"
-        className="cursor-pointer"
-        onClick={() =>
-          setFormData({
-            ...formData,
-            interests: formData.interests.filter((i) => i !== int),
-          })
-        }
-      >
-        {int} ✕
-      </Badge>
-    ))}
-  </div>
-</div>
-
+                  <div>
+                    <Label>Interests</Label>
+                    <Select
+                      onValueChange={(value) => {
+                        if (!formData.interests.includes(value)) {
+                          setFormData({
+                            ...formData,
+                            interests: [...formData.interests, value],
+                          })
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select interest" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INTEREST_OPTIONS.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex gap-2 flex-wrap mt-2">
+                      {formData.interests.map((int, idx) => (
+                        <Badge
+                          key={idx}
+                          variant="secondary"
+                          className="cursor-pointer"
+                          onClick={() =>
+                            setFormData({
+                              ...formData,
+                              interests: formData.interests.filter(
+                                (i) => i !== int
+                              ),
+                            })
+                          }
+                        >
+                          {int} ✕
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
+                <div>
+                  <Label>Bio</Label>
                   <Textarea
-                    id="bio"
                     value={formData.bio}
                     onChange={(e) =>
                       setFormData({ ...formData, bio: e.target.value })
@@ -407,29 +338,7 @@ interests: userData.interests || [],    })
                     rows={3}
                   />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="linkedin">LinkedIn</Label>
-                    <Input
-                      id="linkedin"
-                      value={formData.linkedin}
-                      onChange={(e) =>
-                        setFormData({ ...formData, linkedin: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="twitter">Twitter</Label>
-                    <Input
-                      id="twitter"
-                      value={formData.twitter}
-                      onChange={(e) =>
-                        setFormData({ ...formData, twitter: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
+              </>
             ) : (
               <>
                 <div className="flex items-center gap-2">
@@ -440,35 +349,38 @@ interests: userData.interests || [],    })
                 <div className="flex items-center gap-2">
                   <Phone size={16} className="text-gray-500" />
                   <span className="font-medium">Contact Number</span>
-                  <span className="ml-auto">{userData.phone || "9999879543"}</span>
+                  <span className="ml-auto">
+                    {userData.phone || "9999879543"}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Briefcase size={16} className="text-gray-500" />
                   <span className="font-medium">Position</span>
-                  <span className="ml-auto">{userData.jobTitle || "CEO & Co-Founder"}</span>
+                  <span className="ml-auto">
+                    {userData.jobTitle || "CEO & Co-Founder"}
+                  </span>
                 </div>
-       <div className="flex items-center gap-2">
-  <UserIcon size={16} className="text-gray-500" />
-  <span className="font-medium">Interests</span>
-<div className="ml-auto flex gap-2 flex-wrap">
-  {(userData.interests && userData.interests.length > 0
-    ? userData.interests
-    : ["Conference", "Automation"] // fallback
-  )?.map((int, idx) => (
-    <Badge key={idx} variant="secondary">
-      {int}
-    </Badge>
-  ))}
-</div>
-
-</div>
-
+                <div className="flex items-center gap-2">
+                  <UserIcon size={16} className="text-gray-500" />
+                  <span className="font-medium">Interests</span>
+                  <div className="ml-auto flex gap-2 flex-wrap">
+                    {(userData.interests && userData.interests.length > 0
+                      ? userData.interests
+                      : ["Conference", "Automation"]
+                    ).map((int, idx) => (
+                      <Badge key={idx} variant="secondary">
+                        {int}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
                 <div className="flex items-start gap-2 mt-4">
                   <UserIcon size={16} className="text-gray-500 mt-1" />
                   <div>
                     <span className="font-medium block mb-1">Bio</span>
                     <p className="text-gray-700">
-                      {userData.bio || "The world's deposit sourcing has a commitment to reducing foreign prices at the Paris for Bagnette Collection Centre in Paris, France. Organised by Moura Frankfurt France & S.E."}
+                      {userData.bio ||
+                        "The world's deposit sourcing has a commitment to reducing foreign prices at the Paris for Bagnette Collection Centre in Paris, France. Organised by Moura Frankfurt France & S.E."}
                     </p>
                   </div>
                 </div>
@@ -477,65 +389,72 @@ interests: userData.interests || [],    })
           </CardContent>
         </Card>
 
-        {/* Calendar */}
-        {/* <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Calendar</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm mb-4 flex justify-between items-center">
-              <span className="font-medium">July 2023</span>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">&lt;</Button>
-                <Button variant="outline" size="sm">&gt;</Button>
+        {/* Right side content (Stats + Calendar + Inbox) */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          {/* Stats cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Card className="bg-yellow-200 h-32 flex items-center justify-center">
+              <div className="text-center p-4">
+                <Calendar className="w-8 h-8 mx-auto mb-2" />
+                <h3 className="font-semibold">Upcoming Events</h3>
+                <p className="text-sm">5 events this month</p>
               </div>
-            </div>
-            <div className="grid grid-cols-7 gap-1 text-xs text-center mb-2">
-              {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
-                <div key={i} className="font-medium text-gray-500 py-1">{day}</div>
-              ))}
-            </div>
-            
-            {calendarData.map((week) => (
-              <div key={week.week} className="grid grid-cols-7 gap-1 text-xs text-center mb-1">
-                {week.days.map((day, i) => (
-                  <div
-                    key={i}
-                    className={`p-2 rounded ${day === 27 ? "bg-blue-500 text-white" : "hover:bg-gray-100"}`}
-                  >
-                    {day}
-                  </div>
-                ))}
+            </Card>
+            <Card className="bg-blue-200 h-32 flex items-center justify-center">
+              <div className="text-center p-4">
+                <CalendarDays className="w-8 h-8 mx-auto mb-2" />
+                <h3 className="font-semibold">Events</h3>
+                <p className="text-sm">
+                  {userData._count?.eventsAttended || 40} events
+                </p>
               </div>
-            ))}
-          </CardContent>
-        </Card> */}
-        <DynamicCalendar/>
-        {/* Inbox */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Inbox</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {inboxMessages.map((msg) => (
-              <div
-                key={msg}
-                className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:bg-blue-50 transition-colors"
-              >
-                <Avatar className="w-10 h-10 flex-shrink-0">
-                  <AvatarImage src="/placeholder.svg" />
-                  <AvatarFallback>RK</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">Rajesh Kumar</p>
-                  <p className="text-xs text-gray-600 line-clamp-2">
-                    Depth is not for any major activities but also facilitates sales of products and services that are required to be sold.
-                  </p>
-                </div>
+            </Card>
+            <Card className="bg-red-300 h-32 flex items-center justify-center">
+              <div className="text-center p-4">
+                <UserIcon className="w-8 h-8 mx-auto mb-2" />
+                <h3 className="font-semibold">Connections</h3>
+                <p className="text-sm">
+                  {userData._count?.connections || 3320} total
+                </p>
               </div>
-            ))}
-          </CardContent>
-        </Card>
+            </Card>
+          </div>
+
+          {/* Calendar + Inbox */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <DynamicCalendar />
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle>Interested Events</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {loadingEvents ? (
+                  <p className="text-gray-500 text-sm">Loading events...</p>
+                ) : events.length === 0 ? (
+                  <p className="text-gray-500 text-sm">No events found</p>
+                ) : (
+                  events.map((event) => (
+                    <div
+                      key={event.id}
+                      className="p-3 rounded-lg border border-gray-200 hover:bg-blue-50 transition-colors"
+                    >
+                      <p className="font-semibold text-sm truncate">
+                        {event.title}
+                      </p>
+                      <p className="text-xs text-gray-600 line-clamp-2">
+                        {event.description}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(event.date).toLocaleDateString()}{" "}
+                        {event.organizer && `• ${event.organizer}`}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   )

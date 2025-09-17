@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Building, Mail, Phone, MapPin, Globe, Linkedin, Twitter } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-
+ 
 interface Exhibitor {
   id: string
   firstName: string
@@ -718,8 +718,6 @@ export default function AddExhibitor({ organizerId }: AddExhibitorProps) {
                     rows={3}
                   />
                 </div>
-
-                {/* Cost Summary */}
                 {selectedSpace && (
                   <div className="p-4 bg-white rounded-lg border">
                     <h4 className="font-semibold mb-2">Cost Summary</h4>

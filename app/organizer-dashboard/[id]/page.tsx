@@ -47,8 +47,8 @@ import { signOut } from "next-auth/react"
 import VisitorBadgeSettings from "../Visitor-Badge-Settings"
 // import ExhibitorsForEvent from "../ExhibitorsForEvent"
 import ExhibitorsEventWise from "../ExhibitorsEventWise"
-import ConferenceAgenda from "../ConferenceAgenda"
-import CreateConferenceAgenda from "../create-conference-agenda"
+// import ConferenceAgenda from "../ConferenceAgenda"
+// import CreateConferenceAgenda from "../create-conference-agenda"
 import { ConnectionsSection } from "@/app/dashboard/connections-section"
 import {
   DropdownMenu,
