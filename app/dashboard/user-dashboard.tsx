@@ -150,7 +150,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       case "connections":
         return <ConnectionsSection userId={userId} />
       case "appointments":
-        return <MyAppointments userId={userId} />
+        // return <MyAppointments userId={userId} />
       case "messages":
         return <MessagesSection organizerId={userId} />
       case "settings":
