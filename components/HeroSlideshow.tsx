@@ -2,9 +2,26 @@
 
 import React, { useState, useEffect, useRef } from "react"
 import { ChevronLeft, ChevronRight, Calendar, MapPin } from "lucide-react"
-import { getAllEvents } from "@/lib/data/events"
-import type { Event } from "@/lib/data/events"
+
 import Link from "next/link"
+
+// lib/data/events.ts
+export interface Event {
+  id: string
+  title: string
+  bannerImage?: string
+  images?: string[]
+  startDate: string
+  city?: string
+  location?: {
+    city: string
+    venue: string
+    address: string
+    country?: string
+    coordinates: { lat: number; lng: number }
+  }
+}
+
 
 interface EventCardProps {
   imageSrc: string
@@ -64,11 +81,19 @@ export default function HeroSlideshow() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [events, setEvents] = useState<Event[]>([])
 
-  // Fetch events on mount
+  // Fetch VIP events from API
   useEffect(() => {
-    const allEvents = getAllEvents()
-    const vipEvents = allEvents.filter(event => event.vip)
-    setEvents(vipEvents)
+    const fetchVipEvents = async () => {
+      try {
+        const response = await fetch('/api/events?vip=true')
+        const data = await response.json()
+        setEvents(data.events || [])
+      } catch (error) {
+        console.error('Error fetching VIP events:', error)
+      }
+    }
+
+    fetchVipEvents()
   }, [])
 
   // Auto-scroll functionality
@@ -141,13 +166,14 @@ export default function HeroSlideshow() {
             {events.map((event, index) => (
               <Link href={`/event/${event.id}`} key={event.id}>
                 <EventCard
-                  imageSrc={event.images.find((img) => img.type === "main")?.url || "/placeholder.svg"}
-                  date={new Date(event.timings.startDate).getDate().toString()}
-                  month={new Date(event.timings.startDate).toLocaleString("default", { month: "short" })}
-                  year={new Date(event.timings.startDate).getFullYear().toString()}
+                  imageSrc={event.bannerImage || event.images?.[0] || "/placeholder.svg"}
+                  date={new Date(event.startDate).getDate().toString()}
+                  month={new Date(event.startDate).toLocaleString("default", { month: "short" })}
+                  year={new Date(event.startDate).getFullYear().toString()}
                   title={event.title}
-                  location={event.location.venue}
+                  location={event.location ? `${event.location.city}, ${event.location.venue}` : event.city}
                 />
+
               </Link>
             ))}
           </div>

@@ -1,15 +1,35 @@
 "use client"
 
-import { Share2, MapPin, Calendar, ChevronLeft, ChevronRight } from "lucide-react"
+import { Share2, Calendar, ChevronLeft, ChevronRight } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
-import { events } from "@/lib/data/events"
-import { Button } from "./ui/button"
 import Link from "next/link"
 
-// Filter only featured events
-const featuredEvents = Object.values(events).filter((event) => event.featured)
+// lib/data/events.ts
+export interface Event {
+  id: string
+  title: string
+  bannerImage?: string
+  logo?: string
+  images?: string[]
+  startDate: string
+  city?: string
+  categories?: string
+  featured?: boolean
+  timings?: {
+    startDate: string
+    endDate?: string
+  }
+  location?: {
+    city: string
+    venue: string
+    address: string
+    country?: string
+    coordinates: { lat: number; lng: number }
+  }
+}
 
 export default function FeaturedEvents() {
+  const [featuredEvents, setFeaturedEvents] = useState<Event[]>([])
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isAutoSliding, setIsAutoSliding] = useState(true)
   const [isHovering, setIsHovering] = useState(false)
@@ -18,6 +38,25 @@ export default function FeaturedEvents() {
   const eventsPerSlide = 6
   const totalSlides = Math.ceil(featuredEvents.length / eventsPerSlide)
 
+  // ✅ Fetch from API
+  useEffect(() => {
+    const fetchFeaturedEvents = async () => {
+      try {
+        const response = await fetch("/api/events?featured=true")
+        // const data = await res.json()
+       const data = await response.json()
+        setFeaturedEvents(data.events || [])
+
+       
+      } catch (error) {
+        console.error("Error fetching featured events:", error)
+      }
+    }
+
+    fetchFeaturedEvents()
+  }, [])
+
+  // Auto-slide
   useEffect(() => {
     if (!isAutoSliding || isHovering || totalSlides <= 1) return
 
@@ -44,8 +83,8 @@ export default function FeaturedEvents() {
     setTimeout(() => setIsAutoSliding(true), 6000)
   }
 
-  // Create slides array where each slide contains up to eventsPerSlide events
-  const slides = []
+  // Create slides
+  const slides: Event[][] = []
   for (let i = 0; i < totalSlides; i++) {
     const start = i * eventsPerSlide
     const end = start + eventsPerSlide
@@ -67,27 +106,6 @@ export default function FeaturedEvents() {
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
         >
-          {/* Navigation - only show if more than 1 slide */}
-          {/* {totalSlides > 1 && (
-            <>
-              <button
-                onClick={() => handleManualSlide("prev")}
-                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white hover:shadow-xl transition-all duration-200 group"
-                aria-label="Previous"
-              >
-                <ChevronLeft className="w-5 h-5 text-gray-700 group-hover:text-gray-900" />
-              </button>
-
-              <button
-                onClick={() => handleManualSlide("next")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white hover:shadow-xl transition-all duration-200 group"
-                aria-label="Next"
-              >
-                <ChevronRight className="w-5 h-5 text-gray-700 group-hover:text-gray-900" />
-              </button>
-            </>
-          )} */}
-
           {/* Slides Container */}
           <div className="overflow-hidden">
             <div
@@ -97,81 +115,60 @@ export default function FeaturedEvents() {
                 transform: `translateX(-${currentSlide * 100}%)`,
               }}
             >
-              
               {slides.map((slideEvents, slideIndex) => (
                 <div key={slideIndex} className="w-full flex-shrink-0">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {slideEvents.map((event, eventIndex) => (
-                       <Link href={`/event/${event.id}`} key={eventIndex} className="cursor-pointer">
-                      <div
-                        key={event.id}
-                        className="bg-white border border-gray-200 rounded-sm p-4 hover:shadow-md transition-all duration-200 hover:border-blue-300 group"
-                      >
-                        <div className="grid grid-cols-2">
-                        {/* Event Logo */}
-                        <div className="rounded-lg p-4 mb-4 flex items-center justify-center h-20">
-                          <img
-                            src={event.logo || "/placeholder.svg?height=48&width=120&query=event logo"}
-                            alt={event.title}
-                            className="max-h-12 max-w-50px"
-                          />
-                        </div>
-
-                        {/* Event Info */}
-                        <div className="space-y-3">
-                          <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
-                            {event.title}
-                          </h3>
-
-                          <div className="space-y-2 text-sm text-gray-600">
-                            <div className="flex items-center">
-                              <Calendar className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
-                              <span className="truncate">
-                                {new Date(event.timings.startDate).toLocaleDateString("en-US", {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                })}
-                              </span>
+                    {slideEvents.map((event) => (
+                      <Link href={`/event/${event.id}`} key={event.id} className="cursor-pointer">
+                        <div className="bg-white border border-gray-200 rounded-sm p-4 hover:shadow-md transition-all duration-200 hover:border-blue-300 group">
+                          <div className="grid grid-cols-2">
+                            {/* Event Logo */}
+                            <div className="rounded-lg p-4 mb-4 flex items-center justify-center h-20">
+                              <img
+                                src={event.logo || "/placeholder.svg"}
+                                alt={event.title}
+                                className="max-h-12 max-w-50px"
+                              />
                             </div>
 
-                            {/* <div className="flex items-center">
-                              <MapPin className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
-                              <span className="truncate">{event.location.venue}</span>
-                            </div> */}
+                            {/* Event Info */}
+                            <div className="space-y-3">
+                              <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+                                {event.title}
+                              </h3>
+
+                              <div className="space-y-2 text-sm text-gray-600">
+                                <div className="flex items-center">
+                                  <Calendar className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
+                                  <span className="truncate">
+                                    {new Date(event.startDate).toLocaleDateString("en-US", {
+                                      month: "short",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    })}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
                           </div>
 
                           {/* Footer */}
-                          {/* <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 truncate max-w-[120px]">
-                              {event.categories || "General"}
-                            </span>
+                          <div className="flex justify-between mt-2">
                             <button
                               className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors flex-shrink-0"
                               aria-label="Share event"
                             >
                               <Share2 className="w-4 h-4" />
                             </button>
-                          </div> */}
-                        </div>
-                        </div>
-                        <div className="flex justify-between">
-                          <button
-                              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors flex-shrink-0"
-                              aria-label="Share event"
-                            >
-                              <Share2 className="w-4 h-4" />
-                            </button>
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium  ">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
                               {event.categories || "General"}
                             </span>
-                            
-                            </div>
-                      </div>
+                          </div>
+                        </div>
                       </Link>
                     ))}
 
-                    {/* Fill empty slots if needed */}
+                    {/* Empty slots filler */}
                     {slideEvents.length < eventsPerSlide &&
                       Array.from({ length: eventsPerSlide - slideEvents.length }).map((_, index) => (
                         <div key={`empty-${index}`} className="invisible">
@@ -184,7 +181,7 @@ export default function FeaturedEvents() {
             </div>
           </div>
 
-          {/* Pagination - only show if more than 1 slide */}
+          {/* Pagination */}
           {totalSlides > 1 && (
             <div className="flex justify-center mt-8 space-x-2">
               {slides.map((_, index) => (

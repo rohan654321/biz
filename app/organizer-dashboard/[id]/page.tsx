@@ -396,11 +396,11 @@ export default function OrganizerDashboardPage() {
       icon: MessageCircle,
       id: "feedback",
     },
-    {
-      title: "Feedback Reply",
-      icon: Reply,
-      id: "feedback-reply",
-    },
+    // {
+    //   title: "Feedback Reply",
+    //   icon: Reply,
+    //   id: "feedback-reply",
+    // },
   ],
 },
     {
@@ -567,11 +567,11 @@ export default function OrganizerDashboardPage() {
       case "speakers":
         return <SpeakerSessionsTable organizerId={organizerId} />
       case "feedback":
-       return <FeedbackManagement organizerId={organizerId} />
+       return <FeedbackReplyManagement organizerId={organizerId} />
         case "connections":
         return <ConnectionsSection  userId={organizerId}/>
-      case "feedback-reply":
-         return <FeedbackReplyManagement organizerId={organizerId} />
+      // case "feedback-reply":
+      //    return <FeedbackReplyManagement organizerId={organizerId} />
       default:
         return <div>Select a section from the sidebar</div>
     }

@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const includePrivate = searchParams.get("includePrivate") === "true"
+    const featuredOnly = searchParams.get("featured") === "true"
+    const vipOnly = searchParams.get("vip") === "true"
 
     // Check if requesting private data
     if (includePrivate) {
@@ -16,11 +18,16 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
       }
 
+      // Build where clause for private events
+      const privateWhereClause = {
+        OR: [{ organizerId: session.user?.id }, { isPublic: true }],
+        ...(featuredOnly && { isFeatured: true }),
+        ...(vipOnly && { isVIP: true }),
+      }
+
       // Get all events for authenticated users (organizers can see their own events)
       const events = await prisma.event.findMany({
-        where: {
-          OR: [{ organizerId: session.user?.id }, { isPublic: true }],
-        },
+        where: privateWhereClause,
         include: {
           exhibitionSpaces: true,
           organizer: {
@@ -60,12 +67,61 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ events }, { status: 200 })
     }
 
+    // Build where clause for public events
+    const publicWhereClause = {
+      isPublic: true,
+      ...(featuredOnly && { isFeatured: true }),
+      ...(vipOnly && { isVIP: true }),
+    }
+
     // Public events data (no authentication required)
     const events = await prisma.event.findMany({
-      where: {
+      where: publicWhereClause,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        shortDescription: true,
+        slug: true,
+        status: true,
+        category: true,
+        tags: true,
+        eventType: true,
+        isFeatured: true,  // Add this
+        isVIP: true,       // Add this
+        startDate: true,
+        endDate: true,
+        registrationStart: true,
+        registrationEnd: true,
+        timezone: true,
+        isVirtual: true,
+        virtualLink: true,
+        address: true,
+        location: true,
+        city: true,
+        state: true,
+        country: true,
+        zipCode: true,
+        maxAttendees: true,
+        currentAttendees: true,
+        ticketTypes: true,
+        currency: true,
+        images: true,
+        videos: true,
+        documents: true,
+        bannerImage: true,
+        thumbnailImage: true,
         isPublic: true,
-      },
-      include: {
+        requiresApproval: true,
+        allowWaitlist: true,
+        refundPolicy: true,
+        metaTitle: true,
+        metaDescription: true,
+        organizerId: true,
+        createdAt: true,
+        updatedAt: true,
+        averageRating: true,
+        totalReviews: true,
         exhibitionSpaces: {
           select: {
             id: true,

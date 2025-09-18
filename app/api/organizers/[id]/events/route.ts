@@ -168,8 +168,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         metaDescription: body.metaDescription || null,
         
         // // ✅ Add isFeatured and isVIP here
-        // isFeatured: body.isFeatured || false,
-        // isVIP: body.isVIP || false,
+        isFeatured: body.Featured || false,
+        isVIP: body.VIP || false,
 
         organizerId: id,
 

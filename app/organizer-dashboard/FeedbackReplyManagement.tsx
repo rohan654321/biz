@@ -611,7 +611,7 @@ export default function FeedbackReplyManagement({ organizerId }: { organizerId: 
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-col space-y-2">
+                    {/* <div className="flex flex-col space-y-2">
                       {!review.isApproved && (
                         <Button
                           size="sm"
@@ -627,7 +627,7 @@ export default function FeedbackReplyManagement({ organizerId }: { organizerId: 
                       >
                         Delete
                       </Button>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               ))}
