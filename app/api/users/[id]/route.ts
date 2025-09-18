@@ -40,6 +40,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           state: "CA",
           country: "USA",
         },
+        interests: ["Conference", "Automation", "IT & Technology"],
         _count: {
           eventsAttended: 25,
           eventsOrganized: 50,
@@ -65,6 +66,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           state: "NY",
           country: "USA",
         },
+        interests: ["Conference", "Education Training", "Business Services"],
         _count: {
           eventsAttended: 15,
           eventsOrganized: 30,
@@ -90,6 +92,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           state: "CA",
           country: "USA",
         },
+        interests: ["Conference", "Banking & Finance", "IT & Technology", "Automation"],
         _count: {
           eventsAttended: 40,
           eventsOrganized: 100,
@@ -122,14 +125,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         company: true,
         jobTitle: true,
         location: true,
+        interests: true,
         isVerified: true,
         createdAt: true,
         lastLogin: true,
         _count: {
           select: {
-            // bookings: true,
             reviews: true,
-            // messages: true,
           },
         },
       },
@@ -143,9 +145,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const userData = {
       ...user,
       _count: {
-        // eventsAttended: user._count.bookings,
-        eventsOrganized: 0, // This would need a separate query for organized events
-        // connections: user._count.messages, // Simplified for now
+        eventsAttended: 0, // This would need a separate query
+        eventsOrganized: 0, // This would need a separate query
+        connections: 0, // This would need a separate query
       },
     }
 
@@ -173,7 +175,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const body = await request.json()
-    const { firstName, lastName, phone, bio, website, linkedin, twitter, company, jobTitle, location } = body
+    const { 
+      firstName, 
+      lastName, 
+      phone, 
+      bio, 
+      website, 
+      linkedin, 
+      twitter, 
+      company, 
+      jobTitle, 
+      location, 
+      interests 
+    } = body
 
     // For hardcoded users, return success but don't actually update
     if (["admin-1", "organizer-1", "superadmin-1"].includes(userId)) {
@@ -188,6 +202,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           company,
           jobTitle,
           location,
+          interests,
         },
       })
     }
@@ -205,6 +220,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         company,
         jobTitle,
         location,
+        interests,
       },
       select: {
         id: true,
@@ -221,6 +237,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         company: true,
         jobTitle: true,
         location: true,
+        interests: true,
         isVerified: true,
         createdAt: true,
         lastLogin: true,

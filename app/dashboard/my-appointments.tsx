@@ -1,11 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Calendar, Clock, MapPin, Phone, Mail, Building, Loader2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Calendar } from "@/components/ui/calendar"
+import { Badge } from "@/components/ui/badge"
+import {
+  Calendar as CalendarIcon,
+  CalendarDays,
+  Mail,
+  Phone,
+  Building2,
+  Search,
+  Filter,
+  Trash2,
+  Loader2,
+} from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface Appointment {
@@ -17,7 +28,7 @@ interface Appointment {
   exhibitorPhone?: string
   exhibitorAvatar?: string
   boothNumber?: string
-  scheduledAt: string // Changed from appointmentDate/appointmentTime to scheduledAt
+  scheduledAt: string
   status: "pending" | "confirmed" | "cancelled" | "completed"
   notes?: string
   createdAt: string
@@ -31,6 +42,7 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [date, setDate] = useState<Date | undefined>(new Date())
   const { toast } = useToast()
 
   useEffect(() => {
@@ -55,21 +67,63 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "confirmed":
-        return "bg-green-100 text-green-800"
-      case "pending":
-        return "bg-yellow-100 text-yellow-800"
-      case "cancelled":
-        return "bg-red-100 text-red-800"
-      case "completed":
-        return "bg-blue-100 text-blue-800"
-      default:
-        return "bg-gray-100 text-gray-800"
+  const cancelAppointment = async (appointmentId: string) => {
+    try {
+      const response = await fetch(`/api/appointments/${appointmentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "cancelled" }),
+      })
+
+      if (!response.ok) throw new Error("Failed to cancel appointment")
+
+      toast({
+        title: "Appointment Cancelled",
+        description: "Your appointment has been cancelled successfully.",
+      })
+
+      fetchAppointments()
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to cancel appointment. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
+  // --- Stats with expiry check ---
+// --- Stats with expiry check ---
+const stats = useMemo(() => {
+  const now = new Date()
+
+  const pending = appointments.filter(
+    (a) => a.status.toLowerCase() === "pending"
+  ).length
+
+  const confirmed = appointments.filter(
+    (a) =>
+      a.status.toLowerCase() === "confirmed" &&
+      new Date(a.scheduledAt) >= now
+  ).length
+
+  const completed = appointments.filter(
+    (a) =>
+      a.status.toLowerCase() === "completed" ||
+      (a.status.toLowerCase() === "confirmed" &&
+        new Date(a.scheduledAt) < now)
+  ).length
+
+  return {
+    total: appointments.length,
+    pending,
+    confirmed,
+    completed,
+  }
+}, [appointments])
+
+
+  // --- Helpers ---
   const formatDateTime = (dateTimeString: string) => {
     const date = new Date(dateTimeString)
     return {
@@ -87,35 +141,18 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     }
   }
 
-  const cancelAppointment = async (appointmentId: string) => {
-    try {
-      const response = await fetch(`/api/appointments/${appointmentId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: "cancelled" }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to cancel appointment")
-      }
-
-      toast({
-        title: "Appointment Cancelled",
-        description: "Your appointment has been cancelled successfully.",
-      })
-
-      fetchAppointments() // Refresh the list
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to cancel appointment. Please try again.",
-        variant: "destructive",
-      })
+  const getEffectiveStatus = (appointment: Appointment) => {
+    const now = new Date()
+    if (
+      appointment.status === "confirmed" &&
+      new Date(appointment.scheduledAt) < now
+    ) {
+      return "completed"
     }
+    return appointment.status
   }
 
+  // --- Loading state ---
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -124,6 +161,7 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     )
   }
 
+  // --- Error state ---
   if (error) {
     return (
       <div className="text-center p-8">
@@ -135,107 +173,173 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     )
   }
 
+  // --- Empty state ---
   if (appointments.length === 0) {
     return (
       <div className="text-center p-8">
-        <Calendar className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Appointments Yet</h3>
-        <p className="text-gray-600">You haven't scheduled any meetings with exhibitors yet.</p>
+        <CalendarIcon className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          No Appointments Yet
+        </h3>
+        <p className="text-gray-600">
+          You haven't scheduled any meetings with exhibitors yet.
+        </p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b pb-3">
         <h2 className="text-2xl font-bold">My Appointments</h2>
-        <Badge variant="secondary">{appointments.length} Total</Badge>
+        <Badge variant="secondary">{stats.total} Total</Badge>
       </div>
 
-      <div className="grid gap-4">
-        {appointments.map((appointment) => (
-          <Card key={appointment.id} className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage src={appointment.exhibitorAvatar || "/placeholder.svg"} />
-                    <AvatarFallback>
-                      {appointment.exhibitorName
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <CardTitle className="text-lg">{appointment.exhibitorName}</CardTitle>
-                    <div className="flex items-center text-sm text-gray-600 mt-1">
-                      <Building className="w-4 h-4 mr-1" />
-                      {appointment.exhibitorCompany}
-                    </div>
-                  </div>
-                </div>
-                <Badge className={getStatusColor(appointment.status)}>
-                  {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                </Badge>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center text-sm">
-                  <Calendar className="w-4 h-4 mr-2 text-gray-500" />
-                  <span>{formatDateTime(appointment.scheduledAt).date}</span>
-                </div>
-                <div className="flex items-center text-sm">
-                  <Clock className="w-4 h-4 mr-2 text-gray-500" />
-                  <span>{formatDateTime(appointment.scheduledAt).time}</span>
-                </div>
-                {appointment.boothNumber && (
-                  <div className="flex items-center text-sm">
-                    <MapPin className="w-4 h-4 mr-2 text-gray-500" />
-                    <span>Booth {appointment.boothNumber}</span>
-                  </div>
-                )}
-                <div className="flex items-center text-sm">
-                  <Mail className="w-4 h-4 mr-2 text-gray-500" />
-                  <span>{appointment.exhibitorEmail}</span>
-                </div>
-              </div>
-
-              {appointment.notes && (
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm text-gray-700">{appointment.notes}</p>
-                </div>
-              )}
-
-              <div className="flex justify-end space-x-2 pt-2">
-                {appointment.status === "pending" || appointment.status === "confirmed" ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => cancelAppointment(appointment.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    Cancel Appointment
-                  </Button>
-                ) : null}
-
-                {appointment.exhibitorPhone && (
-                  <Button variant="outline" size="sm">
-                    <Phone className="w-4 h-4 mr-1" />
-                    Call
-                  </Button>
-                )}
-
-                <Button variant="outline" size="sm">
-                  <Mail className="w-4 h-4 mr-1" />
-                  Message
-                </Button>
-              </div>
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          {
+            label: "Total Requests",
+            value: stats.total,
+            color: "border-blue-300 hover:border-blue-500",
+          },
+          {
+            label: "Pending",
+            value: stats.pending,
+            color: "border-yellow-300 hover:border-yellow-500",
+          },
+          {
+            label: "Confirmed",
+            value: stats.confirmed,
+            color: "border-green-300 hover:border-green-500",
+          },
+          {
+            label: "Completed",
+            value: stats.completed,
+            color: "border-gray-300 hover:border-gray-500",
+          },
+        ].map((stat) => (
+          <Card
+            key={stat.label}
+            className={`border-2 transition-colors ${stat.color}`}
+          >
+            <CardContent className="flex flex-col items-center justify-center p-6">
+              <span className="text-3xl font-bold">{stat.value}</span>
+              <span className="text-sm text-muted-foreground">
+                {stat.label}
+              </span>
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Search + Filter */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="relative w-full md:w-1/2">
+          <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search appointments..." className="pl-8" />
+        </div>
+        <Button variant="outline" className="flex items-center gap-2">
+          <Filter className="h-4 w-4" /> Filter
+        </Button>
+      </div>
+
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Calendar */}
+        <Card className="md:col-span-1">
+          <CardHeader>
+            <CardTitle>
+              {date?.toLocaleString("default", {
+                month: "long",
+                year: "numeric",
+              })}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              className="rounded-md border"
+            />
+          </CardContent>
+        </Card>
+
+        {/* Appointment Cards */}
+        <div className="md:col-span-2 space-y-6">
+          {appointments.map((appointment) => {
+            const effectiveStatus = getEffectiveStatus(appointment)
+            return (
+              <Card
+                key={appointment.id}
+                className="hover:shadow-md transition"
+              >
+                <CardContent className="flex flex-col gap-4 p-6">
+                  {/* Header Row */}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-lg">
+                        {appointment.exhibitorName}
+                      </h3>
+                      <div className="flex items-center text-sm text-muted-foreground gap-2">
+                        <Building2 className="h-4 w-4" />{" "}
+                        {appointment.exhibitorCompany}
+                      </div>
+                      <div className="flex items-center text-sm text-muted-foreground gap-2">
+                        <Mail className="h-4 w-4" />{" "}
+                        {appointment.exhibitorEmail}
+                      </div>
+                      {appointment.exhibitorPhone && (
+                        <div className="flex items-center text-sm text-muted-foreground gap-2">
+                          <Phone className="h-4 w-4" />{" "}
+                          {appointment.exhibitorPhone}
+                        </div>
+                      )}
+                      <div className="flex items-center text-sm text-muted-foreground gap-2">
+                        <CalendarDays className="h-4 w-4" />{" "}
+                        {formatDateTime(appointment.scheduledAt).date} –{" "}
+                        {formatDateTime(appointment.scheduledAt).time}
+                      </div>
+                    </div>
+                    {(effectiveStatus === "pending" ||
+                      effectiveStatus === "confirmed") && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => cancelAppointment(appointment.id)}
+                      >
+                        <Trash2 className="h-5 w-5 text-red-500" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Notes */}
+                  {appointment.notes && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm text-gray-700">
+                        {appointment.notes}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Status */}
+                  <div className="flex gap-2">
+                    <Badge variant="outline" className="capitalize">
+                      {effectiveStatus}
+                    </Badge>
+                    {appointment.boothNumber && (
+                      <Badge variant="outline">
+                        Booth {appointment.boothNumber}
+                      </Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
