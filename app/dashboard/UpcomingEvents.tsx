@@ -19,18 +19,27 @@ export function UpcomingEvents({ events, userId, loading }: UpcomingEventsProps)
     )
   }
 
-  if (!events || events.length === 0) {
-    return <p className="text-gray-500">No upcoming events.</p>
+  const upcoming = events.filter(e => new Date(e.startDate) > new Date())
+
+  if (upcoming.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">No upcoming events.</p>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-4">
-      {events.map((event) => (
+      {upcoming.map((event) => (
         <div key={event.id} className="p-4 border rounded-lg shadow-sm bg-green-50">
           <h3 className="font-semibold">{event.title}</h3>
-          <p className="text-sm text-gray-600">{event.shortDescription}</p>
+          {event.shortDescription && (
+            <p className="text-sm text-gray-600">{event.shortDescription}</p>
+          )}
           <p className="text-xs text-gray-500">
-            {event.location} • {event.startDate}
+            {event.location || "No location"} •{" "}
+            {new Date(event.startDate).toLocaleDateString()}
           </p>
         </div>
       ))}

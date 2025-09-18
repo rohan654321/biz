@@ -19,6 +19,7 @@ import {
   SidebarIcon,
   User,
   Bell,
+  Store,
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
@@ -34,7 +35,6 @@ import { PastEvents } from "./PastEvents"
 import { SavedEvents } from "./SavedEvents"
 import { UpcomingEvents } from "./UpcomingEvents"
 import { MyAppointments } from "./my-appointments"
-// import { SidebarHeader, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,67 +42,29 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ExhibitorAppointments } from "./AllExhibitors"
 import { Favourites } from "./Favourites"
 import { Recommendations } from "./Recommendations"
+import RecommendedEvents from "./recommended-events"
+import Schedule from "./Schedule"
+import VenueMap from "./venueMap"
 
 interface UserDashboardProps {
   userId: string
 }
 
-interface OrganizerData {
-  id: string
-  name: string
-  email: string
-  phone: string
-  location: string
-  website: string
-  description: string
-  avatar: string
-  totalEvents: number
-  activeEvents: number
-  totalAttendees: number
-  totalRevenue: number
-  founded: string
-  company: string
-  teamSize: string
-  headquarters: string
-  specialties: string[]
-  achievements: string[]
-  certifications: string[]
-}
-
 export function UserDashboard({ userId }: UserDashboardProps) {
-  const sidebarGroups = [
-    {
-      id: "main",
-      label: "Main",
-      items: [
-        {
-          title: "Dashboard",
-          icon: LayoutDashboard,
-          id: "dashboard",
-        },
-        {
-          title: "My Info",
-          icon: User,
-          id: "info",
-        },
-      ],
-    },
-  ]
   const { data: session, status } = useSession()
   const router = useRouter()
   const { toast } = useToast()
 
   const [activeSection, setActiveSection] = useState("profile")
-  const [expandedGroups, setExpandedGroups] = useState<string[]>([])
-  const [organizerData, setOrganizerData] = useState<OrganizerData | null>(null)
   const [openMenus, setOpenMenus] = useState<string[]>(["dashboard"])
   const [userData, setUserData] = useState<UserData | null>(null)
+  const [userInterests, setUserInterests] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [interestedEvents, setInterestedEvents] = useState<any[]>([])
 
   useEffect(() => {
     if (status === "loading") return
@@ -111,6 +73,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       return
     }
     fetchUserData()
+    fetchInterestedEvents()
   }, [status])
 
   const fetchUserData = async () => {
@@ -121,11 +84,39 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       if (!res.ok) throw new Error("Failed to load user")
       const data = await res.json()
       setUserData(data.user)
+      setUserInterests(data.user.interests || [])
     } catch (err) {
       setError("Error loading user data")
     } finally {
       setLoading(false)
     }
+  }
+
+  const fetchInterestedEvents = async () => {
+    try {
+      const response = await fetch(`/api/users/${userId}/interested-events`)
+      if (!response.ok) throw new Error("Failed to fetch interested events")
+      const data = await response.json()
+      setInterestedEvents(data.events || [])
+    } catch (err) {
+      console.error("Error fetching interested events:", err)
+    }
+  }
+
+  const handleProfileUpdate = (updatedUser: Partial<UserData>) => {
+    setUserData((prev) => {
+      if (!prev) return updatedUser as UserData
+      return { ...prev, ...updatedUser }
+    })
+
+    if (updatedUser.interests) {
+      setUserInterests(updatedUser.interests)
+    }
+
+    toast({
+      title: "Profile Updated",
+      description: "Your profile has been successfully updated.",
+    })
   }
 
   const toggleMenu = (menu: string) => {
@@ -141,31 +132,39 @@ export function UserDashboard({ userId }: UserDashboardProps) {
     }
     switch (activeSection) {
       case "profile":
-        return <ProfileSection userData={userData!} onUpdate={() => { }} />
+        return <ProfileSection userData={userData!} onUpdate={handleProfileUpdate} organizerId={""} />
       case "events":
         return <EventsSection userId={userId} />
       case "past-events":
         return <PastEvents userId={userId} />
       case "wishlist":
         return <SavedEvents userId={userId} />
-      case "passes":
-        return <UpcomingEvents userId={userId} events={[]} />
+      case "upcoming-events":
+        return <UpcomingEvents events={interestedEvents} userId={userId} />
+      case "my-appointments":
+        return <MyAppointments userId={userId} />
+      case "schedule":
+        return <Schedule userId={userId} />
+      case "favourites":
+        return <Favourites />
+      case "recommended-events":
+        return <RecommendedEvents userId={userId} interests={userInterests} />
+      case "recommendations":
+        return <Recommendations />
       case "connections":
         return <ConnectionsSection userId={userId} />
       case "messages":
         return <MessagesSection organizerId={userId} />
       case "settings":
-        return <SettingsSection userData={userData!} onUpdate={() => { }} />
+        return <SettingsSection userData={userData!} onUpdate={handleProfileUpdate} />
       case "travel":
-        return <TravelAccommodation/>
+        return <TravelAccommodation />
+      case "venue-map":
+        return <VenueMap mapUrl="https://www.google.com/maps/embed?pb=!1m18!..." />
       default:
         return <p>Select a section</p>
     }
   }
-
-  // const toggleGroup = (groupId: string) => {
-  //   setExpandedGroups((prev) => (prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]))
-  // }
 
   if (status === "loading") {
     return (
@@ -178,9 +177,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside
-        className={`${isSidebarCollapsed ? "w-16" : "w-64"} bg-white border-r flex flex-col justify-between transition-all duration-300`}
-      >
+      <aside className={`${isSidebarCollapsed ? "w-16" : "w-64"} bg-white border-r flex flex-col justify-between transition-all duration-300`}>
         <div>
           {/* Profile Header */}
           <div className="flex items-center gap-3 p-4 border-b">
@@ -205,10 +202,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
           <nav className="p-4 text-sm space-y-2">
             {/* Dashboard */}
             <div>
-              <button
-                className="flex items-center justify-between w-full py-2 font-medium"
-                onClick={() => toggleMenu("dashboard")}
-              >
+              <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("dashboard")}>
                 <span className="flex items-center gap-2">
                   <LayoutDashboard size={16} />
                   {!isSidebarCollapsed && "Dashboard"}
@@ -216,7 +210,6 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                 {!isSidebarCollapsed &&
                   (openMenus.includes("dashboard") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
               </button>
-
               {openMenus.includes("dashboard") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
                   <li
@@ -235,10 +228,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
 
             {/* Event */}
             <div>
-              <button
-                className="flex items-center justify-between w-full py-2 font-medium"
-                onClick={() => toggleMenu("event")}
-              >
+              <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("event")}>
                 <span className="flex items-center gap-2">
                   <Calendar size={16} />
                   {!isSidebarCollapsed && "Event"}
@@ -248,70 +238,18 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               </button>
               {openMenus.includes("event") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li
-                    onClick={() => setActiveSection("events")}
-                    className={`cursor-pointer pl-3 py-1 border-l-4 ${
-                      activeSection === "events"
-                        ? "border-blue-500 text-blue-600 font-medium"
-                        : "border-transparent hover:text-blue-600"
-                    }`}
-                  >
-                    Registered Events
-                  </li>
-
-                  <li
-                    onClick={() => setActiveSection("past-events")}
-                    className={`cursor-pointer pl-3 py-1 border-l-4 ${
-                      activeSection === "past-events"
-                        ? "border-blue-500 text-blue-600 font-medium"
-                        : "border-transparent hover:text-blue-600"
-                    }`}
-                  >
-                    Past Events Attended
-                  </li>
-
-                  <li
-                    onClick={() => setActiveSection("wishlist")}
-                    className={`cursor-pointer pl-3 py-1 border-l-4 ${
-                      activeSection === "wishlist"
-                        ? "border-blue-500 text-blue-600 font-medium"
-                        : "border-transparent hover:text-blue-600"
-                    }`}
-                  >
-                    Wishlist
-                  </li>
-
-                  <li
-                    onClick={() => setActiveSection("passes")}
-                    className={`cursor-pointer pl-3 py-1 border-l-4 ${
-                      activeSection === "passes"
-                        ? "border-blue-500 text-blue-600 font-medium"
-                        : "border-transparent hover:text-blue-600"
-                    }`}
-                  >
-                    Passes
-                  </li>
-
-                  <li
-                    onClick={() => setActiveSection("qr")}
-                    className={`cursor-pointer pl-3 py-1 border-l-4 ${
-                      activeSection === "qr"
-                        ? "border-blue-500 text-blue-600 font-medium"
-                        : "border-transparent hover:text-blue-600"
-                    }`}
-                  >
-                    Badge / QR Code
-                  </li>
+                  <li onClick={() => setActiveSection("events")} className={menuItemClass(activeSection, "events")}>Registered Events</li>
+                  <li onClick={() => setActiveSection("past-events")} className={menuItemClass(activeSection, "past-events")}>Past Events</li>
+                  <li onClick={() => setActiveSection("wishlist")} className={menuItemClass(activeSection, "wishlist")}>Wishlist</li>
+                  <li onClick={() => setActiveSection("upcoming-events")} className={menuItemClass(activeSection, "upcoming-events")}>Upcoming Events</li>
+                  <li onClick={() => setActiveSection("recommended-events")} className={menuItemClass(activeSection, "recommended-events")}>Recommended Events</li>
                 </ul>
               )}
             </div>
 
             {/* Networking */}
             <div>
-              <button
-                className="flex items-center justify-between w-full py-2 font-medium"
-                onClick={() => toggleMenu("networking")}
-              >
+              <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("networking")}>
                 <span className="flex items-center gap-2">
                   <Network size={16} />
                   {!isSidebarCollapsed && "Networking"}
@@ -321,104 +259,34 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               </button>
               {openMenus.includes("networking") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li
-                    onClick={() => setActiveSection("connections")}
-                    className={`cursor-pointer pl-3 py-1 border-l-4 ${
-                      activeSection === "connections"
-                        ? "border-blue-500 text-blue-600 font-medium"
-                        : "border-transparent hover:text-blue-600"
-                    }`}
-                  >
-                    My Connections
-                  </li>
-                  <li
-                    onClick={() => setActiveSection("appointments")}
-                    className={`cursor-pointer pl-3 py-1 border-l-4 ${
-                      activeSection === "appointments"
-                        ? "border-blue-500 text-blue-600 font-medium"
-                        : "border-transparent hover:text-blue-600"
-                    }`}
-                  >
-                    My Appointments
-                  </li>
+                  <li onClick={() => setActiveSection("connections")} className={menuItemClass(activeSection, "connections")}>My Connections</li>
+                  <li onClick={() => setActiveSection("messages")} className={menuItemClass(activeSection, "messages")}>Messages</li>
                 </ul>
               )}
             </div>
-                      {/* Exhibitor */}
-<div>
-  <button
-    className="flex items-center justify-between w-full py-2 font-medium"
-    onClick={() => toggleMenu("exhibitor")}
-  >
-    <span className="flex items-center gap-2">
-      <Store size={16} /> 
-      {!isSidebarCollapsed && "Exhibitor"}
-    </span>
-    {!isSidebarCollapsed && (
-      openMenus.includes("exhibitor") ? <ChevronDown size={16} /> : <ChevronRight size={16} />
-    )}
-  </button>
-  {openMenus.includes("exhibitor") && !isSidebarCollapsed && (
-    <ul className="ml-2 mt-2 space-y-2 border-l">
-      <li
-        onClick={() => setActiveSection("all-exhibitors")}
-        className={`cursor-pointer pl-3 py-1 border-l-4 ${
-          activeSection === "all-exhibitors"
-            ? "border-blue-500 text-blue-600 font-medium"
-            : "border-transparent hover:text-blue-600"
-        }`}
-      >
-        Exhibitor Appointments
-      </li>
 
-      <li
-        onClick={() => setActiveSection("favourites")}
-        className={`cursor-pointer pl-3 py-1 border-l-4 ${
-          activeSection === "favourites"
-            ? "border-blue-500 text-blue-600 font-medium"
-            : "border-transparent hover:text-blue-600"
-        }`}
-      >
-        Favourites
-      </li>
-
-      <li
-        onClick={() => setActiveSection("recommendations")}
-        className={`cursor-pointer pl-3 py-1 border-l-4 ${
-          activeSection === "recommendations"
-            ? "border-blue-500 text-blue-600 font-medium"
-            : "border-transparent hover:text-blue-600"
-        }`}
-      >
-        Recommendations
-      </li>
-    </ul>
-  )}
-</div>
-
-            
-
-            {/* Messages */}
+            {/* Exhibitor */}
             <div>
-              <button
-                onClick={() => setActiveSection("messages")}
-                className={`flex items-center gap-2 w-full py-2 font-medium ${
-                  activeSection === "messages"
-                    ? "border-blue-500 text-blue-600 font-medium"
-                    : "border-transparent hover:text-blue-600"
-                }`}
-              >
-                <MessageSquare size={16} />
-                {!isSidebarCollapsed && "Messages"}
+              <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("exhibitor")}>
+                <span className="flex items-center gap-2">
+                  <Store size={16} />
+                  {!isSidebarCollapsed && "Exhibitor"}
+                </span>
+                {!isSidebarCollapsed &&
+                  (openMenus.includes("exhibitor") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
               </button>
+              {openMenus.includes("exhibitor") && !isSidebarCollapsed && (
+                <ul className="ml-2 mt-2 space-y-2 border-l">
+                  <li onClick={() => setActiveSection("my-appointments")} className={menuItemClass(activeSection, "my-appointments")}>Exhibitor Appointments</li>
+                  <li onClick={() => setActiveSection("favourites")} className={menuItemClass(activeSection, "favourites")}>Favourites</li>
+                  <li onClick={() => setActiveSection("recommendations")} className={menuItemClass(activeSection, "recommendations")}>Recommendations</li>
+                </ul>
+              )}
             </div>
 
             {/* Event Planning Tools */}
             <div>
-              <button
-                className="flex items-center justify-between w-full py-2 font-medium"
-                onClick={() => toggleMenu("tools")}
-              >
+              <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("tools")}>
                 <span className="flex items-center gap-2">
                   <List size={16} />
                   {!isSidebarCollapsed && "Event Planning Tools"}
@@ -428,16 +296,9 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               </button>
               {openMenus.includes("tools") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li
-                    onClick={() => setActiveSection("travel")}
-                    className={`cursor-pointer pl-3 py-1 border-l-4 ${
-                      activeSection === "travel"
-                        ? "border-blue-500 text-blue-600 font-medium"
-                        : "border-transparent hover:text-blue-600"
-                    }`}
-                  >
-                    Travel & Accommodation
-                  </li>
+                  <li onClick={() => setActiveSection("travel")} className={menuItemClass(activeSection, "travel")}>Travel & Accommodation</li>
+                  <li onClick={() => setActiveSection("venue-map")} className={menuItemClass(activeSection, "venue-map")}>Venue Map</li>
+                  <li onClick={() => setActiveSection("schedule")} className={menuItemClass(activeSection, "schedule")}>Schedule</li>
                 </ul>
               )}
             </div>
@@ -447,9 +308,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               <button
                 onClick={() => setActiveSection("settings")}
                 className={`flex items-center gap-2 w-full py-2 font-medium ${
-                  activeSection === "settings"
-                    ? "border-blue-500 text-blue-600 font-medium"
-                    : "border-transparent hover:text-blue-600"
+                  activeSection === "settings" ? "text-blue-600 font-medium" : "hover:text-blue-600"
                 }`}
               >
                 <Settings size={16} />
@@ -459,59 +318,33 @@ export function UserDashboard({ userId }: UserDashboardProps) {
           </nav>
         </div>
 
-        {/* Collapse Toggle and Logout */}
+        {/* Collapse & Logout */}
         <div className="p-4 space-y-2">
-          <Button
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="w-full flex items-center gap-2 mb-2"
-            variant="outline"
-          >
+          <Button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="w-full flex items-center gap-2 mb-2" variant="outline">
             <SidebarIcon size={16} />
             {!isSidebarCollapsed && "Collapse"}
           </Button>
-          <Button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="w-full flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white"
-          >
+          <Button onClick={() => signOut({ callbackUrl: "/login" })} className="w-full flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white">
             <LogOut size={16} />
             {!isSidebarCollapsed && "Logout"}
           </Button>
         </div>
       </aside>
 
-      {/* Main content with top navigation */}
+      {/* Main content with top bar */}
       <div className="flex-1 flex flex-col">
-        {/* Top Navigation Bar */}
+        {/* Top Navigation */}
         <header className="flex h-16 items-center gap-2 border-b px-4 bg-white">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="md:hidden"
-          >
+          <Button variant="ghost" size="sm" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="md:hidden">
             <SidebarIcon className="w-4 h-4" />
           </Button>
-          
           <div className="flex-1">
-            <h1 className="text-xl font-semibold">
-              {activeSection === "profile" && "My Profile"}
-              {activeSection === "events" && "Registered Events"}
-              {activeSection === "past-events" && "Past Events Attended"}
-              {activeSection === "wishlist" && "Wishlist"}
-              {activeSection === "passes" && "My Passes"}
-              {activeSection === "connections" && "My Connections"}
-              {activeSection === "messages" && "Messages"}
-              {activeSection === "settings" && "Settings"}
-              {activeSection === "travel" && "Travel & Accommodation"}
-              {activeSection === "qr" && "Badge / QR Code"}
-            </h1>
+            <h1 className="text-xl font-semibold capitalize">{activeSection.replace("-", " ")}</h1>
           </div>
-          
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm">
               <Bell className="w-4 h-4" />
             </Button>
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -543,9 +376,16 @@ export function UserDashboard({ userId }: UserDashboardProps) {
           </div>
         </header>
 
-        {/* Main content */}
+        {/* Main Content */}
         <main className="flex-1 p-6 overflow-auto">{renderContent()}</main>
       </div>
     </div>
   )
+}
+
+// helper for menu items
+function menuItemClass(activeSection: string, id: string) {
+  return `cursor-pointer pl-3 py-1 border-l-4 ${
+    activeSection === id ? "border-blue-500 text-blue-600 font-medium" : "border-transparent hover:text-blue-600"
+  }`
 }

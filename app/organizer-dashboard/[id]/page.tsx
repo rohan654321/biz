@@ -77,6 +77,8 @@ import ActivePromotions from "../ActivePromotion"
 import { ExhibitorManualProfessional } from "../exhibitor-manual/exhibitor-manual"
 import SpeakerSessionsTable from "../SpeakerSessionsTable"
 import ExhibitorsForEvent from "../ExhibitorsForEvent"
+import FeedbackManagement from "../FeedbackManagement"
+import FeedbackReplyManagement from "../FeedbackReplyManagement"
 
 interface OrganizerData {
   id: string

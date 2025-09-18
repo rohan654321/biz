@@ -10,16 +10,17 @@ interface PastEventsProps {
 }
 
 export function PastEvents({ userId }: PastEventsProps) {
-    const { data: session, status } = useSession()
+  const { data: session, status } = useSession()
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
+  const [pastEvents, setPastEvents] = useState<Event[]>([])
 
-   const targetUserId = userId || session?.user?.id
+  const targetUserId = userId || session?.user?.id
 
   useEffect(() => {
-    if (!userId) return
+    if (!targetUserId) return
     fetchPastEvents()
-  }, [userId])
+  }, [targetUserId])
 
   const fetchPastEvents = async () => {
     try {
@@ -27,10 +28,18 @@ export function PastEvents({ userId }: PastEventsProps) {
       const response = await fetch(`/api/users/${targetUserId}/interested-events`)
       if (!response.ok) throw new Error("Failed to fetch past events")
       const data = await response.json()
+      
+      // Filter for past events only
+      const pastEventsData = (data.events || []).filter((event: Event) => 
+        new Date(event.startDate) < new Date()
+      )
+      
       setEvents(data.events || [])
+      setPastEvents(pastEventsData)
     } catch (err) {
       console.error("Error fetching past events:", err)
       setEvents([])
+      setPastEvents([])
     } finally {
       setLoading(false)
     }
@@ -45,21 +54,23 @@ export function PastEvents({ userId }: PastEventsProps) {
     )
   }
 
-  if (!events.length) {
+  if (!pastEvents.length) {
     return <p className="text-gray-500">No past events.</p>
   }
 
   return (
     <div className="space-y-4">
-      {events.map((event) => (
+      {pastEvents.map((event) => (
         <div
           key={event.id}
           className="p-4 border rounded-lg shadow-sm bg-gray-100"
         >
           <h3 className="font-semibold">{event.title}</h3>
-          <p className="text-sm text-gray-600">{event.shortDescription}</p>
+          {event.shortDescription && (
+            <p className="text-sm text-gray-600">{event.shortDescription}</p>
+          )}
           <p className="text-xs text-gray-500">
-            {event.location} • {new Date(event.startDate).toLocaleDateString()}
+            {event.location || "No location"} • {new Date(event.startDate).toLocaleDateString()}
           </p>
         </div>
       ))}

@@ -3,15 +3,19 @@ import { authOptions } from "@/lib/auth-options"
 import { redirect } from "next/navigation"
 import { UserDashboard } from "../user-dashboard"
 
-export default async function DashboardPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+interface DashboardPageProps {
+  params: { id: string }
+}
+
+export default async function DashboardPage({ params }: DashboardPageProps) {
+  const { id } = await params // ✅ Must await in Next.js App Router
   const session = await getServerSession(authOptions)
 
   if (!session) {
     redirect("/login")
   }
 
-  // Check if user is trying to access their own dashboard or if they're admin
+  // Only allow self or attendee
   if (session.user.id !== id && session.user.role !== "ATTENDEE") {
     redirect("/login")
   }

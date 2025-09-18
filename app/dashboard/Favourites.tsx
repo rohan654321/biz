@@ -41,7 +41,7 @@ export function Favourites() {
           interested: 518,
           going: 220,
           rating: 4.5,
-          image: "/fitness.jpg",
+          image: "/image/download2.jpg",
           isFavorite: true,
         },
       ]

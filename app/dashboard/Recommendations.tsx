@@ -22,7 +22,7 @@ export function Recommendations() {
       name: "Ramesh S",
       industry: "Mobile Technology",
       location: "Chennai, India",
-      image: "/profile.png", // Replace with your image path
+      image: "/image/Ellipse 72.png", // Replace with your image path
     }))
     setPeople(mockPeople)
   }, [])
