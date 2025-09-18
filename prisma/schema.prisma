@@ -32,6 +32,7 @@ model User {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
+
   // Profile Information
   bio               String?
   website           String?
@@ -42,6 +43,10 @@ model User {
   location          String?
   timezone          String?
   language          String   @default("en")
+  interests         String[] @default([])
+
+
+  
 
   // Organizer-specific fields
   organizationName  String?
@@ -52,6 +57,7 @@ model User {
   specialties       String[]
   achievements      String[]
   certifications    String[]
+  
   
   // Business Information
   businessEmail     String?
