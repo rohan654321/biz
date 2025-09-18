@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { UserDashboard } from "../user-dashboard"
 
 interface DashboardPageProps {
-  params: { id: string }
+  params:Promise<{ id: string }>
 }
 
 export default async function DashboardPage({ params }: DashboardPageProps) {

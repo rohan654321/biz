@@ -238,40 +238,67 @@ export function EventsSection({ userId }: EventsSectionProps) {
           <TabsTrigger value="all">All Events ({filteredEvents.length})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all" className="space-y-4">
+        <TabsContent value="all" className="space-y-8">
           {filteredEvents.length > 0 ? (
-            filteredEvents.map((event) => (
-              <Card key={event.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <h3 className="text-lg font-semibold">{event.title}</h3>
-                        <Badge variant="outline">{event.type}</Badge>
+            <div className="relative border-l-2 border-gray-200 ml-6">
+              {filteredEvents.map((event) => {
+                const defaultImage = "/image/download2.jpg";
+
+                return (
+                  <div key={event.id} className="mb-10 ml-6 relative">
+                    {/* Timeline Dot */}
+                    <span className="absolute -left-[13px] flex items-center justify-center w-5 h-5 bg-blue-600 rounded-full ring-4 ring-white"></span>
+
+                    {/* Date Heading */}
+                    <p className="text-sm font-semibold text-gray-700 mb-3">
+                      {formatDate(event.startDate)} – {formatDate(event.endDate)}
+                    </p>
+
+                    {/* Event Card */}
+                    <Card className="flex w-full border border-gray-200 bg-[#FFF6F6] rounded-lg hover:shadow-md transition-shadow">
+                      {/* Image */}
+                      <div className="flex grid-2">
+                      <div className="w-40 h-28 flex-shrink-0">
+                        <img
+                          src={event.thumbnailImage || defaultImage}
+                          alt={event.title}
+                          className="w-full h-full object-cover rounded-l-lg"
+                          onError={(e) => {
+                            const target = e.currentTarget as HTMLImageElement;
+                            if (target.src !== window.location.origin + defaultImage) {
+                              target.src = defaultImage;
+                            }
+                          }}
+                        />
                       </div>
-                      {event.shortDescription && (
-                        <p className="text-gray-600 mb-3 text-sm">{event.shortDescription}</p>
-                      )}
-                      <div className="flex items-center gap-4 text-gray-600 text-sm mb-2 flex-wrap">
-                        <div className="flex items-center gap-1">
-                          <CalendarIcon className="w-4 h-4" />
-                          {formatDate(event.startDate)} - {formatDate(event.endDate)}
-                        </div>
-                        {(event.location || event.city) && (
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            {event.location || `${event.city}${event.state ? `, ${event.state}` : ""}`}
-                          </div>
+
+                      {/* Event Info */}
+                      <div className="flex flex-col justify-center p-4 flex-1">
+                        <h3
+                          onClick={() => router.push(`/event/${event.id}`)}
+                          className="text-base font-semibold text-blue-700 hover:underline cursor-pointer"
+                        >
+                          {event.title}
+                        </h3>
+                        <p className="text-xs text-gray-600">
+                          {formatDate(event.startDate)} – {formatDate(event.endDate)}
+                        </p>
+                        <p className="text-xs text-blue-600">
+                          {event.location || `${event.city}${event.state ? `, ${event.state}` : ""}`}
+                        </p>
+                        {event.description && (
+                          <p className="text-xs text-gray-700 mt-1 line-clamp-1">
+                            {event.description}
+                          </p>
                         )}
                       </div>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => router.push(`/event/${event.id}`)}>
-                      View Event
-                    </Button>
+                      </div>
+                    </Card>
+
                   </div>
-                </CardContent>
-              </Card>
-            ))
+                );
+              })}
+            </div>
           ) : (
             <Card>
               <CardContent className="p-6 text-center">
@@ -285,6 +312,9 @@ export function EventsSection({ userId }: EventsSectionProps) {
             </Card>
           )}
         </TabsContent>
+
+
+
       </Tabs>
     </div>
   )
