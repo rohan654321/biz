@@ -8,9 +8,23 @@ import { Calendar } from "@/components/ui/calendar"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
-import { Clock, CalendarIcon, CheckCircle, X, Eye, Phone, Mail, Building } from "lucide-react"
+import {
+  Clock,
+  CalendarIcon,
+  CheckCircle,
+  X,
+  Eye,
+  Phone,
+  Mail,
+  Building,
+  User,
+  MapPin,
+  MessageSquare,
+} from "lucide-react"
 
 interface AppointmentSchedulingProps {
   exhibitorId: string
@@ -43,6 +57,7 @@ export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedu
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [filterStatus, setFilterStatus] = useState("ALL")
 
   useEffect(() => {
     if (exhibitorId && exhibitorId !== "undefined") {
@@ -55,7 +70,7 @@ export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedu
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/exhibitors/${exhibitorId}/appointments`, {
+      const response = await fetch(`/api/appointments?exhibitorId=${exhibitorId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -83,7 +98,7 @@ export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedu
 
   const updateAppointment = async (appointmentId: string, updates: Partial<Appointment>) => {
     try {
-      const response = await fetch(`/api/exhibitors/${exhibitorId}/appointments`, {
+      const response = await fetch(`/api/appointments`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -104,6 +119,9 @@ export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedu
         title: "Success",
         description: "Appointment updated successfully!",
       })
+
+      // Refresh appointments to get latest data
+      fetchAppointments()
     } catch (err) {
       console.error("Error updating appointment:", err)
       toast({
@@ -142,6 +160,10 @@ export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedu
     }
   }
 
+  const filteredAppointments = appointments.filter(
+    (appointment) => filterStatus === "ALL" || appointment.status === filterStatus,
+  )
+
   const AppointmentCard = ({ appointment }: { appointment: Appointment }) => (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-6">
@@ -149,7 +171,7 @@ export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedu
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
               <h3 className="font-semibold text-lg">{appointment.visitorName}</h3>
-              <Badge className={getStatusColor(appointment.status)}>{appointment.status}</Badge>
+              <Badge className={`${getStatusColor(appointment.status)} text-white`}>{appointment.status}</Badge>
               <Badge variant="outline" className={getPriorityColor(appointment.priority)}>
                 {appointment.priority}
               </Badge>
@@ -173,6 +195,12 @@ export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedu
                 <CalendarIcon className="w-4 h-4" />
                 {appointment.requestedDate} at {appointment.requestedTime} ({appointment.duration})
               </div>
+              {appointment.location && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  {appointment.location}
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -184,27 +212,33 @@ export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedu
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Appointment Details - {appointment.visitorName}</DialogTitle>
+                  <DialogTitle className="flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    Appointment Details - {appointment.visitorName}
+                  </DialogTitle>
                 </DialogHeader>
                 {selectedAppointment && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium">Visitor Profile Views</label>
+                        <Label className="text-sm font-medium">Visitor Profile Views</Label>
                         <p className="text-gray-600">{selectedAppointment.profileViews} views</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium">Previous Meetings</label>
+                        <Label className="text-sm font-medium">Previous Meetings</Label>
                         <p className="text-gray-600">{selectedAppointment.previousMeetings} meetings</p>
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-medium">Meeting Purpose</label>
+                      <Label className="text-sm font-medium">Meeting Purpose</Label>
                       <p className="text-gray-600 mt-1">{selectedAppointment.purpose}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium">Meeting Notes</label>
+                      <Label htmlFor="notes" className="text-sm font-medium">
+                        Meeting Notes
+                      </Label>
                       <Textarea
+                        id="notes"
                         placeholder="Add meeting notes or preparation points..."
                         className="mt-1"
                         value={selectedAppointment.notes || ""}
@@ -213,12 +247,12 @@ export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedu
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium">Status</label>
+                        <Label className="text-sm font-medium">Status</Label>
                         <Select
                           value={selectedAppointment.status}
                           onValueChange={(value) => setSelectedAppointment({ ...selectedAppointment, status: value })}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="mt-1">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -230,10 +264,16 @@ export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedu
                         </Select>
                       </div>
                       <div>
-                        <label className="text-sm font-medium">Reschedule Date</label>
-                        <input type="date" className="w-full p-2 border rounded" />
+                        <Label className="text-sm font-medium">Reschedule Date</Label>
+                        <Input type="date" className="mt-1" />
                       </div>
                     </div>
+                    {selectedAppointment.meetingLink && (
+                      <div>
+                        <Label className="text-sm font-medium">Meeting Link</Label>
+                        <Input value={selectedAppointment.meetingLink} className="mt-1" readOnly />
+                      </div>
+                    )}
                     <div className="flex justify-end gap-3">
                       <Button variant="outline">Cancel</Button>
                       <Button
@@ -243,6 +283,7 @@ export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedu
                               status: selectedAppointment.status,
                               notes: selectedAppointment.notes,
                             })
+                            setSelectedAppointment(null)
                           }
                         }}
                       >
@@ -312,6 +353,10 @@ export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedu
                 Reschedule
               </Button>
             )}
+            <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
+              <MessageSquare className="w-4 h-4" />
+              Message
+            </Button>
           </div>
         </div>
       </CardContent>
@@ -322,6 +367,11 @@ export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedu
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-64" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full" />
+          ))}
+        </div>
         <div className="space-y-4">
           <Skeleton className="h-48 w-full" />
           <Skeleton className="h-48 w-full" />
@@ -345,10 +395,24 @@ export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedu
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Visitor Appointment Scheduling</h1>
-        <Button className="flex items-center gap-2">
-          <CalendarIcon className="w-4 h-4" />
-          Calendar View
-        </Button>
+        <div className="flex items-center gap-3">
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Status</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+              <SelectItem value="COMPLETED">Completed</SelectItem>
+              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button className="flex items-center gap-2">
+            <CalendarIcon className="w-4 h-4" />
+            Calendar View
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -401,14 +465,20 @@ export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedu
 
         {/* Appointments List */}
         <div className="lg:col-span-2 space-y-4">
-          {appointments.length > 0 ? (
-            appointments.map((appointment) => <AppointmentCard key={appointment.id} appointment={appointment} />)
+          {filteredAppointments.length > 0 ? (
+            filteredAppointments.map((appointment) => (
+              <AppointmentCard key={appointment.id} appointment={appointment} />
+            ))
           ) : (
             <Card>
               <CardContent className="p-12 text-center">
                 <CalendarIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-600 mb-2">No appointments</h3>
-                <p className="text-gray-500">Appointment requests will appear here</p>
+                <p className="text-gray-500">
+                  {filterStatus === "ALL"
+                    ? "Appointment requests will appear here"
+                    : `No ${filterStatus.toLowerCase()} appointments found`}
+                </p>
               </CardContent>
             </Card>
           )}

@@ -47,8 +47,8 @@ import { signOut } from "next-auth/react"
 import VisitorBadgeSettings from "../Visitor-Badge-Settings"
 // import ExhibitorsForEvent from "../ExhibitorsForEvent"
 import ExhibitorsEventWise from "../ExhibitorsEventWise"
-// import ConferenceAgenda from "../ConferenceAgenda"
-// import CreateConferenceAgenda from "../create-conference-agenda"
+import ConferenceAgenda from "../ConferenceAgenda"
+import CreateConferenceAgenda from "../create-conference-agenda"
 import { ConnectionsSection } from "@/app/dashboard/connections-section"
 import {
   DropdownMenu,
@@ -386,21 +386,21 @@ export default function OrganizerDashboardPage() {
       ],
     },
     {
+  id: "feedback",
+  label: "Feedback",
+  items: [
+    {
+      title: "Feedback",
+      icon: MessageCircle,
       id: "feedback",
-      label: "Feedback",
-      items: [
-        {
-          title: "Feed Back",
-          icon: MessageCircle,
-          id: "feedback",
-        },
-        {
-          title: "Feed back reply",
-          icon: Reply,
-          id: "feedback-reply",
-        },
-      ],
     },
+    {
+      title: "Feedback Reply",
+      icon: Reply,
+      id: "feedback-reply",
+    },
+  ],
+},
     {
       id: "other",
       label: "Other",
@@ -565,11 +565,11 @@ export default function OrganizerDashboardPage() {
       case "speakers":
         return <SpeakerSessionsTable organizerId={organizerId} />
       case "feedback":
-        return <PlaceholderPage title="Feed Back" />
+       return <FeedbackManagement organizerId={organizerId} />
         case "connections":
         return <ConnectionsSection  userId={organizerId}/>
       case "feedback-reply":
-        return <PlaceholderPage title="Feed back reply" />
+         return <FeedbackReplyManagement organizerId={organizerId} />
       default:
         return <div>Select a section from the sidebar</div>
     }

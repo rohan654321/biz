@@ -142,6 +142,7 @@ export async function GET(request: NextRequest) {
       include: {
         exhibitor: {
           select: {
+            id: true,             // ✅ add this (actual User.id)
             firstName: true,
             lastName: true,
             company: true,
@@ -158,7 +159,7 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: {
-        createdAt: "desc", // ✅ newest first
+        createdAt: "desc",
       },
     })
 
@@ -169,7 +170,23 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ booths }, { status: 200 })
+    // ✅ transform response so frontend gets both booth + exhibitor user info
+    const formatted = booths.map((booth) => ({
+      id: booth.id,                 // booth id
+      boothId: booth.id,
+      company: booth.companyName,
+      description: booth.description,
+      boothNumber: booth.boothNumber,
+      status: booth.status,
+      totalCost: booth.totalCost,
+      spaceReference: booth.spaceReference,
+      // exhibitor info
+      name: `${booth.exhibitor?.firstName || ""} ${booth.exhibitor?.lastName || ""}`.trim(),
+      email: booth.exhibitor?.email,
+      userId: booth.exhibitor?.id,  // ✅ actual User.id
+    }))
+
+    return NextResponse.json({ booths: formatted }, { status: 200 })
   } catch (error) {
     console.error("[v0] Error fetching exhibitor booths:", error)
     return NextResponse.json(
@@ -178,4 +195,5 @@ export async function GET(request: NextRequest) {
     )
   }
 }
+
 
