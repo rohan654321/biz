@@ -190,12 +190,6 @@ const stats = useMemo(() => {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b pb-3">
-        <h2 className="text-2xl font-bold">My Appointments</h2>
-        <Badge variant="secondary">{stats.total} Total</Badge>
-      </div>
-
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
@@ -247,25 +241,7 @@ const stats = useMemo(() => {
 
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Calendar */}
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle>
-              {date?.toLocaleString("default", {
-                month: "long",
-                year: "numeric",
-              })}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              className="rounded-md border"
-            />
-          </CardContent>
-        </Card>
+
 
         {/* Appointment Cards */}
         <div className="md:col-span-2 space-y-6">

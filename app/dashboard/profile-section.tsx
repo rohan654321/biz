@@ -23,6 +23,8 @@ import {
   Calendar,
   CalendarDays,
   Loader2,
+  BriefcaseBusiness,
+  Building2,
 } from "lucide-react"
 import { DynamicCalendar } from "@/components/DynamicCalendar"
 import { UserData } from "@/types/user"
@@ -59,6 +61,7 @@ interface FormData {
   website: string
   company: string
   jobTitle: string
+  companyIndustry: string   // 👈 NEW
   linkedin: string
   twitter: string
   instagram: string
@@ -83,11 +86,13 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
     website: userData?.website || "",
     company: userData?.company || "",
     jobTitle: userData?.jobTitle || "",
+    companyIndustry: userData?.companyIndustry || "", // 👈 NEW
     linkedin: userData?.linkedin || "",
     twitter: userData?.twitter || "",
     instagram: userData?.instagram || "",
     interests: userData?.interests || [],
   }
+
 
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState<FormData>(initialFormData)
@@ -97,6 +102,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
   const [saveError, setSaveError] = useState<string | null>(null)
   const [localUserData, setLocalUserData] = useState<UserData>(userData)
   const [selectedInterests, setSelectedInterests] = useState<string[]>(userData?.interests || [])
+  const [displayedEvents, setDisplayedEvents] = useState<Event[]>([])
 
   // Filter events based on interests
   const filteredEvents = selectedInterests.length > 0
@@ -104,6 +110,38 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
       event.tags?.some((tag: string) => selectedInterests.includes(tag))
     )
     : events
+
+  // Shuffle function
+  const shuffleEvents = useCallback(() => {
+    if (filteredEvents.length <= 10) {
+      // If less than or equal to 10 events, show them all
+      setDisplayedEvents(filteredEvents)
+    } else {
+      // Shuffle and take 10 random events
+      const shuffled = [...filteredEvents].sort(() => Math.random() - 0.5)
+      setDisplayedEvents(shuffled.slice(0, 10))
+    }
+  }, [filteredEvents])
+
+
+  // Run on mount & when filteredEvents changes
+  useEffect(() => {
+    shuffleEvents()
+  }, [filteredEvents, shuffleEvents])
+
+  // Auto shuffle every 3 minutes
+  useEffect(() => {
+    if (filteredEvents.length > 10) {
+      const interval = setInterval(() => {
+        shuffleEvents()
+      }, 180000) // 3 minutes
+
+      return () => clearInterval(interval)
+    }
+  }, [filteredEvents, shuffleEvents])
+
+
+
 
   useEffect(() => {
     setLocalUserData(userData)
@@ -117,6 +155,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
       bio: localUserData?.bio || "",
       website: localUserData?.website || "",
       company: localUserData?.company || "",
+      companyIndustry: userData?.companyIndustry || "",
       jobTitle: localUserData?.jobTitle || "",
       linkedin: localUserData?.linkedin || "",
       twitter: localUserData?.twitter || "",
@@ -163,6 +202,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
       bio: localUserData?.bio || "",
       website: localUserData?.website || "",
       company: localUserData?.company || "",
+      companyIndustry: userData?.companyIndustry || "",
       jobTitle: localUserData?.jobTitle || "",
       linkedin: localUserData?.linkedin || "",
       twitter: localUserData?.twitter || "",
@@ -315,6 +355,17 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                         }
                       }}
                     >
+                      <div>
+                        <Label>Company Field</Label>
+                        <Input
+                          value={formData.companyIndustry}
+                          onChange={(e) =>
+                            setFormData({ ...formData, companyIndustry: e.target.value })
+                          }
+                          placeholder="e.g. Fintech, Education, Healthcare"
+                        />
+                      </div>
+
                       <SelectTrigger>
                         <SelectValue placeholder="Select interest" />
                       </SelectTrigger>
@@ -357,14 +408,24 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   <span className="ml-auto">{localUserData.jobTitle || "CEO & Co-Founder"}</span>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Building2 size={16} className="text-gray-500" />
+                  <span className="font-medium">Company</span>
+                  <span className="ml-auto">{localUserData.company || "N/A"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <BriefcaseBusiness size={16} className="text-gray-500" />
+                  <span className="font-medium">Industry</span>
+                  <span className="ml-auto">{localUserData.companyIndustry || "N/A"}</span>
+                </div>
+                <div className="flex items-center gap-2">
                   <UserIcon size={16} className="text-gray-500" />
                   <span className="font-medium">Interests</span>
                   <div className="ml-auto flex gap-2 flex-wrap">
                     {(localUserData.interests && localUserData.interests.length > 0
                       ? localUserData.interests
                       : ["Conference", "Automation"]).map((int, idx) => (
-                      <Badge key={idx} variant="secondary">{int}</Badge>
-                    ))}
+                        <Badge key={idx} variant="secondary">{int}</Badge>
+                      ))}
                   </div>
                 </div>
                 <div className="flex items-start gap-2 mt-4">
@@ -376,6 +437,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                         "The world's deposit sourcing has a commitment to reducing foreign prices at the Paris for Bagnette Collection Centre in Paris, France."}
                     </p>
                   </div>
+
                 </div>
               </>
             )}
@@ -411,20 +473,28 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
 
           {/* Calendar + Events */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <DynamicCalendar />
-            <Card>
+            {/* Calendar */}
+            <div className="h-[500px]"> {/* 👈 Set fixed height */}
+              <DynamicCalendar className="h-full w-full" /> {/* 👈 Stretch calendar */}
+            </div>
+
+            {/* Interested Events */}
+            <Card className="h-[500px] flex flex-col"> {/* 👈 Same height as calendar */}
               <CardHeader className="pb-3">
                 <CardTitle>Interested Events</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="flex-1 overflow-y-auto space-y-4">
                 {loadingEvents ? (
                   <p className="text-gray-500 text-sm">Loading events...</p>
-                ) : filteredEvents.length === 0 ? (
+                ) : displayedEvents.length === 0 ? (
                   <p className="text-gray-500 text-sm">No events found</p>
                 ) : (
-                  filteredEvents.map((event) => (
-                    <Link key={event.id} href={`/event/${event.id}`}
-                      className="block p-3 rounded-lg border border-gray-200 hover:bg-blue-50 transition-colors">
+                  displayedEvents.map((event) => (
+                    <Link
+                      key={event.id}
+                      href={`/event/${event.id}`}
+                      className="block p-3 rounded-lg border border-gray-200 hover:bg-blue-50 transition-colors"
+                    >
                       <p className="font-semibold text-sm truncate">{event.title}</p>
                       <p className="text-xs text-gray-600 line-clamp-2">{event.description}</p>
                       <p className="text-xs text-gray-500 mt-1">
@@ -435,8 +505,10 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   ))
                 )}
               </CardContent>
+
             </Card>
           </div>
+
         </div>
       </div>
     </div>
