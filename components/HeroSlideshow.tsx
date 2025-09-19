@@ -13,13 +13,7 @@ export interface Event {
   images?: string[]
   startDate: string
   city?: string
-  location?: {
-    city: string
-    venue: string
-    address: string
-    country?: string
-    coordinates: { lat: number; lng: number }
-  }
+  address?: string
 }
 
 
@@ -171,7 +165,8 @@ export default function HeroSlideshow() {
                   month={new Date(event.startDate).toLocaleString("default", { month: "short" })}
                   year={new Date(event.startDate).getFullYear().toString()}
                   title={event.title}
-                  location={event.location ? `${event.location.city}, ${event.location.venue}` : event.city}
+                  // location={event.location ? `${event.location.city}, ${event.location.venue}` : event.city}
+                   location={event.address}
                 />
 
               </Link>
