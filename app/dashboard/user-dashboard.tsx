@@ -35,6 +35,7 @@ import { PastEvents } from "./PastEvents"
 import { SavedEvents } from "./SavedEvents"
 import { UpcomingEvents } from "./UpcomingEvents"
 import { MyAppointments } from "./my-appointments"
+import { ExhibitorSchedule } from "./ExhibitorSchedule" // ADD THIS IMPORT
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,7 +47,10 @@ import { Favourites } from "./Favourites"
 import { Recommendations } from "./Recommendations"
 import RecommendedEvents from "./recommended-events"
 import Schedule from "./Schedule"
-import VenueMap from "./venueMap"
+import { HelpCircle, Phone, MessageCircle } from "lucide-react"
+import { FAQs } from "../../components/help/FAQs"
+import { ContactSupport } from "../../components/help/ContactSupport"
+import { ChatSupport } from "../../components/help/ChatSupport"
 
 interface UserDashboardProps {
   userId: string
@@ -143,6 +147,8 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         return <UpcomingEvents events={interestedEvents} userId={userId} />
       case "my-appointments":
         return <MyAppointments userId={userId} />
+      case "exhibitor-schedule": // ADD THIS CASE
+        return <ExhibitorSchedule userId={userId} />
       case "schedule":
         return <Schedule userId={userId} />
       case "favourites":
@@ -159,8 +165,12 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         return <SettingsSection userData={userData!} onUpdate={handleProfileUpdate} />
       case "travel":
         return <TravelAccommodation />
-      case "venue-map":
-        return <VenueMap mapUrl="https://www.google.com/maps/embed?pb=!1m18!..." />
+      case "faqs":
+        return <FAQs />
+      case "contact-support":
+        return <ContactSupport />
+      case "chat-support":
+        return <ChatSupport />  
       default:
         return <p>Select a section</p>
     }
@@ -180,7 +190,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       <aside className={`${isSidebarCollapsed ? "w-16" : "w-64"} bg-white border-r flex flex-col justify-between transition-all duration-300`}>
         <div>
           {/* Profile Header */}
-          <div className="flex items-center gap-3 p-4 border-b">
+          <div className="flex items-center gap-3 p-3 border-b">
             <Avatar className="w-10 h-10">
               <AvatarImage src={userData?.avatar || "/placeholder.svg"} />
               <AvatarFallback>
@@ -238,11 +248,9 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               </button>
               {openMenus.includes("event") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li onClick={() => setActiveSection("events")} className={menuItemClass(activeSection, "events")}>Registered Events</li>
+                  <li onClick={() => setActiveSection("events")} className={menuItemClass(activeSection, "events")}>Interested Events</li>
                   <li onClick={() => setActiveSection("past-events")} className={menuItemClass(activeSection, "past-events")}>Past Events</li>
                   <li onClick={() => setActiveSection("wishlist")} className={menuItemClass(activeSection, "wishlist")}>Wishlist</li>
-                  <li onClick={() => setActiveSection("upcoming-events")} className={menuItemClass(activeSection, "upcoming-events")}>Upcoming Events</li>
-                  <li onClick={() => setActiveSection("recommended-events")} className={menuItemClass(activeSection, "recommended-events")}>Recommended Events</li>
                 </ul>
               )}
             </div>
@@ -277,8 +285,8 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               </button>
               {openMenus.includes("exhibitor") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
+                  <li onClick={() => setActiveSection("exhibitor-schedule")} className={menuItemClass(activeSection, "exhibitor-schedule")}>Exhibitor Schedule</li>
                   <li onClick={() => setActiveSection("my-appointments")} className={menuItemClass(activeSection, "my-appointments")}>Exhibitor Appointments</li>
-                  <li onClick={() => setActiveSection("favourites")} className={menuItemClass(activeSection, "favourites")}>Favourites</li>
                   <li onClick={() => setActiveSection("recommendations")} className={menuItemClass(activeSection, "recommendations")}>Recommendations</li>
                 </ul>
               )}
@@ -296,9 +304,49 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               </button>
               {openMenus.includes("tools") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li onClick={() => setActiveSection("travel")} className={menuItemClass(activeSection, "travel")}>Travel & Accommodation</li>
-                  <li onClick={() => setActiveSection("venue-map")} className={menuItemClass(activeSection, "venue-map")}>Venue Map</li>
+                  <li onClick={() => setActiveSection("travel")} className={menuItemClass(activeSection, "travel")}>Travel & Stay</li>
                   <li onClick={() => setActiveSection("schedule")} className={menuItemClass(activeSection, "schedule")}>Schedule</li>
+                </ul>
+              )}
+            </div>
+
+            {/* Help & Support */}
+            <div>
+              <button
+                className="flex items-center justify-between w-full py-2 font-medium"
+                onClick={() => toggleMenu("help-support")}
+              >
+                <span className="flex items-center gap-2">
+                  <HelpCircle size={16} />
+                  {!isSidebarCollapsed && "Help & Support"}
+                </span>
+                {!isSidebarCollapsed &&
+                  (openMenus.includes("help-support") ? (
+                    <ChevronDown size={16} />
+                  ) : (
+                    <ChevronRight size={16} />
+                  ))}
+              </button>
+              {openMenus.includes("help-support") && !isSidebarCollapsed && (
+                <ul className="ml-2 mt-2 space-y-2 border-l">
+                  <li
+                    onClick={() => setActiveSection("faqs")}
+                    className={menuItemClass(activeSection, "faqs")}
+                  >
+                    FAQs
+                  </li>
+                  <li
+                    onClick={() => setActiveSection("contact-support")}
+                    className={menuItemClass(activeSection, "contact-support")}
+                  >
+                    Contact
+                  </li>
+                  <li
+                    onClick={() => setActiveSection("chat-support")}
+                    className={menuItemClass(activeSection, "chat-support")}
+                  >
+                    Chat Support
+                  </li>
                 </ul>
               )}
             </div>
@@ -343,7 +391,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm">
-              <Bell className="w-4 h-4" />
+              <Bell className="w-4 w-4" />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
