@@ -41,7 +41,7 @@ const EventCard: React.FC<EventCardProps> = ({
   location,
 }) => {
   return (
-    <div className="flex-shrink-0 w-80 h-[480px] bg-[#F2F2F2] relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
+    <div className="mr-4 flex-shrink-0 w-80 h-[480px] bg-[#F2F2F2] relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
       <img
         src={imageSrc || "/placeholder.svg"}
         alt={title}
@@ -166,7 +166,7 @@ export default function HeroSlideshow() {
             {events.map((event, index) => (
               <Link href={`/event/${event.id}`} key={event.id}>
                 <EventCard
-                  imageSrc={event.bannerImage || event.images?.[0] || "/placeholder.svg"}
+                  imageSrc={event.bannerImage || event.images?.[0] || "/herosection-images/food.jpg"}
                   date={new Date(event.startDate).getDate().toString()}
                   month={new Date(event.startDate).toLocaleString("default", { month: "short" })}
                   year={new Date(event.startDate).getFullYear().toString()}
