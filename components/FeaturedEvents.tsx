@@ -123,13 +123,14 @@ export default function FeaturedEvents() {
                         <div className="bg-white border border-gray-200 rounded-sm p-4 hover:shadow-md transition-all duration-200 hover:border-blue-300 group">
                           <div className="grid grid-cols-2">
                             {/* Event Logo */}
-                            <div className="rounded-lg p-4 mb-4 flex items-center justify-center h-20">
-                              <img
-                                src={event.logo || "/placeholder.svg"}
-                                alt={event.title}
-                                className="max-h-12 max-w-50px"
-                              />
-                            </div>
+                           <div className="rounded-lg p-4 mb-4 flex items-center justify-center h-28">
+  <img
+    src={event.logo || "/herosection-images/food.jpg"}
+    alt={event.title}
+    className="max-h-20 max-w-[120px] object-contain"
+  />
+</div>
+
 
                             {/* Event Info */}
                             <div className="space-y-3">
