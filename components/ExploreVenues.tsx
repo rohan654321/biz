@@ -89,7 +89,7 @@ export default function ExploreVenues() {
                       </div>
                     </div>
 
-                    <p className="text-xs text-gray-700 mt-1 line-clamp-2 mt-2">
+                    <p className="text-xs text-gray-700 mt-1 line-clamp-2 ">
                       {venue.description ?? ""}
                     </p>
                   </div>

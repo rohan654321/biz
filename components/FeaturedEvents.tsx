@@ -44,10 +44,11 @@ export default function FeaturedEvents() {
       try {
         const response = await fetch("/api/events?featured=true")
         // const data = await res.json()
-       const data = await response.json()
-        setFeaturedEvents(data.events || [])
+        const data = await response.json()
+        const shuffled = data.events.sort(() => 0.5 - Math.random())
 
-       
+        // Pick only 6
+        setFeaturedEvents(shuffled.slice(0, 6))
       } catch (error) {
         console.error("Error fetching featured events:", error)
       }
@@ -119,49 +120,51 @@ export default function FeaturedEvents() {
                 <div key={slideIndex} className="w-full flex-shrink-0">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {slideEvents.map((event) => (
-                      <Link href={`/event/${event.id}`} key={event.id} className="cursor-pointer">
-                        <div className="bg-white border border-gray-200 rounded-sm p-4 hover:shadow-md transition-all duration-200 hover:border-blue-300 group">
-                          <div className="grid grid-cols-2">
+                      <Link
+                        href={`/event/${event.id}`}
+                        key={event.id}
+                        className="cursor-pointer group"
+                      >
+                        <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 hover:border-blue-400">
+                          {/* Logo & Info */}
+                          <div className="flex items-start gap-4">
                             {/* Event Logo */}
-                           <div className="rounded-lg p-4 mb-4 flex items-center justify-center h-28">
-  <img
-    src={event.logo || "/herosection-images/food.jpg"}
-    alt={event.title}
-    className="max-h-20 max-w-[120px] object-contain"
-  />
-</div>
-
+                            <div className="flex items-center justify-center w-20 h-20 rounded-full bg-gray-50 border border-gray-200 overflow-hidden">
+                              <img
+                                src={event.logo || "/herosection-images/food.jpg"}
+                                alt={event.title}
+                                className="w-14 h-14 object-cover rounded-4xl"
+                              />
+                            </div>
 
                             {/* Event Info */}
-                            <div className="space-y-3">
-                              <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+                            <div className="flex-1 space-y-2">
+                              <h3 className="font-semibold text-lg text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
                                 {event.title}
                               </h3>
 
-                              <div className="space-y-2 text-sm text-gray-600">
-                                <div className="flex items-center">
-                                  <Calendar className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
-                                  <span className="truncate">
-                                    {new Date(event.startDate).toLocaleDateString("en-US", {
-                                      month: "short",
-                                      day: "numeric",
-                                      year: "numeric",
-                                    })}
-                                  </span>
-                                </div>
+                              <div className="flex items-center text-sm text-gray-600">
+                                <Calendar className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
+                                <span>
+                                  {new Date(event.startDate).toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  })}
+                                </span>
                               </div>
                             </div>
                           </div>
 
                           {/* Footer */}
-                          <div className="flex justify-between mt-2">
+                          <div className="flex justify-between items-center mt-6">
                             <button
-                              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors flex-shrink-0"
+                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
                               aria-label="Share event"
                             >
                               <Share2 className="w-4 h-4" />
                             </button>
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-600">
                               {event.categories || "General"}
                             </span>
                           </div>
@@ -179,6 +182,7 @@ export default function FeaturedEvents() {
                   </div>
                 </div>
               ))}
+
             </div>
           </div>
 
@@ -189,9 +193,8 @@ export default function FeaturedEvents() {
                 <button
                   key={index}
                   onClick={() => goToSlide(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                    index === currentSlide ? "bg-blue-600 scale-110" : "bg-gray-300 hover:bg-gray-400"
-                  }`}
+                  className={`w-3 h-3 rounded-full transition-all duration-200 ${index === currentSlide ? "bg-blue-600 scale-110" : "bg-gray-300 hover:bg-gray-400"
+                    }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />
               ))}

@@ -1,47 +1,51 @@
 // components/EventReviews.tsx
-"use client";
+"use client"
 
-import { Star } from "lucide-react";
+import { useState, useEffect } from "react"
+import { Star } from "lucide-react"
+
+export interface Event {
+  id: string
+  title: string
+  bannerImage?: string
+  logo?: string
+  images?: string[]
+  startDate: string
+  city?: string
+  categories?: string
+  featured?: boolean
+  timings?: {
+    startDate: string
+    endDate?: string
+  }
+  location?: {
+    city: string
+    venue: string
+    address: string
+    country?: string
+    coordinates: { lat: number; lng: number }
+  }
+}
 
 export default function EventReviews() {
-  const reviews = [
-    {
-      title: "ACETECH Delhi",
-      location: "New Delhi, India",
-      review:
-        'Exhibitors directory should have been provided to visitors of the show"',
-      name: "Hitesh Verma",
-      date: "14 Jul 2025",
-      rating: 5,
-    },
-    {
-      title: "ACETECH Delhi",
-      location: "New Delhi, India",
-      review:
-        'Exhibitors directory should have been provided to visitors of the show"',
-      name: "Hitesh Verma",
-      date: "14 Jul 2025",
-      rating: 5,
-    },
-    {
-      title: "ACETECH Delhi",
-      location: "New Delhi, India",
-      review:
-        'Exhibitors directory should have been provided to visitors of the show"',
-      name: "Hitesh Verma",
-      date: "14 Jul 2025",
-      rating: 5,
-    },
-    {
-      title: "ACETECH Delhi",
-      location: "New Delhi, India",
-      review:
-        'Exhibitors directory should have been provided to visitors of the show"',
-      name: "Hitesh Verma",
-      date: "14 Jul 2025",
-      rating: 5,
-    },
-  ];
+  const [nearByEvents, setNearByEvents] = useState<Event[]>([])
+
+  useEffect(() => {
+    const fetchNearByEvents = async () => {
+      try {
+        const response = await fetch("/api/events?featured=true")
+        const data = await response.json()
+
+        // Shuffle + pick 3 random events
+        const shuffled = data.events.sort(() => 0.5 - Math.random())
+        setNearByEvents(shuffled.slice(0, 3))
+      } catch (error) {
+        console.error("Error fetching featured events:", error)
+      }
+    }
+
+    fetchNearByEvents()
+  }, [])
 
   return (
     <section className="py-12 px-6 bg-white">
@@ -56,42 +60,53 @@ export default function EventReviews() {
       </div>
 
       {/* Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-        {reviews.map((review, index) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+        {nearByEvents.map((event, index) => (
           <div
-            key={index}
-            className="bg-white shadow-md rounded-sm overflow-hidden"
+            key={event.id || index}
+            className="bg-white shadow-md rounded-md overflow-hidden hover:shadow-lg transition"
           >
-            {/* Top gray section */}
-            <div className="bg-gray-300 h-28"></div>
+            {/* Top Image */}
+            <div className="h-32 bg-gray-200 overflow-hidden">
+              <img
+                src={event.bannerImage || event.logo || "/herosection-images/food.jpg"}
+                alt={event.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
 
             {/* Content */}
             <div className="p-4">
-              <h3 className="font-bold">{review.title}</h3>
-              <p className="text-sm text-gray-500">{review.location}</p>
+              <h3 className="font-bold text-lg">{event.title}</h3>
+              <p className="text-sm text-gray-500">{event.location?.city || "Location not available"}</p>
 
-              <p className="text-sm mt-3">{review.review}</p>
+              {/* Mock review text since your API doesn’t have reviews */}
+              <p className="text-sm mt-3">
+                Amazing experience! Great opportunity to connect with people.
+              </p>
 
               {/* Rating */}
               <div className="flex items-center mt-3">
-                {[...Array(review.rating)].map((_, i) => (
+                {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
                     size={16}
-                    className="fill-yellow-400 text-yellow-400"
+                    className={`${
+                      i < 4 ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                    }`}
                   />
                 ))}
               </div>
 
-              {/* Reviewer */}
+              {/* Reviewer - mock for now */}
               <div className="flex justify-between items-center mt-3 text-sm text-gray-600">
-                <span className="font-medium">{review.name}</span>
-                <span>{review.date}</span>
+                <span className="font-medium">Eventgoer</span>
+                <span>{new Date(event.startDate).toLocaleDateString("en-US")}</span>
               </div>
             </div>
           </div>
         ))}
       </div>
     </section>
-  );
+  )
 }

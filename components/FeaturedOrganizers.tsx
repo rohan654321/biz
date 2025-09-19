@@ -28,32 +28,9 @@ export default function FeaturedOrganizers() {
     fetchOrganizer()
   }, [])
 
-  // useEffect(() => {
-  //   if (!scrollRef.current || isHovering) return
-
-  //   const scrollContainer = scrollRef.current
-  //   const scrollStep = 1
-  //   const interval = setInterval(() => {
-  //     scrollContainer.scrollLeft += scrollStep
-  //     if (
-  //       scrollContainer.scrollLeft + scrollContainer.clientWidth >=
-  //       scrollContainer.scrollWidth
-  //     ) {
-  //       scrollContainer.scrollLeft = 0
-  //     }
-  //   }, 20)
-
-  //   return () => clearInterval(interval)
-  // }, [isHovering])
-
   const scrollByAmount = (amount: number) => {
     scrollRef.current?.scrollBy({ left: amount, behavior: "smooth" })
   }
-
-
-
-  // Skip first 3 and take next 10 organizers
-  const visibleOrganizers = organizers
 
   if (loading) return <p className="text-center py-10">Loading organizers...</p>
 
@@ -61,7 +38,9 @@ export default function FeaturedOrganizers() {
     <div className="w-full max-w-6xl mx-auto px-4">
       {/* Header */}
       <div className="text-center py-6">
-        <h2 className="text-4xl font-bold text-gray-900 mb-1">Featured Organizers</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+          Featured Organizers
+        </h2>
         <p className="text-gray-600">Worldwide Organizers</p>
       </div>
 
@@ -72,74 +51,74 @@ export default function FeaturedOrganizers() {
         onMouseLeave={() => setIsHovering(false)}
       >
         {/* Navigation Buttons */}
-{/* Navigation Buttons */}
-<button
-  onClick={() => scrollByAmount(-300)}
-  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 
-             bg-white/90 rounded-full shadow hover:bg-white 
-             transition-all opacity-0 group-hover:opacity-100"
->
-  <ChevronLeft className="w-5 h-5 text-gray-700" />
-</button>
+        <button
+          onClick={() => scrollByAmount(-300)}
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 
+                     bg-white/90 rounded-full shadow-md hover:bg-white 
+                     transition-all opacity-0 group-hover:opacity-100"
+        >
+          <ChevronLeft className="w-5 h-5 text-gray-700" />
+        </button>
 
-<button
-  onClick={() => scrollByAmount(300)}
-  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 
-             bg-white/90 rounded-full shadow hover:bg-white 
-             transition-all opacity-0 group-hover:opacity-100"
->
-  <ChevronRight className="w-5 h-5 text-gray-700" />
-</button>
-
+        <button
+          onClick={() => scrollByAmount(300)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 
+                     bg-white/90 rounded-full shadow-md hover:bg-white 
+                     transition-all opacity-0 group-hover:opacity-100"
+        >
+          <ChevronRight className="w-5 h-5 text-gray-700" />
+        </button>
 
         {/* Scrollable Container */}
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto scroll-smooth px-1 py-4"
-          style={{
-            scrollbarWidth: "none", // Firefox
-            msOverflowStyle: "none", // IE/Edge
-          }}
+          className="flex gap-5 overflow-x-auto scroll-smooth px-1 py-4 hide-scrollbar"
         >
-          <style jsx>{`
-            div::-webkit-scrollbar {
-              display: none; /* Chrome, Safari, Opera */
-            }
-          `}</style>
-
-          {visibleOrganizers.map((organizer: any) => (
+          {organizers.map((organizer: any) => (
             <div
               onClick={() => router.push(`/organizer/${organizer.id}`)}
               key={organizer.id}
-              className="max-w-[200px] bg-white border border-gray-200 rounded-sm p-1 flex-shrink-0 hover:shadow-md hover:border-gray-300 transition duration-200"
+              className="w-[200px] bg-white border border-gray-200 rounded-lg 
+                         p-4 flex-shrink-0 hover:shadow-lg hover:border-blue-300 
+                         transition duration-200 cursor-pointer"
             >
-              <div className="flex items-center justify-center h-10 mb-4">
-                
+              {/* Organizer Image */}
+              <div className="flex items-center justify-center h-20 mb-3">
                 <img
-                  // src={ organizer.image ||"/herosection-images/land.jpg"}   from database
-                   src={ "/herosection-images/land.jpg"}               // default image
+                  src={organizer.image || "/herosection-images/fit.jpg"}
                   alt={organizer.name}
-                  className="max-h-full max-w-full object-contain"
+                  className="h-full object-cover"
                 />
               </div>
+
+              {/* Organizer Info */}
               <div className="text-center">
-                <h3 className="font-semibold text-gray-900 text-sm mb-1">{organizer.name}</h3>
-                <p className="text-xs text-gray-500">{organizer.description}</p>
-                <p className="text-xs text-gray-500">{organizer.eventsOrganized ?? 0} events</p>
+                <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-1">
+                  {organizer.name}
+                </h3>
+                <p className="text-xs text-gray-500 line-clamp-2 mb-1">
+                  {organizer.description || "Organizer of amazing events"}
+                </p>
+                <p className="text-xs font-medium text-blue-600">
+                  {organizer.eventsOrganized ?? 0} events
+                </p>
               </div>
             </div>
           ))}
 
           {/* View All Button */}
           <Link href="/organizers">
-          <button
-            className="aspect-[3/2] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 flex flex-col items-center justify-center group p-14"
-          >
-            <MoreHorizontal className="w-8 h-8 text-gray-400 group-hover:text-blue-500 mb-2" />
-            
-            
-            <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600">View All</span>
-          </button>
+            <button
+              className="w-[200px] flex flex-col items-center justify-center 
+                         bg-gray-50 border-2 border-dashed border-gray-300 
+                         rounded-lg hover:border-blue-400 hover:bg-blue-50 
+                         transition-all duration-200 flex-shrink-0"
+            >
+              <MoreHorizontal className="w-8 h-42 text-gray-400 group-hover:text-blue-500 mb-2" />
+              <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600">
+                {/* View All */}
+              </span>
+            </button>
           </Link>
         </div>
       </div>
