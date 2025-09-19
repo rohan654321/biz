@@ -391,7 +391,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm">
-              <Bell className="w-4 w-4" />
+              <Bell className="w-4 " />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

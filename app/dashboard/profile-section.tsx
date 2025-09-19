@@ -127,7 +127,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
   // Run on mount & when filteredEvents changes
   useEffect(() => {
     shuffleEvents()
-  }, [filteredEvents, shuffleEvents])
+  }, [filteredEvents.length])
 
   // Auto shuffle every 3 minutes
   useEffect(() => {
@@ -138,7 +138,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
 
       return () => clearInterval(interval)
     }
-  }, [filteredEvents, shuffleEvents])
+  }, [filteredEvents.length])
 
 
 
