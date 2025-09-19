@@ -35,7 +35,7 @@ const EventCard: React.FC<EventCardProps> = ({
   location,
 }) => {
   return (
-    <div className="mr-4 flex-shrink-0 w-80 h-[480px] bg-[#F2F2F2] relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
+    <div className="flex-shrink-0 w-80 h-[480px] bg-[#F2F2F2] relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
       <img
         src={imageSrc || "/placeholder.svg"}
         alt={title}

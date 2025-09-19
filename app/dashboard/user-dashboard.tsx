@@ -203,7 +203,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                 <p className="font-semibold">
                   {userData?.firstName} {userData?.lastName}
                 </p>
-                <p className="text-xs text-gray-500">{userData?.jobTitle || userData?.role || "User"}</p>
+                <p className="text-xs text-gray-500">{userData?.jobTitle || (userData?.role == "ATTENDEE" ? "VISITOR" : userData?.role)}</p>
               </div>
             )}
           </div>

@@ -272,7 +272,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
               </Avatar>
               <div>
                 <h2 className="text-xl font-semibold">{localUserData.firstName} {localUserData.lastName}</h2>
-                <p className="text-gray-600">{localUserData.jobTitle || localUserData.role}</p>
+                <p className="text-gray-600">{localUserData.jobTitle || (localUserData.role === "ATTENDEE" ? "Visitor" : localUserData.role)}</p>
                 {localUserData.isVerified && <Badge variant="secondary" className="mt-1">Verified</Badge>}
               </div>
             </div>
