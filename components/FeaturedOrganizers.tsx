@@ -114,8 +114,10 @@ export default function FeaturedOrganizers() {
               className="max-w-[200px] bg-white border border-gray-200 rounded-sm p-1 flex-shrink-0 hover:shadow-md hover:border-gray-300 transition duration-200"
             >
               <div className="flex items-center justify-center h-10 mb-4">
+                
                 <img
-                  src={organizer.image || "/herosection-images/land.jpg"}
+                  // src={ organizer.image ||"/herosection-images/land.jpg"}   from database
+                   src={ "/herosection-images/land.jpg"}               // default image
                   alt={organizer.name}
                   className="max-h-full max-w-full object-contain"
                 />

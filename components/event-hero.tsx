@@ -40,7 +40,7 @@ export default function EventHero({ event }: EventHeroProps) {
 
   const getMainImage = () => {
     const mainImage = event.images?.find((img) => img.type === "main")
-    return mainImage?.url || "/placeholder.svg?height=400&width=1200&text=Event+Background"
+    return mainImage?.url || "/herosection-images/test.jpeg"
   }
 
   const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
