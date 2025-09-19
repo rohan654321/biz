@@ -431,284 +431,286 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     }
   }
 
-const handlePublishEvent = async () => {
-  const newValidationErrors: ValidationErrors = {}
+  const handlePublishEvent = async () => {
+    const newValidationErrors: ValidationErrors = {}
 
-  // Basic Info - all fields required
-  if (!formData.title.trim()) newValidationErrors.title = "Title is required for publishing"
-  if (!formData.description.trim()) newValidationErrors.description = "Description is required for publishing"
-  if (!formData.eventType.trim()) newValidationErrors.eventType = "Event type is required for publishing"
-  if (!formData.startDate.trim()) newValidationErrors.startDate = "Start date is required for publishing"
-  if (!formData.endDate.trim()) newValidationErrors.endDate = "End date is required for publishing"
-  if (!formData.venue.trim()) newValidationErrors.venue = "Venue is required for publishing"
-  if (!formData.city.trim()) newValidationErrors.city = "City is required for publishing"
-  if (!formData.address.trim()) newValidationErrors.address = "Address is required for publishing"
+    // Basic Info - all fields required
+    if (!formData.title.trim()) newValidationErrors.title = "Title is required for publishing"
+    if (!formData.description.trim()) newValidationErrors.description = "Description is required for publishing"
+    if (!formData.eventType.trim()) newValidationErrors.eventType = "Event type is required for publishing"
+    if (!formData.startDate.trim()) newValidationErrors.startDate = "Start date is required for publishing"
+    if (!formData.endDate.trim()) newValidationErrors.endDate = "End date is required for publishing"
+    if (!formData.venue.trim()) newValidationErrors.venue = "Venue is required for publishing"
+    if (!formData.city.trim()) newValidationErrors.city = "City is required for publishing"
+    if (!formData.address.trim()) newValidationErrors.address = "Address is required for publishing"
 
-  // Event Details - only tags required
-  if (formData.tags.length === 0) newValidationErrors.tags = "Event tags & keywords are required for publishing"
+    // Event Details - only tags required
+    if (formData.tags.length === 0) newValidationErrors.tags = "Event tags & keywords are required for publishing"
 
-  setValidationErrors(newValidationErrors)
+    setValidationErrors(newValidationErrors)
 
-  if (Object.keys(newValidationErrors).length > 0) {
-    return
-  }
+    if (Object.keys(newValidationErrors).length > 0) {
+      return
+    }
 
-  setIsPublishing(true)
-  try {
-    // 🔥 FIX: Transform spaceCosts to exhibitionSpaces format - corrected mapping
-    const exhibitionSpaces = formData.spaceCosts
-      .filter(cost => cost.type.trim() !== "") // Only include spaces with names
-      .map(cost => {
-        // Map space types to enum values - fixed logic
-        let spaceType;
-        const spaceName = cost.type?.toLowerCase() || '';
-        
-        if (spaceName.includes('shell space') || spaceName.includes('standard booth')) {
-          spaceType = 'SHELL_SPACE';
-        } else if (spaceName.includes('raw space')) {
-          spaceType = 'RAW_SPACE';
-        } else if (spaceName.includes('2 side open')) {
-          spaceType = 'TWO_SIDE_OPEN';
-        } else if (spaceName.includes('3 side open')) {
-          spaceType = 'THREE_SIDE_OPEN';
-        } else if (spaceName.includes('4 side open')) {
-          spaceType = 'FOUR_SIDE_OPEN';
-        } else if (spaceName.includes('mezzanine')) {
-          spaceType = 'MEZZANINE';
-        } else if (spaceName.includes('additional power')) {
-          spaceType = 'ADDITIONAL_POWER';
-        } else if (spaceName.includes('compressed air')) {
-          spaceType = 'COMPRESSED_AIR';
-        } else {
-          spaceType = 'CUSTOM';
-        }
+    setIsPublishing(true)
+    try {
+      // 🔥 FIX: Transform spaceCosts to exhibitionSpaces format - corrected mapping
+      const exhibitionSpaces = formData.spaceCosts
+        .filter(cost => cost.type.trim() !== "") // Only include spaces with names
+        .map(cost => {
+          // Map space types to enum values - fixed logic
+          let spaceType;
+          const spaceName = cost.type?.toLowerCase() || '';
 
-        return {
-          spaceType: spaceType,
-          name: cost.type,
-          description: cost.description || '',
-          area: cost.minArea || 0,
-          dimensions: cost.minArea ? `${cost.minArea} sq.m` : '',
-          location: null,
-          basePrice: cost.pricePerSqm || cost.pricePerUnit || 0,
-          pricePerSqm: cost.pricePerSqm || null,
-          minArea: cost.minArea || null,
-          pricePerUnit: cost.pricePerUnit || null,
-          unit: cost.unit || null,
-          currency: formData.currency,
-          powerIncluded: false,
-          additionalPowerRate: cost.type.toLowerCase().includes('power') ? (cost.pricePerUnit || 0) : null,
-          compressedAirRate: cost.type.toLowerCase().includes('air') ? (cost.pricePerUnit || 0) : null,
-          isFixed: cost.isFixed || false,
-          isAvailable: true,
-          maxBooths: null,
-          bookedBooths: 0,
-          setupRequirements: null,
-        };
+          if (spaceName.includes('shell space') || spaceName.includes('standard booth')) {
+            spaceType = 'SHELL_SPACE';
+          } else if (spaceName.includes('raw space')) {
+            spaceType = 'RAW_SPACE';
+          } else if (spaceName.includes('2 side open')) {
+            spaceType = 'TWO_SIDE_OPEN';
+          } else if (spaceName.includes('3 side open')) {
+            spaceType = 'THREE_SIDE_OPEN';
+          } else if (spaceName.includes('4 side open')) {
+            spaceType = 'FOUR_SIDE_OPEN';
+          } else if (spaceName.includes('mezzanine')) {
+            spaceType = 'MEZZANINE';
+          } else if (spaceName.includes('additional power')) {
+            spaceType = 'ADDITIONAL_POWER';
+          } else if (spaceName.includes('compressed air')) {
+            spaceType = 'COMPRESSED_AIR';
+          } else {
+            spaceType = 'CUSTOM';
+          }
+
+          return {
+            spaceType: spaceType,
+            name: cost.type,
+            description: cost.description || '',
+            area: cost.minArea || 0,
+            dimensions: cost.minArea ? `${cost.minArea} sq.m` : '',
+            location: null,
+            basePrice: cost.pricePerSqm || cost.pricePerUnit || 0,
+            pricePerSqm: cost.pricePerSqm || null,
+            minArea: cost.minArea || null,
+            pricePerUnit: cost.pricePerUnit || null,
+            unit: cost.unit || null,
+            currency: formData.currency,
+            powerIncluded: false,
+            additionalPowerRate: cost.type.toLowerCase().includes('power') ? (cost.pricePerUnit || 0) : null,
+            compressedAirRate: cost.type.toLowerCase().includes('air') ? (cost.pricePerUnit || 0) : null,
+            isFixed: cost.isFixed || false,
+            isAvailable: true,
+            maxBooths: null,
+            bookedBooths: 0,
+            setupRequirements: null,
+          };
+        })
+
+      // Transform form data to match backend expectations
+      const eventData = {
+        title: formData.title,
+        description: formData.description,
+        shortDescription: formData.description.substring(0, 200),
+        category: formData.eventType,
+        tags: formData.tags,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        registrationStart: formData.startDate,
+        registrationEnd: formData.endDate,
+        timezone: formData.timezone,
+        isVirtual: false,
+        address: formData.address,
+        location: formData.venue,
+        city: formData.city,
+        state: "",
+        country: "India",
+        venue: formData.venue,
+        currency: formData.currency,
+        bannerImage: formData.images[0] || null,
+        thumbnailImage: formData.images[0] || null,
+        isPublic: true,
+        requiresApproval: false,
+        allowWaitlist: false,
+        status: "published",
+        featured: formData.featured,
+        vip: formData.vip,
+        // 🔥 CRITICAL: Send exhibition spaces with correct structure
+        exhibitionSpaces: exhibitionSpaces,
+        eventType: [formData.eventType],
+        maxAttendees: null,
+        // Include ticket pricing
+        ticketTypes: [
+          {
+            id: "general",
+            name: "General",
+            description: "General admission ticket",
+            price: formData.generalPrice,
+            quantity: 1000,
+            sold: 0,
+            isActive: formData.generalPrice > 0
+          },
+          {
+            id: "student",
+            name: "Student",
+            description: "Student discount ticket",
+            price: formData.studentPrice,
+            quantity: 500,
+            sold: 0,
+            isActive: formData.studentPrice > 0
+          },
+          {
+            id: "vip",
+            name: "VIP",
+            description: "VIP access ticket",
+            price: formData.vipPrice,
+            quantity: 100,
+            sold: 0,
+            isActive: formData.vipPrice > 0
+          }
+        ].filter(ticket => ticket.isActive),
+      }
+
+      console.log("[v0] Publishing event with transformed data:", eventData)
+      console.log("[v0] Exhibition spaces being sent:", exhibitionSpaces)
+
+      const response = await fetch(`/api/organizers/${organizerId}/events`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(eventData),
       })
 
-    // Transform form data to match backend expectations
-    const eventData = {
-      title: formData.title,
-      description: formData.description,
-      shortDescription: formData.description.substring(0, 200),
-      category: formData.eventType,
-      tags: formData.tags,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-      registrationStart: formData.startDate,
-      registrationEnd: formData.endDate,
-      timezone: formData.timezone,
-      isVirtual: false,
-      address: formData.address,
-      location: formData.venue,
-      city: formData.city,
-      state: "",
-      country: "India",
-      venue: formData.venue,
-      currency: formData.currency,
-      bannerImage: formData.images[0] || null,
-      thumbnailImage: formData.images[0] || null,
-      isPublic: true,
-      requiresApproval: false,
-      allowWaitlist: false,
-      status: "published",
-      // 🔥 CRITICAL: Send exhibition spaces with correct structure
-      exhibitionSpaces: exhibitionSpaces,
-      eventType: [formData.eventType],
-      maxAttendees: null,
-      // Include ticket pricing
-      ticketTypes: [
-        {
-          id: "general",
-          name: "General",
-          description: "General admission ticket",
-          price: formData.generalPrice,
-          quantity: 1000,
-          sold: 0,
-          isActive: formData.generalPrice > 0
-        },
-        {
-          id: "student", 
-          name: "Student",
-          description: "Student discount ticket",
-          price: formData.studentPrice,
-          quantity: 500,
-          sold: 0,
-          isActive: formData.studentPrice > 0
-        },
-        {
-          id: "vip",
-          name: "VIP", 
-          description: "VIP access ticket",
-          price: formData.vipPrice,
-          quantity: 100,
-          sold: 0,
-          isActive: formData.vipPrice > 0
-        }
-      ].filter(ticket => ticket.isActive),
+      console.log("[v0] Response status:", response.status)
+      const responseData = await response.json()
+      console.log("[v0] Response data:", responseData)
+
+      if (!response.ok) {
+        throw new Error(responseData.error || "Failed to publish event")
+      }
+
+      toast({
+        title: "Success",
+        description: "Event created successfully with exhibition spaces",
+      })
+
+      // Reset form after successful submission
+      setFormData({
+        title: "",
+        description: "",
+        eventType: "",
+        categories: [],
+        startDate: "",
+        endDate: "",
+        dailyStart: "09:00",
+        dailyEnd: "18:00",
+        timezone: "Asia/Kolkata",
+        venue: "",
+        city: "",
+        address: "",
+        currency: "₹",
+        generalPrice: 0,
+        studentPrice: 0,
+        vipPrice: 0,
+        groupPrice: 0,
+        highlights: [],
+        tags: [],
+        dressCode: "Business Casual",
+        ageLimit: "18+",
+        featured: false,
+        vip: false,
+        spaceCosts: [
+          {
+            type: "Shell Space (Standard Booth)",
+            description: "Fully constructed booth with walls, flooring, basic lighting, and standard amenities",
+            pricePerSqm: 5000,
+            minArea: 9,
+            isFixed: true,
+          },
+          {
+            type: "Raw Space",
+            description: "Open floor space without any construction or amenities",
+            pricePerSqm: 2500,
+            minArea: 20,
+            isFixed: false,
+          },
+          {
+            type: "2 Side Open Space",
+            description: "Space with two sides open for better visibility and accessibility",
+            pricePerSqm: 3500,
+            minArea: 12,
+            isFixed: true,
+          },
+          {
+            type: "3 Side Open Space",
+            description: "Premium corner space with three sides open for maximum exposure",
+            pricePerSqm: 4200,
+            minArea: 15,
+            isFixed: true,
+          },
+          {
+            type: "4 Side Open Space",
+            description: "Island space with all four sides open for 360-degree visibility",
+            pricePerSqm: 5500,
+            minArea: 25,
+            isFixed: true,
+          },
+          {
+            type: "Mezzanine Charges",
+            description: "Additional upper level space for storage or display purposes",
+            pricePerSqm: 1500,
+            minArea: 10,
+            isFixed: true,
+          },
+          {
+            type: "Additional Power",
+            description: "Extra electrical power supply for high-consumption equipment",
+            pricePerUnit: 800,
+            unit: "KW",
+            isFixed: true,
+          },
+          {
+            type: "Compressed Air",
+            description: "Compressed air supply for machinery demonstration (6 bar pressure)",
+            pricePerUnit: 1200,
+            unit: "HP",
+            isFixed: true,
+          },
+        ],
+        images: [],
+        brochure: "",
+        layoutPlan: "",
+        featuredHotels: [],
+        travelPartners: [],
+        touristAttractions: [],
+        ageRestriction: "",
+        accessibility: "",
+        parking: "",
+        publicTransport: "",
+        foodBeverage: "",
+        wifi: "",
+        photography: "",
+        recording: "",
+        liveStreaming: "",
+        socialMedia: "",
+        networking: "",
+        certificates: "",
+        materials: "",
+        followUp: "",
+      })
+      setValidationErrors({})
+    } catch (error) {
+      console.error("[v0] Error publishing event:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to publish event",
+        variant: "destructive",
+      })
+    } finally {
+      setIsPublishing(false)
     }
-
-    console.log("[v0] Publishing event with transformed data:", eventData)
-    console.log("[v0] Exhibition spaces being sent:", exhibitionSpaces)
-    
-    const response = await fetch(`/api/organizers/${organizerId}/events`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(eventData),
-    })
-
-    console.log("[v0] Response status:", response.status)
-    const responseData = await response.json()
-    console.log("[v0] Response data:", responseData)
-
-    if (!response.ok) {
-      throw new Error(responseData.error || "Failed to publish event")
-    }
-
-    toast({
-      title: "Success",
-      description: "Event created successfully with exhibition spaces",
-    })
-
-    // Reset form after successful submission
-    setFormData({
-      title: "",
-      description: "",
-      eventType: "",
-      categories: [],
-      startDate: "",
-      endDate: "",
-      dailyStart: "09:00",
-      dailyEnd: "18:00",
-      timezone: "Asia/Kolkata",
-      venue: "",
-      city: "",
-      address: "",
-      currency: "₹",
-      generalPrice: 0,
-      studentPrice: 0,
-      vipPrice: 0,
-      groupPrice: 0,
-      highlights: [],
-      tags: [],
-      dressCode: "Business Casual",
-      ageLimit: "18+",
-      featured: false,
-      vip: false,
-      spaceCosts: [
-        {
-          type: "Shell Space (Standard Booth)",
-          description: "Fully constructed booth with walls, flooring, basic lighting, and standard amenities",
-          pricePerSqm: 5000,
-          minArea: 9,
-          isFixed: true,
-        },
-        {
-          type: "Raw Space",
-          description: "Open floor space without any construction or amenities",
-          pricePerSqm: 2500,
-          minArea: 20,
-          isFixed: false,
-        },
-        {
-          type: "2 Side Open Space",
-          description: "Space with two sides open for better visibility and accessibility",
-          pricePerSqm: 3500,
-          minArea: 12,
-          isFixed: true,
-        },
-        {
-          type: "3 Side Open Space",
-          description: "Premium corner space with three sides open for maximum exposure",
-          pricePerSqm: 4200,
-          minArea: 15,
-          isFixed: true,
-        },
-        {
-          type: "4 Side Open Space",
-          description: "Island space with all four sides open for 360-degree visibility",
-          pricePerSqm: 5500,
-          minArea: 25,
-          isFixed: true,
-        },
-        {
-          type: "Mezzanine Charges",
-          description: "Additional upper level space for storage or display purposes",
-          pricePerSqm: 1500,
-          minArea: 10,
-          isFixed: true,
-        },
-        {
-          type: "Additional Power",
-          description: "Extra electrical power supply for high-consumption equipment",
-          pricePerUnit: 800,
-          unit: "KW",
-          isFixed: true,
-        },
-        {
-          type: "Compressed Air",
-          description: "Compressed air supply for machinery demonstration (6 bar pressure)",
-          pricePerUnit: 1200,
-          unit: "HP",
-          isFixed: true,
-        },
-      ],
-      images: [],
-      brochure: "",
-      layoutPlan: "",
-      featuredHotels: [],
-      travelPartners: [],
-      touristAttractions: [],
-      ageRestriction: "",
-      accessibility: "",
-      parking: "",
-      publicTransport: "",
-      foodBeverage: "",
-      wifi: "",
-      photography: "",
-      recording: "",
-      liveStreaming: "",
-      socialMedia: "",
-      networking: "",
-      certificates: "",
-      materials: "",
-      followUp: "",
-    })
-    setValidationErrors({})
-  } catch (error) {
-    console.error("[v0] Error publishing event:", error)
-    toast({
-      title: "Error",
-      description: error instanceof Error ? error.message : "Failed to publish event",
-      variant: "destructive",
-    })
-  } finally {
-    setIsPublishing(false)
   }
-}
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files

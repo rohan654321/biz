@@ -81,10 +81,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         location: event.isVirtual
           ? "Virtual Event"
           : (event.venue ? `${event.venue.firstName} ${event.venue.lastName ?? ""}`.trim() : null) ||
-            event.location ||
-            `${event.city}, ${event.state}` ||
-            event.address ||
-            "TBD",
+          event.location ||
+          `${event.city}, ${event.state}` ||
+          event.address ||
+          "TBD",
         status: event.status,
         attendees: confirmedRegistrations,
         registrations: confirmedRegistrations,
@@ -166,31 +166,30 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         refundPolicy: body.refundPolicy || null,
         metaTitle: body.metaTitle || null,
         metaDescription: body.metaDescription || null,
-        
-        // // ✅ Add isFeatured and isVIP here
-        isFeatured: body.Featured || false,
-        isVIP: body.VIP || false,
+
+        isFeatured: body.featured || false,
+        isVIP: body.vip || false,
 
         organizerId: id,
 
         exhibitionSpaces: body.exhibitionSpaces
           ? {
-              create: body.exhibitionSpaces.map((space: any) => ({
-                spaceType: space.spaceType || "CUSTOM",
-                name: space.name,
-                description: space.description,
-                basePrice: space.basePrice,
-                pricePerSqm: space.pricePerSqm,
-                minArea: space.minArea,
-                isFixed: space.isFixed ?? false,
-                additionalPowerRate: space.additionalPowerRate,
-                compressedAirRate: space.compressedAirRate,
-                unit: space.unit,
-                area: space.area || 0,
-                isAvailable: space.isAvailable !== false,
-                maxBooths: space.maxBooths || null,
-              })),
-            }
+            create: body.exhibitionSpaces.map((space: any) => ({
+              spaceType: space.spaceType || "CUSTOM",
+              name: space.name,
+              description: space.description,
+              basePrice: space.basePrice,
+              pricePerSqm: space.pricePerSqm,
+              minArea: space.minArea,
+              isFixed: space.isFixed ?? false,
+              additionalPowerRate: space.additionalPowerRate,
+              compressedAirRate: space.compressedAirRate,
+              unit: space.unit,
+              area: space.area || 0,
+              isAvailable: space.isAvailable !== false,
+              maxBooths: space.maxBooths || null,
+            })),
+          }
           : undefined,
       },
       include: {

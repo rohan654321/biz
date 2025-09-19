@@ -240,8 +240,8 @@ model Event {
   campaigns       Campaign[]
   leads           EventLead[]
   promotions Promotion[] // ✅ back relation for event promotions
-   savedEvents SavedEvent[] // Add this line
-   appointments Appointment[] // Add appointments relation
+  savedEvents SavedEvent[] // Add this line
+  appointments Appointment[] // Add appointments relation
 
   @@map("events")
 }
