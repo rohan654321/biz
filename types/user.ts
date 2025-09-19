@@ -1,5 +1,6 @@
 // types/user.ts
 export interface UserData {
+  companyIndustry: string
   id: string
   email: string
   firstName: string
