@@ -92,36 +92,37 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     }
   }
 
-  // --- Stats with expiry check ---
-// --- Stats with expiry check ---
-const stats = useMemo(() => {
-  const now = new Date()
+  // Fixed stats calculation
+  const stats = useMemo(() => {
+    const now = new Date();
+    
+    const pending = appointments.filter(
+      (a) => a.status.toLowerCase() === "pending"
+    ).length;
 
-  const pending = appointments.filter(
-    (a) => a.status.toLowerCase() === "pending"
-  ).length
+    const confirmed = appointments.filter(
+      (a) => a.status.toLowerCase() === "confirmed" && 
+             new Date(a.scheduledAt) >= now
+    ).length;
 
-  const confirmed = appointments.filter(
-    (a) =>
-      a.status.toLowerCase() === "confirmed" &&
-      new Date(a.scheduledAt) >= now
-  ).length
+    const completed = appointments.filter(
+      (a) => a.status.toLowerCase() === "completed" || 
+             (a.status.toLowerCase() === "confirmed" && 
+              new Date(a.scheduledAt) < now)
+    ).length;
 
-  const completed = appointments.filter(
-    (a) =>
-      a.status.toLowerCase() === "completed" ||
-      (a.status.toLowerCase() === "confirmed" &&
-        new Date(a.scheduledAt) < now)
-  ).length
+    const cancelled = appointments.filter(
+      (a) => a.status.toLowerCase() === "cancelled"
+    ).length;
 
-  return {
-    total: appointments.length,
-    pending,
-    confirmed,
-    completed,
-  }
-}, [appointments])
-
+    return {
+      total: appointments.length,
+      pending,
+      confirmed,
+      completed,
+      cancelled,
+    };
+  }, [appointments]);
 
   // --- Helpers ---
   const formatDateTime = (dateTimeString: string) => {
@@ -194,7 +195,7 @@ const stats = useMemo(() => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           {
-            label: "Total Requests",
+            label: "Total",
             value: stats.total,
             color: "border-blue-300 hover:border-blue-500",
           },
@@ -241,7 +242,22 @@ const stats = useMemo(() => {
 
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
+        {/* Calendar */}
+        <Card className="md:col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5" /> Calendar
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              className="rounded-md border"
+            />
+          </CardContent>
+        </Card>
 
         {/* Appointment Cards */}
         <div className="md:col-span-2 space-y-6">
