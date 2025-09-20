@@ -6,34 +6,24 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ userId: string }> }
+  { params }: { params: { userId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Extract userId from the request URL as a fallback
-    const url = new URL(request.url)
-    const pathParts = url.pathname.split('/')
-    const userId = pathParts[pathParts.length - 2] // Get the userId from the URL path
-    
+    const userId = params.userId  // ✅ direct and safe
+
     console.log("Session user ID:", session.user.id)
     console.log("Requested user ID:", userId)
     console.log("User role:", session.user.role)
 
-    // Ensure user can only access their own events (or admin can access any)
     if (session.user.id !== userId && session.user.role !== "ADMIN") {
       console.log("Access denied - user doesn't match and not admin")
-      return NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     console.log("Fetching events for user:", userId)
