@@ -83,37 +83,29 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     }
   }
 
-  // --- Stats with expiry check ---
   const stats = useMemo(() => {
     const now = new Date()
-    const pending = appointments.filter((a) => a.status === "pending").length
-    const confirmed = appointments.filter(
-      (a) => a.status === "confirmed" && new Date(a.scheduledAt) >= now
-    ).length
-    const completed = appointments.filter(
-      (a) => a.status === "completed" || (a.status === "confirmed" && new Date(a.scheduledAt) < now)
-    ).length
-    return { total: appointments.length, pending, confirmed, completed }
+    const pending = appointments.filter((a) => a.status === "PENDING").length
+    const confirmed = appointments.filter((a) => a.status === "CONFIRMED").length
+    const completed = appointments.filter((a) => a.status === "COMPLETED").length
+    const cancelled = appointments.filter((a) => a.status === "CANCELLED").length
+
+    return {
+      total: appointments.length,
+      pending,
+      confirmed,
+      completed: completed + cancelled,
+    }
   }, [appointments])
 
-
-  // --- Helpers ---
-  const formatDateTime = (dateTimeString: string) => {
-    const date = new Date(dateTimeString)
-    return {
-      date: date.toLocaleDateString("en-US", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }),
-      time: date.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      }),
-    }
-  }
+  const formatDate = (dateStr?: string) =>
+    dateStr
+      ? new Date(dateStr).toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+        })
+      : "N/A"
 
   const getEffectiveStatus = (appointment: Appointment) => {
     return appointment.status.toLowerCase()
@@ -224,109 +216,95 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
         </div>
       </div>
 
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {(searchTerm || selectedEvent !== "all") && (
+        <div className="text-sm text-muted-foreground">
+          Showing {filteredAppointments.length} of {appointments.length} appointments
+          {selectedEvent !== "all" && ` for "${selectedEvent}"`}
+        </div>
+      )}
 
-
-      {/* Appointment Cards */}
-<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-  <div className="md:col-span-2 space-y-6">
-    {filteredAppointments.map((appointment) => {
-      const effectiveStatus = getEffectiveStatus(appointment)
-      return (
-        <Card
-          key={appointment.id}
-          className="transition-shadow hover:shadow-xl rounded-xl border border-gray-200 overflow-hidden"
-        >
-          {/* Event Badge */}
-          {appointment.eventTitle && (
-            <div className="bg-blue-50 text-blue-800 px-3 py-1 font-semibold text-sm w-fit rounded-br-xl">
-              {appointment.eventTitle}
-            </div>
-          )}
-
-          <CardContent className="flex flex-col gap-4 p-6">
-            {/* Header: Exhibitor */}
-            <div className="flex items-center gap-4">
-              {appointment.exhibitorAvatar ? (
-                <img
-                  src={appointment.exhibitorAvatar}
-                  alt={appointment.exhibitorName}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                  {appointment.exhibitorName[0] || "?"}
-                </div>
-              )}
-
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg">{appointment.exhibitorName}</h3>
-                <p className="text-sm text-gray-500 flex items-center gap-1">
-                  <Building2 className="w-4 h-4" /> {appointment.exhibitorCompany || "N/A"}
-                </p>
-              </div>
-
-              {(effectiveStatus === "pending" || effectiveStatus === "confirmed") && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="self-start"
-                  onClick={() => cancelAppointment(appointment.id)}
-                >
-                  <Trash2 className="h-5 w-5 text-red-500" />
-                </Button>
-              )}
-            </div>
-
-            {/* Contact & Event Info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mt-2">
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                {appointment.exhibitorEmail}
-              </div>
-              {appointment.exhibitorPhone && (
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  {appointment.exhibitorPhone}
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <CalendarDays className="w-4 h-4" />
-                {formatDate(appointment.eventStartDate)} – {formatDate(appointment.eventEndDate)}
-              </div>
-            </div>
-
-            {/* Notes */}
-            {appointment.notes && (
-              <div className="bg-gray-50 p-3 rounded-md text-gray-700 text-sm mt-2">{appointment.notes}</div>
-            )}
-
-            {/* Status & Booth */}
-            <div className="flex flex-wrap gap-2 mt-3">
-              <Badge
-                variant="outline"
-                className={`capitalize ${
-                  effectiveStatus === "confirmed"
-                    ? "border-green-500 text-green-600"
-                    : effectiveStatus === "pending"
-                    ? "border-yellow-500 text-yellow-600"
-                    : effectiveStatus === "cancelled"
-                    ? "border-red-500 text-red-600"
-                    : "border-gray-400 text-gray-600"
-                }`}
+      <div className="">
+        <div className="md:col-span-2 space-y-6">
+          {filteredAppointments.map((appointment) => {
+            const effectiveStatus = getEffectiveStatus(appointment)
+            return (
+              <Card
+                key={appointment.id}
+                className="transition-shadow hover:shadow-xl rounded-xl border border-gray-200 overflow-hidden"
               >
-                {effectiveStatus}
-              </Badge>
-              {appointment.boothNumber && <Badge variant="outline">Booth {appointment.boothNumber}</Badge>}
-            </div>
-          </CardContent>
-        </Card>
-      )
-    })}
-  </div>
-</div>
+                {appointment.eventTitle && (
+                  <div className="bg-blue-50 text-blue-800 px-3 py-1 font-semibold text-sm w-fit rounded-br-xl">
+                    {appointment.eventTitle}
+                  </div>
+                )}
 
+                <CardContent className="flex flex-col gap-4 p-6">
+                  <div className="flex items-center gap-4">
+                    {appointment.exhibitorAvatar ? (
+                      <img
+                        src={appointment.exhibitorAvatar || "/placeholder.svg"}
+                        alt={appointment.exhibitorName}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                        {appointment.exhibitorName[0] || "?"}
+                      </div>
+                    )}
+
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg">{appointment.exhibitorName}</h3>
+                      <p className="text-sm text-gray-500 flex items-center gap-1">
+                        <Building2 className="w-4 h-4" /> {appointment.exhibitorCompany || "N/A"}
+                      </p>
+                    </div>
+
+                    <Badge
+                      variant="outline"
+                      className={`capitalize ${
+                        effectiveStatus === "confirmed"
+                          ? "border-green-500 text-green-600"
+                          : effectiveStatus === "pending"
+                            ? "border-yellow-500 text-yellow-600"
+                            : effectiveStatus === "cancelled"
+                              ? "border-red-500 text-red-600"
+                              : "border-gray-400 text-gray-600"
+                      }`}
+                    >
+                      {effectiveStatus}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mt-2">
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      {appointment.exhibitorEmail}
+                    </div>
+                    {appointment.exhibitorPhone && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4" />
+                        {appointment.exhibitorPhone}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="w-4 h-4" />
+                      {formatDate(appointment.eventStartDate)} – {formatDate(appointment.eventEndDate)}
+                    </div>
+                  </div>
+
+                  {appointment.notes && (
+                    <div className="bg-gray-50 p-3 rounded-md text-gray-700 text-sm mt-2">{appointment.notes}</div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {appointment.boothNumber && <Badge variant="outline">Booth {appointment.boothNumber}</Badge>}
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }
