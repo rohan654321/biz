@@ -329,11 +329,10 @@ export function EventsSection({ userId }: EventsSectionProps) {
                 const role = roleBadgeProps(event.leadType)
                 return (
                   <div key={event.id} className="mb-10 ml-6 relative">
-                    {/* Timeline Dot (color by role) */}
+                    {/* Timeline Dot (centered over the line) */}
                     <span
-                      className={`absolute -left-[13px] flex items-center justify-center w-5 h-5 rounded-full ring-4 ring-white ${timelineDotClass(
-                        event.leadType
-                      )}`}
+                      className={`absolute -left-[35px] top-0 flex items-center justify-center 
+    w-5 h-5 rounded-full ring-4 ring-white ${timelineDotClass(event.leadType)}`}
                     />
 
                     {/* Date Heading */}

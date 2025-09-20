@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 
 interface Event {
   id: string
   title: string
-  date: string // ISO format
-  category: "personal" | "work" | "travel"
+  startDate: string // ISO string
+  endDate: string   // ISO string
+  category?: "personal" | "work" | "travel"
 }
 
 interface ScheduleProps {
@@ -15,15 +17,31 @@ interface ScheduleProps {
 }
 
 export default function Schedule({ userId }: ScheduleProps) {
+  const router = useRouter()
   const [events, setEvents] = useState<Event[]>([])
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
+  // Fetch events
   useEffect(() => {
-    fetch(`/api/schedule/${userId}`)
+    fetch(`/api/users/${userId}/interested-events`)
       .then((res) => res.json())
-      .then((data) => setEvents(data.events || []))
+      .then((data) => {
+        const apiEvents = data.events || []
+
+        const mappedEvents: Event[] = apiEvents.map((e: any) => ({
+          id: e.id,
+          title: e.title,
+          startDate: e.startDate,
+          endDate: e.endDate || e.startDate,
+          category: e.category || "work", // default if not provided
+        }))
+
+        setEvents(mappedEvents)
+      })
+      .catch((error) => console.error("Error fetching events:", error))
   }, [userId])
 
+  // Calendar dates
   const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
   const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)
   const daysInMonth = Array.from({ length: endOfMonth.getDate() }, (_, i) => i + 1)
@@ -35,14 +53,21 @@ export default function Schedule({ userId }: ScheduleProps) {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))
   }
 
+  // Get events for a day
   const getDayEvents = (day: number) => {
-    const dateStr = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toISOString().split("T")[0]
-    return events.filter((e) => e.date.startsWith(dateStr))
+    const dayDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
+
+    return events.filter((e) => {
+      const start = new Date(e.startDate)
+      const end = new Date(e.endDate)
+      return dayDate >= start && dayDate <= end
+    })
   }
 
-  const categoryColors: Record<Event["category"], string> = {
+  // Colors per category
+  const categoryColors: Record<NonNullable<Event["category"]>, string> = {
     personal: "bg-blue-200 text-blue-800",
-    work: "bg-red-200 text-red-800",
+    work: "bg-green-200 text-green-800",
     travel: "bg-yellow-200 text-yellow-800",
   }
 
@@ -63,20 +88,26 @@ export default function Schedule({ userId }: ScheduleProps) {
           <div key={d} className="font-semibold">{d}</div>
         ))}
 
+        {/* Empty slots before 1st day */}
         {Array(startOfMonth.getDay()).fill(null).map((_, i) => (
           <div key={`empty-${i}`} />
         ))}
 
+        {/* Days */}
         {daysInMonth.map((day) => {
           const dayEvents = getDayEvents(day)
           return (
-            <div key={day} className="border rounded-lg p-2 h-28 flex flex-col items-start overflow-hidden">
+            <div
+              key={day}
+              className="border rounded-lg p-2 h-28 flex flex-col items-start overflow-hidden"
+            >
               <span className="text-xs font-bold">{day}</span>
               <div className="flex flex-col gap-1 w-full mt-1">
                 {dayEvents.map((e) => (
                   <span
                     key={e.id}
-                    className={`text-xs rounded px-1 truncate ${categoryColors[e.category]}`}
+                    onClick={() => router.push(`/event/${e.id}`)}
+                    className={`text-xs rounded px-1 truncate cursor-pointer ${categoryColors[e.category || "work"]}`}
                   >
                     {e.title}
                   </span>

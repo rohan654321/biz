@@ -241,7 +241,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("event")}>
                 <span className="flex items-center gap-2">
                   <Calendar size={16} />
-                  {!isSidebarCollapsed && "Event"}
+                  {!isSidebarCollapsed && "My-Events"}
                 </span>
                 {!isSidebarCollapsed &&
                   (openMenus.includes("event") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
@@ -278,14 +278,14 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("exhibitor")}>
                 <span className="flex items-center gap-2">
                   <Store size={16} />
-                  {!isSidebarCollapsed && "Exhibitor"}
+                  {!isSidebarCollapsed && "My-Exhibitors"}
                 </span>
                 {!isSidebarCollapsed &&
                   (openMenus.includes("exhibitor") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
               </button>
               {openMenus.includes("exhibitor") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li onClick={() => setActiveSection("exhibitor-schedule")} className={menuItemClass(activeSection, "exhibitor-schedule")}>Exhibitor Schedule</li>
+                  {/* <li onClick={() => setActiveSection("exhibitor-schedule")} className={menuItemClass(activeSection, "exhibitor-schedule")}>Exhibitor Schedule</li> */}
                   <li onClick={() => setActiveSection("my-appointments")} className={menuItemClass(activeSection, "my-appointments")}>Exhibitor Appointments</li>
                   <li onClick={() => setActiveSection("recommendations")} className={menuItemClass(activeSection, "recommendations")}>Recommendations</li>
                 </ul>
@@ -293,7 +293,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
             </div>
 
             {/* Event Planning Tools */}
-            <div>
+            {/* <div>
               <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("tools")}>
                 <span className="flex items-center gap-2">
                   <List size={16} />
@@ -308,7 +308,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                   <li onClick={() => setActiveSection("schedule")} className={menuItemClass(activeSection, "schedule")}>Schedule</li>
                 </ul>
               )}
-            </div>
+            </div> */}
 
             {/* Help & Support */}
             <div>
