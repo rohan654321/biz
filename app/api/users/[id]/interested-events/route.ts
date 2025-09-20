@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params:Promise <{ userId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -15,13 +15,13 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const userId = params.userId  // ✅ direct and safe
+    const {userId} =await params  // ✅ direct and safe
 
     console.log("Session user ID:", session.user.id)
     console.log("Requested user ID:", userId)
     console.log("User role:", session.user.role)
 
-    if (session.user.id !== userId && session.user.role !== "ADMIN") {
+    if (session.user.id !== userId && session.user.role !== "ATTENDEE") {
       console.log("Access denied - user doesn't match and not admin")
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
