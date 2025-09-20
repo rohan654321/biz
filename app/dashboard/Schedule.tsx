@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
 interface Event {
@@ -18,23 +17,23 @@ interface ScheduleProps {
 export default function Schedule({ userId }: ScheduleProps) {
   const [events, setEvents] = useState<Event[]>([])
   const [currentMonth, setCurrentMonth] = useState(new Date())
-  const router = useRouter()
 
   useEffect(() => {
-    fetch(`/api/users/${userId}/interested-events`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.events) {
-          const mappedEvents = data.events.map((e: any) => ({
-            id: e.id,
-            title: e.title,
-            date: e.startDate, // use startDate for calendar
-            category: "work" as const, // default or map from e.type
-          }))
-          setEvents(mappedEvents)
-        }
-      })
-  }, [userId])
+  fetch(`/api/users/${userId}/interested-events`)
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.events) {
+        const mappedEvents = data.events.map((e: any) => ({
+          id: e.id,
+          title: e.title,
+          date: e.startDate, // use startDate for calendar
+          category: "work" as const, // default or map from e.type
+        }))
+        setEvents(mappedEvents)
+      }
+    })
+}, [userId])
+
 
   const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
   const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)
@@ -43,7 +42,6 @@ export default function Schedule({ userId }: ScheduleProps) {
   const prevMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))
   }
-  
   const nextMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))
   }
@@ -53,14 +51,10 @@ export default function Schedule({ userId }: ScheduleProps) {
     return events.filter((e) => e.date.startsWith(dateStr))
   }
 
-  const handleEventClick = (eventId: string) => {
-    router.push(`/event/${eventId}`)
-  }
-
-  const categoryColors: Record<Event["category"], string> = {
-    personal: "bg-blue-200 text-blue-800 hover:bg-blue-300",
-    work: "bg-green-200 text-green-800 hover:bg-green-300",
-    travel: "bg-yellow-200 text-yellow-800 hover:bg-yellow-300",
+ const categoryColors: Record<Event["category"], string> = {
+    personal: "bg-blue-200 text-blue-800",
+    work: "bg-green-200 text-green-800", // ✅ updated
+    travel: "bg-yellow-200 text-yellow-800",
   }
 
   return (
@@ -91,14 +85,12 @@ export default function Schedule({ userId }: ScheduleProps) {
               <span className="text-xs font-bold">{day}</span>
               <div className="flex flex-col gap-1 w-full mt-1">
                 {dayEvents.map((e) => (
-                  <button
+                  <span
                     key={e.id}
-                    onClick={() => handleEventClick(e.id)}
-                    className={`text-xs rounded px-1 truncate w-full text-left cursor-pointer transition-colors ${categoryColors[e.category]}`}
-                    title={e.title} // Show full title on hover
+                    className={`text-xs rounded px-1 truncate ${categoryColors[e.category]}`}
                   >
                     {e.title}
-                  </button>
+                  </span>
                 ))}
               </div>
             </div>
