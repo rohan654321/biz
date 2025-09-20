@@ -28,7 +28,7 @@ export async function GET(
     console.log("User role:", session.user.role)
 
     // Ensure user can only access their own events (or admin can access any)
-    if (session.user.id !== userId && session.user.role !== "ADMIN") {
+    if (session.user.id !== userId && session.user.role !== "ATTENDEE") {
       console.log("Access denied - user doesn't match and not admin")
       return NextResponse.json(
         { error: "Forbidden" },

@@ -26,7 +26,7 @@ import {
   BriefcaseBusiness,
   Building2,
 } from "lucide-react"
-import { DynamicCalendar } from "@/components/DynamicCalendar"
+import { DynamicCalendar } from "./DynamicCalander"
 import { UserData } from "@/types/user"
 import {
   Select,
@@ -474,8 +474,11 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
           {/* Calendar + Events */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Calendar */}
-            <div className="h-[500px]"> {/* 👈 Set fixed height */}
-              <DynamicCalendar className="h-full w-full" /> {/* 👈 Stretch calendar */}
+            <div className="h-[500px]">
+             <DynamicCalendar userId={userData.id} className="h-full w-full" />
+
+           
+
             </div>
 
             {/* Interested Events */}
