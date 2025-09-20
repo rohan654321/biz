@@ -91,34 +91,34 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
   }
 
   // --- Stats with expiry check ---
-// --- Stats with expiry check ---
-const stats = useMemo(() => {
-  const now = new Date()
+  // --- Stats with expiry check ---
+  const stats = useMemo(() => {
+    const now = new Date()
 
-  const pending = appointments.filter(
-    (a) => a.status.toLowerCase() === "pending"
-  ).length
+    const pending = appointments.filter(
+      (a) => a.status.toLowerCase() === "pending"
+    ).length
 
-  const confirmed = appointments.filter(
-    (a) =>
-      a.status.toLowerCase() === "confirmed" &&
-      new Date(a.scheduledAt) >= now
-  ).length
+    const confirmed = appointments.filter(
+      (a) =>
+        a.status.toLowerCase() === "confirmed" &&
+        new Date(a.scheduledAt) >= now
+    ).length
 
-  const completed = appointments.filter(
-    (a) =>
-      a.status.toLowerCase() === "completed" ||
-      (a.status.toLowerCase() === "confirmed" &&
-        new Date(a.scheduledAt) < now)
-  ).length
+    const completed = appointments.filter(
+      (a) =>
+        a.status.toLowerCase() === "completed" ||
+        (a.status.toLowerCase() === "confirmed" &&
+          new Date(a.scheduledAt) < now)
+    ).length
 
-  return {
-    total: appointments.length,
-    pending,
-    confirmed,
-    completed,
-  }
-}, [appointments])
+    return {
+      total: appointments.length,
+      pending,
+      confirmed,
+      completed,
+    }
+  }, [appointments])
 
 
   // --- Helpers ---
@@ -274,45 +274,44 @@ const stats = useMemo(() => {
                     </div>
                     {(effectiveStatus === "pending" ||
                       effectiveStatus === "confirmed") && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => cancelAppointment(appointment.id)}
-                      >
-                        <Trash2 className="h-5 w-5 text-red-500" />
-                      </Button>
-                    )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => cancelAppointment(appointment.id)}
+                        >
+                          <Trash2 className="h-5 w-5 text-red-500" />
+                        </Button>
+                      )}
                   </div>
 
-            {/* Notes */}
-            {appointment.notes && (
-              <div className="bg-gray-50 p-3 rounded-md text-gray-700 text-sm mt-2">{appointment.notes}</div>
-            )}
+                  {/* Notes */}
+                  {appointment.notes && (
+                    <div className="bg-gray-50 p-3 rounded-md text-gray-700 text-sm mt-2">{appointment.notes}</div>
+                  )}
 
-            {/* Status & Booth */}
-            <div className="flex flex-wrap gap-2 mt-3">
-              <Badge
-                variant="outline"
-                className={`capitalize ${
-                  effectiveStatus === "confirmed"
-                    ? "border-green-500 text-green-600"
-                    : effectiveStatus === "pending"
-                    ? "border-yellow-500 text-yellow-600"
-                    : effectiveStatus === "cancelled"
-                    ? "border-red-500 text-red-600"
-                    : "border-gray-400 text-gray-600"
-                }`}
-              >
-                {effectiveStatus}
-              </Badge>
-              {appointment.boothNumber && <Badge variant="outline">Booth {appointment.boothNumber}</Badge>}
-            </div>
-          </CardContent>
-        </Card>
-      )
-    })}
-  </div>
-</div>
+                  {/* Status & Booth */}
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <Badge
+                      variant="outline"
+                      className={`capitalize ${effectiveStatus === "confirmed"
+                          ? "border-green-500 text-green-600"
+                          : effectiveStatus === "pending"
+                            ? "border-yellow-500 text-yellow-600"
+                            : effectiveStatus === "cancelled"
+                              ? "border-red-500 text-red-600"
+                              : "border-gray-400 text-gray-600"
+                        }`}
+                    >
+                      {effectiveStatus}
+                    </Badge>
+                    {appointment.boothNumber && <Badge variant="outline">Booth {appointment.boothNumber}</Badge>}
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      </div>
 
     </div>
   )
