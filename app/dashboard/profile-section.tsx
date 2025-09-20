@@ -26,7 +26,7 @@ import {
   BriefcaseBusiness,
   Building2,
 } from "lucide-react"
-import { DynamicCalendar } from "@/components/DynamicCalendar"
+import { DynamicCalendar } from "./DynamicCalander"
 import { UserData } from "@/types/user"
 import {
   Select,
@@ -54,6 +54,7 @@ const INTEREST_OPTIONS = [
 ]
 
 interface FormData {
+  email: string
   firstName: string
   lastName: string
   phone: string
@@ -79,6 +80,7 @@ interface Event {
 
 export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSectionProps) {
   const initialFormData: FormData = {
+    email: userData?.email || "",
     firstName: userData?.firstName || "",
     lastName: userData?.lastName || "",
     phone: userData?.phone || "",
@@ -149,6 +151,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
 
   useEffect(() => {
     setFormData({
+      email: localUserData?.email || "",
       firstName: localUserData?.firstName || "",
       lastName: localUserData?.lastName || "",
       phone: localUserData?.phone || "",
@@ -196,6 +199,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
 
   const handleCancel = useCallback(() => {
     setFormData({
+      email: localUserData?.email || "",
       firstName: localUserData?.firstName || "",
       lastName: localUserData?.lastName || "",
       phone: localUserData?.phone || "",
@@ -325,71 +329,121 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
           <CardContent className="space-y-4 text-sm">
             {isEditing ? (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>First Name</Label>
-                    <Input value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} />
-                  </div>
-                  <div>
-                    <Label>Last Name</Label>
-                    <Input value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} />
-                  </div>
-                  <div>
-                    <Label>Contact Number</Label>
-                    <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
-                  </div>
-                  <div>
-                    <Label>Position</Label>
-                    <Input value={formData.jobTitle} onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })} />
-                  </div>
-                  <div>
-                    <Label>Company</Label>
-                    <Input value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} />
-                  </div>
-                  <div>
-                    <Label>Interests</Label>
-                    <Select
-                      onValueChange={(value) => {
-                        if (!formData.interests.includes(value)) {
-                          setFormData({ ...formData, interests: [...formData.interests, value] })
-                        }
-                      }}
-                    >
-                      <div>
-                        <Label>Company Field</Label>
-                        <Input
-                          value={formData.companyIndustry}
-                          onChange={(e) =>
-                            setFormData({ ...formData, companyIndustry: e.target.value })
-                          }
-                          placeholder="e.g. Fintech, Education, Healthcare"
-                        />
-                      </div>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <Label>First Name</Label>
+      <Input
+        value={formData.firstName}
+        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+      />
+    </div>
 
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select interest" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {INTEREST_OPTIONS.map((option) => (
-                          <SelectItem key={option} value={option}>{option}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <div className="flex gap-2 flex-wrap mt-2">
-                      {formData.interests.map((int, idx) => (
-                        <Badge key={idx} variant="secondary" className="cursor-pointer"
-                          onClick={() => setFormData({ ...formData, interests: formData.interests.filter((i) => i !== int) })}>
-                          {int} ✕
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <Label>Bio</Label>
-                  <Textarea value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} rows={3} />
-                </div>
-              </>
+    <div>
+      <Label>Last Name</Label>
+      <Input
+        value={formData.lastName}
+        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+      />
+    </div>
+
+    <div>
+      <Label>Email</Label> {/* ✅ Added Email field */}
+      <Input
+        type="email"
+        value={formData.email}
+        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+      />
+    </div>
+
+    <div>
+      <Label>Contact Number</Label>
+      <Input
+        value={formData.phone}
+        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+      />
+    </div>
+
+    <div>
+      <Label>Position</Label>
+      <Input
+        value={formData.jobTitle}
+        onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+      />
+    </div>
+
+    <div>
+      <Label>Company</Label>
+      <Input
+        value={formData.company}
+        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+      />
+    </div>
+
+    <div>
+      <Label>Company Field</Label> {/* ✅ Moved outside Interests */}
+      <Input
+        value={formData.companyIndustry}
+        onChange={(e) =>
+          setFormData({ ...formData, companyIndustry: e.target.value })
+        }
+        placeholder="e.g. Fintech, Education, Healthcare"
+      />
+    </div>
+
+    <div>
+      <Label>Interests</Label> {/* ✅ Separate Interests */}
+      <Select
+        onValueChange={(value) => {
+          if (!formData.interests.includes(value)) {
+            setFormData({
+              ...formData,
+              interests: [...formData.interests, value],
+            })
+          }
+        }}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Select interest" />
+        </SelectTrigger>
+        <SelectContent>
+          {INTEREST_OPTIONS.map((option) => (
+            <SelectItem key={option} value={option}>
+              {option}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <div className="flex gap-2 flex-wrap mt-2">
+        {formData.interests.map((int, idx) => (
+          <Badge
+            key={idx}
+            variant="secondary"
+            className="cursor-pointer"
+            onClick={() =>
+              setFormData({
+                ...formData,
+                interests: formData.interests.filter((i) => i !== int),
+              })
+            }
+          >
+            {int} ✕
+          </Badge>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <Label>Bio</Label>
+    <Textarea
+      value={formData.bio}
+      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+      rows={3}
+    />
+  </div>
+</>
+
             ) : (
               <>
                 <div className="flex items-center gap-2">
@@ -474,14 +528,17 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
           {/* Calendar + Events */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Calendar */}
-            <div className="h-[500px]"> {/* 👈 Set fixed height */}
-              <DynamicCalendar className="h-full w-full" /> {/* 👈 Stretch calendar */}
+            <div className="h-[500px]">
+             <DynamicCalendar userId={userData.id} className="h-full w-full" />
+
+           
+
             </div>
 
             {/* Interested Events */}
             <Card className="h-[500px] flex flex-col"> {/* 👈 Same height as calendar */}
               <CardHeader className="pb-3">
-                <CardTitle>Interested Events</CardTitle>
+                <CardTitle>Suggested Events</CardTitle>
               </CardHeader>
               <CardContent className="flex-1 overflow-y-auto space-y-4">
                 {loadingEvents ? (

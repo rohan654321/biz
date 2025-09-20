@@ -80,11 +80,11 @@ export function SettingsSection({ userData, onUpdate }: SettingsSectionProps) {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+      {/* <h1 className="text-3xl font-bold text-gray-900">Settings</h1> */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
         {/* Account Settings */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle>Account Settings</CardTitle>
           </CardHeader>
@@ -124,7 +124,7 @@ export function SettingsSection({ userData, onUpdate }: SettingsSectionProps) {
             </div>
             <Button onClick={handleAccountSave}>Save Changes</Button>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Privacy & Notifications */}
         <Card>
@@ -244,7 +244,7 @@ export function SettingsSection({ userData, onUpdate }: SettingsSectionProps) {
             </div>
           </CardContent>
         </Card>
-      </div>
+     
     </div>
   )
 }

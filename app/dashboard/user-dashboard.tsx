@@ -51,6 +51,7 @@ import { HelpCircle, Phone, MessageCircle } from "lucide-react"
 import { FAQs } from "../../components/help/FAQs"
 import { ContactSupport } from "../../components/help/ContactSupport"
 import { ChatSupport } from "../../components/help/ChatSupport"
+import { HelpSupport } from "@/components/HelpSupport"
 
 interface UserDashboardProps {
   userId: string
@@ -155,7 +156,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         return <Favourites />
       case "recommended-events":
         return <RecommendedEvents userId={userId} interests={userInterests} />
-      case "recommendations":
+      case "Suggested":
         return <Recommendations />
       case "connections":
         return <ConnectionsSection userId={userId} />
@@ -165,12 +166,15 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         return <SettingsSection userData={userData!} onUpdate={handleProfileUpdate} />
       case "travel":
         return <TravelAccommodation />
-      case "faqs":
-        return <FAQs />
-      case "contact-support":
-        return <ContactSupport />
-      case "chat-support":
-        return <ChatSupport />  
+        case "help-support":
+  return <HelpSupport />
+
+      // case "faqs":
+      //   return <FAQs />
+      // case "contact-support":
+      //   return <ContactSupport />
+      // case "chat-support":
+      //   return <ChatSupport />  
       default:
         return <p>Select a section</p>
     }
@@ -241,7 +245,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("event")}>
                 <span className="flex items-center gap-2">
                   <Calendar size={16} />
-                  {!isSidebarCollapsed && "Event"}
+                  {!isSidebarCollapsed && "My-Events"}
                 </span>
                 {!isSidebarCollapsed &&
                   (openMenus.includes("event") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
@@ -278,22 +282,22 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("exhibitor")}>
                 <span className="flex items-center gap-2">
                   <Store size={16} />
-                  {!isSidebarCollapsed && "Exhibitor"}
+                  {!isSidebarCollapsed && "My-Exhibitors"}
                 </span>
                 {!isSidebarCollapsed &&
                   (openMenus.includes("exhibitor") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
               </button>
               {openMenus.includes("exhibitor") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li onClick={() => setActiveSection("exhibitor-schedule")} className={menuItemClass(activeSection, "exhibitor-schedule")}>Exhibitor Schedule</li>
+                  {/* <li onClick={() => setActiveSection("exhibitor-schedule")} className={menuItemClass(activeSection, "exhibitor-schedule")}>Exhibitor Schedule</li> */}
                   <li onClick={() => setActiveSection("my-appointments")} className={menuItemClass(activeSection, "my-appointments")}>Exhibitor Appointments</li>
-                  <li onClick={() => setActiveSection("recommendations")} className={menuItemClass(activeSection, "recommendations")}>Recommendations</li>
+                  <li onClick={() => setActiveSection("Suggested")} className={menuItemClass(activeSection, "Suggested")}>Suggested</li>
                 </ul>
               )}
             </div>
 
             {/* Event Planning Tools */}
-            <div>
+            {/* <div>
               <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("tools")}>
                 <span className="flex items-center gap-2">
                   <List size={16} />
@@ -308,10 +312,10 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                   <li onClick={() => setActiveSection("schedule")} className={menuItemClass(activeSection, "schedule")}>Schedule</li>
                 </ul>
               )}
-            </div>
+            </div> */}
 
             {/* Help & Support */}
-            <div>
+            {/* <div>
               <button
                 className="flex items-center justify-between w-full py-2 font-medium"
                 onClick={() => toggleMenu("help-support")}
@@ -326,8 +330,8 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                   ) : (
                     <ChevronRight size={16} />
                   ))}
-              </button>
-              {openMenus.includes("help-support") && !isSidebarCollapsed && (
+              </button> */}
+              {/* {openMenus.includes("help-support") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
                   <li
                     onClick={() => setActiveSection("faqs")}
@@ -349,7 +353,23 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                   </li>
                 </ul>
               )}
+            </div> */}
+            {/* </div> */}
+                       <div>
+              <button
+  onClick={() => setActiveSection("help-support")}
+  className={`flex items-center gap-2 w-full py-2 font-medium ${
+    activeSection === "help-support" ? "text-blue-600 font-medium" : "hover:text-blue-600"
+  }`}
+>
+  <HelpCircle size={16} /> {/* <-- icon added */}
+  {!isSidebarCollapsed && "Help & Support"}
+</button>
+
             </div>
+           {/* <li onClick={() => setActiveSection("help-support")} className={menuItemClass(activeSection, "help-support")}>
+  Help & Support
+</li> */}
 
             {/* Settings */}
             <div>

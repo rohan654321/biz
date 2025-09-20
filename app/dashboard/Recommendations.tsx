@@ -30,8 +30,8 @@ export function Recommendations() {
   return (
     <div className="space-y-6">
       {/* Title */}
-      <h2 className="text-xl font-bold">Recommendation</h2>
-      <hr />
+      {/* <h2 className="text-xl font-bold">Recommendation</h2>
+      <hr /> */}
 
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

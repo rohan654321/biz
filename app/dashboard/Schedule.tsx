@@ -19,10 +19,21 @@ export default function Schedule({ userId }: ScheduleProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
   useEffect(() => {
-    fetch(`/api/schedule/${userId}`)
-      .then((res) => res.json())
-      .then((data) => setEvents(data.events || []))
-  }, [userId])
+  fetch(`/api/users/${userId}/interested-events`)
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.events) {
+        const mappedEvents = data.events.map((e: any) => ({
+          id: e.id,
+          title: e.title,
+          date: e.startDate, // use startDate for calendar
+          category: "work" as const, // default or map from e.type
+        }))
+        setEvents(mappedEvents)
+      }
+    })
+}, [userId])
+
 
   const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
   const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)
@@ -40,9 +51,9 @@ export default function Schedule({ userId }: ScheduleProps) {
     return events.filter((e) => e.date.startsWith(dateStr))
   }
 
-  const categoryColors: Record<Event["category"], string> = {
+ const categoryColors: Record<Event["category"], string> = {
     personal: "bg-blue-200 text-blue-800",
-    work: "bg-red-200 text-red-800",
+    work: "bg-green-200 text-green-800", // ✅ updated
     travel: "bg-yellow-200 text-yellow-800",
   }
 
