@@ -113,7 +113,7 @@ export function PastEvents({ userId }: PastEventsProps) {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Past Events</h1>
+      {/* <h1 className="text-3xl font-bold text-gray-900">Past Events</h1> */}
 
       <div className="relative border-l-2 border-gray-200 ml-6">
         {pastEvents.map((event) => (
