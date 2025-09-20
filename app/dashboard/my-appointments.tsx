@@ -1,10 +1,9 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Calendar } from "@/components/ui/calendar"
 import { Badge } from "@/components/ui/badge"
 import {
   Calendar as CalendarIcon,
@@ -13,9 +12,8 @@ import {
   Phone,
   Building2,
   Search,
-  Filter,
   Trash2,
-  Loader2,
+  Loader2, // ✅ Import fixed
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -32,6 +30,9 @@ interface Appointment {
   status: "pending" | "confirmed" | "cancelled" | "completed"
   notes?: string
   createdAt: string
+  eventTitle?: string
+  eventStartDate?: string
+  eventEndDate?: string
 }
 
 interface MyAppointmentsProps {
@@ -42,7 +43,7 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [date, setDate] = useState<Date | undefined>(new Date())
+  const [searchTerm, setSearchTerm] = useState("")
   const { toast } = useToast()
 
   useEffect(() => {
@@ -54,9 +55,7 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
       setLoading(true)
       setError(null)
       const response = await fetch(`/api/users/${userId}/appointments`)
-      if (!response.ok) {
-        throw new Error("Failed to fetch appointments")
-      }
+      if (!response.ok) throw new Error("Failed to fetch appointments")
       const data = await response.json()
       setAppointments(data.appointments || [])
     } catch (err) {
@@ -74,7 +73,6 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "cancelled" }),
       })
-
       if (!response.ok) throw new Error("Failed to cancel appointment")
 
       toast({
@@ -92,37 +90,36 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     }
   }
 
-  // Fixed stats calculation
-  const stats = useMemo(() => {
-    const now = new Date();
-    
-    const pending = appointments.filter(
-      (a) => a.status.toLowerCase() === "pending"
-    ).length;
+  // --- Stats with expiry check ---
+// --- Stats with expiry check ---
+const stats = useMemo(() => {
+  const now = new Date()
 
-    const confirmed = appointments.filter(
-      (a) => a.status.toLowerCase() === "confirmed" && 
-             new Date(a.scheduledAt) >= now
-    ).length;
+  const pending = appointments.filter(
+    (a) => a.status.toLowerCase() === "pending"
+  ).length
 
-    const completed = appointments.filter(
-      (a) => a.status.toLowerCase() === "completed" || 
-             (a.status.toLowerCase() === "confirmed" && 
-              new Date(a.scheduledAt) < now)
-    ).length;
+  const confirmed = appointments.filter(
+    (a) =>
+      a.status.toLowerCase() === "confirmed" &&
+      new Date(a.scheduledAt) >= now
+  ).length
 
-    const cancelled = appointments.filter(
-      (a) => a.status.toLowerCase() === "cancelled"
-    ).length;
+  const completed = appointments.filter(
+    (a) =>
+      a.status.toLowerCase() === "completed" ||
+      (a.status.toLowerCase() === "confirmed" &&
+        new Date(a.scheduledAt) < now)
+  ).length
 
-    return {
-      total: appointments.length,
-      pending,
-      confirmed,
-      completed,
-      cancelled,
-    };
-  }, [appointments]);
+  return {
+    total: appointments.length,
+    pending,
+    confirmed,
+    completed,
+  }
+}, [appointments])
+
 
   // --- Helpers ---
   const formatDateTime = (dateTimeString: string) => {
@@ -144,10 +141,7 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
 
   const getEffectiveStatus = (appointment: Appointment) => {
     const now = new Date()
-    if (
-      appointment.status === "confirmed" &&
-      new Date(appointment.scheduledAt) < now
-    ) {
+    if (appointment.status === "confirmed" && new Date(appointment.scheduledAt) < now) {
       return "completed"
     }
     return appointment.status
@@ -179,15 +173,16 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     return (
       <div className="text-center p-8">
         <CalendarIcon className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          No Appointments Yet
-        </h3>
-        <p className="text-gray-600">
-          You haven't scheduled any meetings with exhibitors yet.
-        </p>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Appointments Yet</h3>
+        <p className="text-gray-600">You haven't scheduled any meetings with exhibitors yet.</p>
       </div>
     )
   }
+
+  // --- Filtered appointments ---
+  const filteredAppointments = appointments.filter((a) =>
+    a.eventTitle?.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   return (
     <div className="space-y-8">
@@ -195,7 +190,7 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           {
-            label: "Total",
+            label: "Total Requests",
             value: stats.total,
             color: "border-blue-300 hover:border-blue-500",
           },
@@ -215,49 +210,31 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
             color: "border-gray-300 hover:border-gray-500",
           },
         ].map((stat) => (
-          <Card
-            key={stat.label}
-            className={`border-2 transition-colors ${stat.color}`}
-          >
+          <Card key={stat.label} className={`border-2 transition-colors ${stat.color}`}>
             <CardContent className="flex flex-col items-center justify-center p-6">
               <span className="text-3xl font-bold">{stat.value}</span>
-              <span className="text-sm text-muted-foreground">
-                {stat.label}
-              </span>
+              <span className="text-sm text-muted-foreground">{stat.label}</span>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Search + Filter */}
+      {/* Search */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="relative w-full md:w-1/2">
           <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search appointments..." className="pl-8" />
+          <Input
+            placeholder="Search by event..."
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-        <Button variant="outline" className="flex items-center gap-2">
-          <Filter className="h-4 w-4" /> Filter
-        </Button>
       </div>
 
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Calendar */}
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5" /> Calendar
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              className="rounded-md border"
-            />
-          </CardContent>
-        </Card>
+
 
         {/* Appointment Cards */}
         <div className="md:col-span-2 space-y-6">
@@ -307,32 +284,36 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
                     )}
                   </div>
 
-                  {/* Notes */}
-                  {appointment.notes && (
-                    <div className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-sm text-gray-700">
-                        {appointment.notes}
-                      </p>
-                    </div>
-                  )}
+            {/* Notes */}
+            {appointment.notes && (
+              <div className="bg-gray-50 p-3 rounded-md text-gray-700 text-sm mt-2">{appointment.notes}</div>
+            )}
 
-                  {/* Status */}
-                  <div className="flex gap-2">
-                    <Badge variant="outline" className="capitalize">
-                      {effectiveStatus}
-                    </Badge>
-                    {appointment.boothNumber && (
-                      <Badge variant="outline">
-                        Booth {appointment.boothNumber}
-                      </Badge>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-      </div>
+            {/* Status & Booth */}
+            <div className="flex flex-wrap gap-2 mt-3">
+              <Badge
+                variant="outline"
+                className={`capitalize ${
+                  effectiveStatus === "confirmed"
+                    ? "border-green-500 text-green-600"
+                    : effectiveStatus === "pending"
+                    ? "border-yellow-500 text-yellow-600"
+                    : effectiveStatus === "cancelled"
+                    ? "border-red-500 text-red-600"
+                    : "border-gray-400 text-gray-600"
+                }`}
+              >
+                {effectiveStatus}
+              </Badge>
+              {appointment.boothNumber && <Badge variant="outline">Booth {appointment.boothNumber}</Badge>}
+            </div>
+          </CardContent>
+        </Card>
+      )
+    })}
+  </div>
+</div>
+
     </div>
   )
 }
