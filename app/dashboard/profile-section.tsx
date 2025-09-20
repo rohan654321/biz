@@ -44,8 +44,8 @@ interface ProfileSectionProps {
 }
 
 const INTEREST_OPTIONS = [
-  "Conference",
-  "Automation",
+  // "Conference",
+  // "Automation",
   "Education Training",
   "Medical & Pharma",
   "IT & Technology",
@@ -356,7 +356,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
     </div>
 
     <div>
-      <Label>Contact Number</Label>
+      <Label>Contact</Label>
       <Input
         value={formData.phone}
         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -380,7 +380,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
     </div>
 
     <div>
-      <Label>Company Field</Label> {/* ✅ Moved outside Interests */}
+      <Label>Industry</Label> {/* ✅ Moved outside Interests */}
       <Input
         value={formData.companyIndustry}
         onChange={(e) =>
