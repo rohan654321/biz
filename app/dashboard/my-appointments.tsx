@@ -5,16 +5,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import {
-  Calendar as CalendarIcon,
-  CalendarDays,
-  Mail,
-  Phone,
-  Building2,
-  Search,
-  Trash2,
-  Loader2, // ✅ Import fixed
-} from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { CalendarIcon, CalendarDays, Mail, Phone, Building2, Search, Loader2, Filter } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface Appointment {
@@ -27,7 +19,7 @@ interface Appointment {
   exhibitorAvatar?: string
   boothNumber?: string
   scheduledAt: string
-  status: "pending" | "confirmed" | "cancelled" | "completed"
+  status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED"
   notes?: string
   createdAt: string
   eventTitle?: string
@@ -44,6 +36,7 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedEvent, setSelectedEvent] = useState<string>("all")
   const { toast } = useToast()
 
   useEffect(() => {
@@ -91,33 +84,16 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
   }
 
   // --- Stats with expiry check ---
-  // --- Stats with expiry check ---
   const stats = useMemo(() => {
     const now = new Date()
-
-    const pending = appointments.filter(
-      (a) => a.status.toLowerCase() === "pending"
-    ).length
-
+    const pending = appointments.filter((a) => a.status === "pending").length
     const confirmed = appointments.filter(
-      (a) =>
-        a.status.toLowerCase() === "confirmed" &&
-        new Date(a.scheduledAt) >= now
+      (a) => a.status === "confirmed" && new Date(a.scheduledAt) >= now
     ).length
-
     const completed = appointments.filter(
-      (a) =>
-        a.status.toLowerCase() === "completed" ||
-        (a.status.toLowerCase() === "confirmed" &&
-          new Date(a.scheduledAt) < now)
+      (a) => a.status === "completed" || (a.status === "confirmed" && new Date(a.scheduledAt) < now)
     ).length
-
-    return {
-      total: appointments.length,
-      pending,
-      confirmed,
-      completed,
-    }
+    return { total: appointments.length, pending, confirmed, completed }
   }, [appointments])
 
 
@@ -140,14 +116,22 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
   }
 
   const getEffectiveStatus = (appointment: Appointment) => {
-    const now = new Date()
-    if (appointment.status === "confirmed" && new Date(appointment.scheduledAt) < now) {
-      return "completed"
-    }
-    return appointment.status
+    return appointment.status.toLowerCase()
   }
 
-  // --- Loading state ---
+  const uniqueEvents = useMemo(() => {
+    const events = appointments
+      .map((appointment) => appointment.eventTitle)
+      .filter((title): title is string => Boolean(title))
+    return Array.from(new Set(events)).sort()
+  }, [appointments])
+
+  const filteredAppointments = appointments.filter((a) => {
+    const matchesSearch = a.eventTitle?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesEvent = selectedEvent === "all" || a.eventTitle === selectedEvent
+    return matchesSearch && matchesEvent
+  })
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -156,7 +140,6 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     )
   }
 
-  // --- Error state ---
   if (error) {
     return (
       <div className="text-center p-8">
@@ -168,7 +151,6 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     )
   }
 
-  // --- Empty state ---
   if (appointments.length === 0) {
     return (
       <div className="text-center p-8">
@@ -179,14 +161,8 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     )
   }
 
-  // --- Filtered appointments ---
-  const filteredAppointments = appointments.filter((a) =>
-    a.eventTitle?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
   return (
     <div className="space-y-8">
-      {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           {
@@ -219,7 +195,6 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
         ))}
       </div>
 
-      {/* Search */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="relative w-full md:w-1/2">
           <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
@@ -230,88 +205,127 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={selectedEvent} onValueChange={setSelectedEvent}>
+            <SelectTrigger className="w-full md:w-[200px]">
+              <SelectValue placeholder="Filter by event" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Events</SelectItem>
+              {uniqueEvents.map((event) => (
+                <SelectItem key={event} value={event}>
+                  {event}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
 
-        {/* Appointment Cards */}
-        <div className="md:col-span-2 space-y-6">
-          {appointments.map((appointment) => {
-            const effectiveStatus = getEffectiveStatus(appointment)
-            return (
-              <Card
-                key={appointment.id}
-                className="hover:shadow-md transition"
+      {/* Appointment Cards */}
+<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div className="md:col-span-2 space-y-6">
+    {filteredAppointments.map((appointment) => {
+      const effectiveStatus = getEffectiveStatus(appointment)
+      return (
+        <Card
+          key={appointment.id}
+          className="transition-shadow hover:shadow-xl rounded-xl border border-gray-200 overflow-hidden"
+        >
+          {/* Event Badge */}
+          {appointment.eventTitle && (
+            <div className="bg-blue-50 text-blue-800 px-3 py-1 font-semibold text-sm w-fit rounded-br-xl">
+              {appointment.eventTitle}
+            </div>
+          )}
+
+          <CardContent className="flex flex-col gap-4 p-6">
+            {/* Header: Exhibitor */}
+            <div className="flex items-center gap-4">
+              {appointment.exhibitorAvatar ? (
+                <img
+                  src={appointment.exhibitorAvatar}
+                  alt={appointment.exhibitorName}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                  {appointment.exhibitorName[0] || "?"}
+                </div>
+              )}
+
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg">{appointment.exhibitorName}</h3>
+                <p className="text-sm text-gray-500 flex items-center gap-1">
+                  <Building2 className="w-4 h-4" /> {appointment.exhibitorCompany || "N/A"}
+                </p>
+              </div>
+
+              {(effectiveStatus === "pending" || effectiveStatus === "confirmed") && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="self-start"
+                  onClick={() => cancelAppointment(appointment.id)}
+                >
+                  <Trash2 className="h-5 w-5 text-red-500" />
+                </Button>
+              )}
+            </div>
+
+            {/* Contact & Event Info */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mt-2">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                {appointment.exhibitorEmail}
+              </div>
+              {appointment.exhibitorPhone && (
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  {appointment.exhibitorPhone}
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <CalendarDays className="w-4 h-4" />
+                {formatDate(appointment.eventStartDate)} – {formatDate(appointment.eventEndDate)}
+              </div>
+            </div>
+
+            {/* Notes */}
+            {appointment.notes && (
+              <div className="bg-gray-50 p-3 rounded-md text-gray-700 text-sm mt-2">{appointment.notes}</div>
+            )}
+
+            {/* Status & Booth */}
+            <div className="flex flex-wrap gap-2 mt-3">
+              <Badge
+                variant="outline"
+                className={`capitalize ${
+                  effectiveStatus === "confirmed"
+                    ? "border-green-500 text-green-600"
+                    : effectiveStatus === "pending"
+                    ? "border-yellow-500 text-yellow-600"
+                    : effectiveStatus === "cancelled"
+                    ? "border-red-500 text-red-600"
+                    : "border-gray-400 text-gray-600"
+                }`}
               >
-                <CardContent className="flex flex-col gap-4 p-6">
-                  {/* Header Row */}
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold text-lg">
-                        {appointment.exhibitorName}
-                      </h3>
-                      <div className="flex items-center text-sm text-muted-foreground gap-2">
-                        <Building2 className="h-4 w-4" />{" "}
-                        {appointment.exhibitorCompany}
-                      </div>
-                      <div className="flex items-center text-sm text-muted-foreground gap-2">
-                        <Mail className="h-4 w-4" />{" "}
-                        {appointment.exhibitorEmail}
-                      </div>
-                      {appointment.exhibitorPhone && (
-                        <div className="flex items-center text-sm text-muted-foreground gap-2">
-                          <Phone className="h-4 w-4" />{" "}
-                          {appointment.exhibitorPhone}
-                        </div>
-                      )}
-                      <div className="flex items-center text-sm text-muted-foreground gap-2">
-                        <CalendarDays className="h-4 w-4" />{" "}
-                        {formatDateTime(appointment.scheduledAt).date} –{" "}
-                        {formatDateTime(appointment.scheduledAt).time}
-                      </div>
-                    </div>
-                    {(effectiveStatus === "pending" ||
-                      effectiveStatus === "confirmed") && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => cancelAppointment(appointment.id)}
-                        >
-                          <Trash2 className="h-5 w-5 text-red-500" />
-                        </Button>
-                      )}
-                  </div>
-
-                  {/* Notes */}
-                  {appointment.notes && (
-                    <div className="bg-gray-50 p-3 rounded-md text-gray-700 text-sm mt-2">{appointment.notes}</div>
-                  )}
-
-                  {/* Status & Booth */}
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <Badge
-                      variant="outline"
-                      className={`capitalize ${effectiveStatus === "confirmed"
-                          ? "border-green-500 text-green-600"
-                          : effectiveStatus === "pending"
-                            ? "border-yellow-500 text-yellow-600"
-                            : effectiveStatus === "cancelled"
-                              ? "border-red-500 text-red-600"
-                              : "border-gray-400 text-gray-600"
-                        }`}
-                    >
-                      {effectiveStatus}
-                    </Badge>
-                    {appointment.boothNumber && <Badge variant="outline">Booth {appointment.boothNumber}</Badge>}
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-      </div>
+                {effectiveStatus}
+              </Badge>
+              {appointment.boothNumber && <Badge variant="outline">Booth {appointment.boothNumber}</Badge>}
+            </div>
+          </CardContent>
+        </Card>
+      )
+    })}
+  </div>
+</div>
 
     </div>
   )
