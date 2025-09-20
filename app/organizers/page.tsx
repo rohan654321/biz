@@ -191,11 +191,10 @@ export default function OrganizersPage() {
                   <button
                     key={city}
                     onClick={() => toggleFilter(city, selectedCities, setSelectedCities)}
-                    className={`text-left px-3 py-2 text-sm rounded-md transition-colors ${
-                      selectedCities.includes(city)
+                    className={`text-left px-3 py-2 text-sm rounded-md transition-colors ${selectedCities.includes(city)
                         ? "bg-blue-50 text-blue-700 border border-blue-200"
                         : "text-gray-600 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     {city}
                   </button>
@@ -211,11 +210,10 @@ export default function OrganizersPage() {
                   <button
                     key={country.name}
                     onClick={() => toggleFilter(country.name, selectedCountries, setSelectedCountries)}
-                    className={`text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center gap-2 ${
-                      selectedCountries.includes(country.name)
+                    className={`text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center gap-2 ${selectedCountries.includes(country.name)
                         ? "bg-blue-50 text-blue-700 border border-blue-200"
                         : "text-gray-600 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     <span>{country.flag}</span>
                     <span>{country.name}</span>
@@ -239,11 +237,10 @@ export default function OrganizersPage() {
                   <button
                     key={category.name}
                     onClick={() => toggleFilter(category.name, selectedCategories, setSelectedCategories)}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center gap-3 ${
-                      selectedCategories.includes(category.name)
+                    className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center gap-3 ${selectedCategories.includes(category.name)
                         ? "bg-blue-50 text-blue-700 border border-blue-200"
                         : "text-gray-600 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     <span>{category.icon}</span>
                     <span>{category.name}</span>
@@ -428,7 +425,6 @@ export default function OrganizersPage() {
                           <div className="text-xs text-gray-500">{organizer.nextAvailable}</div>
                         </div>
                       </div>
-
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex gap-2">
                           <Button size="sm" variant="outline" className="h-8 w-8 p-0 bg-transparent">

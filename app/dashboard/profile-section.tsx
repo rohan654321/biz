@@ -44,8 +44,8 @@ interface ProfileSectionProps {
 }
 
 const INTEREST_OPTIONS = [
-  "Conference",
-  "Automation",
+  // "Conference",
+  // "Automation",
   "Education Training",
   "Medical & Pharma",
   "IT & Technology",
@@ -88,7 +88,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
     website: userData?.website || "",
     company: userData?.company || "",
     jobTitle: userData?.jobTitle || "",
-    companyIndustry: userData?.companyIndustry || "", // 👈 NEW
+    companyIndustry: userData?.companyIndustry || "",
     linkedin: userData?.linkedin || "",
     twitter: userData?.twitter || "",
     instagram: userData?.instagram || "",
@@ -329,120 +329,120 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
           <CardContent className="space-y-4 text-sm">
             {isEditing ? (
               <>
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div>
-      <Label>First Name</Label>
-      <Input
-        value={formData.firstName}
-        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-      />
-    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>First Name</Label>
+                    <Input
+                      value={formData.firstName}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    />
+                  </div>
 
-    <div>
-      <Label>Last Name</Label>
-      <Input
-        value={formData.lastName}
-        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-      />
-    </div>
+                  <div>
+                    <Label>Last Name</Label>
+                    <Input
+                      value={formData.lastName}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    />
+                  </div>
 
-    <div>
-      <Label>Email</Label> {/* ✅ Added Email field */}
-      <Input
-        type="email"
-        value={formData.email}
-        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-      />
-    </div>
+                  <div>
+                    <Label>Email</Label> {/* ✅ Added Email field */}
+                    <Input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    />
+                  </div>
 
-    <div>
-      <Label>Contact Number</Label>
-      <Input
-        value={formData.phone}
-        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-      />
-    </div>
+                  <div>
+                    <Label>Contact</Label>
+                    <Input
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    />
+                  </div>
 
-    <div>
-      <Label>Position</Label>
-      <Input
-        value={formData.jobTitle}
-        onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
-      />
-    </div>
+                  <div>
+                    <Label>Position</Label>
+                    <Input
+                      value={formData.jobTitle}
+                      onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+                    />
+                  </div>
 
-    <div>
-      <Label>Company</Label>
-      <Input
-        value={formData.company}
-        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-      />
-    </div>
+                  <div>
+                    <Label>Company</Label>
+                    <Input
+                      value={formData.company}
+                      onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                    />
+                  </div>
 
-    <div>
-      <Label>Company Field</Label> {/* ✅ Moved outside Interests */}
-      <Input
-        value={formData.companyIndustry}
-        onChange={(e) =>
-          setFormData({ ...formData, companyIndustry: e.target.value })
-        }
-        placeholder="e.g. Fintech, Education, Healthcare"
-      />
-    </div>
+                  <div>
+                    <Label>Industry</Label> {/* ✅ Moved outside Interests */}
+                    <Input
+                      value={formData.companyIndustry}
+                      onChange={(e) =>
+                        setFormData({ ...formData, companyIndustry: e.target.value })
+                      }
+                      placeholder="e.g. Fintech, Education, Healthcare"
+                    />
+                  </div>
 
-    <div>
-      <Label>Interests</Label> {/* ✅ Separate Interests */}
-      <Select
-        onValueChange={(value) => {
-          if (!formData.interests.includes(value)) {
-            setFormData({
-              ...formData,
-              interests: [...formData.interests, value],
-            })
-          }
-        }}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="Select interest" />
-        </SelectTrigger>
-        <SelectContent>
-          {INTEREST_OPTIONS.map((option) => (
-            <SelectItem key={option} value={option}>
-              {option}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+                  <div>
+                    <Label>Interests</Label> {/* ✅ Separate Interests */}
+                    <Select
+                      onValueChange={(value) => {
+                        if (!formData.interests.includes(value)) {
+                          setFormData({
+                            ...formData,
+                            interests: [...formData.interests, value],
+                          })
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select interest" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INTEREST_OPTIONS.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
 
-      <div className="flex gap-2 flex-wrap mt-2">
-        {formData.interests.map((int, idx) => (
-          <Badge
-            key={idx}
-            variant="secondary"
-            className="cursor-pointer"
-            onClick={() =>
-              setFormData({
-                ...formData,
-                interests: formData.interests.filter((i) => i !== int),
-              })
-            }
-          >
-            {int} ✕
-          </Badge>
-        ))}
-      </div>
-    </div>
-  </div>
+                    <div className="flex gap-2 flex-wrap mt-2">
+                      {formData.interests.map((int, idx) => (
+                        <Badge
+                          key={idx}
+                          variant="secondary"
+                          className="cursor-pointer"
+                          onClick={() =>
+                            setFormData({
+                              ...formData,
+                              interests: formData.interests.filter((i) => i !== int),
+                            })
+                          }
+                        >
+                          {int} ✕
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
 
-  <div>
-    <Label>Bio</Label>
-    <Textarea
-      value={formData.bio}
-      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-      rows={3}
-    />
-  </div>
-</>
+                <div>
+                  <Label>Bio</Label>
+                  <Textarea
+                    value={formData.bio}
+                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+              </>
 
             ) : (
               <>
@@ -453,7 +453,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone size={16} className="text-gray-500" />
-                  <span className="font-medium">Contact Number</span>
+                  <span className="font-medium">Contact</span>
                   <span className="ml-auto">{localUserData.phone || "9999879543"}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -477,7 +477,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   <div className="ml-auto flex gap-2 flex-wrap">
                     {(localUserData.interests && localUserData.interests.length > 0
                       ? localUserData.interests
-                      : ["Conference", "Automation"]).map((int, idx) => (
+                      : ["All Interest"]).map((int, idx) => (
                         <Badge key={idx} variant="secondary">{int}</Badge>
                       ))}
                   </div>
@@ -529,9 +529,9 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Calendar */}
             <div className="h-[500px]">
-             <DynamicCalendar userId={userData.id} className="h-full w-full" />
+              <DynamicCalendar userId={userData.id} className="h-full w-full" />
 
-           
+
 
             </div>
 
