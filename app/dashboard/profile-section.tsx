@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -437,7 +437,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                     </Select>
 
                     <div className="flex gap-2 flex-wrap mt-2">
-                      {formData.interests.map((int, idx) => (
+                      {formData.interests.map((int: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined, idx: Key | null | undefined) => (
                         <Badge
                           key={idx}
                           variant="secondary"
