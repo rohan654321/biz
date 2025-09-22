@@ -16,7 +16,7 @@ import {
   Save,
   X,
   Briefcase,
-  User as UserIcon,
+  UserIcon,
   Linkedin,
   Twitter,
   Instagram,
@@ -25,16 +25,11 @@ import {
   Loader2,
   BriefcaseBusiness,
   Building2,
+  Filter,
 } from "lucide-react"
 import { DynamicCalendar } from "./DynamicCalander"
-import { UserData } from "@/types/user"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import type { UserData } from "@/types/user"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
 
 interface ProfileSectionProps {
@@ -84,7 +79,7 @@ interface FormData {
   website: string
   company: string
   jobTitle: string
-  companyIndustry: string   // 👈 NEW
+  companyIndustry: string // 👈 NEW
   linkedin: string
   twitter: string
   instagram: string
@@ -117,7 +112,6 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
     interests: userData?.interests || [],
   }
 
-
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState<FormData>(initialFormData)
   const [events, setEvents] = useState<Event[]>([])
@@ -127,45 +121,50 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
   const [localUserData, setLocalUserData] = useState<UserData>(userData)
   const [selectedInterests, setSelectedInterests] = useState<string[]>(userData?.interests || [])
   const [displayedEvents, setDisplayedEvents] = useState<Event[]>([])
+  const [selectedEventFilter, setSelectedEventFilter] = useState<string>("all")
+  const [connectionsCount, setConnectionsCount] = useState<number>(0)
+  const [interestedEventsCount, setInterestedEventsCount] = useState<number>(0)
 
   // Filter events based on interests
-  const filteredEvents = selectedInterests.length > 0
-    ? events.filter((event) =>
-      event.tags?.some((tag: string) => selectedInterests.includes(tag))
-    )
-    : events
+  const filteredEvents =
+    selectedInterests.length > 0
+      ? events.filter((event) => event.tags?.some((tag: string) => selectedInterests.includes(tag)))
+      : events
 
-  // Shuffle function
+  const titleFilteredEvents =
+    selectedEventFilter === "all"
+      ? filteredEvents
+      : filteredEvents.filter((event) => event.title.toLowerCase().includes(selectedEventFilter.toLowerCase()))
+
+  const uniqueEventTitles = Array.from(new Set(events.map((event) => event.title)))
+
+  // Shuffle function - updated to use titleFilteredEvents
   const shuffleEvents = useCallback(() => {
-    if (filteredEvents.length <= 10) {
+    if (titleFilteredEvents.length <= 10) {
       // If less than or equal to 10 events, show them all
-      setDisplayedEvents(filteredEvents)
+      setDisplayedEvents(titleFilteredEvents)
     } else {
       // Shuffle and take 10 random events
-      const shuffled = [...filteredEvents].sort(() => Math.random() - 0.5)
+      const shuffled = [...titleFilteredEvents].sort(() => Math.random() - 0.5)
       setDisplayedEvents(shuffled.slice(0, 10))
     }
-  }, [filteredEvents])
+  }, [titleFilteredEvents])
 
-
-  // Run on mount & when filteredEvents changes
+  // Run on mount & when titleFilteredEvents changes
   useEffect(() => {
     shuffleEvents()
-  }, [filteredEvents.length])
+  }, [titleFilteredEvents.length, selectedEventFilter])
 
   // Auto shuffle every 3 minutes
   useEffect(() => {
-    if (filteredEvents.length > 10) {
+    if (titleFilteredEvents.length > 10) {
       const interval = setInterval(() => {
         shuffleEvents()
       }, 180000) // 3 minutes
 
       return () => clearInterval(interval)
     }
-  }, [filteredEvents.length])
-
-
-
+  }, [titleFilteredEvents.length])
 
   useEffect(() => {
     setLocalUserData(userData)
@@ -207,7 +206,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
       }
 
       const { user: updatedUser } = await response.json()
-      setLocalUserData(prev => ({ ...prev, ...updatedUser }))
+      setLocalUserData((prev) => ({ ...prev, ...updatedUser }))
       setSelectedInterests(updatedUser.interests || [])
       onUpdate(updatedUser)
       setIsEditing(false)
@@ -258,6 +257,35 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
     fetchEvents()
   }, [])
 
+  const fetchConnectionsCount = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/users/${userData.id}/connections`)
+      if (response.ok) {
+        const data = await response.json()
+        setConnectionsCount(data.connections?.length || 0)
+      }
+    } catch (error) {
+      console.error("Error fetching connections:", error)
+    }
+  }, [userData.id])
+
+  const fetchInterestedEventsCount = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/users/${userData.id}/interested-events`)
+      if (response.ok) {
+        const data = await response.json()
+        setInterestedEventsCount(data.total || 0)
+      }
+    } catch (error) {
+      console.error("Error fetching interested events:", error)
+    }
+  }, [userData.id])
+
+  useEffect(() => {
+    fetchConnectionsCount()
+    fetchInterestedEventsCount()
+  }, [fetchConnectionsCount, fetchInterestedEventsCount])
+
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
       {/* Header */}
@@ -270,18 +298,29 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
         ) : (
           <div className="flex gap-2">
             <Button onClick={handleSave} className="flex items-center gap-2" disabled={isSaving}>
-              {isSaving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : <><Save className="w-4 h-4" /> Save</>}
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" /> Save
+                </>
+              )}
             </Button>
-            <Button variant="outline" onClick={handleCancel} className="flex items-center gap-2" disabled={isSaving}>
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              className="flex items-center gap-2 bg-transparent"
+              disabled={isSaving}
+            >
               <X className="w-4 h-4" /> Cancel
             </Button>
           </div>
         )}
       </div>
 
-      {saveError && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">{saveError}</div>
-      )}
+      {saveError && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">{saveError}</div>}
 
       {/* Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -297,29 +336,53 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h2 className="text-xl font-semibold">{localUserData.firstName} {localUserData.lastName}</h2>
-                <p className="text-gray-600">{localUserData.jobTitle || (localUserData.role === "ATTENDEE" ? "Visitor" : localUserData.role)}</p>
-                {localUserData.isVerified && <Badge variant="secondary" className="mt-1">Verified</Badge>}
+                <h2 className="text-xl font-semibold">
+                  {localUserData.firstName} {localUserData.lastName}
+                </h2>
+                <p className="text-gray-600">
+                  {localUserData.jobTitle || (localUserData.role === "ATTENDEE" ? "Visitor" : localUserData.role)}
+                </p>
+                {localUserData.isVerified && (
+                  <Badge variant="secondary" className="mt-1">
+                    Verified
+                  </Badge>
+                )}
               </div>
             </div>
 
             {/* Social links */}
             {!isEditing ? (
               <div className="flex justify-center gap-3 mb-6">
-                <a href={localUserData.linkedin || "#"} target="_blank" rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white">
+                <a
+                  href={localUserData.linkedin || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white"
+                >
                   <Linkedin size={18} />
                 </a>
-                <a href={localUserData.twitter || "#"} target="_blank" rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full flex items-center justify-center bg-sky-400 hover:bg-sky-500 text-white">
+                <a
+                  href={localUserData.twitter || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-full flex items-center justify-center bg-sky-400 hover:bg-sky-500 text-white"
+                >
                   <Twitter size={18} />
                 </a>
-                <a href={localUserData.instagram || "#"} target="_blank" rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-tr from-purple-500 via-pink-500 to-yellow-500 text-white">
+                <a
+                  href={localUserData.instagram || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-tr from-purple-500 via-pink-500 to-yellow-500 text-white"
+                >
                   <Instagram size={18} />
                 </a>
-                <a href={localUserData.website || "#"} target="_blank" rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-600 hover:bg-gray-700 text-white">
+                <a
+                  href={localUserData.website || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-600 hover:bg-gray-700 text-white"
+                >
                   <Globe size={18} />
                 </a>
               </div>
@@ -327,19 +390,31 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
               <div className="space-y-3 mb-6">
                 <div>
                   <Label>LinkedIn</Label>
-                  <Input value={formData.linkedin} onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })} />
+                  <Input
+                    value={formData.linkedin}
+                    onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
+                  />
                 </div>
                 <div>
                   <Label>Twitter</Label>
-                  <Input value={formData.twitter} onChange={(e) => setFormData({ ...formData, twitter: e.target.value })} />
+                  <Input
+                    value={formData.twitter}
+                    onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
+                  />
                 </div>
                 <div>
                   <Label>Instagram</Label>
-                  <Input value={formData.instagram} onChange={(e) => setFormData({ ...formData, instagram: e.target.value })} />
+                  <Input
+                    value={formData.instagram}
+                    onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
+                  />
                 </div>
                 <div>
                   <Label>Website</Label>
-                  <Input value={formData.website} onChange={(e) => setFormData({ ...formData, website: e.target.value })} />
+                  <Input
+                    value={formData.website}
+                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                  />
                 </div>
               </div>
             )}
@@ -378,7 +453,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   </div>
 
                   <div>
-                    <Label>Contact</Label>
+                    <Label>Contact Number</Label>
                     <Input
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -402,7 +477,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   </div>
 
                   <div>
-                    <Label>Industry</Label> {/* ✅ Moved outside Interests */}
+                    <Label>Company Field</Label> {/* ✅ Moved outside Interests */}
                     <Input
                       value={formData.companyIndustry}
                       onChange={(e) =>
@@ -499,7 +574,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   <div className="ml-auto flex gap-2 flex-wrap">
                     {(localUserData.interests && localUserData.interests.length > 0
                       ? localUserData.interests
-                      : ["All Interest"]).map((int, idx) => (
+                      : ["All Interests"]).map((int, idx) => (
                         <Badge key={idx} variant="secondary">{int}</Badge>
                       ))}
                   </div>
@@ -513,7 +588,6 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                         "The world's deposit sourcing has a commitment to reducing foreign prices at the Paris for Bagnette Collection Centre in Paris, France."}
                     </p>
                   </div>
-
                 </div>
               </>
             )}
@@ -528,21 +602,21 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
               <div className="text-center p-4">
                 <Calendar className="w-8 h-8 mx-auto mb-2" />
                 <h3 className="font-semibold">Upcoming Events</h3>
-                <p className="text-sm">5 events this month</p>
+                <p className="text-sm">{interestedEventsCount} events</p>
               </div>
             </Card>
             <Card className="bg-blue-200 h-32 flex items-center justify-center">
               <div className="text-center p-4">
                 <CalendarDays className="w-8 h-8 mx-auto mb-2" />
                 <h3 className="font-semibold">Events</h3>
-                <p className="text-sm">{localUserData._count?.eventsAttended || 40} events</p>
+                <p className="text-sm">{localUserData._count?.eventsAttended || events.length} events</p>
               </div>
             </Card>
             <Card className="bg-red-300 h-32 flex items-center justify-center">
               <div className="text-center p-4">
                 <UserIcon className="w-8 h-8 mx-auto mb-2" />
                 <h3 className="font-semibold">Connections</h3>
-                <p className="text-sm">{localUserData._count?.connections || 3320} total</p>
+                <p className="text-sm">{connectionsCount} total</p>
               </div>
             </Card>
           </div>
@@ -558,15 +632,42 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
             </div>
 
             {/* Interested Events */}
-            <Card className="h-[500px] flex flex-col"> {/* 👈 Same height as calendar */}
+            <Card className="h-[500px] flex flex-col">
               <CardHeader className="pb-3">
-                <CardTitle>Suggested Events</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Suggested Events</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-gray-500" />
+                    <Select value={selectedEventFilter} onValueChange={setSelectedEventFilter}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by event" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Events</SelectItem>
+                        {uniqueEventTitles.map((title) => (
+                          <SelectItem key={title} value={title}>
+                            {title.length > 20 ? `${title.substring(0, 20)}...` : title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {selectedEventFilter !== "all" && (
+                  <p className="text-sm text-gray-500">
+                    Showing {displayedEvents.length} events matching "{selectedEventFilter}"
+                  </p>
+                )}
               </CardHeader>
               <CardContent className="flex-1 overflow-y-auto space-y-4">
                 {loadingEvents ? (
                   <p className="text-gray-500 text-sm">Loading events...</p>
                 ) : displayedEvents.length === 0 ? (
-                  <p className="text-gray-500 text-sm">No events found</p>
+                  <p className="text-gray-500 text-sm">
+                    {selectedEventFilter === "all"
+                      ? "No events found"
+                      : `No events found matching "${selectedEventFilter}"`}
+                  </p>
                 ) : (
                   displayedEvents.map((event) => (
                     <Link
@@ -577,17 +678,14 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                       <p className="font-semibold text-sm truncate">{event.title}</p>
                       <p className="text-xs text-gray-600 line-clamp-2">{event.description}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {new Date(event.date).toLocaleDateString()}{" "}
-                        {event.organizer && `• ${event.organizer}`}
+                        {new Date(event.date).toLocaleDateString()} {event.organizer && `• ${event.organizer}`}
                       </p>
                     </Link>
                   ))
                 )}
               </CardContent>
-
             </Card>
           </div>
-
         </div>
       </div>
     </div>
