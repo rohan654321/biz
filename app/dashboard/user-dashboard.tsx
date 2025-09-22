@@ -166,8 +166,8 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         return <SettingsSection userData={userData!} onUpdate={handleProfileUpdate} />
       case "travel":
         return <TravelAccommodation />
-        case "help-support":
-  return <HelpSupport />
+      case "Help & Support":
+        return <HelpSupport />
 
       // case "faqs":
       //   return <FAQs />
@@ -228,11 +228,10 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                 <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
                   <li
                     onClick={() => setActiveSection("profile")}
-                    className={`cursor-pointer pl-3 py-1 border-l-4 ${
-                      activeSection === "profile"
+                    className={`cursor-pointer pl-3 py-1 border-l-4 ${activeSection === "profile"
                         ? "border-blue-500 text-blue-600 font-medium"
                         : "border-transparent hover:text-blue-600"
-                    }`}
+                      }`}
                   >
                     Profile
                   </li>
@@ -331,7 +330,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                     <ChevronRight size={16} />
                   ))}
               </button> */}
-              {/* {openMenus.includes("help-support") && !isSidebarCollapsed && (
+            {/* {openMenus.includes("help-support") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
                   <li
                     onClick={() => setActiveSection("faqs")}
@@ -355,19 +354,18 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               )}
             </div> */}
             {/* </div> */}
-                       <div>
+            <div>
               <button
-  onClick={() => setActiveSection("help-support")}
-  className={`flex items-center gap-2 w-full py-2 font-medium ${
-    activeSection === "help-support" ? "text-blue-600 font-medium" : "hover:text-blue-600"
-  }`}
->
-  <HelpCircle size={16} /> {/* <-- icon added */}
-  {!isSidebarCollapsed && "Help & Support"}
-</button>
+                onClick={() => setActiveSection("Help & Support")}
+                className={`flex items-center gap-2 w-full py-2 font-medium ${activeSection === "Help & Support" ? "text-blue-600 font-medium" : "hover:text-blue-600"
+                  }`}
+              >
+                <HelpCircle size={16} /> {/* <-- icon added */}
+                {!isSidebarCollapsed && "Help & Support"}
+              </button>
 
             </div>
-           {/* <li onClick={() => setActiveSection("help-support")} className={menuItemClass(activeSection, "help-support")}>
+            {/* <li onClick={() => setActiveSection("help-support")} className={menuItemClass(activeSection, "help-support")}>
   Help & Support
 </li> */}
 
@@ -375,9 +373,8 @@ export function UserDashboard({ userId }: UserDashboardProps) {
             <div>
               <button
                 onClick={() => setActiveSection("settings")}
-                className={`flex items-center gap-2 w-full py-2 font-medium ${
-                  activeSection === "settings" ? "text-blue-600 font-medium" : "hover:text-blue-600"
-                }`}
+                className={`flex items-center gap-2 w-full py-2 font-medium ${activeSection === "settings" ? "text-blue-600 font-medium" : "hover:text-blue-600"
+                  }`}
               >
                 <Settings size={16} />
                 {!isSidebarCollapsed && "Settings"}
@@ -453,7 +450,6 @@ export function UserDashboard({ userId }: UserDashboardProps) {
 
 // helper for menu items
 function menuItemClass(activeSection: string, id: string) {
-  return `cursor-pointer pl-3 py-1 border-l-4 ${
-    activeSection === id ? "border-blue-500 text-blue-600 font-medium" : "border-transparent hover:text-blue-600"
-  }`
+  return `cursor-pointer pl-3 py-1 border-l-4 ${activeSection === id ? "border-blue-500 text-blue-600 font-medium" : "border-transparent hover:text-blue-600"
+    }`
 }

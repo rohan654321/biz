@@ -31,6 +31,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         createdAt: new Date().toISOString(),
         jobTitle: "System Administrator",
         company: "EventPlatform Inc.",
+        companyIndustry: "Technology", // Add this
         bio: "Managing the platform and ensuring smooth operations.",
         phone: "+1 (555) 123-4567",
         website: "https://eventplatform.com",
@@ -57,6 +58,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         createdAt: new Date().toISOString(),
         jobTitle: "Event Organizer",
         company: "Events Co.",
+        companyIndustry: "Event Management", // Add this
         bio: "Passionate about creating memorable events and experiences.",
         phone: "+1 (555) 234-5678",
         website: "https://eventsco.com",
@@ -83,6 +85,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         createdAt: new Date().toISOString(),
         jobTitle: "Super Administrator",
         company: "EventPlatform Inc.",
+        companyIndustry: "Technology", // Add this
         bio: "Overseeing all platform operations and strategic decisions.",
         phone: "+1 (555) 345-6789",
         website: "https://eventplatform.com",
@@ -122,7 +125,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         website: true,
         linkedin: true,
         twitter: true,
+        instagram: true, // Add this
         company: true,
+        companyIndustry: true, // Add this
         jobTitle: true,
         location: true,
         interests: true,
@@ -145,9 +150,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const userData = {
       ...user,
       _count: {
-        eventsAttended: 0, // This would need a separate query
-        eventsOrganized: 0, // This would need a separate query
-        connections: 0, // This would need a separate query
+        eventsAttended: 0,
+        eventsOrganized: 0,
+        connections: 0,
       },
     }
 
@@ -183,7 +188,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       website, 
       linkedin, 
       twitter, 
+      instagram, // Add this
       company, 
+      companyIndustry, // Add this
       jobTitle, 
       location, 
       interests 
@@ -199,7 +206,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           phone,
           bio,
           website,
+          linkedin,
+          twitter,
+          instagram,
           company,
+          companyIndustry,
           jobTitle,
           location,
           interests,
@@ -217,7 +228,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         website,
         linkedin,
         twitter,
+        instagram, // Add this
         company,
+        companyIndustry, // Add this
         jobTitle,
         location,
         interests,
@@ -234,7 +247,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         website: true,
         linkedin: true,
         twitter: true,
+        instagram: true, // Add this
         company: true,
+        companyIndustry: true, // Add this
         jobTitle: true,
         location: true,
         interests: true,

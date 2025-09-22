@@ -87,8 +87,8 @@ export async function GET(request: NextRequest) {
         category: true,
         tags: true,
         eventType: true,
-        isFeatured: true,  // Add this
-        isVIP: true,       // Add this
+        isFeatured: true,  
+        isVIP: true,       
         startDate: true,
         endDate: true,
         registrationStart: true,
