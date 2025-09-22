@@ -135,14 +135,20 @@ export function DynamicCalendar({ className, userId }: DynamicCalendarProps) {
           {calendarDays.map((day, idx) => {
             if (!day) return <div key={idx} />
 
-            const dayEvents = monthEvents.filter(
-              ev => new Date(ev.startDate).getDate() === day
-            )
+            const dayEvents = monthEvents.filter(ev => {
+              const start = new Date(ev.startDate)
+              const end = new Date(ev.endDate)
+
+              const current = new Date(currentYear, currentMonth, day)
+
+              return current >= start && current <= end
+            })
+
 
             const isToday = day === today.getDate() &&
               currentMonth === today.getMonth() &&
               currentYear === today.getFullYear()
-            
+
             const isSelected = selectedDate === day
             const hasEvents = dayEvents.length > 0
 
@@ -154,15 +160,15 @@ export function DynamicCalendar({ className, userId }: DynamicCalendarProps) {
                     isToday
                       ? "bg-red-400 text-white font-bold hover:bg-red-500"
                       : isSelected
-                      ? "bg-blue-100 border-blue-300 hover:bg-blue-200"
-                      : hasEvents
-                      ? "bg-green-50 border-green-200 hover:bg-green-100"
-                      : "hover:bg-gray-100"
+                        ? "bg-blue-100 border-blue-300 hover:bg-blue-200"
+                        : hasEvents
+                          ? "bg-green-50 border-green-200 hover:bg-green-100"
+                          : "hover:bg-gray-100"
                   )}
                   onClick={() => handleDateClick(day)}
                 >
                   <div>{day}</div>
-                  
+
                   {/* Small indicator for events */}
                   {hasEvents && !isSelected && (
                     <div className="absolute bottom-1 right-1 w-2 h-2 bg-blue-500 rounded-full"></div>

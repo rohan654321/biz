@@ -430,13 +430,13 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                     />
                   </div>
 
-    <div>
-      <Label>Contact Number</Label>
-      <Input
-        value={formData.phone}
-        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-      />
-    </div>
+                  <div>
+                    <Label>Contact Number</Label>
+                    <Input
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    />
+                  </div>
 
                   <div>
                     <Label>Position</Label>
@@ -454,70 +454,70 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                     />
                   </div>
 
-    <div>
-      <Label>Company Field</Label> {/* ✅ Moved outside Interests */}
-      <Input
-        value={formData.companyIndustry}
-        onChange={(e) =>
-          setFormData({ ...formData, companyIndustry: e.target.value })
-        }
-        placeholder="e.g. Fintech, Education, Healthcare"
-      />
-    </div>
+                  <div>
+                    <Label>Company Field</Label> {/* ✅ Moved outside Interests */}
+                    <Input
+                      value={formData.companyIndustry}
+                      onChange={(e) =>
+                        setFormData({ ...formData, companyIndustry: e.target.value })
+                      }
+                      placeholder="e.g. Fintech, Education, Healthcare"
+                    />
+                  </div>
 
-    <div>
-      <Label>Interests</Label> {/* ✅ Separate Interests */}
-      <Select
-        onValueChange={(value) => {
-          if (!formData.interests.includes(value)) {
-            setFormData({
-              ...formData,
-              interests: [...formData.interests, value],
-            })
-          }
-        }}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="Select interest" />
-        </SelectTrigger>
-        <SelectContent>
-          {INTEREST_OPTIONS.map((option) => (
-            <SelectItem key={option} value={option}>
-              {option}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+                  <div>
+                    <Label>Interests</Label> {/* ✅ Separate Interests */}
+                    <Select
+                      onValueChange={(value) => {
+                        if (!formData.interests.includes(value)) {
+                          setFormData({
+                            ...formData,
+                            interests: [...formData.interests, value],
+                          })
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select interest" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INTEREST_OPTIONS.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
 
-      <div className="flex gap-2 flex-wrap mt-2">
-        {formData.interests.map((int, idx) => (
-          <Badge
-            key={idx}
-            variant="secondary"
-            className="cursor-pointer"
-            onClick={() =>
-              setFormData({
-                ...formData,
-                interests: formData.interests.filter((i) => i !== int),
-              })
-            }
-          >
-            {int} ✕
-          </Badge>
-        ))}
-      </div>
-    </div>
-  </div>
+                    <div className="flex gap-2 flex-wrap mt-2">
+                      {formData.interests.map((int, idx) => (
+                        <Badge
+                          key={idx}
+                          variant="secondary"
+                          className="cursor-pointer"
+                          onClick={() =>
+                            setFormData({
+                              ...formData,
+                              interests: formData.interests.filter((i) => i !== int),
+                            })
+                          }
+                        >
+                          {int} ✕
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
 
-  <div>
-    <Label>Bio</Label>
-    <Textarea
-      value={formData.bio}
-      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-      rows={3}
-    />
-  </div>
-</>
+                <div>
+                  <Label>Bio</Label>
+                  <Textarea
+                    value={formData.bio}
+                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+              </>
 
             ) : (
               <>
@@ -552,7 +552,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   <div className="ml-auto flex gap-2 flex-wrap">
                     {(localUserData.interests && localUserData.interests.length > 0
                       ? localUserData.interests
-                      : ["Conference", "Automation"]).map((int, idx) => (
+                      : ["All Interests"]).map((int, idx) => (
                         <Badge key={idx} variant="secondary">{int}</Badge>
                       ))}
                   </div>
@@ -603,9 +603,9 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Calendar */}
             <div className="h-[500px]">
-             <DynamicCalendar userId={userData.id} className="h-full w-full" />
+              <DynamicCalendar userId={userData.id} className="h-full w-full" />
 
-           
+
 
             </div>
 
