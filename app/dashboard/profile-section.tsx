@@ -44,13 +44,35 @@ interface ProfileSectionProps {
 }
 
 const INTEREST_OPTIONS = [
-  // "Conference",
-  // "Automation",
-  "Education Training",
+  "Education & Training",
   "Medical & Pharma",
   "IT & Technology",
   "Banking & Finance",
   "Business Services",
+  "Industrial Engineering",
+  "Building & Construction",
+  "Power & Energy",
+  "Entertainment & Media",
+  "Wellness, Health & Fitness",
+  "Science & Research",
+  "Environment & Waste",
+  "Agriculture & Forestry",
+  "Food & Beverages",
+  "Logistics & Transportation",
+  "Electric & Electronics",
+  "Arts & Crafts",
+  "Auto & Automotive",
+  "Home & Office",
+  "Security & Defense",
+  "Fashion & Beauty",
+  "Travel & Tourism",
+  "Telecommunication",
+  "Apparel & Clothing",
+  "Animals & Pets",
+  "Baby, Kids & Maternity",
+  "Hospitality",
+  "Packing & Packaging",
+  "Miscellaneous"
 ]
 
 interface FormData {
