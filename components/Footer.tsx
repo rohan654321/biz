@@ -210,58 +210,58 @@ const Footer: React.FC = () => {
             <ul className="space-y-3">
               <li>
                 <Link
-                  href="/categories/conferences"
+                  href="/event?category=Education"
                   className="text-black  hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
-                  Conferences
+                  Education Training
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/categories/trade-shows"
+                  href="/event?category=Medical"
                   className="text-black  hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
-                  Trade Shows
+                  Medical & Pharma
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/categories/exhibitions"
+                  href="/event?category=Technology"
                   className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
-                  Exhibitions
+                  IT & Technology
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/categories/workshops"
+                  href="/event?category=Finance"
                   className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
-                  Workshops
+                  Banking & Finance
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/categories/seminars"
+                  href="/event?category=Business"
                   className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
-                  Seminars
+                  Business Services
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/categories/networking"
+                  href="/event?category=Industrial%20Engineering"
                   className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
-                  Networking Events
+                  Industrial Engineering
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/categories/webinars"
+                  href="/event?category=Building%20%26%20Construction"
                   className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
-                  Webinars
+                  Building & Construction
                 </Link>
               </li>
             </ul>
