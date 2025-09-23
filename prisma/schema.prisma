@@ -199,7 +199,7 @@ model Event {
   // Capacity and Pricing
   maxAttendees     Int?
   currentAttendees Int @default(0)
-  ticketTypes      TicketType[]
+  
   currency         String @default("USD")  
   
   // Media
@@ -244,6 +244,7 @@ model Event {
   promotions Promotion[] // ✅ back relation for event promotions
   savedEvents SavedEvent[] // Add this line
   appointments Appointment[] // Add appointments relation
+  ticketTypes      TicketType[]
 
   @@map("events")
 }
@@ -255,17 +256,30 @@ enum EventStatus {
   COMPLETED
 }
 
-type TicketType {
-  id          String
-  name        String
-  description String?
-  price       Float
-  earlyBirdPrice Float?
-  earlyBirdEnd   DateTime?
-  quantity    Int
-  sold        Int @default(0)
-  isActive    Boolean @default(true)
+model TicketType {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId         String   @db.ObjectId
+  event           Event    @relation(fields: [eventId], references: [id])
+  
+  name            String
+  description     String?
+  price           Float
+  earlyBirdPrice  Float?
+  earlyBirdEnd    DateTime?
+  quantity        Int
+  sold            Int      @default(0)
+  isActive        Boolean  @default(true)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relationships
+  eventLeads      EventLead[]
+  // registrations   Event[]
+
+  @@map("ticket_types")
 }
+
 
 // Appointment Management Model
 model Appointment {
@@ -1003,6 +1017,11 @@ model EventLead {
   event           Event    @relation(fields: [eventId], references: [id])
   userId          String   @db.ObjectId
   user            User     @relation(fields: [userId], references: [id])
+
+  // Add ticket type relation
+  ticketTypeId    String?  @db.ObjectId
+  ticketType      TicketType? @relation(fields: [ticketTypeId], references: [id])
+  
   
   type            LeadType // attendee, exhibitor, etc.
   status          LeadStatus @default(NEW)
