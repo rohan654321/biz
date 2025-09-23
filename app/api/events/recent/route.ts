@@ -71,7 +71,7 @@ export async function GET() {
         isVirtual: event.isVirtual,
         virtualLink: event.virtualLink || null,
 
-        // Pricing from ticketTypes
+     
         // generalPrice: generalTicket?.price || 0,
         // vipPrice: vipTicket?.price || 0,
         // premiumPrice: premiumTicket?.price || 0,
