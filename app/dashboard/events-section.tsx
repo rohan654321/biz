@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Calendar as CalendarIcon, MapPin, Plus, Heart, Filter, X } from "lucide-react"
+import { MapPin, Plus, Heart, Filter, X, CalendarIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
@@ -39,6 +39,7 @@ interface TicketType {
 }
 
 export interface Event {
+  expectedExhibitors: string
   id: string
   title: string
   startDate: string
@@ -70,9 +71,6 @@ export interface Event {
   leadNotes?: string
   currentRegistrations?: number
   maxAttendees?: number
-  expectedVisitors?: number
-  expectedExhibitors?: number
-  entryFee?: string
 }
 
 /* ---------- Props ---------- */
@@ -146,29 +144,6 @@ const statusPillClass = (status?: string) => {
       return "bg-gray-50 text-gray-700 border-gray-100"
   }
 }
-
-// Mock function to download ticket
-const downloadTicket = (event: Event) => {
-  // Create a simple ticket PDF content (in real app, this would generate a proper PDF)
-  const ticketContent = `
-    TICKET FOR: ${event.title}
-    DATE: ${formatDate(event.startDate)}
-    TIME: 3:00 PM
-    LOCATION: ${event.location || `${event.city || ""}${event.state ? `, ${event.state}` : ""}`}
-    TYPE: ${event.leadType || 'Visitor'}
-    TICKET ID: ${event.id.slice(0, 8).toUpperCase()}
-  `;
-
-  const blob = new Blob([ticketContent], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `ticket-${event.title.toLowerCase().replace(/\s+/g, '-')}.txt`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-};
 
 /* ---------- Component ---------- */
 export function EventsSection({ userId }: EventsSectionProps) {
@@ -404,82 +379,88 @@ export function EventsSection({ userId }: EventsSectionProps) {
                     </p>
 
                     {/* Event Card */}
-                    <Card className="flex w-full border border-gray-200 bg-[#FFF6F6] rounded-lg hover:shadow-md transition-shadow">
-                      {/* Image */}
-                      <div className="flex grid-2">
-                        <div className="w-40 h-28 flex-shrink-0">
-                          <img
-                            src={event.thumbnailImage || defaultImage}
-                            alt={event.title}
-                            className="w-full h-full object-cover rounded-l-lg"
-                            onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement
-                              if (!target.src.endsWith(defaultImage)) {
-                                target.src = defaultImage
-                              }
-                            }}
-                          />
-                        </div>
+                    <div className="flex w-full border border-gray-200 bg-white rounded-lg hover:shadow-md transition-shadow overflow-hidden">
+                      {/* Left Image Section */}
+                      <div className="w-40 h-32 flex-shrink-0">
+                        <img
+                          src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"
+                          alt="Adventure Gear Show"
+                          className="w-full h-full object-cover rounded-4xl mt-6 ml-2"
+                        />
+                      </div>
 
-                        {/* Event Info */}
-                        <div className="flex flex-col justify-center p-4 flex-1">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1">
-                              <h3
-                                onClick={() => router.push(`/event/${event.id}`)}
-                                className="text-base font-semibold text-blue-700 hover:underline cursor-pointer"
-                              >
-                                {event.title}
-                              </h3>
-
-                              <p className="text-xs text-gray-600">
-                                {formatDate(event.startDate)} – {formatDate(event.endDate)}
-                              </p>
-
-                              <p className="text-xs text-blue-600">
-                                {event.location ||
-                                  `${event.city || ""}${event.state ? `, ${event.state}` : ""}`}
-                              </p>
-
-                              {event.description && (
-                                <p className="text-xs text-gray-700 mt-1 line-clamp-1">
-                                  {event.description}
-                                </p>
-                              )}
+                      {/* Main Content Section */}
+                      <div className="flex-1 p-6">
+                        <div className="flex justify-between items-start">
+                          {/* Left Content */}
+                          <div className="flex-1">
+                            {/* Category Badge */}
+                            <div className="mb-2">
+                              <span className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded">
+                                {event.category}
+                              </span>
                             </div>
 
-                            {/* Right side: Status pill */}
-                            <div className="flex flex-col items-end gap-2">
-                              {event.leadType && (
-                                <span
-                                  className={`text-[11px] px-2 py-1 rounded border ${statusPillClass(
-                                    event.leadType
-                                  )}`}
-                                >
-                                  {event.leadType}
-                                </span>
-                              )}
-                              {/* Role badge */}
-                              {/* <span className={`text-[11px] px-2 py-1 rounded border ${role.classes}`}>
-                                {role.label}
-                              </span> */}
+                            {/* Title */}
+                            <div className="flex ">
+                              <div>
+                                <h2 className="text-xl font-bold text-gray-900 mb-3">{event.title}</h2>
+
+                                {/* Description */}
+                                <p className="text-sm text-gray-600 mb-4">{event.description}</p>
+
+                              </div>
+
+
+
+
+                              {/* Location and Date */}
+                              <div className="items-center gap-4 text-sm text-gray-500 ml-4">
+                                <div className="flex items-center">
+                                  <MapPin className="w-4 h-4" />
+                                  <span>{event.address}</span>
+                                </div>
+                                <div className="flex items-center gap-1 ml-5 mt-3">
+                                  <CalendarIcon className="w-4 h-4" />
+                                  <span>
+                                    {formatDate(event.startDate)} - {formatDate(event.endDate)}
+                                  </span>
+                                </div>
+                              </div>
+                              <button>
+                                <div className="w-15 h-15 flex items-center justify-center bg-purple-50 rounded-lg ml-8">🎟️</div>
+                              </button>
                             </div>
                           </div>
 
-                          {/* Optional meta row */}
-                          <div className="mt-3 flex items-center gap-4 text-xs text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <CalendarIcon className="w-3.5 h-3.5" />
-                              <span>{formatDate(event.startDate)}</span>
+                          {/* Right Stats Section */}
+                          <div className="ml-6 flex">
+                            {/* Expected Visitors */}
+                            <div className="mb-4 mr-20 space-y-2 mt-6">
+                              <div className="flex gap-10">
+                                <span className="text-gray-500">Expected Visitors</span>
+                                <span className="font-semibold text-gray-900">{event.maxAttendees || "200"}</span>
+                              </div>
+                              <div className="flex gap-12">
+                                <span className="text-gray-500">Exptd Exhibitors</span>
+                                <span className="font-semibold text-gray-900">{event.maxAttendees || "200"}</span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-3.5 h-3.5" />
-                              <span>{event.city || event.location || "Online"}</span>
+
+
+                            <div className="grid text-center mt-5">
+                              <span className="text-xl font-bold text-pink-500">
+                                {formatTicketPrice(event.ticketTypes)}
+                              </span>
+                              <span className="text-gray-500 text-sm">Entry Fee</span>
                             </div>
+
+
+                            {/* Expected Exhibitors and Entry Fee */}
                           </div>
                         </div>
                       </div>
-                    </Card>
+                    </div>
                   </div>
                 )
               })}
