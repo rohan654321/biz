@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth-options"
 import { redirect } from "next/navigation"
 import { UserDashboard } from "../user-dashboard"
 import { NameBanner } from "../NameBanner"
-import Navbar from "@/components/navbar"
+import Navbar from "../navbar"
 
 interface DashboardPageProps {
   params: Promise<{ id: string }>
