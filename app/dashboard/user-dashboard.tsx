@@ -194,7 +194,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       <aside className={`${isSidebarCollapsed ? "w-16" : "w-64"} bg-white border-r flex flex-col justify-between transition-all duration-300`}>
         <div>
           {/* Profile Header */}
-          <div className="flex items-center gap-3 p-3 border-b">
+          {/* <div className="flex items-center gap-3 p-3 border-b">
             <Avatar className="w-10 h-10">
               <AvatarImage src={userData?.avatar || "/placeholder.svg"} />
               <AvatarFallback>
@@ -210,7 +210,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                 <p className="text-xs text-gray-500">{userData?.jobTitle || (userData?.role == "ATTENDEE" ? "VISITOR" : userData?.role)}</p>
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Menu */}
           <nav className="p-4 text-sm space-y-2">
@@ -399,7 +399,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       {/* Main content with top bar */}
       <div className="flex-1 flex flex-col">
         {/* Top Navigation */}
-        <header className="flex h-16 items-center gap-2 border-b px-4 bg-white">
+        {/* <header className="flex h-16 items-center gap-2 border-b px-4 bg-white">
           <Button variant="ghost" size="sm" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="md:hidden">
             <SidebarIcon className="w-4 h-4" />
           </Button>
@@ -439,7 +439,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </header>
+        </header> */}
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-auto">{renderContent()}</main>

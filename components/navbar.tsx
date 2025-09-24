@@ -44,11 +44,13 @@ export default function Navbar() {
   const handleDashboard = () => {
     const role = session?.user?.role; // 👈 adjust this depending on how your role is stored
 
-    if (role === "organizer") {
-      router.push("/organizer-dashboard");
+    if (role === "ORGANIZER") {
+      router.push(`/organizer-dashboard/${session?.user?.id}`);
     } else if (role === "superadmin") {
       router.push("/admin-dashboard");
-    } else {
+    } else if (role === "ATTENDEE") {
+      router.push(`/dashboard/${session?.user?.id}`);
+    }else {
       router.push("/login"); // fallback route
     }
   };
