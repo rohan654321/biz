@@ -31,7 +31,7 @@ export default function ImageBannerCarousel({
   const nextSlide = () => setCurrent((current + 1) % images.length)
 
   return (
-    <div className="relative w-full h-52 md:h-64 lg:h-80 overflow-hidden rounded-xl shadow">
+    <div className="relative w-full h-52 md:h-64 lg:h-80 overflow-hidden shadow">
       <AnimatePresence mode="wait">
         <motion.img
           key={current}
