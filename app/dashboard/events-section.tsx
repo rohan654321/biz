@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Calendar as CalendarIcon, MapPin, Plus, Heart, Filter, X } from "lucide-react"
+import { Calendar as CalendarIcon, MapPin, Plus, Heart, Filter, X, Users, DollarSign, Download } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
@@ -57,6 +57,9 @@ export interface Event {
   leadNotes?: string
   currentRegistrations?: number
   maxAttendees?: number
+  expectedVisitors?: number
+  expectedExhibitors?: number
+  entryFee?: string
 }
 
 /* ---------- Props ---------- */
@@ -106,6 +109,29 @@ const statusPillClass = (status?: string) => {
       return "bg-gray-50 text-gray-700 border-gray-100"
   }
 }
+
+// Mock function to download ticket
+const downloadTicket = (event: Event) => {
+  // Create a simple ticket PDF content (in real app, this would generate a proper PDF)
+  const ticketContent = `
+    TICKET FOR: ${event.title}
+    DATE: ${formatDate(event.startDate)}
+    TIME: 3:00 PM
+    LOCATION: ${event.location || `${event.city || ""}${event.state ? `, ${event.state}` : ""}`}
+    TYPE: ${event.leadType || 'Visitor'}
+    TICKET ID: ${event.id.slice(0, 8).toUpperCase()}
+  `;
+
+  const blob = new Blob([ticketContent], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ticket-${event.title.toLowerCase().replace(/\s+/g, '-')}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
 
 /* ---------- Component ---------- */
 export function EventsSection({ userId }: EventsSectionProps) {
@@ -340,83 +366,70 @@ export function EventsSection({ userId }: EventsSectionProps) {
                       {formatDate(event.startDate)} – {formatDate(event.endDate)}
                     </p>
 
-                    {/* Event Card */}
-                    <Card className="flex w-full border border-gray-200 bg-[#FFF6F6] rounded-lg hover:shadow-md transition-shadow">
-                      {/* Image */}
-                      <div className="flex grid-2">
-                        <div className="w-40 h-28 flex-shrink-0">
-                          <img
-                            src={event.thumbnailImage || defaultImage}
-                            alt={event.title}
-                            className="w-full h-full object-cover rounded-l-lg"
-                            onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement
-                              if (!target.src.endsWith(defaultImage)) {
-                                target.src = defaultImage
-                              }
-                            }}
-                          />
-                        </div>
+                    {/* Event Card - Exact match to your image */}
+                   <Card className="w-full border border-gray-200 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+  <CardContent className="p-0">
+    <div className="flex flex-col md:flex-row items-stretch">
+      {/* Left: Event Image */}
+      <div className="w-full md:w-1/4 h-48 md:h-auto overflow-hidden">
+        <img
+          src={event.thumbnailImage || DEFAULT_IMAGE}
+          alt={event.title}
+          className="w-full h-full object-cover"
+        />
+      </div>
 
-                        {/* Event Info */}
-                        <div className="flex flex-col justify-center p-4 flex-1">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1">
-                              <h3
-                                onClick={() => router.push(`/event/${event.id}`)}
-                                className="text-base font-semibold text-blue-700 hover:underline cursor-pointer"
-                              >
-                                {event.title}
-                              </h3>
+      {/* Middle: Event Info */}
+      <div className="flex-1 p-4 flex flex-col justify-between">
+        <div>
+          {/* Category Badge */}
+          <Badge className="bg-purple-100 text-purple-700 mb-2 rounded-full">
+            {event.type || "Outdoor & Adventure"}
+          </Badge>
 
-                              <p className="text-xs text-gray-600">
-                                {formatDate(event.startDate)} – {formatDate(event.endDate)}
-                              </p>
+          {/* Title */}
+          <h3 className="text-xl font-bold text-gray-900 mb-1">{event.title}</h3>
 
-                              <p className="text-xs text-blue-600">
-                                {event.location ||
-                                  `${event.city || ""}${event.state ? `, ${event.state}` : ""}`}
-                              </p>
+          {/* Description */}
+          <p className="text-gray-600 text-sm mb-3">
+            {event.description || event.shortDescription || "Top outdoor brands showcase the latest gear. Discounts, demos, and expert consultations."}
+          </p>
 
-                              {event.description && (
-                                <p className="text-xs text-gray-700 mt-1 line-clamp-1">
-                                  {event.description}
-                                </p>
-                              )}
-                            </div>
+          {/* Location + Date */}
+          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-700">
+            <div className="flex items-center gap-1">
+              <MapPin className="w-4 h-4 text-gray-500" />
+              <span>{event.location || "Rocky Ridge Hall, Denver, CO"}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <CalendarIcon className="w-4 h-4 text-gray-500" />
+              <span>{formatDate(event.startDate)} — 3:00 PM</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-                            {/* Right side: Status pill */}
-                            <div className="flex flex-col items-end gap-2">
-                              {event.leadType && (
-                                <span
-                                  className={`text-[11px] px-2 py-1 rounded border ${statusPillClass(
-                                    event.leadType
-                                  )}`}
-                                >
-                                  {event.leadType}
-                                </span>
-                              )}
-                              {/* Role badge */}
-                              {/* <span className={`text-[11px] px-2 py-1 rounded border ${role.classes}`}>
-                                {role.label}
-                              </span> */}
-                            </div>
-                          </div>
+      {/* Right: Stats */}
+      <div className="w-full md:w-1/4 bg-gray-50 p-4 flex flex-col justify-center gap-3 text-center">
+        <div>
+          <p className="text-xs text-gray-500 uppercase">Expected Visitor</p>
+          <p className="text-lg font-bold text-gray-900">{event.expectedVisitors || "5000"}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500 uppercase">Exptd Exhibitors</p>
+          <p className="text-lg font-bold text-gray-900">{event.expectedExhibitors || "300"}</p>
+        </div>
+      </div>
+              <div>
+          <p className="text-xs text-gray-500 uppercase mt-15 mr-10">Entry Fee</p>
+          <p className="text-lg font-bold text-purple-600">
+            {event.entryFee || "$40"}
+          </p>
+        </div>
+    </div>
+  </CardContent>
+</Card>
 
-                          {/* Optional meta row */}
-                          <div className="mt-3 flex items-center gap-4 text-xs text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <CalendarIcon className="w-3.5 h-3.5" />
-                              <span>{formatDate(event.startDate)}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-3.5 h-3.5" />
-                              <span>{event.city || event.location || "Online"}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
                   </div>
                 )
               })}
