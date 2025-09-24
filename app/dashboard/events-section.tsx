@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { MapPin, Plus, Heart, Filter, X } from "lucide-react"
+import { MapPin, Plus, Heart, Filter, X, CalendarIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
@@ -39,6 +39,7 @@ interface TicketType {
 }
 
 export interface Event {
+  expectedExhibitors: string
   id: string
   title: string
   startDate: string
@@ -401,47 +402,61 @@ export function EventsSection({ userId }: EventsSectionProps) {
                             </div>
 
                             {/* Title */}
-                            <h2 className="text-xl font-bold text-gray-900 mb-3">{event.title}</h2>
+                            <div className="flex ">
+                              <div>
+                                <h2 className="text-xl font-bold text-gray-900 mb-3">{event.title}</h2>
 
-                            {/* Description */}
-                            <p className="text-sm text-gray-600 mb-4">{event.description}</p>
+                                {/* Description */}
+                                <p className="text-sm text-gray-600 mb-4">{event.description}</p>
 
-                            {/* Location and Date */}
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                              <div className="flex items-center gap-1">
-                                <MapPin className="w-4 h-4" />
-                                <span>{event.address}</span>
                               </div>
-                              <div className="flex items-center gap-1">
-                                {/* <Calendar className="w-4 h-4" /> */}
-                                <span>
-                                  {formatDate(event.startDate)} - {formatDate(event.endDate)}
-                                </span>
+
+
+
+
+                              {/* Location and Date */}
+                              <div className="items-center gap-4 text-sm text-gray-500 ml-4">
+                                <div className="flex items-center">
+                                  <MapPin className="w-4 h-4" />
+                                  <span>{event.address}</span>
+                                </div>
+                                <div className="flex items-center gap-1 ml-5 mt-3">
+                                  <CalendarIcon className="w-4 h-4" />
+                                  <span>
+                                    {formatDate(event.startDate)} - {formatDate(event.endDate)}
+                                  </span>
+                                </div>
                               </div>
+                              <button>
+                                <div className="w-15 h-15 flex items-center justify-center bg-purple-50 rounded-lg ml-8">🎟️</div>
+                              </button>
                             </div>
                           </div>
 
                           {/* Right Stats Section */}
-                          <div className="ml-6 text-right">
+                          <div className="ml-6 flex">
                             {/* Expected Visitors */}
-                            <div className="mb-4">
-                              <div className="text-xs text-gray-500 mb-1">Expected Visitors</div>
-                              <div className="text-2xl font-bold text-gray-900">{event.maxAttendees || "200"}</div>
+                            <div className="mb-4 mr-20 space-y-2 mt-6">
+                              <div className="flex gap-10">
+                                <span className="text-gray-500">Expected Visitors</span>
+                                <span className="font-semibold text-gray-900">{event.maxAttendees || "200"}</span>
+                              </div>
+                              <div className="flex gap-12">
+                                <span className="text-gray-500">Exptd Exhibitors</span>
+                                <span className="font-semibold text-gray-900">{event.maxAttendees || "200"}</span>
+                              </div>
                             </div>
 
-                            {/* Expected Exhibitors and Entry Fee */}
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between items-center gap-8">
-                                <span className="text-gray-500">Exptd Exhibitors</span>
-                                <span className="font-semibold">{event.maxAttendees || "200"}</span>
-                              </div>
-                              <div className="flex justify-between items-center gap-8">
-                                <span className="text-gray-500">Entry Fee</span>
-                                <span className="text-xl font-bold text-pink-500">
-                                  {formatTicketPrice(event.ticketTypes)}
-                                </span>
-                              </div>
+
+                            <div className="grid text-center mt-5">
+                              <span className="text-xl font-bold text-pink-500">
+                                {formatTicketPrice(event.ticketTypes)}
+                              </span>
+                              <span className="text-gray-500 text-sm">Entry Fee</span>
                             </div>
+
+
+                            {/* Expected Exhibitors and Entry Fee */}
                           </div>
                         </div>
                       </div>
