@@ -172,6 +172,23 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
         organizerId: id,
 
+        ticketTypes: body.ticketTypes
+          ? {
+              create: body.ticketTypes.map((ticket: any) => ({
+                name: ticket.name,
+                description: ticket.description,
+                price: ticket.price,
+                earlyBirdPrice: ticket.earlyBirdPrice || null,
+                earlyBirdEnd: ticket.earlyBirdEnd
+                  ? new Date(ticket.earlyBirdEnd)
+                  : null,
+                quantity: ticket.quantity,
+                isActive: ticket.isActive !== false,
+              })),
+            }
+          : undefined,
+
+
         exhibitionSpaces: body.exhibitionSpaces
           ? {
             create: body.exhibitionSpaces.map((space: any) => ({
@@ -194,6 +211,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       },
       include: {
         exhibitionSpaces: true,
+         ticketTypes: true,
       },
     })
 

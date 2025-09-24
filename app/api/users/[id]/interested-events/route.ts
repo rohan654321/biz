@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(
   request: Request,
-  { params }: { params:Promise <{ userId: string }> }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -15,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const {userId} =await params  // ✅ direct and safe
+    const { userId } = await params
 
     console.log("Session user ID:", session.user.id)
     console.log("Requested user ID:", userId)
@@ -29,7 +29,7 @@ export async function GET(
 
     console.log("Fetching events for user:", userId)
 
-    // Fetch user's event leads (interested events)
+    // Fetch user's event leads (interested events) with proper includes
     const eventLeads = await prisma.eventLead.findMany({
       where: {
         userId: userId,
@@ -52,12 +52,15 @@ export async function GET(
             venue: {
               select: {
                 id: true,
-                venueName: true,
-                venueAddress: true,
-                venueCity: true,
-                venueState: true,
+                firstName: true, // Assuming venue is a User with firstName as venueName
+                lastName: true,
+                avatar: true,
+                company: true,
+                // Add other venue fields you need
               },
             },
+            // ✅ Include ticket types
+            ticketTypes: true,
             _count: {
               select: {
                 registrations: true,
@@ -68,7 +71,7 @@ export async function GET(
       },
       orderBy: [
         { createdAt: "desc" },
-        { followUpDate: "asc" }, // Show follow-ups first
+        { followUpDate: "asc" },
       ],
     })
 
@@ -83,14 +86,21 @@ export async function GET(
       shortDescription: lead.event.shortDescription,
       startDate: lead.event.startDate.toISOString(),
       endDate: lead.event.endDate.toISOString(),
-      location: lead.event.location || lead.event.venue?.venueName || "TBA",
-      city: lead.event.city || lead.event.venue?.venueCity,
-      state: lead.event.state || lead.event.venue?.venueState,
+      location: lead.event.location || "TBA",
+      city: lead.event.city,
+      state: lead.event.state,
       status: lead.event.status,
       type: lead.event.eventType?.[0] || "General",
       bannerImage: lead.event.bannerImage,
       thumbnailImage: lead.event.thumbnailImage,
+      category: lead.event.category,
+      address: lead.event.address,
+      
+      // ✅ Ticket types - now properly included
+      ticketTypes: lead.event.ticketTypes,
+      
       organizer: lead.event.organizer,
+      venue: lead.event.venue,
       
       // Lead-specific information
       leadId: lead.id,

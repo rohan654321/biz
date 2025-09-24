@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { redirect } from "next/navigation"
-import {ExhibitorDashboard}  from "../speaker-dashboard"
+import { ExhibitorDashboard } from "../speaker-dashboard"
+import { NameBanner } from "@/app/dashboard/NameBanner"
 
 export default async function DashboardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -16,5 +17,17 @@ export default async function DashboardPage({ params }: { params: Promise<{ id: 
     redirect("/login")
   }
 
-  return <ExhibitorDashboard userId={id} />
+  return (
+    <div>
+      <NameBanner
+        name={session.user.name || "User"}
+        designation={
+          session.user.role === "ATTENDEE"
+            ? "Visitor"
+            : session.user.role || ""
+        }
+      />
+      <ExhibitorDashboard userId={id} />
+    </div>
+  )
 }

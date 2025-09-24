@@ -42,15 +42,15 @@ export async function GET() {
     // Transform to match frontend Event interface
     const formattedEvents = events.map((event) => {
       // Extract pricing from ticketTypes if available
-      const generalTicket = event.ticketTypes?.find(
-        (t) => t.name.toLowerCase() === "general"
-      )
-      const vipTicket = event.ticketTypes?.find(
-        (t) => t.name.toLowerCase() === "vip"
-      )
-      const premiumTicket = event.ticketTypes?.find(
-        (t) => t.name.toLowerCase() === "premium"
-      )
+      // const generalTicket = event.ticketTypes?.find(
+      //   (t) => t.name.toLowerCase() === "general"
+      // )
+      // const vipTicket = event.ticketTypes?.find(
+      //   (t) => t.name.toLowerCase() === "vip"
+      // )
+      // const premiumTicket = event.ticketTypes?.find(
+      //   (t) => t.name.toLowerCase() === "premium"
+      // )
 
       return {
         id: event.id,
@@ -71,10 +71,10 @@ export async function GET() {
         isVirtual: event.isVirtual,
         virtualLink: event.virtualLink || null,
 
-        // Pricing from ticketTypes
-        generalPrice: generalTicket?.price || 0,
-        vipPrice: vipTicket?.price || 0,
-        premiumPrice: premiumTicket?.price || 0,
+     
+        // generalPrice: generalTicket?.price || 0,
+        // vipPrice: vipTicket?.price || 0,
+        // premiumPrice: premiumTicket?.price || 0,
 
         // Media
         bannerImage: event.bannerImage || null,

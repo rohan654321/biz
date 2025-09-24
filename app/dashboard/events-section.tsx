@@ -4,11 +4,10 @@ import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Calendar as CalendarIcon, MapPin, Plus, Heart, Filter, X, Users, DollarSign, Download } from "lucide-react"
+import { Calendar as CalendarIcon, MapPin, Plus, Heart, Filter, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
@@ -28,6 +27,17 @@ import { format } from "date-fns"
  */
 
 /* ---------- Types ---------- */
+interface TicketType {
+  id: string
+  name: string
+  price: number
+  earlyBirdPrice?: number
+  earlyBirdEnd?: string
+  quantity: number
+  sold: number
+  isActive: boolean
+}
+
 export interface Event {
   id: string
   title: string
@@ -41,7 +51,10 @@ export interface Event {
   description?: string
   shortDescription?: string
   bannerImage?: string
+  category?: string
   thumbnailImage?: string
+  address?: string
+  ticketTypes: TicketType[] // Fixed from ticketType:[] to ticketTypes with proper typing
   organizer?: {
     id: string
     firstName: string
@@ -77,12 +90,36 @@ const formatDate = (dateString: string) =>
     day: "numeric",
   })
 
+const formatTicketPrice = (ticketTypes: TicketType[]) => {
+  if (!ticketTypes || ticketTypes.length === 0) return "Free"
+
+  // Find the cheapest active ticket
+  const activeTickets = ticketTypes.filter((ticket) => ticket.isActive)
+  if (activeTickets.length === 0) return "N/A"
+
+  const cheapestTicket = activeTickets.reduce((min, ticket) => {
+    const price =
+      ticket.earlyBirdPrice && new Date() < new Date(ticket.earlyBirdEnd || "") ? ticket.earlyBirdPrice : ticket.price
+    const minPrice =
+      min.earlyBirdPrice && new Date() < new Date(min.earlyBirdEnd || "") ? min.earlyBirdPrice : min.price
+    return price < minPrice ? ticket : min
+  })
+
+  const currentPrice =
+    cheapestTicket.earlyBirdPrice && new Date() < new Date(cheapestTicket.earlyBirdEnd || "")
+      ? cheapestTicket.earlyBirdPrice
+      : cheapestTicket.price
+
+  if (currentPrice === 0) return "Free"
+  return `$${currentPrice.toFixed(2)}`
+}
+
 // Choose dot color based on leadType (visitor / exhibitor / unknown)
 const timelineDotClass = (leadType?: string) => {
-  if (!leadType) return "bg-gray-400"
-  if (leadType === "exhibitor") return "bg-green-600"
-  if (leadType === "visitor") return "bg-blue-600"
-  return "bg-gray-600"
+  if (!leadType) return "bg-blue-700"
+  if (leadType === "exhibitor") return "bg-blue-700"
+  if (leadType === "visitor") return "bg-blue-700"
+  return "bg-blue-700"
 }
 
 // Choose badge variant or classes for role display
@@ -326,7 +363,7 @@ export function EventsSection({ userId }: EventsSectionProps) {
                 <Button
                   variant="outline"
                   onClick={clearDateFilter}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 bg-transparent"
                   disabled={!dateFilter.from && !dateFilter.to}
                 >
                   <X className="w-4 h-4" />
@@ -343,9 +380,9 @@ export function EventsSection({ userId }: EventsSectionProps) {
 
       {/* Tabs (only All for now) */}
       <Tabs defaultValue="all" className="w-full">
-        <TabsList>
+        {/* <TabsList>
           <TabsTrigger value="all">All Events ({filteredEvents.length})</TabsTrigger>
-        </TabsList>
+        </TabsList> */}
 
         <TabsContent value="all" className="space-y-8">
           {filteredEvents.length > 0 ? (
@@ -357,7 +394,7 @@ export function EventsSection({ userId }: EventsSectionProps) {
                   <div key={event.id} className="mb-10 ml-6 relative">
                     {/* Timeline Dot (centered over the line) */}
                     <span
-                      className={`absolute -left-[35px] top-0 flex items-center justify-center 
+                      className={`absolute -left-[35px] top-0 flex items-center justify-center text-blue-700 
     w-5 h-5 rounded-full ring-4 ring-white ${timelineDotClass(event.leadType)}`}
                     />
 
@@ -366,70 +403,83 @@ export function EventsSection({ userId }: EventsSectionProps) {
                       {formatDate(event.startDate)} – {formatDate(event.endDate)}
                     </p>
 
-                    {/* Event Card - Exact match to your image */}
-                   <Card className="w-full border border-gray-200 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-  <CardContent className="p-0">
-    <div className="flex flex-col md:flex-row items-stretch">
-      {/* Left: Event Image */}
-      <div className="w-full md:w-1/4 h-48 md:h-auto overflow-hidden">
-        <img
-          src={event.thumbnailImage || DEFAULT_IMAGE}
-          alt={event.title}
-          className="w-full h-full object-cover"
-        />
-      </div>
+                    {/* Event Card */}
+                    <Card className="flex w-full border border-gray-200 bg-[#FFF6F6] rounded-lg hover:shadow-md transition-shadow">
+                      {/* Image */}
+                      <div className="flex grid-2">
+                        <div className="w-40 h-28 flex-shrink-0">
+                          <img
+                            src={event.thumbnailImage || defaultImage}
+                            alt={event.title}
+                            className="w-full h-full object-cover rounded-l-lg"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement
+                              if (!target.src.endsWith(defaultImage)) {
+                                target.src = defaultImage
+                              }
+                            }}
+                          />
+                        </div>
 
-      {/* Middle: Event Info */}
-      <div className="flex-1 p-4 flex flex-col justify-between">
-        <div>
-          {/* Category Badge */}
-          <Badge className="bg-purple-100 text-purple-700 mb-2 rounded-full">
-            {event.type || "Outdoor & Adventure"}
-          </Badge>
+                        {/* Event Info */}
+                        <div className="flex flex-col justify-center p-4 flex-1">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <h3
+                                onClick={() => router.push(`/event/${event.id}`)}
+                                className="text-base font-semibold text-blue-700 hover:underline cursor-pointer"
+                              >
+                                {event.title}
+                              </h3>
 
-          {/* Title */}
-          <h3 className="text-xl font-bold text-gray-900 mb-1">{event.title}</h3>
+                              <p className="text-xs text-gray-600">
+                                {formatDate(event.startDate)} – {formatDate(event.endDate)}
+                              </p>
 
-          {/* Description */}
-          <p className="text-gray-600 text-sm mb-3">
-            {event.description || event.shortDescription || "Top outdoor brands showcase the latest gear. Discounts, demos, and expert consultations."}
-          </p>
+                              <p className="text-xs text-blue-600">
+                                {event.location ||
+                                  `${event.city || ""}${event.state ? `, ${event.state}` : ""}`}
+                              </p>
 
-          {/* Location + Date */}
-          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-700">
-            <div className="flex items-center gap-1">
-              <MapPin className="w-4 h-4 text-gray-500" />
-              <span>{event.location || "Rocky Ridge Hall, Denver, CO"}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <CalendarIcon className="w-4 h-4 text-gray-500" />
-              <span>{formatDate(event.startDate)} — 3:00 PM</span>
-            </div>
-          </div>
-        </div>
-      </div>
+                              {event.description && (
+                                <p className="text-xs text-gray-700 mt-1 line-clamp-1">
+                                  {event.description}
+                                </p>
+                              )}
+                            </div>
 
-      {/* Right: Stats */}
-      <div className="w-full md:w-1/4 bg-gray-50 p-4 flex flex-col justify-center gap-3 text-center">
-        <div>
-          <p className="text-xs text-gray-500 uppercase">Expected Visitor</p>
-          <p className="text-lg font-bold text-gray-900">{event.expectedVisitors || "5000"}</p>
-        </div>
-        <div>
-          <p className="text-xs text-gray-500 uppercase">Exptd Exhibitors</p>
-          <p className="text-lg font-bold text-gray-900">{event.expectedExhibitors || "300"}</p>
-        </div>
-      </div>
-              <div>
-          <p className="text-xs text-gray-500 uppercase mt-15 mr-10">Entry Fee</p>
-          <p className="text-lg font-bold text-purple-600">
-            {event.entryFee || "$40"}
-          </p>
-        </div>
-    </div>
-  </CardContent>
-</Card>
+                            {/* Right side: Status pill */}
+                            <div className="flex flex-col items-end gap-2">
+                              {event.leadType && (
+                                <span
+                                  className={`text-[11px] px-2 py-1 rounded border ${statusPillClass(
+                                    event.leadType
+                                  )}`}
+                                >
+                                  {event.leadType}
+                                </span>
+                              )}
+                              {/* Role badge */}
+                              {/* <span className={`text-[11px] px-2 py-1 rounded border ${role.classes}`}>
+                                {role.label}
+                              </span> */}
+                            </div>
+                          </div>
 
+                          {/* Optional meta row */}
+                          <div className="mt-3 flex items-center gap-4 text-xs text-gray-500">
+                            <div className="flex items-center gap-1">
+                              <CalendarIcon className="w-3.5 h-3.5" />
+                              <span>{formatDate(event.startDate)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-3.5 h-3.5" />
+                              <span>{event.city || event.location || "Online"}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
                   </div>
                 )
               })}
@@ -439,7 +489,9 @@ export function EventsSection({ userId }: EventsSectionProps) {
               <CardContent className="p-6 text-center">
                 <Heart className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                 <p className="text-gray-600 mb-4">
-                  {dateFilter.from || dateFilter.to ? "No events match your filter criteria." : "No interested events yet."}
+                  {dateFilter.from || dateFilter.to
+                    ? "No events match your filter criteria."
+                    : "No interested events yet."}
                 </p>
                 <div className="flex items-center justify-center gap-2">
                   <Button variant="outline" onClick={() => router.push("/event")}>

@@ -27,6 +27,12 @@ interface SpaceCost {
   isFixed: boolean
 }
 
+interface TicketType {
+  name: string;
+  price: number;
+  currency?: string;
+}
+
 interface EventFormData {
   // Basic Info
   title: string
@@ -59,6 +65,8 @@ interface EventFormData {
 
   // Space Costs
   spaceCosts: SpaceCost[]
+
+  ticketTypes: TicketType[];
 
   // Media
   images: string[]
@@ -146,6 +154,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     ageLimit: "18+",
     featured: false,
     vip: false,
+    ticketTypes: [],
     spaceCosts: [
       {
         type: "Shell Space (Standard Booth)",
@@ -540,36 +549,31 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         eventType: [formData.eventType],
         maxAttendees: null,
         // Include ticket pricing
-        ticketTypes: [
-          {
-            id: "general",
-            name: "General",
-            description: "General admission ticket",
-            price: formData.generalPrice,
-            quantity: 1000,
-            sold: 0,
-            isActive: formData.generalPrice > 0
-          },
-          {
-            id: "student",
-            name: "Student",
-            description: "Student discount ticket",
-            price: formData.studentPrice,
-            quantity: 500,
-            sold: 0,
-            isActive: formData.studentPrice > 0
-          },
-          {
-            id: "vip",
-            name: "VIP",
-            description: "VIP access ticket",
-            price: formData.vipPrice,
-            quantity: 100,
-            sold: 0,
-            isActive: formData.vipPrice > 0
-          }
-        ].filter(ticket => ticket.isActive),
-      }
+       ticketTypes: [
+        {
+          name: "General",
+          description: "General admission ticket",
+          price: formData.generalPrice,
+          quantity: 1000,
+          isActive: formData.generalPrice > 0
+        },
+        {
+          name: "Student", 
+          description: "Student discount ticket",
+          price: formData.studentPrice,
+          quantity: 500,
+          isActive: formData.studentPrice > 0
+        },
+        {
+          name: "VIP",
+          description: "VIP access ticket", 
+          price: formData.vipPrice,
+          quantity: 100,
+          isActive: formData.vipPrice > 0
+        }
+      ].filter(ticket => ticket.isActive),
+    }
+
 
       console.log("[v0] Publishing event with transformed data:", eventData)
       console.log("[v0] Exhibition spaces being sent:", exhibitionSpaces)
@@ -620,6 +624,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         ageLimit: "18+",
         featured: false,
         vip: false,
+        ticketTypes:[],
         spaceCosts: [
           {
             type: "Shell Space (Standard Booth)",
