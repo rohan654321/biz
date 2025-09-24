@@ -112,7 +112,7 @@ export function SavedEvents({ userId }: { userId?: string }) {
               <img
                 src={event.thumbnailImage || event.bannerImage || "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"}
                 alt={event.title}
-                className="w-full h-full object-cover rounded-4xl mt-6 ml-2"
+                className="w-full h-full object-cover rounded-2xl mt-3 mx-3"
                 onError={(e) => {
                   const target = e.currentTarget as HTMLImageElement
                   target.src = "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"

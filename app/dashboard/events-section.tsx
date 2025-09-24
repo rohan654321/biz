@@ -368,10 +368,11 @@ export function EventsSection({ userId }: EventsSectionProps) {
                 return (
                   <div key={event.id} className="mb-10 ml-6 relative">
                     {/* Timeline Dot (centered over the line) */}
-                    <span
-                      className={`absolute -left-[35px] top-0 flex items-center justify-center text-blue-700 
-    w-5 h-5 rounded-full ring-4 ring-white ${timelineDotClass(event.leadType)}`}
-                    />
+                   <span
+  className={`absolute -left-[35px] top-0 flex items-center justify-center 
+    w-6 h-6 rounded-full bg-gray-600 ${timelineDotClass(event.leadType)}`}
+/>
+
 
                     {/* Date Heading */}
                     <p className="text-sm font-semibold text-gray-700 mb-3">
@@ -385,7 +386,7 @@ export function EventsSection({ userId }: EventsSectionProps) {
     <img
       src={event.thumbnailImage || event.bannerImage || "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"}
       alt={event.title}
-      className="w-full h-full object-cover rounded-4xl mt-6 ml-2"
+      className="w-full h-full object-cover rounded-2xl mt-3 mx-3"
       onError={(e) => {
         const target = e.currentTarget as HTMLImageElement
         target.src = "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"
