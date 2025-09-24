@@ -193,19 +193,19 @@ export function PastEvents({ userId }: PastEventsProps) {
             </p>
 
             {/* Event Card */}
-            <div className="flex w-full border border-gray-200 bg-white rounded-lg hover:shadow-md transition-shadow overflow-hidden">
-              {/* Left Image Section */}
-              <div className="w-40 h-32 flex-shrink-0">
-                <img
-                  src={event.thumbnailImage || event.bannerImage || "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"}
-                  alt={event.title}
-                  className="w-full h-full object-cover rounded-4xl mt-6 ml-2"
-                  onError={(e) => {
-                    const target = e.currentTarget as HTMLImageElement
-                    target.src = "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"
-                  }}
-                />
-              </div>
+           <div className="flex w-full border border-gray-200 bg-white rounded-lg hover:shadow-lg transition-shadow m-2">
+  {/* Left Image Section */}
+  <div className="w-40 h-32 flex-shrink-0">
+    <img
+      src={event.thumbnailImage || event.bannerImage || "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"}
+      alt={event.title}
+      className="w-full h-full object-cover rounded-2xl mt-3 mx-3 overflow-hidden"
+      onError={(e) => {
+        const target = e.currentTarget as HTMLImageElement
+        target.src = "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"
+      }}
+    />
+  </div>
 
               {/* Main Content Section */}
               <div className="flex-1 p-6">

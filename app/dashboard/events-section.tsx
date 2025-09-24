@@ -368,10 +368,11 @@ export function EventsSection({ userId }: EventsSectionProps) {
                 return (
                   <div key={event.id} className="mb-10 ml-6 relative">
                     {/* Timeline Dot (centered over the line) */}
-                    <span
-                      className={`absolute -left-[35px] top-0 flex items-center justify-center text-blue-700 
-    w-5 h-5 rounded-full ring-4 ring-white ${timelineDotClass(event.leadType)}`}
-                    />
+                   <span
+  className={`absolute -left-[35px] top-0 flex items-center justify-center 
+    w-6 h-6 rounded-full bg-gray-600 ${timelineDotClass(event.leadType)}`}
+/>
+
 
                     {/* Date Heading */}
                     <p className="text-sm font-semibold text-gray-700 mb-3">
@@ -379,88 +380,94 @@ export function EventsSection({ userId }: EventsSectionProps) {
                     </p>
 
                     {/* Event Card */}
-                    <div className="flex w-full border border-gray-200 bg-white rounded-lg hover:shadow-md transition-shadow overflow-hidden">
-                      {/* Left Image Section */}
-                      <div className="w-40 h-32 flex-shrink-0">
-                        <img
-                          src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"
-                          alt="Adventure Gear Show"
-                          className="w-full h-full object-cover rounded-4xl mt-6 ml-2"
-                        />
-                      </div>
+      <div className="flex w-full border border-gray-200 bg-white rounded-lg hover:shadow-md transition-shadow overflow-hidden">
+  {/* Left Image Section - Keep exact same styling */}
+  <div className="w-40 h-32 flex-shrink-0">
+    <img
+      src={event.thumbnailImage || event.bannerImage || "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"}
+      alt={event.title}
+      className="w-full h-full object-cover rounded-2xl mt-3 mx-3"
+      onError={(e) => {
+        const target = e.currentTarget as HTMLImageElement
+        target.src = "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop"
+      }}
+    />
+  </div>
 
-                      {/* Main Content Section */}
-                      <div className="flex-1 p-6">
-                        <div className="flex justify-between items-start">
-                          {/* Left Content */}
-                          <div className="flex-1">
-                            {/* Category Badge */}
-                            <div className="mb-2">
-                              <span className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded">
-                                {event.category}
-                              </span>
-                            </div>
+  {/* Main Content Section */}
+  <div className="flex-1 p-6">
+    <div className="flex justify-between items-start">
+      {/* Left Content */}
+      <div className="flex-1 min-w-0">
+        {/* Category Badge */}
+        <div className="mb-2">
+          <span className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded">
+            {event.category || "Event"}
+          </span>
+        </div>
 
-                            {/* Title */}
-                            <div className="flex ">
-                              <div>
-                                <h2 className="text-xl font-bold text-gray-900 mb-3">{event.title}</h2>
+        {/* Title and Content Row */}
+        <div className="flex">
+          {/* Text Content */}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl font-bold text-gray-900 mb-3 truncate pr-4">
+              {event.title}
+            </h2>
+            <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+              {event.shortDescription || event.description || "No description available"}
+            </p>
+          </div>
 
-                                {/* Description */}
-                                <p className="text-sm text-gray-600 mb-4">{event.description}</p>
+          {/* Location and Date - Fixed width */}
+          <div className="flex flex-col gap-4 text-sm text-gray-500 ml-4 min-w-[200px]">
+            <div className="flex items-center">
+              <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+              <span className="truncate">{event.address}</span>
+            </div>
+            <div className="flex items-center">
+              <CalendarIcon className="w-4 h-4 mr-2 flex-shrink-0" />
+              <span className="whitespace-nowrap">
+                {formatDate(event.startDate)} - {formatDate(event.endDate || event.startDate)}
+              </span>
+            </div>
+          </div>
+          
+          {/* Ticket Icon */}
+          <div className="w-15 h-15 flex items-center justify-center bg-purple-50 rounded-lg ml-8 flex-shrink-0">
+            🎟️
+          </div>
+        </div>
+      </div>
 
-                              </div>
+      {/* Right Stats Section - Fixed alignment */}
+      <div className="ml-6 flex items-start">
+        {/* Expected Visitors and Exhibitors */}
+        <div className="space-y-2 mt-6 mr-20 min-w-[180px]">
+          <div className="flex justify-between gap-10">
+            <span className="text-gray-500 whitespace-nowrap">Expected Visitors</span>
+            <span className="font-semibold text-gray-900 whitespace-nowrap">
+              {event.expectedExhibitors || event.maxAttendees || "200"}
+            </span>
+          </div>
+          <div className="flex justify-between gap-12">
+            <span className="text-gray-500 whitespace-nowrap">Exptd Exhibitors</span>
+            <span className="font-semibold text-gray-900 whitespace-nowrap">
+              {event.expectedExhibitors || "200"}
+            </span>
+          </div>
+        </div>
 
-
-
-
-                              {/* Location and Date */}
-                              <div className="items-center gap-4 text-sm text-gray-500 ml-4">
-                                <div className="flex items-center">
-                                  <MapPin className="w-4 h-4" />
-                                  <span>{event.address}</span>
-                                </div>
-                                <div className="flex items-center gap-1 ml-5 mt-3">
-                                  <CalendarIcon className="w-4 h-4" />
-                                  <span>
-                                    {formatDate(event.startDate)} - {formatDate(event.endDate)}
-                                  </span>
-                                </div>
-                              </div>
-                              <button>
-                                <div className="w-15 h-15 flex items-center justify-center bg-purple-50 rounded-lg ml-8">🎟️</div>
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Right Stats Section */}
-                          <div className="ml-6 flex">
-                            {/* Expected Visitors */}
-                            <div className="mb-4 mr-20 space-y-2 mt-6">
-                              <div className="flex gap-10">
-                                <span className="text-gray-500">Expected Visitors</span>
-                                <span className="font-semibold text-gray-900">{event.maxAttendees || "200"}</span>
-                              </div>
-                              <div className="flex gap-12">
-                                <span className="text-gray-500">Exptd Exhibitors</span>
-                                <span className="font-semibold text-gray-900">{event.maxAttendees || "200"}</span>
-                              </div>
-                            </div>
-
-
-                            <div className="grid text-center mt-5">
-                              <span className="text-xl font-bold text-pink-500">
-                                {formatTicketPrice(event.ticketTypes)}
-                              </span>
-                              <span className="text-gray-500 text-sm">Entry Fee</span>
-                            </div>
-
-
-                            {/* Expected Exhibitors and Entry Fee */}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+        {/* Entry Fee */}
+        <div className="grid text-center mt-5 min-w-[80px]">
+          <span className="text-xl font-bold text-pink-500 whitespace-nowrap">
+            {formatTicketPrice(event.ticketTypes as unknown as TicketType[])}
+          </span>
+          <span className="text-gray-500 text-sm">Entry Fee</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
                   </div>
                 )
               })}

@@ -21,6 +21,8 @@ import {
   Loader2,
 } from "lucide-react"
 import Image from "next/image"
+// import router from "next/router"
+// import Link from "next/link"
 
 interface Event {
   id: string
@@ -320,7 +322,13 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                           )}
                         </DialogContent>
                       </Dialog>
-                      <Button variant="ghost" size="sm"><Edit className="w-4 h-4" /></Button>
+                      
+{/* <Link href={`/organizer-dashboard/edit/${event.id}`}> */}
+  <Button variant="ghost" size="sm">
+    <Edit className="w-4 h-4 mr-1" />
+    Edit
+  </Button>
+{/* </Link> */}
                       <Button variant="ghost" size="sm" onClick={() => handleDeleteEvent(event.id)} disabled={loading}>
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                       </Button>
