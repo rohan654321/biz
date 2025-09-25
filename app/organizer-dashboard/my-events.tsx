@@ -326,7 +326,6 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
 {/* <Link href={`/organizer-dashboard/edit/${event.id}`}> */}
   <Button variant="ghost" size="sm">
     <Edit className="w-4 h-4 mr-1" />
-    Edit
   </Button>
 {/* </Link> */}
                       <Button variant="ghost" size="sm" onClick={() => handleDeleteEvent(event.id)} disabled={loading}>
