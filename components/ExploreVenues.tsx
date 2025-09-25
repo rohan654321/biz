@@ -37,66 +37,85 @@ export default function ExploreVenues() {
   return (
     <div className="w-full max-w-6xl mx-auto mb-12">
       <div>
-        <div className="px-6 py-6 border-b text-center">
-          <h2 className="text-4xl font-bold text-gray-900 mb-1">Explore Venues</h2>
-        </div>
+          <div className="px-6 py-6 border-b border-gray-200 text-left">
+  <h2 className="text-3xl font-semibold text-gray-900 mb-1">
+    Explore Venues
+  </h2>
+</div>
 
         <div className="p-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
-            {Array.isArray(organizers) && organizers.map((venue: any, index:number) => (
-              <button
-                key={`${venue.id}-${index}`}
-                onClick={() => handleVenueClick(venue)}
-                className="group rounded-sm p-3 bg-white transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg text-left"
-              >
-                <div className="space-y-1">
-                  <div className="h-[200px] rounded-sm overflow-hidden">
-                    <img
-                      src={venue.image?.length && venue.image[0] !== "/placeholder.svg" ? venue.images[0] : "city/c1.jpg"}
-                      alt={venue.name}
-                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-200"
-                    />
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+  {Array.isArray(organizers) && organizers.map((venue: any, index:number) => (
+    <button
+      key={`${venue.id}-${index}`}
+      onClick={() => handleVenueClick(venue)}
+      className="group rounded-md p-3 bg-white transition-all duration-200 
+                 hover:scale-105 shadow hover:shadow-lg text-left"
+    >
+      <div className="space-y-2">
+        {/* Reduced image height */}
+        <div className="h-[140px] rounded-md overflow-hidden">
+          <img
+            src={
+              venue.image?.length && venue.image[0] !== "/placeholder.svg"
+                ? venue.images[0]
+                : "city/c1.jpg"
+            }
+            alt={venue.name}
+            className="w-full h-full object-cover opacity-80 
+                       group-hover:opacity-100 transition-opacity duration-200"
+          />
+        </div>
 
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-bold text-sm text-black">{venue.name}</h3>
-                      <div className="flex items-center">
-                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-1" />
-                        <span className="text-xs text-black font-medium">
-                          {venue?.rating?.average ?? "—"}
-                        </span>
-                        <span className="text-xs text-black font-medium ml-2">
-                          {venue?.rating?.count ? `(${venue.rating.count})` : ""}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between items-center w-full">
-                      <div className="flex items-center">
-                        <MapPin className="w-3 h-3 mr-1 text-black" />
-                        <span className="text-xs text-black">
-                          {venue?.location?.address ?? venue?.location?.city ?? "Location not available"}
-                        </span>
-                      </div>
-
-                      <div className="text-black text-sm">
-                        {venue?.capacity?.total ? (
-                          <p>{venue.capacity.total} capacity</p>
-                        ) : (
-                          <p className="line-clamp-1">{venue?.description ? `${venue.description.slice(0, 40)}…` : ""}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-gray-700 mt-1 line-clamp-2 ">
-                      {venue.description ?? ""}
-                    </p>
-                  </div>
-                </div>
-              </button>
-            ))}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="font-bold text-sm text-black line-clamp-1">
+              {venue.name}
+            </h3>
+            <div className="flex items-center">
+              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-1" />
+              <span className="text-xs text-black font-medium">
+                {venue?.rating?.average ?? "—"}
+              </span>
+              <span className="text-xs text-black font-medium ml-2">
+                {venue?.rating?.count ? `(${venue.rating.count})` : ""}
+              </span>
+            </div>
           </div>
+
+          <div className="flex justify-between items-center w-full">
+            <div className="flex items-center">
+              <MapPin className="w-3 h-3 mr-1 text-black" />
+              <span className="text-xs text-black line-clamp-1">
+                {venue?.location?.address ??
+                  venue?.location?.city ??
+                  "Location not available"}
+              </span>
+            </div>
+
+            <div className="text-black text-xs">
+              {venue?.capacity?.total ? (
+                <p>{venue.capacity.total} capacity</p>
+              ) : (
+                <p className="line-clamp-1">
+                  {venue?.description
+                    ? `${venue.description.slice(0, 30)}…`
+                    : ""}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Clamp description to keep height small */}
+          <p className="text-xs text-gray-700 mt-1 line-clamp-1">
+            {venue.description ?? ""}
+          </p>
+        </div>
+      </div>
+    </button>
+  ))}
+</div>
+
 
           <div className="text-center">
             <Link href="/venues">
