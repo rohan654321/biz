@@ -427,11 +427,11 @@ export function EventsSection({ userId }: EventsSectionProps) {
     leading-relaxed 
     break-all 
     whitespace-pre-line 
-    line-clamp-2
+    line-clamp-1
   "
 >
   {event.address
-    ? event.address.replace(/(.{14})/g, "$1\n")
+    ? event.address.replace(/(.{12})/g, "$1\n")
     : "Location TBD"}
 </span>
 
