@@ -424,7 +424,7 @@ export function EventsSection({ userId }: EventsSectionProps) {
               <MapPin className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
               <span className="leading-relaxed break-all">
   {event.address
-    ? event.address.replace(/(.{12})/g, "$1\n")
+    ? event.address.replace(/(.{5})/g, "$1\n")
     : "Location TBD"}
 </span>
 
