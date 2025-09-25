@@ -158,7 +158,20 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     return matchesSearch && matchesEvent
   })
 
-  const defaultImage = "/placeholder.svg"
+  // Fixed default image path
+  const defaultImage = "/image/Ellipse 72.png"
+
+  // Function to get valid image source
+  const getImageSrc = (avatarUrl?: string) => {
+    if (!avatarUrl) return defaultImage
+    
+    // Check if it's a relative path or valid URL
+    if (avatarUrl.startsWith('/') || avatarUrl.startsWith('http')) {
+      return avatarUrl
+    }
+    
+    return defaultImage
+  }
 
   if (loading) {
     return (
@@ -276,14 +289,19 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
         {filteredAppointments.map((appointment) => (
           <Card key={appointment.id} className="overflow-hidden hover:shadow-lg transition-shadow w-full">
             <div className="flex flex-col md:flex-row">
-              {/* Exhibitor Avatar on left */}
+              {/* Exhibitor Avatar on left - FIXED IMAGE SECTION */}
               <div className="relative w-full md:w-1/3 h-48 bg-gray-100 flex items-center justify-center">
                 {appointment.exhibitorAvatar ? (
                   <Image 
-                    src={appointment.exhibitorAvatar || defaultImage} 
-                    alt={appointment.exhibitorName} 
-                    fill 
-                    className="object-cover" 
+                    src={getImageSrc(appointment.exhibitorAvatar)}
+                    alt={appointment.exhibitorName}  
+                    fill
+                    className="object-cover"
+                    onError={(e) => {
+                      // Fallback to default image on error
+                      const target = e.target as HTMLImageElement
+                      target.src = defaultImage
+                    }}
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
@@ -368,20 +386,16 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
                             <div className="space-y-4">
                               <div className="flex items-center gap-4">
                                 <div className="relative w-16 h-16 rounded-full overflow-hidden">
-                                  {selectedAppointment.exhibitorAvatar ? (
-                                    <Image 
-                                      src={selectedAppointment.exhibitorAvatar} 
-                                      alt={selectedAppointment.exhibitorName} 
-                                      fill 
-                                      className="object-cover" 
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-                                      <div className="text-xl font-bold text-blue-600">
-                                        {selectedAppointment.exhibitorName[0]?.toUpperCase() || "E"}
-                                      </div>
-                                    </div>
-                                  )}
+                                  <Image 
+                                    src={getImageSrc(selectedAppointment.exhibitorAvatar)}
+                                    alt={selectedAppointment.exhibitorName} 
+                                    fill 
+                                    className="object-cover rounded-full"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement
+                                      target.src = defaultImage
+                                    }}
+                                  />
                                 </div>
                                 <div>
                                   <h3 className="font-semibold text-lg">{selectedAppointment.exhibitorName}</h3>
