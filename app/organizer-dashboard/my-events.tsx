@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -21,8 +22,7 @@ import {
   Loader2,
 } from "lucide-react"
 import Image from "next/image"
-// import router from "next/router"
-// import Link from "next/link"
+import Link from "next/link"
 
 interface Event {
   id: string
@@ -56,6 +56,7 @@ interface MyEventsProps {
 
 export default function MyEvents({ organizerId }: MyEventsProps) {
   const { toast } = useToast()
+  const router = useRouter()
   const [events, setEvents] = useState<Event[]>([])
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -87,6 +88,8 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
           status: calculateEventStatus(event.startDate, event.endDate),
           bannerImage: event.images && event.images.length > 0 ? event.images[0] : undefined,
           location: `${event.venue}, ${event.city}`,
+          categories: event.categories || [],
+          tags: event.tags || [],
         }))
         setEvents(eventsWithStatus)
         setFilteredEvents(eventsWithStatus)
@@ -143,6 +146,8 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
 
   const handleDeleteEvent = async (eventId: string) => {
+    if (!confirm("Are you sure you want to delete this event?")) return
+
     try {
       setLoading(true)
       const response = await fetch(`/api/organizers/${organizerId}/events/${eventId}`, { method: "DELETE" })
@@ -157,6 +162,14 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
     }
   }
 
+  // const handleNavigateToEditPage = () => {
+  //   router.push(`/organizer-dashboard/${organizerId}/editevent`)
+  // }
+
+  // const handleEditSpecificEvent = (eventId: string) => {
+  //   router.push(`/organizer-dashboard/${organizerId}/editevent?id=${eventId}`)
+  // }
+
   const uniqueTypes = [...new Set(events.map((event) => event.eventType).filter(Boolean))]
 
   if (loading) {
@@ -169,15 +182,30 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">My Events</h2>
           <p className="text-gray-600">Manage and track your events</p>
         </div>
-        <Button className="flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Create New Event
-        </Button>
+        
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="flex items-center gap-2"
+            // onClick={handleNavigateToEditPage}
+          >
+            <Edit className="w-4 h-4" />
+            Edit Events
+          </Button>
+          
+          {/* <Link href={`/organizer-dashboard/${organizerId}/create-event`}>
+            <Button className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Create New Event
+            </Button>
+          </Link> */}
+        </div>
       </div>
 
       {/* Filters and Search */}
@@ -302,7 +330,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                                     <div className="flex justify-between"><span className="text-gray-600">Attendees:</span><span>{selectedEvent.attendees || 0}</span></div>
                                     <div className="flex justify-between"><span className="text-gray-600">Revenue:</span><span>{formatCurrency(selectedEvent.revenue || 0)}</span></div>
                                   </div>
-                                </div>
+                                </div>   
                               </div>
                               <div>
                                 <h4 className="font-medium mb-2">Description</h4>
@@ -323,12 +351,22 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                         </DialogContent>
                       </Dialog>
                       
-{/* <Link href={`/organizer-dashboard/edit/${event.id}`}> */}
-  <Button variant="ghost" size="sm">
-    <Edit className="w-4 h-4 mr-1" />
-  </Button>
-{/* </Link> */}
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteEvent(event.id)} disabled={loading}>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        // onClick={() => handleEditSpecificEvent(event.id)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleDeleteEvent(event.id)} 
+                        disabled={loading}
+                        className="text-red-600 hover:text-red-800"
+                      >
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                       </Button>
                     </div>
@@ -350,10 +388,12 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                 ? "Try adjusting your search or filters"
                 : "Get started by creating your first event"}
             </p>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Create New Event
-            </Button>
+            {/* <Link href={`/organizer-dashboard/${organizerId}/create-event`}>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Create New Event
+              </Button>
+            </Link> */}
           </CardContent>
         </Card>
       )}

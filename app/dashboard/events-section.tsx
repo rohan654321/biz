@@ -373,7 +373,6 @@ export function EventsSection({ userId }: EventsSectionProps) {
     w-6 h-6 rounded-full bg-gray-600 ${timelineDotClass(event.leadType)}`}
 />
 
-
                     {/* Date Heading */}
                     <p className="text-sm font-semibold text-gray-700 mb-3">
                       {formatDate(event.startDate)} – {formatDate(event.endDate)}
@@ -419,12 +418,14 @@ export function EventsSection({ userId }: EventsSectionProps) {
 
           </div>
 
-          {/* Location and Date - Fixed width */}
-          <div className="flex flex-col gap-4 text-sm text-gray-500 ml-4 min-w-[200px]">
-          <div className="flex items-center min-w-0">
-  <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
-  <span className="truncate">{event.address}</span>
-</div>
+          {/* Location and Date - Fixed width with proper wrapping */}
+          <div className="flex flex-col gap-4 text-sm text-gray-500 ml-4 min-w-[200px] max-w-[250px]">
+            <div className="flex items-start min-w-0">
+              <MapPin className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
+              <span className="break-words leading-relaxed">
+                {event.address || "Location TBD"}
+              </span>
+            </div>
 
             <div className="flex items-center">
               <CalendarIcon className="w-4 h-4 mr-2 flex-shrink-0" />

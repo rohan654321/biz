@@ -1,14 +1,29 @@
 "use client"
-import { useState, useMemo, useEffect } from "react"
+
+import { useState, useEffect, useMemo } from "react"
+import { useParams, useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"  
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Search, Share2, MapPin, Calendar, Heart, ChevronDown, ChevronLeft, ChevronRight, Loader2, Edit, Trash2, Save, X, Image as ImageIcon, Users, Tag, Clock, Filter } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/hooks/use-toast"
+import { 
+  Search, 
+  MapPin, 
+  Calendar, 
+  ChevronDown, 
+  ChevronLeft, 
+  ChevronRight, 
+  Loader2, 
+  Edit, 
+  Trash2, 
+  Save, 
+  X, 
+  Users, 
+  Tag,
+  ArrowLeft 
+} from "lucide-react"
 import Image from "next/image"
-import { useSearchParams, useRouter } from "next/navigation"
-import Link from "next/link"
 
 interface Event {
   id: string
@@ -42,10 +57,11 @@ interface Event {
   }
   capacity?: number
   organizer?: string
-}
-
-interface ApiResponse {
-  events: Event[]
+  generalPrice?: number
+  vipPrice?: number
+  premiumPrice?: number
+  city?: string
+  eventType?: string
 }
 
 // Helper function to normalize event data
@@ -58,9 +74,13 @@ const normalizeEvent = (event: any): Event => ({
   categories: event.categories || [],
   tags: event.tags || [],
   images: event.images || [],
-  location: event.location || { city: "", venue: "", country: "" },
+  location: event.location || { 
+    city: event.city || "", 
+    venue: event.venue || "", 
+    country: "" 
+  },
   venue: event.venue || {},
-  pricing: event.pricing || { general: 0 },
+  pricing: event.pricing || { general: event.generalPrice || 0 },
   rating: event.rating || { average: 0 },
   featured: event.featured || false,
   status: event.status || "draft",
@@ -69,10 +89,23 @@ const normalizeEvent = (event: any): Event => ({
     endDate: event.endDate || new Date().toISOString() 
   },
   capacity: event.capacity || 0,
-  organizer: event.organizer || ""
+  organizer: event.organizer || "",
+  generalPrice: event.generalPrice || event.pricing?.general || 0,
+  vipPrice: event.vipPrice || 0,
+  premiumPrice: event.premiumPrice || 0,
+  city: event.city || event.location?.city || "",
+  eventType: event.eventType || ""
 })
 
-export default function EditEventComponent() {
+export default function EditEventPage() {
+  const params = useParams()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const { toast } = useToast()
+
+  const organizerId = params.id as string
+  const eventIdFromUrl = searchParams.get("id")
+
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -81,7 +114,6 @@ export default function EditEventComponent() {
   const [saving, setSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-  const [viewMode, setViewMode] = useState("All")
 
   // Sidebar state
   const [categoryOpen, setCategoryOpen] = useState(true)
@@ -92,14 +124,10 @@ export default function EditEventComponent() {
   const [selectedStatus, setSelectedStatus] = useState<string[]>([])
   const [selectedFeatured, setSelectedFeatured] = useState<string[]>([])
 
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const eventIdFromUrl = searchParams.get("id")
+  const DEFAULT_EVENT_IMAGE = "/herosection-images/test.jpeg"
 
-  const DEFAULT_EVENT_IMAGE = "/herosection-images/weld.jpg?height=160&width=200&text=Event"
-
-  const getEventImage = (event: any) => {
-    return event.images?.[0]?.url || event.image || DEFAULT_EVENT_IMAGE
+  const getEventImage = (event: Event) => {
+    return event.images?.[0]?.url || DEFAULT_EVENT_IMAGE
   }
 
   const fetchEvents = async () => {
@@ -107,18 +135,26 @@ export default function EditEventComponent() {
       setLoading(true)
       setError(null)
 
-      const response = await fetch("/api/events")
+      const response = await fetch(`/api/organizers/${organizerId}/events`)
 
       if (!response.ok) {
         throw new Error("Failed to fetch events")
       }
 
-      const data: ApiResponse = await response.json()
+      const data = await response.json()
       
-      // Validate and normalize event data
-      const validatedEvents = data.events.map(event => normalizeEvent(event))
+      const validatedEvents = data.events.map((event: any) => normalizeEvent(event))
       
       setEvents(validatedEvents)
+
+      // Auto-select event from URL if provided
+      if (eventIdFromUrl) {
+        const eventToEdit = validatedEvents.find((e: Event) => e.id === eventIdFromUrl)
+        if (eventToEdit) {
+          setEditingEvent(eventToEdit)
+          setIsEditing(true)
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
       console.error("Error fetching events:", err)
@@ -128,27 +164,23 @@ export default function EditEventComponent() {
   }
 
   useEffect(() => {
-    fetchEvents()
-  }, [])
-
-  useEffect(() => {
-    if (eventIdFromUrl && events.length > 0) {
-      const event = events.find(e => e.id === eventIdFromUrl)
-      if (event) {
-        setEditingEvent(normalizeEvent(event))
-        setIsEditing(true)
-      }
+    if (organizerId) {
+      fetchEvents()
     }
-  }, [eventIdFromUrl, events])
+  }, [organizerId])
 
   const handleEdit = (event: Event) => {
     setEditingEvent(normalizeEvent(event))
     setIsEditing(true)
+    // Update URL to reflect the selected event
+    router.replace(`/organizer-dashboard/${organizerId}/edit-event?id=${event.id}`)
   }
 
   const handleCancelEdit = () => {
     setEditingEvent(null)
     setIsEditing(false)
+    // Remove event ID from URL
+    router.replace(`/organizer-dashboard/${organizerId}/edit-event`)
   }
 
   const handleSave = async () => {
@@ -156,7 +188,7 @@ export default function EditEventComponent() {
 
     try {
       setSaving(true)
-      const response = await fetch(`/api/events/${editingEvent.id}`, {
+      const response = await fetch(`/api/organizers/${organizerId}/events/${editingEvent.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -173,10 +205,21 @@ export default function EditEventComponent() {
         event.id === editingEvent.id ? editingEvent : event
       ))
 
+      toast({
+        title: "Success",
+        description: "Event updated successfully"
+      })
+
       setIsEditing(false)
       setEditingEvent(null)
+      router.replace(`/organizer-dashboard/${organizerId}/edit-event`)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save event")
+      toast({
+        title: "Error",
+        description: "Failed to update event. Please try again.",
+        variant: "destructive"
+      })
     } finally {
       setSaving(false)
     }
@@ -186,7 +229,7 @@ export default function EditEventComponent() {
     if (!confirm("Are you sure you want to delete this event?")) return
 
     try {
-      const response = await fetch(`/api/events/${eventId}`, {
+      const response = await fetch(`/api/organizers/${organizerId}/events/${eventId}`, {
         method: "DELETE",
       })
 
@@ -195,8 +238,17 @@ export default function EditEventComponent() {
       }
 
       setEvents(events.filter(event => event.id !== eventId))
+      toast({
+        title: "Success",
+        description: "Event deleted successfully"
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete event")
+      toast({
+        title: "Error",
+        description: "Failed to delete event. Please try again.",
+        variant: "destructive"
+      })
     }
   }
 
@@ -210,15 +262,15 @@ export default function EditEventComponent() {
   }
 
   const handleNestedInputChange = (parent: string, field: string, value: any) => {
-    if (!editingEvent) return;
+    if (!editingEvent) return
     
     setEditingEvent(prev => ({
       ...prev!,
       [parent]: {
-        ...((prev as any)[parent] || {}),
+        ...((prev as any)?.[parent] || {}),
         [field]: value
       }
-    }));
+    }))
   }
 
   const handleCategoryChange = (index: number, value: string) => {
@@ -247,7 +299,6 @@ export default function EditEventComponent() {
   const filteredEvents = useMemo(() => {
     let filtered = events
 
-    // Search filter
     if (searchQuery) {
       filtered = filtered.filter(event =>
         event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -256,7 +307,6 @@ export default function EditEventComponent() {
       )
     }
 
-    // Category filter
     if (selectedCategories.length > 0) {
       filtered = filtered.filter(event =>
         event.categories.some(cat =>
@@ -267,12 +317,10 @@ export default function EditEventComponent() {
       )
     }
 
-    // Status filter
     if (selectedStatus.length > 0) {
       filtered = filtered.filter(event => selectedStatus.includes(event.status))
     }
 
-    // Featured filter
     if (selectedFeatured.length > 0) {
       if (selectedFeatured.includes("featured")) {
         filtered = filtered.filter(event => event.featured)
@@ -356,6 +404,11 @@ export default function EditEventComponent() {
     setCurrentPage(1)
   }
 
+  const handleBackToMyEvents = () => {
+    router.back()
+
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -381,204 +434,208 @@ export default function EditEventComponent() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {isEditing ? "Edit Event" : "Manage Events"}
-            </h1>
-            <p className="text-gray-600">
-              {isEditing ? "Update event details" : "View and manage all events"}
-            </p>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={handleBackToMyEvents}
+              className="p-0 h-auto"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                {isEditing ? "Edit Event" : "Manage Events"}
+              </h1>
+              <p className="text-gray-600">
+                {isEditing ? "Update event details" : "View and manage all events"}
+              </p>
+            </div>
           </div>
-          {/* <div className="flex items-center space-x-4">
-            {!isEditing && (
-            //   <Button 
-            //     className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
-            //     onClick={() => router.push("/events/create")}
-            //   >
-            //     Create New Event
-            //   </Button>
-            )}
-          </div> */}
+          
+          {isEditing && (
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={handleCancelEdit}
+                disabled={saving}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSave}
+                disabled={saving}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {saving ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                Save Changes
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-6">
-          {/* Sidebar */}
-          <div className="w-80 sticky top-6 self-start">
-            <Card className="border border-gray-200 shadow-sm bg-white">
-              <CardContent className="p-0">
-                {/* Search */}
-                <div className="p-4 border-b border-gray-100">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      placeholder="Search events..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
-                    />
+          {/* Sidebar - Only show when not editing */}
+          {!isEditing && (
+            <div className="w-80 sticky top-6 self-start">
+              <Card className="border border-gray-200 shadow-sm bg-white">
+                <CardContent className="p-0">
+                  {/* Search */}
+                  <div className="p-4 border-b border-gray-100">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <Input
+                        placeholder="Search events..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                {/* Category Section */}
-                <div className="border-b border-gray-100">
-                  <button
-                    onClick={() => setCategoryOpen(!categoryOpen)}
-                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-                  >
-                    <span className="text-gray-900 font-medium">Category</span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-400 transition-transform ${categoryOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-                  {categoryOpen && (
-                    <div className="px-4 pb-4">
-                      <div className="relative mb-3">
-                        <Input
-                          type="text"
-                          placeholder="Search categories..."
-                          value={categorySearch}
-                          onChange={(e) => setCategorySearch(e.target.value)}
-                          className="text-sm pr-8 border-gray-200"
-                        />
-                        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      </div>
-                      <div className="space-y-3 max-h-60 overflow-y-auto">
-                        {filteredCategories.map((category) => (
-                          <div key={category.name} className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <input
-                                type="checkbox"
-                                checked={selectedCategories.includes(category.name)}
-                                onChange={() => handleCategoryToggle(category.name)}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                              />
-                              <span className="text-sm text-gray-700">{category.name}</span>
+                  {/* Category Section */}
+                  <div className="border-b border-gray-100">
+                    <button
+                      onClick={() => setCategoryOpen(!categoryOpen)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                    >
+                      <span className="text-gray-900 font-medium">Category</span>
+                      <ChevronDown
+                        className={`w-4 h-4 text-gray-400 transition-transform ${categoryOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    {categoryOpen && (
+                      <div className="px-4 pb-4">
+                        <div className="relative mb-3">
+                          <Input
+                            type="text"
+                            placeholder="Search categories..."
+                            value={categorySearch}
+                            onChange={(e) => setCategorySearch(e.target.value)}
+                            className="text-sm pr-8 border-gray-200"
+                          />
+                          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        </div>
+                        <div className="space-y-3 max-h-60 overflow-y-auto">
+                          {filteredCategories.map((category) => (
+                            <div key={category.name} className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedCategories.includes(category.name)}
+                                  onChange={() => handleCategoryToggle(category.name)}
+                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-gray-700">{category.name}</span>
+                              </div>
+                              <span className="text-xs text-gray-500">{category.count}</span>
                             </div>
-                            <span className="text-xs text-gray-500">{category.count}</span>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                {/* Status Section */}
-                <div className="border-b border-gray-100">
-                  <button
-                    onClick={() => setStatusOpen(!statusOpen)}
-                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-                  >
-                    <span className="text-gray-900 font-medium">Status</span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-400 transition-transform ${statusOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-                  {statusOpen && (
-                    <div className="px-4 pb-4">
-                      <div className="space-y-3">
-                        {["draft", "published", "cancelled", "completed"].map((status) => (
-                          <div key={status} className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <input
-                                type="checkbox"
-                                checked={selectedStatus.includes(status)}
-                                onChange={() => handleStatusToggle(status)}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                              />
-                              <span className="text-sm text-gray-700 capitalize">{status}</span>
+                  {/* Status Section */}
+                  <div className="border-b border-gray-100">
+                    <button
+                      onClick={() => setStatusOpen(!statusOpen)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                    >
+                      <span className="text-gray-900 font-medium">Status</span>
+                      <ChevronDown
+                        className={`w-4 h-4 text-gray-400 transition-transform ${statusOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    {statusOpen && (
+                      <div className="px-4 pb-4">
+                        <div className="space-y-3">
+                          {["draft", "published", "cancelled", "completed"].map((status) => (
+                            <div key={status} className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedStatus.includes(status)}
+                                  onChange={() => handleStatusToggle(status)}
+                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-gray-700 capitalize">{status}</span>
+                              </div>
+                              <span className="text-xs text-gray-500">
+                                {events.filter(e => e.status === status).length}
+                              </span>
                             </div>
-                            <span className="text-xs text-gray-500">
-                              {events.filter(e => e.status === status).length}
-                            </span>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                {/* Featured Section */}
-                <div className="border-b border-gray-100">
-                  <button
-                    onClick={() => setFeaturedOpen(!featuredOpen)}
-                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-                  >
-                    <span className="text-gray-900 font-medium">Featured</span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-400 transition-transform ${featuredOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-                  {featuredOpen && (
-                    <div className="px-4 pb-4">
-                      <div className="space-y-3">
-                        {["featured", "regular"].map((type) => (
-                          <div key={type} className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <input
-                                type="checkbox"
-                                checked={selectedFeatured.includes(type)}
-                                onChange={() => handleFeaturedToggle(type)}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                              />
-                              <span className="text-sm text-gray-700 capitalize">{type}</span>
+                  {/* Featured Section */}
+                  <div className="border-b border-gray-100">
+                    <button
+                      onClick={() => setFeaturedOpen(!featuredOpen)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                    >
+                      <span className="text-gray-900 font-medium">Featured</span>
+                      <ChevronDown
+                        className={`w-4 h-4 text-gray-400 transition-transform ${featuredOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    {featuredOpen && (
+                      <div className="px-4 pb-4">
+                        <div className="space-y-3">
+                          {["featured", "regular"].map((type) => (
+                            <div key={type} className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedFeatured.includes(type)}
+                                  onChange={() => handleFeaturedToggle(type)}
+                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-gray-700 capitalize">{type}</span>
+                              </div>
+                              <span className="text-xs text-gray-500">
+                                {type === "featured" 
+                                  ? events.filter(e => e.featured).length
+                                  : events.filter(e => !e.featured).length
+                                }
+                              </span>
                             </div>
-                            <span className="text-xs text-gray-500">
-                              {type === "featured" 
-                                ? events.filter(e => e.featured).length
-                                : events.filter(e => !e.featured).length
-                              }
-                            </span>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                {/* Clear Filters */}
-                <div className="p-4">
-                  <Button 
-                    variant="outline" 
-                    className="w-full bg-transparent"
-                    onClick={clearAllFilters}
-                  >
-                    Clear All Filters
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  {/* Clear Filters */}
+                  <div className="p-4">
+                    <Button 
+                      variant="outline" 
+                      className="w-full bg-transparent"
+                      onClick={clearAllFilters}
+                    >
+                      Clear All Filters
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Main Content */}
           <div className="flex-1">
             {isEditing && editingEvent ? (
-              /* Edit Form - Same Page */
+              /* Edit Form */
               <Card className="bg-white shadow-lg mb-6">
                 <CardContent className="p-6">
-                  <div className="flex justify-between items-center mb-6">
+                  <div className="mb-6">
                     <h2 className="text-xl font-semibold">Editing: {editingEvent.title}</h2>
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        onClick={handleCancelEdit}
-                        disabled={saving}
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        Cancel
-                      </Button>
-                      <Button 
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        {saving ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <Save className="w-4 h-4 mr-2" />
-                        )}
-                        Save Changes
-                      </Button>
-                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -614,16 +671,16 @@ export default function EditEventComponent() {
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
                             <Input
-                              type="datetime-local"
-                              value={editingEvent.startDate.split('T')[0]}
+                              type="date"
+                              value={editingEvent.startDate ? editingEvent.startDate.split('T')[0] : ''}
                               onChange={(e) => handleInputChange("startDate", e.target.value)}
                             />
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
                             <Input
-                              type="datetime-local"
-                              value={editingEvent.endDate.split('T')[0]}
+                              type="date"
+                              value={editingEvent.endDate ? editingEvent.endDate.split('T')[0] : ''}
                               onChange={(e) => handleInputChange("endDate", e.target.value)}
                             />
                           </div>
@@ -640,8 +697,11 @@ export default function EditEventComponent() {
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
                           <Input
-                            value={editingEvent.location?.city || ""}
-                            onChange={(e) => handleNestedInputChange("location", "city", e.target.value)}
+                            value={editingEvent.location?.city || editingEvent.city || ""}
+                            onChange={(e) => {
+                              handleNestedInputChange("location", "city", e.target.value)
+                              handleInputChange("city", e.target.value)
+                            }}
                             placeholder="Enter city"
                           />
                         </div>
@@ -701,9 +761,42 @@ export default function EditEventComponent() {
                           <label className="block text-sm font-medium text-gray-700 mb-1">General Price ($)</label>
                           <Input
                             type="number"
-                            value={editingEvent.pricing?.general ?? 0}
-                            onChange={(e) => handleNestedInputChange("pricing", "general", Number(e.target.value))}
+                            value={editingEvent.generalPrice || editingEvent.pricing?.general || 0}
+                            onChange={(e) => {
+                              const value = Number(e.target.value)
+                              handleInputChange("generalPrice", value)
+                              handleNestedInputChange("pricing", "general", value)
+                            }}
                             placeholder="0"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">VIP Price ($)</label>
+                          <Input
+                            type="number"
+                            value={editingEvent.vipPrice || 0}
+                            onChange={(e) => handleInputChange("vipPrice", Number(e.target.value))}
+                            placeholder="0"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Premium Price ($)</label>
+                          <Input
+                            type="number"
+                            value={editingEvent.premiumPrice || 0}
+                            onChange={(e) => handleInputChange("premiumPrice", Number(e.target.value))}
+                            placeholder="0"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Event Type</label>
+                          <Input
+                            value={editingEvent.eventType || ""}
+                            onChange={(e) => handleInputChange("eventType", e.target.value)}
+                            placeholder="Enter event type"
                           />
                         </div>
 
@@ -747,16 +840,6 @@ export default function EditEventComponent() {
                     <span className="text-sm text-gray-600">
                       Showing {paginatedEvents.length} of {filteredEvents.length} events
                     </span>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => setViewMode("All")}
-                        className={`px-3 py-1 text-sm rounded-full ${
-                          viewMode === "All" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:text-gray-800"
-                        }`}
-                      >
-                        All Events
-                      </button>
-                    </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button
@@ -766,6 +849,7 @@ export default function EditEventComponent() {
                       disabled={currentPage === 1}
                       className="text-gray-600"
                     >
+                      <ChevronLeft className="w-4 h-4 mr-1" />
                       Previous
                     </Button>
                     <span className="text-sm text-gray-600">
@@ -779,6 +863,7 @@ export default function EditEventComponent() {
                       className="text-gray-600"
                     >
                       Next
+                      <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </div>
                 </div>
@@ -791,9 +876,9 @@ export default function EditEventComponent() {
                       <Button 
                         variant="outline" 
                         className="mt-4"
-                        onClick={() => router.push("/events/create")}
+                        onClick={handleBackToMyEvents}
                       >
-                        Create Your First Event
+                        Back to My Events
                       </Button>
                     </div>
                   ) : (
@@ -833,7 +918,7 @@ export default function EditEventComponent() {
                                   
                                   <div className="flex items-center text-sm text-gray-600 mb-3">
                                     <MapPin className="w-4 h-4 mr-2" />
-                                    <span>{event.location?.city || "TBD"}, {event.location?.venue || "TBD"}</span>
+                                    <span>{event.location?.city || event.city || "TBD"}, {event.location?.venue || "TBD"}</span>
                                   </div>
                                   
                                   <p className="text-sm text-gray-600 mb-4 line-clamp-2">{event.description}</p>
@@ -871,7 +956,7 @@ export default function EditEventComponent() {
                                   </div>
                                   
                                   <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                    <span>${event.pricing?.general || 0}</span>
+                                    <span>${event.generalPrice || event.pricing?.general || 0}</span>
                                     <span>•</span>
                                     <span>{event.rating?.average || "N/A"} ⭐</span>
                                   </div>
