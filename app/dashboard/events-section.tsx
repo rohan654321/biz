@@ -413,17 +413,19 @@ export function EventsSection({ userId }: EventsSectionProps) {
             <h2 className="text-xl font-bold text-gray-900 mb-3 truncate pr-4">
               {event.title}
             </h2>
-            <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-              {event.shortDescription || event.description || "No description available"}
-            </p>
+           <p className="text-sm text-gray-600 mb-4 truncate">
+  {event.shortDescription || event.description || "No description available"}
+</p>
+
           </div>
 
           {/* Location and Date - Fixed width */}
           <div className="flex flex-col gap-4 text-sm text-gray-500 ml-4 min-w-[200px]">
-            <div className="flex items-center">
-              <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
-              <span className="truncate">{event.address}</span>
-            </div>
+          <div className="flex items-center min-w-0">
+  <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+  <span className="truncate">{event.address}</span>
+</div>
+
             <div className="flex items-center">
               <CalendarIcon className="w-4 h-4 mr-2 flex-shrink-0" />
               <span className="whitespace-nowrap">
