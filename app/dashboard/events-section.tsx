@@ -422,9 +422,12 @@ export function EventsSection({ userId }: EventsSectionProps) {
           <div className="flex flex-col gap-4 text-sm text-gray-500 ml-4 min-w-[200px] max-w-[250px]">
             <div className="flex items-start min-w-0">
               <MapPin className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
-              <span className="break-words leading-relaxed">
-                {event.address || "Location TBD"}
-              </span>
+              <span className="leading-relaxed break-all">
+  {event.address
+    ? event.address.replace(/(.{12})/g, "$1\n")
+    : "Location TBD"}
+</span>
+
             </div>
 
             <div className="flex items-center">
