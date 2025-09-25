@@ -427,7 +427,7 @@ export function EventsSection({ userId }: EventsSectionProps) {
     leading-relaxed 
     break-all 
     whitespace-pre-line 
-    line-clamp-3
+    line-clamp-2
   "
 >
   {event.address
