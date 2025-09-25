@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
 
 interface ImageBannerCarouselProps {
   images: string[]
@@ -14,7 +12,7 @@ interface ImageBannerCarouselProps {
 export default function ImageBannerCarousel({
   images,
   autoPlay = true,
-  interval = 4000,
+  interval = 15000,
 }: ImageBannerCarouselProps) {
   const [current, setCurrent] = useState(0)
 
@@ -26,9 +24,6 @@ export default function ImageBannerCarousel({
     }, interval)
     return () => clearInterval(timer)
   }, [autoPlay, interval, images.length])
-
-  const prevSlide = () => setCurrent((current - 1 + images.length) % images.length)
-  const nextSlide = () => setCurrent((current + 1) % images.length)
 
   return (
     <div className="relative w-full h-52 md:h-64 lg:h-80 overflow-hidden shadow">
@@ -44,26 +39,6 @@ export default function ImageBannerCarousel({
           className="absolute inset-0 w-full h-full object-cover"
         />
       </AnimatePresence>
-
-      {/* Left Arrow */}
-      <Button
-        size="icon"
-        variant="ghost"
-        className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white rounded-full shadow"
-        onClick={prevSlide}
-      >
-        <ChevronLeft />
-      </Button>
-
-      {/* Right Arrow */}
-      <Button
-        size="icon"
-        variant="ghost"
-        className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white rounded-full shadow"
-        onClick={nextSlide}
-      >
-        <ChevronRight />
-      </Button>
 
       {/* Dots */}
       <div className="absolute bottom-2 w-full flex justify-center gap-2">

@@ -37,12 +37,12 @@ export default function FeaturedOrganizers() {
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
       {/* Header */}
-      <div className="text-center py-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          Featured Organizers
-        </h2>
-        <p className="text-gray-600">Worldwide Organizers</p>
-      </div>
+         <div className="py-6 border-b border-gray-200 text-left">
+  <h2 className="text-3xl font-semibold text-gray-900 mb-1">
+    Featured Organizers
+  </h2>
+  <p className="text-gray-600">Worldwide Organizers</p>
+</div>
 
       {/* Organizer Carousel */}
       <div

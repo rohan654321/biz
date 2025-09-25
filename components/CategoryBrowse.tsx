@@ -123,10 +123,11 @@ export default function CategoryBrowser() {
     <div className="w-full">
       <div className="rounded-lg overflow-hidden">
         {/* Header */}
-        <div className="px-20 pt-20 pb-10">
-          <h2 className="text-4xl font-bold text-gray-900 mb-1 text-center">Browse by Category</h2>
-          <p className="text-gray-600 text-center mt-2">Find events that match your interests</p>
-        </div>
+    <div className="px-6 py-6 border-b border-gray-200 text-left ml-45">
+  <h2 className="text-3xl font-semibold text-gray-900 mb-1">Browse by Category</h2>
+  <p className="text-gray-600">Find events that match your interests</p>
+</div>
+
 
         {/* Categories */}
         <div className="px-6 py-8">

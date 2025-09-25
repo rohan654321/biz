@@ -106,10 +106,11 @@ export default function BrowseByCountry() {
     <div className="w-full max-w-6xl mx-auto mb-12">
       <div className="overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-6 border-b border-gray-200 text-center">
-          <h2 className="text-4xl font-bold text-gray-900 mb-1">Browse Event By Country</h2>
-        </div>
-
+          <div className="px-6 py-6 border-b border-gray-200 text-left">
+  <h2 className="text-3xl font-semibold text-gray-900 mb-1">
+    Browse Event By Country
+  </h2>
+</div>
         {/* Countries Grid */}
         <div className="p-6">
           {/* First Row */}
