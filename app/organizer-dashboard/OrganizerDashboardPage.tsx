@@ -579,7 +579,7 @@ export default function OrganizerDashboardPage({ organizerId }: OrganizerDashboa
       `}
       >
         {/* Sidebar Header */}
-        <div className="border-b border-gray-200 p-4 flex-shrink-0">
+        {/* <div className="border-b border-gray-200 p-4 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10">
@@ -600,7 +600,7 @@ export default function OrganizerDashboardPage({ organizerId }: OrganizerDashboa
               <X className="w-4 h-4" />
             </Button>
           </div>
-        </div>
+        </div> */}
 
         {/* Sidebar Content */}
         <div className="flex-1 overflow-y-auto p-4">
@@ -660,7 +660,7 @@ export default function OrganizerDashboardPage({ organizerId }: OrganizerDashboa
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-4 py-3">
+        {/* <header className="bg-white border-b border-gray-200 px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setSidebarOpen(true)}>
@@ -707,7 +707,7 @@ export default function OrganizerDashboardPage({ organizerId }: OrganizerDashboa
               </DropdownMenu>
             </div>
           </div>
-        </header>
+        </header> */}
 
         {/* Content */}
         <main className="flex-1 p-6 overflow-auto">{renderContent()}</main>

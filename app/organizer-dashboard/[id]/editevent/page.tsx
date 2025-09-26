@@ -7,21 +7,21 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { 
-  Search, 
-  MapPin, 
-  Calendar, 
-  ChevronDown, 
-  ChevronLeft, 
-  ChevronRight, 
-  Loader2, 
-  Edit, 
-  Trash2, 
-  Save, 
-  X, 
-  Users, 
+import {
+  Search,
+  MapPin,
+  Calendar,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Edit,
+  Trash2,
+  Save,
+  X,
+  Users,
   Tag,
-  ArrowLeft 
+  ArrowLeft,
 } from "lucide-react"
 import Image from "next/image"
 
@@ -74,19 +74,19 @@ const normalizeEvent = (event: any): Event => ({
   categories: event.categories || [],
   tags: event.tags || [],
   images: event.images || [],
-  location: event.location || { 
-    city: event.city || "", 
-    venue: event.venue || "", 
-    country: "" 
+  location: event.location || {
+    city: event.city || "",
+    venue: event.venue || "",
+    country: "",
   },
   venue: event.venue || {},
   pricing: event.pricing || { general: event.generalPrice || 0 },
   rating: event.rating || { average: 0 },
   featured: event.featured || false,
   status: event.status || "draft",
-  timings: event.timings || { 
-    startDate: event.startDate || new Date().toISOString(), 
-    endDate: event.endDate || new Date().toISOString() 
+  timings: event.timings || {
+    startDate: event.startDate || new Date().toISOString(),
+    endDate: event.endDate || new Date().toISOString(),
   },
   capacity: event.capacity || 0,
   organizer: event.organizer || "",
@@ -94,7 +94,7 @@ const normalizeEvent = (event: any): Event => ({
   vipPrice: event.vipPrice || 0,
   premiumPrice: event.premiumPrice || 0,
   city: event.city || event.location?.city || "",
-  eventType: event.eventType || ""
+  eventType: event.eventType || "",
 })
 
 export default function EditEventPage() {
@@ -124,7 +124,7 @@ export default function EditEventPage() {
   const [selectedStatus, setSelectedStatus] = useState<string[]>([])
   const [selectedFeatured, setSelectedFeatured] = useState<string[]>([])
 
-  const DEFAULT_EVENT_IMAGE = "/herosection-images/test.jpeg"
+  const DEFAULT_EVENT_IMAGE = "/herosection-images/test.jpg"
 
   const getEventImage = (event: Event) => {
     return event.images?.[0]?.url || DEFAULT_EVENT_IMAGE
@@ -135,16 +135,16 @@ export default function EditEventPage() {
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/organizers/${organizerId}/events`)
+      const response = await fetch(`/api/organizers/${organizerId}/events?`)
 
       if (!response.ok) {
         throw new Error("Failed to fetch events")
       }
 
       const data = await response.json()
-      
+
       const validatedEvents = data.events.map((event: any) => normalizeEvent(event))
-      
+
       setEvents(validatedEvents)
 
       // Auto-select event from URL if provided
@@ -201,24 +201,22 @@ export default function EditEventPage() {
       }
 
       // Update local state
-      setEvents(events.map(event => 
-        event.id === editingEvent.id ? editingEvent : event
-      ))
+      setEvents(events.map((event) => (event.id === editingEvent.id ? editingEvent : event)))
 
       toast({
         title: "Success",
-        description: "Event updated successfully"
+        description: "Event updated successfully",
       })
 
       setIsEditing(false)
       setEditingEvent(null)
-      router.replace(`/organizer-dashboard/${organizerId}/edit-event`)
+      router.replace(`/organizer-dashboard/${organizerId}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save event")
       toast({
         title: "Error",
         description: "Failed to update event. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       })
     } finally {
       setSaving(false)
@@ -237,17 +235,17 @@ export default function EditEventPage() {
         throw new Error("Failed to delete event")
       }
 
-      setEvents(events.filter(event => event.id !== eventId))
+      setEvents(events.filter((event) => event.id !== eventId))
       toast({
         title: "Success",
-        description: "Event deleted successfully"
+        description: "Event deleted successfully",
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete event")
       toast({
         title: "Error",
         description: "Failed to delete event. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       })
     }
   }
@@ -255,21 +253,25 @@ export default function EditEventPage() {
   const handleInputChange = (field: string, value: any) => {
     if (!editingEvent) return
 
-    setEditingEvent(prev => prev ? {
-      ...prev,
-      [field]: value
-    } : null)
+    setEditingEvent((prev) =>
+      prev
+        ? {
+            ...prev,
+            [field]: value,
+          }
+        : null,
+    )
   }
 
   const handleNestedInputChange = (parent: string, field: string, value: any) => {
     if (!editingEvent) return
-    
-    setEditingEvent(prev => ({
+
+    setEditingEvent((prev) => ({
       ...prev!,
       [parent]: {
         ...((prev as any)?.[parent] || {}),
-        [field]: value
-      }
+        [field]: value,
+      },
     }))
   }
 
@@ -278,21 +280,25 @@ export default function EditEventPage() {
 
     const newCategories = [...(editingEvent.categories || [])]
     newCategories[index] = value
-    setEditingEvent(prev => prev ? { ...prev, categories: newCategories } : null)
+    setEditingEvent((prev) => (prev ? { ...prev, categories: newCategories } : null))
   }
 
   const addCategory = () => {
     if (!editingEvent) return
-    setEditingEvent(prev => prev ? { 
-      ...prev, 
-      categories: [...(prev.categories || []), ""] 
-    } : null)
+    setEditingEvent((prev) =>
+      prev
+        ? {
+            ...prev,
+            categories: [...(prev.categories || []), ""],
+          }
+        : null,
+    )
   }
 
   const removeCategory = (index: number) => {
     if (!editingEvent) return
     const newCategories = (editingEvent.categories || []).filter((_, i) => i !== index)
-    setEditingEvent(prev => prev ? { ...prev, categories: newCategories } : null)
+    setEditingEvent((prev) => (prev ? { ...prev, categories: newCategories } : null))
   }
 
   // Filter events based on search and sidebar filters
@@ -300,33 +306,32 @@ export default function EditEventPage() {
     let filtered = events
 
     if (searchQuery) {
-      filtered = filtered.filter(event =>
-        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (event.categories || []).some(cat => cat.toLowerCase().includes(searchQuery.toLowerCase()))
+      filtered = filtered.filter(
+        (event) =>
+          event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (event.categories || []).some((cat) => cat.toLowerCase().includes(searchQuery.toLowerCase())),
       )
     }
 
     if (selectedCategories.length > 0) {
-      filtered = filtered.filter(event =>
-        event.categories.some(cat =>
-          selectedCategories.some(
-            selectedCat => cat.toLowerCase().trim() === selectedCat.toLowerCase().trim()
-          )
-        )
+      filtered = filtered.filter((event) =>
+        event.categories.some((cat) =>
+          selectedCategories.some((selectedCat) => cat.toLowerCase().trim() === selectedCat.toLowerCase().trim()),
+        ),
       )
     }
 
     if (selectedStatus.length > 0) {
-      filtered = filtered.filter(event => selectedStatus.includes(event.status))
+      filtered = filtered.filter((event) => selectedStatus.includes(event.status))
     }
 
     if (selectedFeatured.length > 0) {
       if (selectedFeatured.includes("featured")) {
-        filtered = filtered.filter(event => event.featured)
+        filtered = filtered.filter((event) => event.featured)
       }
       if (selectedFeatured.includes("regular")) {
-        filtered = filtered.filter(event => !event.featured)
+        filtered = filtered.filter((event) => !event.featured)
       }
     }
 
@@ -377,9 +382,7 @@ export default function EditEventPage() {
 
   const handleStatusToggle = (status: string) => {
     setSelectedStatus((prev) => {
-      const newStatus = prev.includes(status)
-        ? prev.filter((s) => s !== status)
-        : [...prev, status]
+      const newStatus = prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
       return newStatus
     })
     setCurrentPage(1)
@@ -387,9 +390,7 @@ export default function EditEventPage() {
 
   const handleFeaturedToggle = (type: string) => {
     setSelectedFeatured((prev) => {
-      const newFeatured = prev.includes(type)
-        ? prev.filter((f) => f !== type)
-        : [...prev, type]
+      const newFeatured = prev.includes(type) ? prev.filter((f) => f !== type) : [...prev, type]
       return newFeatured
     })
     setCurrentPage(1)
@@ -406,7 +407,6 @@ export default function EditEventPage() {
 
   const handleBackToMyEvents = () => {
     router.back()
-
   }
 
   if (loading) {
@@ -435,43 +435,23 @@ export default function EditEventPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={handleBackToMyEvents}
-              className="p-0 h-auto"
-            >
+            <Button variant="ghost" onClick={handleBackToMyEvents} className="p-0 h-auto">
               <ArrowLeft className="w-5 h-5 mr-2" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                {isEditing ? "Edit Event" : "Manage Events"}
-              </h1>
-              <p className="text-gray-600">
-                {isEditing ? "Update event details" : "View and manage all events"}
-              </p>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">{isEditing ? "Edit Event" : "Manage Events"}</h1>
+              <p className="text-gray-600">{isEditing ? "Update event details" : "View and manage all events"}</p>
             </div>
           </div>
-          
+
           {isEditing && (
             <div className="flex items-center space-x-2">
-              <Button 
-                variant="outline" 
-                onClick={handleCancelEdit}
-                disabled={saving}
-              >
+              <Button variant="outline" onClick={handleCancelEdit} disabled={saving}>
                 <X className="w-4 h-4 mr-2" />
                 Cancel
               </Button>
-              <Button 
-                onClick={handleSave}
-                disabled={saving}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {saving ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4 mr-2" />
-                )}
+              <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                 Save Changes
               </Button>
             </div>
@@ -566,7 +546,7 @@ export default function EditEventPage() {
                                 <span className="text-sm text-gray-700 capitalize">{status}</span>
                               </div>
                               <span className="text-xs text-gray-500">
-                                {events.filter(e => e.status === status).length}
+                                {events.filter((e) => e.status === status).length}
                               </span>
                             </div>
                           ))}
@@ -601,10 +581,9 @@ export default function EditEventPage() {
                                 <span className="text-sm text-gray-700 capitalize">{type}</span>
                               </div>
                               <span className="text-xs text-gray-500">
-                                {type === "featured" 
-                                  ? events.filter(e => e.featured).length
-                                  : events.filter(e => !e.featured).length
-                                }
+                                {type === "featured"
+                                  ? events.filter((e) => e.featured).length
+                                  : events.filter((e) => !e.featured).length}
                               </span>
                             </div>
                           ))}
@@ -615,11 +594,7 @@ export default function EditEventPage() {
 
                   {/* Clear Filters */}
                   <div className="p-4">
-                    <Button 
-                      variant="outline" 
-                      className="w-full bg-transparent"
-                      onClick={clearAllFilters}
-                    >
+                    <Button variant="outline" className="w-full bg-transparent" onClick={clearAllFilters}>
                       Clear All Filters
                     </Button>
                   </div>
@@ -647,7 +622,7 @@ export default function EditEventPage() {
                           <Edit className="w-5 h-5 mr-2" />
                           Basic Information
                         </h3>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Event Title</label>
                           <Input
@@ -672,7 +647,7 @@ export default function EditEventPage() {
                             <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
                             <Input
                               type="date"
-                              value={editingEvent.startDate ? editingEvent.startDate.split('T')[0] : ''}
+                              value={editingEvent.startDate ? editingEvent.startDate.split("T")[0] : ""}
                               onChange={(e) => handleInputChange("startDate", e.target.value)}
                             />
                           </div>
@@ -680,7 +655,7 @@ export default function EditEventPage() {
                             <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
                             <Input
                               type="date"
-                              value={editingEvent.endDate ? editingEvent.endDate.split('T')[0] : ''}
+                              value={editingEvent.endDate ? editingEvent.endDate.split("T")[0] : ""}
                               onChange={(e) => handleInputChange("endDate", e.target.value)}
                             />
                           </div>
@@ -693,7 +668,7 @@ export default function EditEventPage() {
                           <MapPin className="w-5 h-5 mr-2" />
                           Location
                         </h3>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
                           <Input
@@ -730,7 +705,7 @@ export default function EditEventPage() {
                             Add Category
                           </Button>
                         </div>
-                        
+
                         {(editingEvent.categories || []).map((category, index) => (
                           <div key={index} className="flex space-x-2">
                             <Input
@@ -756,7 +731,7 @@ export default function EditEventPage() {
                           <Users className="w-5 h-5 mr-2" />
                           Pricing & Status
                         </h3>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">General Price ($)</label>
                           <Input
@@ -873,17 +848,16 @@ export default function EditEventPage() {
                   {paginatedEvents.length === 0 ? (
                     <div className="text-center py-12">
                       <p className="text-gray-500 text-lg">No events found</p>
-                      <Button 
-                        variant="outline" 
-                        className="mt-4"
-                        onClick={handleBackToMyEvents}
-                      >
+                      <Button variant="outline" className="mt-4 bg-transparent" onClick={handleBackToMyEvents}>
                         Back to My Events
                       </Button>
                     </div>
                   ) : (
                     paginatedEvents.map((event) => (
-                      <Card key={event.id} className="hover:shadow-md transition-shadow bg-white border border-gray-100">
+                      <Card
+                        key={event.id}
+                        className="hover:shadow-md transition-shadow bg-white border border-gray-100"
+                      >
                         <CardContent className="p-6">
                           <div className="flex gap-4">
                             {/* Event Image */}
@@ -903,26 +877,28 @@ export default function EditEventPage() {
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-2 mb-2">
                                     <h3 className="text-lg font-semibold text-gray-900">{event.title}</h3>
-                                    <Badge variant={event.status === 'published' ? 'default' : 'secondary'}>
+                                    <Badge variant={event.status === "published" ? "default" : "secondary"}>
                                       {event.status}
                                     </Badge>
                                     {event.featured && (
                                       <Badge className="bg-yellow-100 text-yellow-800">Featured</Badge>
                                     )}
                                   </div>
-                                  
+
                                   <div className="flex items-center text-sm text-gray-600 mb-1">
                                     <Calendar className="w-4 h-4 mr-2" />
                                     <span>{formatDate(event.startDate)}</span>
                                   </div>
-                                  
+
                                   <div className="flex items-center text-sm text-gray-600 mb-3">
                                     <MapPin className="w-4 h-4 mr-2" />
-                                    <span>{event.location?.city || event.city || "TBD"}, {event.location?.venue || "TBD"}</span>
+                                    <span>
+                                      {event.location?.city || event.city || "TBD"}, {event.location?.venue || "TBD"}
+                                    </span>
                                   </div>
-                                  
+
                                   <p className="text-sm text-gray-600 mb-4 line-clamp-2">{event.description}</p>
-                                  
+
                                   <div className="flex items-center space-x-2">
                                     {(event.categories || []).slice(0, 2).map((category, idx) => (
                                       <Badge key={idx} variant="outline" className="text-xs">
@@ -935,8 +911,8 @@ export default function EditEventPage() {
                                 {/* Actions */}
                                 <div className="flex flex-col items-end space-y-2 ml-4">
                                   <div className="flex items-center space-x-2">
-                                    <Button 
-                                      variant="ghost" 
+                                    <Button
+                                      variant="ghost"
                                       size="sm"
                                       onClick={() => handleEdit(event)}
                                       className="text-blue-600 hover:text-blue-800"
@@ -944,8 +920,8 @@ export default function EditEventPage() {
                                       <Edit className="w-4 h-4 mr-1" />
                                       Edit
                                     </Button>
-                                    <Button 
-                                      variant="ghost" 
+                                    <Button
+                                      variant="ghost"
                                       size="sm"
                                       onClick={() => handleDelete(event.id)}
                                       className="text-red-600 hover:text-red-800"
@@ -954,7 +930,7 @@ export default function EditEventPage() {
                                       Delete
                                     </Button>
                                   </div>
-                                  
+
                                   <div className="flex items-center space-x-4 text-sm text-gray-500">
                                     <span>${event.generalPrice || event.pricing?.general || 0}</span>
                                     <span>•</span>

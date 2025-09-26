@@ -234,3 +234,164 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
+
+// ✅ PUT Handler - Update existing event
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getServerSession(authOptions)
+    const { id } = await params
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    if (!id || id === "undefined") {
+      return NextResponse.json({ error: "Invalid organizer ID" }, { status: 400 })
+    }
+
+    if (session.user?.id !== id && session.user?.role !== "ORGANIZER") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    const body = await request.json()
+    const { eventId, ...updateData } = body
+
+    if (!eventId) {
+      return NextResponse.json({ error: "Event ID is required" }, { status: 400 })
+    }
+
+    // Check if event exists and belongs to the organizer
+    const existingEvent = await prisma.event.findFirst({
+      where: {
+        id: eventId,
+        organizerId: id,
+      },
+    })
+
+    if (!existingEvent) {
+      return NextResponse.json({ error: "Event not found or access denied" }, { status: 404 })
+    }
+
+    // Prepare update data
+    const eventUpdateData: any = {
+      title: updateData.title,
+      description: updateData.description,
+      shortDescription: updateData.shortDescription || null,
+      slug: updateData.slug ?? 
+        updateData.title
+          ?.toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9-]/g, ""),
+      status: (updateData.status?.toUpperCase() as EventStatus) || existingEvent.status,
+      category: updateData.category || null,
+      tags: updateData.tags || [],
+      startDate: updateData.startDate ? new Date(updateData.startDate) : existingEvent.startDate,
+      endDate: updateData.endDate ? new Date(updateData.endDate) : existingEvent.endDate,
+      registrationStart: updateData.registrationStart 
+        ? new Date(updateData.registrationStart) 
+        : existingEvent.registrationStart,
+      registrationEnd: updateData.registrationEnd 
+        ? new Date(updateData.registrationEnd) 
+        : existingEvent.registrationEnd,
+      timezone: updateData.timezone || existingEvent.timezone,
+      isVirtual: updateData.isVirtual ?? existingEvent.isVirtual,
+      virtualLink: updateData.virtualLink || null,
+      address: updateData.address || null,
+      location: updateData.location || null,
+      city: updateData.city || null,
+      state: updateData.state || null,
+      country: updateData.country || null,
+      zipCode: updateData.zipCode || null,
+      venueId: updateData.venue && ObjectId.isValid(updateData.venue) ? updateData.venue : null,
+      maxAttendees: updateData.maxAttendees || null,
+      currency: updateData.currency || existingEvent.currency,
+      bannerImage: updateData.bannerImage || null,
+      thumbnailImage: updateData.thumbnailImage || null,
+      isPublic: updateData.isPublic !== false,
+      requiresApproval: updateData.requiresApproval || false,
+      allowWaitlist: updateData.allowWaitlist || false,
+      refundPolicy: updateData.refundPolicy || null,
+      metaTitle: updateData.metaTitle || null,
+      metaDescription: updateData.metaDescription || null,
+      isFeatured: updateData.featured || false,
+      isVIP: updateData.vip || false,
+    }
+
+    // Handle ticket types update
+    if (updateData.ticketTypes) {
+      // Delete existing ticket types and create new ones
+      await prisma.ticketType.deleteMany({
+        where: { eventId: eventId },
+      })
+      
+      eventUpdateData.ticketTypes = {
+        create: updateData.ticketTypes.map((ticket: any) => ({
+          name: ticket.name,
+          description: ticket.description,
+          price: ticket.price,
+          earlyBirdPrice: ticket.earlyBirdPrice || null,
+          earlyBirdEnd: ticket.earlyBirdEnd ? new Date(ticket.earlyBirdEnd) : null,
+          quantity: ticket.quantity,
+          isActive: ticket.isActive !== false,
+        })),
+      }
+    }
+
+    // Handle exhibition spaces update
+    if (updateData.exhibitionSpaces) {
+      // Delete existing exhibition spaces and create new ones
+      await prisma.exhibitionSpace.deleteMany({
+        where: { eventId: eventId },
+      })
+      
+      eventUpdateData.exhibitionSpaces = {
+        create: updateData.exhibitionSpaces.map((space: any) => ({
+          spaceType: space.spaceType || "CUSTOM",
+          name: space.name,
+          description: space.description,
+          basePrice: space.basePrice,
+          pricePerSqm: space.pricePerSqm,
+          minArea: space.minArea,
+          isFixed: space.isFixed ?? false,
+          additionalPowerRate: space.additionalPowerRate,
+          compressedAirRate: space.compressedAirRate,
+          unit: space.unit,
+          area: space.area || 0,
+          isAvailable: space.isAvailable !== false,
+          maxBooths: space.maxBooths || null,
+        })),
+      }
+    }
+
+    const updatedEvent = await prisma.event.update({
+      where: { id: eventId },
+      data: eventUpdateData,
+      include: {
+        exhibitionSpaces: true,
+        ticketTypes: true,
+        venue: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            location: true,
+            venueCity: true,
+            venueState: true,
+            venueCountry: true,
+          },
+        },
+      },
+    })
+
+    return NextResponse.json(
+      {
+        message: "Event updated successfully",
+        event: updatedEvent,
+      },
+      { status: 200 }
+    )
+  } catch (error) {
+    console.error("Error updating event:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}

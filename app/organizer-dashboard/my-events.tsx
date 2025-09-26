@@ -162,13 +162,13 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
     }
   }
 
-  // const handleNavigateToEditPage = () => {
-  //   router.push(`/organizer-dashboard/${organizerId}/editevent`)
-  // }
+  const handleNavigateToEditPage = () => {
+    router.push(`/organizer-dashboard/${organizerId}/editevent`)
+  }
 
-  // const handleEditSpecificEvent = (eventId: string) => {
-  //   router.push(`/organizer-dashboard/${organizerId}/editevent?id=${eventId}`)
-  // }
+  const handleEditSpecificEvent = (eventId: string) => {
+    router.push(`/organizer-dashboard/${organizerId}/editevent?id=${eventId}`)
+  }
 
   const uniqueTypes = [...new Set(events.map((event) => event.eventType).filter(Boolean))]
 
@@ -354,7 +354,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        // onClick={() => handleEditSpecificEvent(event.id)}
+                        onClick={() => handleEditSpecificEvent(event.id)}
                         className="text-blue-600 hover:text-blue-800"
                       >
                         <Edit className="w-4 h-4" />
