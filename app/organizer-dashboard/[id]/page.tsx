@@ -2,9 +2,10 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { redirect } from "next/navigation"
 
-import Navbar from "@/components/navbar"
+// import Navbar from "@/components/navbar"
 import { NameBanner } from "@/app/dashboard/NameBanner"
 import OrganizerDashboardPage from "../OrganizerDashboardPage"
+import Navbar from "../navbar"
 
 interface DashboardPageProps {
   params: Promise<{ id: string }>

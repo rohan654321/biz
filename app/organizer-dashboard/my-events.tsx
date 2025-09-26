@@ -162,9 +162,9 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
     }
   }
 
-  // const handleNavigateToEditPage = () => {
-  //   router.push(`/organizer-dashboard/${organizerId}/editevent`)
-  // }
+  const handleNavigateToEditPage = () => {
+    router.push(`/organizer-dashboard/${organizerId}/editevent`)
+  }
 
   const handleEditSpecificEvent = (eventId: string) => {
     router.push(`/organizer-dashboard/${organizerId}/editevent?id=${eventId}`)
