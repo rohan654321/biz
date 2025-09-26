@@ -379,7 +379,10 @@ export function EventsSection({ userId }: EventsSectionProps) {
                     </p>
 
                     {/* Event Card */}
-      <div className="flex w-full border border-gray-200 bg-white rounded-lg hover:shadow-md transition-shadow overflow-hidden">
+      <div
+  onClick={() => router.push(`/event/${event.id}`)}
+  className="flex w-full border border-gray-200 bg-white rounded-lg hover:shadow-md transition-shadow overflow-hidden cursor-pointer"
+>
   {/* Left Image Section - Keep exact same styling */}
   <div className="w-40 h-32 flex-shrink-0">
     <img

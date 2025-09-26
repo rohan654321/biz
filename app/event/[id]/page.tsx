@@ -251,7 +251,7 @@ export default function EventPage({ params }: EventPageProps) {
         <div className="bg-white rounded-sm  p-6 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-blue-900 mb-2">{event.title}</h1>
+              <h1 className="text-3xl font-bold text-blue-900 mb-2">Tag Name will be updated by backend</h1>
               <div className="flex items-center gap-2 text-gray-600 mb-3">
                 <MapPin className="w-4 h-4" />
                 <span>{event.address || event.location || "Location TBA"}</span>
