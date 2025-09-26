@@ -173,14 +173,14 @@ export default function EditEventPage() {
     setEditingEvent(normalizeEvent(event))
     setIsEditing(true)
     // Update URL to reflect the selected event
-    router.replace(`/organizer-dashboard/${organizerId}/edit-event?id=${event.id}`)
+    router.replace(`/organizer-dashboard/${organizerId}/editevent?id=${event.id}`)
   }
 
   const handleCancelEdit = () => {
     setEditingEvent(null)
     setIsEditing(false)
     // Remove event ID from URL
-    router.replace(`/organizer-dashboard/${organizerId}/edit-event`)
+    router.replace(`/organizer-dashboard/${organizerId}/editevent`)
   }
 
   const handleSave = async () => {
@@ -212,7 +212,7 @@ export default function EditEventPage() {
 
       setIsEditing(false)
       setEditingEvent(null)
-      router.replace(`/organizer-dashboard/${organizerId}/edit-event`)
+      router.replace(`/organizer-dashboard/${organizerId}/editevent`)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save event")
       toast({
@@ -953,7 +953,7 @@ export default function EditEventPage() {
                                       <Trash2 className="w-4 h-4 mr-1" />
                                       Delete
                                     </Button>
-                                  </div>
+                                  </div>  
                                   
                                   <div className="flex items-center space-x-4 text-sm text-gray-500">
                                     <span>${event.generalPrice || event.pricing?.general || 0}</span>
