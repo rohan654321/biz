@@ -176,52 +176,55 @@ export default function EditEventPage() {
     router.replace(`/organizer-dashboard/${organizerId}/editevent?id=${event.id}`)
   }
 
-  const handleCancelEdit = () => {
-    setEditingEvent(null)
-    setIsEditing(false)
-    // Remove event ID from URL
-    router.replace(`/organizer-dashboard/${organizerId}/editevent`)
-  }
+const handleCancelEdit = () => {
+  setEditingEvent(null)
+  setIsEditing(false)
+  router.back() // Use router.back() instead of replace
+}
 
-  const handleSave = async () => {
-    if (!editingEvent) return
+const handleSave = async () => {
+  if (!editingEvent) return
 
-    try {
-      setSaving(true)
-      const response = await fetch(`/api/organizers/${organizerId}/events/${editingEvent.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(editingEvent),
-      })
+  try {
+    setSaving(true)
+    const response = await fetch(`/api/organizers/${organizerId}/events/${editingEvent.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(editingEvent),
+    })
 
-      if (!response.ok) {
-        throw new Error("Failed to update event")
-      }
+    if (!response.ok) {
+      throw new Error("Failed to update event")
+    }
 
-      // Update local state
-      setEvents(events.map((event) => (event.id === editingEvent.id ? editingEvent : event)))
+    // Update local state
+    setEvents(events.map((event) => (event.id === editingEvent.id ? editingEvent : event)))
 
-      toast({
-        title: "Success",
-        description: "Event updated successfully",
-      })
+    // Show success notification first
+    toast({
+      title: "Success",
+      description: "Event updated successfully",
+    })
 
+    // Wait a moment for the toast to be visible, then navigate back
+    setTimeout(() => {
       setIsEditing(false)
       setEditingEvent(null)
-      router.replace(`/organizer-dashboard/${organizerId}/edit-event`)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save event")
-      toast({
-        title: "Error",
-        description: "Failed to update event. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setSaving(false)
-    }
+      router.back() // This will go back to the previous page (MyEvents page)
+    }, 1000) // 1 second delay to see the toast
+
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Failed to save event")
+    toast({
+      title: "Error",
+      description: "Failed to update event. Please try again.",
+      variant: "destructive",
+    })
+    setSaving(false)
   }
+}
 
   const handleDelete = async (eventId: string) => {
     if (!confirm("Are you sure you want to delete this event?")) return
