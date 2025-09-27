@@ -1069,11 +1069,11 @@ export default function OrganizerDashboardPage({ organizerId }: OrganizerDashboa
           icon: Building,
           id: "total-exhibitors",
         },
-        // {
-        //   title: "Exhibitors Event Wise",
-        //   icon: Calendar,
-        //   id: "exhibitors-event-wise",
-        // },
+        {
+          title: "Exhibitors Event Wise",
+          icon: Calendar,
+          id: "exhibitors-event-wise",
+        },
         {
           title: "Add Exhibitor",
           icon: Plus,
@@ -1287,18 +1287,18 @@ export default function OrganizerDashboardPage({ organizerId }: OrganizerDashboa
         return <ExhibitorsForEvent />
       case "exhibitors-event-wise":
         return <ExhibitorsEventWise />
-      // case "exhibitor-manual":
-      //   return <ExhibitorManualProfessional organizerId={organizerId} />
+      case "exhibitor-manual":
+        return <ExhibitorManualProfessional organizerId={organizerId} />
       // case "conference-agenda":
       //   return <ConferenceAgenda organizerId={organizerId} />
-      case "create-conference-agenda":
-        // return (
-        //   <CreateConferenceAgenda
-        //     organizerId={organizerId}
-        //     onSuccess={() => setActiveSection("conference-agenda")}
-        //     onCancel={() => setActiveSection("conference-agenda")}
-        //   />
-        // )
+      // case "create-conference-agenda":
+      //   return (
+      //     <CreateConferenceAgenda
+      //       organizerId={organizerId}
+      //       onSuccess={() => setActiveSection("conference-agenda")}
+      //       onCancel={() => setActiveSection("conference-agenda")}
+      //     />
+      //   )
       case "speakers":
         return <SpeakerSessionsTable organizerId={organizerId} />
       case "feedback":
