@@ -1069,11 +1069,11 @@ export default function OrganizerDashboardPage({ organizerId }: OrganizerDashboa
           icon: Building,
           id: "total-exhibitors",
         },
-        {
-          title: "Exhibitors Event Wise",
-          icon: Calendar,
-          id: "exhibitors-event-wise",
-        },
+        // {
+        //   title: "Exhibitors Event Wise",
+        //   icon: Calendar,
+        //   id: "exhibitors-event-wise",
+        // },
         {
           title: "Add Exhibitor",
           icon: Plus,
@@ -1147,17 +1147,21 @@ export default function OrganizerDashboardPage({ organizerId }: OrganizerDashboa
           icon: Crown,
           id: "my-plan",
         },
-        {
-          title: "Help & Support",
-          icon: HelpCircle,
-          id: "help-support",
-        },
-        {
-          title: "Settings",
-          icon: Settings,
-          id: "settings",
-        },
       ],
+    },
+  ]
+
+  // Separate sidebar items that should be outside of groups
+  const individualSidebarItems: SidebarItem[] = [
+    {
+      title: "Help & Support",
+      icon: HelpCircle,
+      id: "help-support",
+    },
+    {
+      title: "Settings",
+      icon: Settings,
+      id: "settings",
     },
   ]
 
@@ -1283,18 +1287,18 @@ export default function OrganizerDashboardPage({ organizerId }: OrganizerDashboa
         return <ExhibitorsForEvent />
       case "exhibitors-event-wise":
         return <ExhibitorsEventWise />
-      case "exhibitor-manual":
-        return <ExhibitorManualProfessional organizerId={organizerId} />
-      case "conference-agenda":
-        return <ConferenceAgenda organizerId={organizerId} />
+      // case "exhibitor-manual":
+      //   return <ExhibitorManualProfessional organizerId={organizerId} />
+      // case "conference-agenda":
+      //   return <ConferenceAgenda organizerId={organizerId} />
       case "create-conference-agenda":
-        return (
-          <CreateConferenceAgenda
-            organizerId={organizerId}
-            onSuccess={() => setActiveSection("conference-agenda")}
-            onCancel={() => setActiveSection("conference-agenda")}
-          />
-        )
+        // return (
+        //   <CreateConferenceAgenda
+        //     organizerId={organizerId}
+        //     onSuccess={() => setActiveSection("conference-agenda")}
+        //     onCancel={() => setActiveSection("conference-agenda")}
+        //   />
+        // )
       case "speakers":
         return <SpeakerSessionsTable organizerId={organizerId} />
       case "feedback":
@@ -1310,10 +1314,15 @@ export default function OrganizerDashboardPage({ organizerId }: OrganizerDashboa
 
   // Find the current section title for the header
   const getCurrentSectionTitle = () => {
+    // Check in grouped items first
     for (const group of sidebarGroups) {
       const item = group.items.find(item => item.id === activeSection)
       if (item) return item.title
     }
+    // Check in individual items
+    const individualItem = individualSidebarItems.find(item => item.id === activeSection)
+    if (individualItem) return individualItem.title
+    
     return "Dashboard"
   }
 
@@ -1336,7 +1345,7 @@ export default function OrganizerDashboardPage({ organizerId }: OrganizerDashboa
       `}
       >
         {/* Sidebar Header */}
-        {/* <div className="border-b border-gray-200 p-4 flex-shrink-0">
+        <div className="border-b border-gray-200 p-4 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10">
@@ -1357,10 +1366,11 @@ export default function OrganizerDashboardPage({ organizerId }: OrganizerDashboa
               <X className="w-4 h-4" />
             </Button>
           </div>
-        </div> */}
+        </div>
 
         {/* Sidebar Content */}
         <div className="flex-1 overflow-y-auto p-4">
+          {/* Grouped Items */}
           {sidebarGroups.map((group) => (
             <div key={group.id} className="mb-4">
               <div
@@ -1400,6 +1410,30 @@ export default function OrganizerDashboardPage({ organizerId }: OrganizerDashboa
               )}
             </div>
           ))}
+
+          {/* Individual Items (outside of groups) */}
+          <div className="mt-8 space-y-1">
+            {individualSidebarItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveSection(item.id)
+                  setSidebarOpen(false)
+                }}
+                className={`
+                  w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors
+                  ${
+                    activeSection === item.id
+                      ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  }
+                `}
+              >
+                <item.icon className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{item.title}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Sidebar Footer */}
