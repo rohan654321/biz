@@ -20,6 +20,7 @@ import {
   Search,
   Plus,
   Loader2,
+  LayoutDashboard,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -63,7 +64,9 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [timelineStatusFilter, setTimelineStatusFilter] = useState<"all" | "upcoming" | "ongoing" | "past">("all")
-  const [publicationStatusFilter, setPublicationStatusFilter] = useState<"all" | "draft" | "published" | "cancelled" | "archived">("all")
+  const [publicationStatusFilter, setPublicationStatusFilter] = useState<
+    "all" | "draft" | "published" | "cancelled" | "archived"
+  >("all")
   const [typeFilter, setTypeFilter] = useState("all")
   const [loading, setLoading] = useState(true)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
@@ -122,52 +125,75 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
           event.city.toLowerCase().includes(searchTerm.toLowerCase()),
       )
     }
-    if (timelineStatusFilter !== "all") filtered = filtered.filter((event) => event.timelineStatus === timelineStatusFilter)
-    if (publicationStatusFilter !== "all") filtered = filtered.filter((event) => event.status === publicationStatusFilter)
-    if (typeFilter !== "all") filtered = filtered.filter((event) => event.eventType.toLowerCase() === typeFilter.toLowerCase())
+    if (timelineStatusFilter !== "all")
+      filtered = filtered.filter((event) => event.timelineStatus === timelineStatusFilter)
+    if (publicationStatusFilter !== "all")
+      filtered = filtered.filter((event) => event.status === publicationStatusFilter)
+    if (typeFilter !== "all")
+      filtered = filtered.filter((event) => event.eventType.toLowerCase() === typeFilter.toLowerCase())
     setFilteredEvents(filtered)
   }, [events, searchTerm, timelineStatusFilter, publicationStatusFilter, typeFilter])
 
   const getTimelineStatusColor = (status: string) => {
     switch (status) {
-      case "upcoming": return "default"
-      case "ongoing": return "secondary"
-      case "past": return "outline"
-      default: return "secondary"
+      case "upcoming":
+        return "default"
+      case "ongoing":
+        return "secondary"
+      case "past":
+        return "outline"
+      default:
+        return "secondary"
     }
   }
 
   const getTimelineStatusLabel = (status: string) => {
     switch (status) {
-      case "upcoming": return "Upcoming"
-      case "ongoing": return "Ongoing"
-      case "past": return "Past Event"
-      default: return status
+      case "upcoming":
+        return "Upcoming"
+      case "ongoing":
+        return "Ongoing"
+      case "past":
+        return "Past Event"
+      default:
+        return status
     }
   }
 
   const getPublicationStatusColor = (status: string) => {
     switch (status) {
-      case "published": return "default"
-      case "draft": return "secondary"
-      case "cancelled": return "destructive"
-      case "archived": return "outline"
-      default: return "secondary"
+      case "published":
+        return "default"
+      case "draft":
+        return "secondary"
+      case "cancelled":
+        return "destructive"
+      case "archived":
+        return "outline"
+      default:
+        return "secondary"
     }
   }
 
   const getPublicationStatusLabel = (status: string) => {
     switch (status) {
-      case "published": return "Published"
-      case "draft": return "Draft"
-      case "cancelled": return "Cancelled"
-      case "archived": return "Archived"
-      default: return status
+      case "published":
+        return "Published"
+      case "draft":
+        return "Draft"
+      case "cancelled":
+        return "Cancelled"
+      case "archived":
+        return "Archived"
+      default:
+        return status
     }
   }
 
-  const formatCurrency = (amount: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount)
-  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount)
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
 
   const handleDeleteEvent = async (eventId: string) => {
     if (!confirm("Are you sure you want to delete this event?")) return
@@ -208,7 +234,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
           <h2 className="text-2xl font-bold text-gray-900">My Events</h2>
           <p className="text-gray-600">Manage and track your events</p>
         </div>
-        
+
         <div className="flex gap-2">
           <Link href={`/organizer-dashboard/${organizerId}/create-event`}>
             <Button className="flex items-center gap-2">
@@ -226,7 +252,12 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input placeholder="Search events..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+                <Input
+                  placeholder="Search events..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
               </div>
             </div>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
@@ -247,10 +278,10 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
             <div className="flex gap-2 flex-wrap">
               <span className="text-sm font-medium text-gray-700 self-center">Timeline Status:</span>
               {["all", "upcoming", "ongoing", "past"].map((status) => (
-                <Button 
-                  key={status} 
-                  variant={timelineStatusFilter === status ? "default" : "outline"} 
-                  size="sm" 
+                <Button
+                  key={status}
+                  variant={timelineStatusFilter === status ? "default" : "outline"}
+                  size="sm"
                   onClick={() => setTimelineStatusFilter(status as typeof timelineStatusFilter)}
                 >
                   {status === "all" ? "All Timeline" : getTimelineStatusLabel(status)}
@@ -309,7 +340,9 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4" />
-                      <span className="line-clamp-1">{event.venue}, {event.city}</span>
+                      <span className="line-clamp-1">
+                        {event.venue}, {event.city}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4" />
@@ -324,10 +357,20 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
 
                   <div className="flex items-center justify-between pt-3 border-t">
                     <Badge variant="outline">{event.eventType}</Badge>
-                        <Badge variant={getPublicationStatusColor(event.status)}>
-      {getPublicationStatusLabel(event.status)}
-    </Badge>
+                    <Badge variant={getPublicationStatusColor(event.status)}>
+                      {getPublicationStatusLabel(event.status)}
+                    </Badge>
                     <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => router.push(`/event-dashboard/${event.id}`)}
+                        className="text-green-600 hover:text-green-800"
+                        title="View Event Dashboard"
+                      >
+                        <LayoutDashboard className="w-4 h-4" />
+                      </Button>
+
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button variant="ghost" size="sm" onClick={() => setSelectedEvent(event)}>
@@ -341,7 +384,12 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                           {selectedEvent && (
                             <div className="space-y-4">
                               <div className="relative h-64 rounded-lg overflow-hidden">
-                                <Image src={selectedEvent.bannerImage || defaultImage} alt={selectedEvent.title} fill className="object-cover" />
+                                <Image
+                                  src={selectedEvent.bannerImage || defaultImage}
+                                  alt={selectedEvent.title}
+                                  fill
+                                  className="object-cover"
+                                />
                               </div>
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -349,7 +397,9 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                                   <div className="space-y-2 text-sm">
                                     <div className="flex justify-between">
                                       <span className="text-gray-600">Timeline Status:</span>
-                                      <Badge variant={getTimelineStatusColor(selectedEvent.timelineStatus || "upcoming")}>
+                                      <Badge
+                                        variant={getTimelineStatusColor(selectedEvent.timelineStatus || "upcoming")}
+                                      >
                                         {getTimelineStatusLabel(selectedEvent.timelineStatus || "upcoming")}
                                       </Badge>
                                     </div>
@@ -359,22 +409,51 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                                         {getPublicationStatusLabel(selectedEvent.status)}
                                       </Badge>
                                     </div> */}
-                                    <div className="flex justify-between"><span className="text-gray-600">Type:</span><span>{selectedEvent.eventType}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-600">Start Date:</span><span>{formatDate(selectedEvent.startDate)}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-600">End Date:</span><span>{formatDate(selectedEvent.endDate)}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-600">Location:</span><span className="text-right">{selectedEvent.venue}, {selectedEvent.city}</span></div>
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Type:</span>
+                                      <span>{selectedEvent.eventType}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Start Date:</span>
+                                      <span>{formatDate(selectedEvent.startDate)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">End Date:</span>
+                                      <span>{formatDate(selectedEvent.endDate)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Location:</span>
+                                      <span className="text-right">
+                                        {selectedEvent.venue}, {selectedEvent.city}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
                                 <div>
                                   <h4 className="font-medium mb-2">Pricing & Stats</h4>
                                   <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between"><span className="text-gray-600">General:</span><span>{formatCurrency(selectedEvent.generalPrice)}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-600">VIP:</span><span>{formatCurrency(selectedEvent.vipPrice)}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-600">Premium:</span><span>{formatCurrency(selectedEvent.premiumPrice)}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-600">Attendees:</span><span>{selectedEvent.attendees || 0}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-600">Revenue:</span><span>{formatCurrency(selectedEvent.revenue || 0)}</span></div>
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">General:</span>
+                                      <span>{formatCurrency(selectedEvent.generalPrice)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">VIP:</span>
+                                      <span>{formatCurrency(selectedEvent.vipPrice)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Premium:</span>
+                                      <span>{formatCurrency(selectedEvent.premiumPrice)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Attendees:</span>
+                                      <span>{selectedEvent.attendees || 0}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Revenue:</span>
+                                      <span>{formatCurrency(selectedEvent.revenue || 0)}</span>
+                                    </div>
                                   </div>
-                                </div>   
+                                </div>
                               </div>
                               <div>
                                 <h4 className="font-medium mb-2">Description</h4>
@@ -385,7 +464,9 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                                   <h4 className="font-medium mb-2">Tags</h4>
                                   <div className="flex flex-wrap gap-2">
                                     {selectedEvent.tags.map((tag, index) => (
-                                      <Badge key={index} variant="outline">{tag}</Badge>
+                                      <Badge key={index} variant="outline">
+                                        {tag}
+                                      </Badge>
                                     ))}
                                   </div>
                                 </div>
@@ -394,20 +475,20 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                           )}
                         </DialogContent>
                       </Dialog>
-                      
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleEditSpecificEvent(event.id)}
                         className="text-blue-600 hover:text-blue-800"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
-                      
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleDeleteEvent(event.id)} 
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteEvent(event.id)}
                         disabled={loading}
                         className="text-red-600 hover:text-red-800"
                       >

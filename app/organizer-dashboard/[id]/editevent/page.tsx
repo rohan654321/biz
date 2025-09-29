@@ -135,7 +135,7 @@ export default function EditEventPage() {
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/organizers/${organizerId}/events?`)
+      const response = await fetch(`/api/organizers/${organizerId}/events`)
 
       if (!response.ok) {
         throw new Error("Failed to fetch events")
