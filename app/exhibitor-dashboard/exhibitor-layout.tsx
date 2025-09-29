@@ -23,6 +23,7 @@ import {
   Globe,
   Twitter,
   Briefcase,
+  HelpCircle,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
@@ -36,6 +37,7 @@ import AnalyticsReports from "./analytics-reports"
 // import PromotionsMarketing from "./promotions-marketing"
 import ExhibitorSettings from "./settings"
 import { ConnectionsSection } from "@/app/dashboard/connections-section"
+import { HelpSupport } from "@/components/HelpSupport"
 
 interface ExhibitorData {
   id: string
@@ -187,6 +189,7 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     { id: "appointments", label: "Appointments", icon: Calendar },
     { id: "analytics", label: "Analytics", icon: TrendingUp },
     { id: "promotions", label: "Promotions", icon: Star },
+    { id: "help", label: "Help & Support", icon: HelpCircle },
     { id: "settings", label: "Settings", icon: Settings },
   ]
 
@@ -405,6 +408,7 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
           {activeTab === "appointments" && <AppointmentScheduling exhibitorId={exhibitor.id} />}
           {activeTab === "analytics" && <AnalyticsReports exhibitorId={exhibitor.id} />}
           {activeTab === "promotions" && <EventPromotion organizerId={exhibitor.id} />}
+          {activeTab === "help" && <HelpSupport />} 
           {activeTab === "settings" && <ExhibitorSettings exhibitorId={exhibitor.id} />}
         </div>
       </div>

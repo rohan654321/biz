@@ -19,7 +19,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import { Building2, Calendar, MapPin, MessageSquare, Star, FileText, Bell, Settings } from "lucide-react"
+import { Building2, Calendar, MapPin, MessageSquare, Star, FileText, Bell, Settings, HelpCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -34,6 +34,7 @@ import VenueSettings from "./venue-settings"
 import { promise } from "zod"
 import { MeetingSpace } from "@prisma/client"
 import { ConnectionsSection } from "../dashboard/connections-section"
+import { HelpSupport } from "@/components/HelpSupport"
 
 type VenueData = {
   id: string
@@ -218,6 +219,11 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
       icon: FileText,
       id: "legal-documentation",
     },
+      {
+    title: "Help & Support",
+    icon: HelpCircle,
+    id: "help-support",
+  },
     {
       title: "Settings",
       icon: Settings,
@@ -242,6 +248,8 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
         return <RatingsReviews />
       case "legal-documentation":
         return <LegalDocumentation />
+         case "help-support":
+      return <HelpSupport /> 
       case "settings":
         return <VenueSettings venueData={venueData} />
       default:

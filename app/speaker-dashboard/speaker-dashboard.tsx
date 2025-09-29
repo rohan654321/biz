@@ -22,6 +22,7 @@ import {
   Globe,
   Twitter,
   Briefcase,
+  HelpCircle,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
@@ -34,6 +35,7 @@ import  {OrganizerCommunication} from "./organizer-communication"
 // import  {PresentationMaterials}  from "./presentation-materials"
 import MessagesCenter from "@/app/organizer-dashboard/messages-center"
 import  {SpeakerSettings} from "./speaker-settings"
+import { HelpSupport } from "@/components/HelpSupport"
 
 interface ExhibitorData {
   id: string
@@ -184,6 +186,7 @@ export function ExhibitorDashboard({userId}: UserDashboardProps) {
     { id: "connection", label: "connection", icon: TrendingUp },
     { id: "message", label: "message", icon: TrendingUp },
     // { id: "promotions", label: "Promotions", icon: Star },
+    { id: "help", label: "Help & Support", icon: HelpCircle },
     { id: "settings", label: "Settings", icon: Settings },
   ]
 
@@ -267,6 +270,7 @@ export function ExhibitorDashboard({userId}: UserDashboardProps) {
            {activeTab === "connection" &&<ConnectionsSection  userId={exhibitor.id}/>}
           {/* {activeTab === "analytics" && < />} */}
           {/* {activeTab === "promotions" && < />} */}
+          {activeTab === "help" && <HelpSupport />}
           {activeTab === "settings" && <SpeakerSettings />}
         </div>
       </div>
