@@ -27,8 +27,8 @@ export default function Navbar() {
 
     const role = session.user?.role;
 
-    if (role === "organizer") {
-      router.push("/organizer-dashboard");
+    if (role == "ORGANIZER") {
+      router.push(`/organizer-dashboard/${session.user?.id}`);
     } else {
       const confirmed = window.confirm(
         `You are logged in as '${role}'.\n\nPlease login as an organizer to access this page.\n\nClick OK to logout and login as an organizer, or Cancel to stay logged in.`
