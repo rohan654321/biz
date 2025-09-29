@@ -1,146 +1,105 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { authOptions } from "@/lib/auth-options"
-import { getServerSession } from "next-auth/next"
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
-    const { searchParams } = new URL(request.url);
-    const includePrivate = searchParams.get('includePrivate') === 'true';
+    const { id } =await params
 
-    if (!id || id === "undefined") {
-      return NextResponse.json({ error: "Invalid event ID" }, { status: 400 });
+    // Validate ObjectId format for MongoDB
+    if (!id || id.length !== 24) {
+      return NextResponse.json({ error: "Invalid event ID format" }, { status: 400 })
     }
 
-    // Check if requesting private data
-    if (includePrivate) {
-      const session = await getServerSession(authOptions);
-      
-      if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-
-      // Only organizer or admin can access private data
-      const event = await prisma.event.findUnique({
-        where: { id },
-        include: {
-          exhibitionSpaces: true,
-          organizer: {
-            select: {
-              id: true,
-              firstName: true,
-              email: true,
-              avatar: true,
-            },
-          },
-          venue: true,
-          registrations: {
-            select: {
-              id: true,
-              status: true,
-              registeredAt: true,
-              user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  email: true,
-                },
-              },
-            },
-          },
-          _count: {
-            select: {
-              registrations: true,
-            },
-          },
-        },
-      });
-
-      if (!event) {
-        return NextResponse.json({ error: "Event not found" }, { status: 404 });
-      }
-
-      // Check if user can access this event's private data
-      if (event.organizerId !== session.user?.id && session.user?.role !== "ADMIN") {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
-
-      return NextResponse.json({ event }, { status: 200 });
-    }
-
-    // Public event data (no authentication required)
-    const event = await prisma.event.findFirst({
+    const event = await prisma.event.findUnique({
       where: {
-        id,
-        isPublic: true, // Only return public events for unauthenticated requests
+        id: id,
       },
       include: {
-        exhibitionSpaces: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            basePrice: true,
-            pricePerSqm: true,
-            minArea: true,
-            isFixed: true,
-            unit: true,
-            // Don't include rates for public view
-          },
-        },
         organizer: {
           select: {
             id: true,
             firstName: true,
+            lastName: true,
+            email: true,
             avatar: true,
-            // Don't include email for public view
+            organizationName: true,
+            description: true,
           },
         },
         venue: {
           select: {
             id: true,
-            firstName: true,
-            location: true,
+            venueName: true,
+            venueAddress: true,
             venueCity: true,
             venueState: true,
             venueCountry: true,
+            maxCapacity: true,
+            amenities: true,
+            averageRating: true,
+          },
+        },
+        ticketTypes: {
+          where: {
+            isActive: true,
+          },
+          orderBy: {
+            price: "asc",
+          },
+        },
+        speakerSessions: {
+          include: {
+            speaker: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+                bio: true,
+                company: true,
+                jobTitle: true,
+              },
+            },
+          },
+          orderBy: {
+            startTime: "asc",
+          },
+        },
+        exhibitionSpaces: {
+          where: {
+            isAvailable: true,
           },
         },
         _count: {
           select: {
             registrations: true,
+            reviews: true,
           },
         },
       },
-    });
+    })
 
     if (!event) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+      return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
 
-    // Add computed fields for public view
-    const eventWithComputedFields = {
+    // Calculate availability
+    const availableTickets = event.ticketTypes.reduce((total, ticket) => {
+      return total + (ticket.quantity - ticket.sold)
+    }, 0)
+
+    // Format response
+    const eventData = {
       ...event,
-      spotsRemaining: event.maxAttendees 
-        ? event.maxAttendees - event._count.registrations 
-        : null,
-      isRegistrationOpen: 
-        new Date() >= new Date(event.registrationStart) &&
-        new Date() <= new Date(event.registrationEnd),
-    };
+      availableTickets,
+      isAvailable: availableTickets > 0 && new Date() < event.registrationEnd,
+      registrationCount: event._count.registrations,
+      reviewCount: event._count.reviews,
+    }
 
-    return NextResponse.json({ event: eventWithComputedFields }, { status: 200 });
-
+    return NextResponse.json(eventData)
   } catch (error) {
-    console.error("Error fetching event:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error("Error fetching event:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
-
