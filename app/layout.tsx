@@ -6,9 +6,9 @@ import "./globals.css"
 import { ClientLayout } from "./client-layout"
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
-  generator: "v0.app",
+  title: "Biz Trade Fairs",
+  description: "Discover global trade fairs, connect with opportunities, and grow your business network.",
+  generator: "Biz Trade Fairs",
 }
 
 export default function RootLayout({
