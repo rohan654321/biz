@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,7 +24,9 @@ import {
   ChevronRight,
 } from "lucide-react"
 import EventPage from "./info"
-// import Attendees from "./attendees"
+import Attendees from "./AttendeesManagement"
+import ExhibitorsManagement from "./ExhibitorsManagement"
+import VisitorBadgeSettings from "./Visitor-Badge-Settings"
 // import Exhibitors from "./exhibitors"
 // import Analytics from "./analytics"
 // ...create/import other components as needed
@@ -51,6 +53,16 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState<string[]>(["main", "lead-management"])
   const [activeSection, setActiveSection] = useState("dashboard")
+  const [params, setParams] = useState<{ id: string } | null>(null)
+
+  useEffect(() => {
+    // Simulate async params resolution
+    const resolveParams = async () => {
+      const resolvedParams = await Promise.resolve({ id: eventId })
+      setParams(resolvedParams)
+    }
+    resolveParams()
+  }, [eventId])
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups((prev) =>
@@ -90,18 +102,20 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
     },
   ]
 
-  const mockParams = Promise.resolve({ id: eventId })
-
   const renderContent = () => {
+    if (!params) {
+      return <div>Loading...</div>
+    }
+
     switch (activeSection) {
       case "dashboard":
-        return <EventPage params={mockParams} />
+        return <EventPage params={Promise.resolve(params)} />
       case "attendees":
-        return <div>Attendees Component</div>
+        return <Attendees eventId={eventId} />
       case "exhibitors":
-        return <div>Exhibitors Component</div>
-      case "analytics":
-        return <div>Analytics Component</div>
+        return <ExhibitorsManagement eventId={eventId} />
+      case "badge-settings":
+        return <VisitorBadgeSettings />
       default:
         return <div>Select a section</div>
     }
