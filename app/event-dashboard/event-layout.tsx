@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
@@ -11,11 +11,6 @@ import {
   Briefcase,
   Megaphone,
   Tag,
-  PlusCircle,
-  FileText,
-  CalendarDays,
-  Mic,
-  MessageSquare,
   BarChart3,
   ArrowLeft,
   Menu,
@@ -24,9 +19,7 @@ import {
   ChevronRight,
 } from "lucide-react"
 import EventPage from "./info"
-import Attendees from "./AttendeesManagement"
-import ExhibitorsManagement from "./ExhibitorsManagement"
-import VisitorBadgeSettings from "./Visitor-Badge-Settings"
+// import Attendees from "./attendees"
 // import Exhibitors from "./exhibitors"
 // import Analytics from "./analytics"
 // ...create/import other components as needed
@@ -74,9 +67,7 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
     {
       id: "main",
       label: "Main",
-      items: [
-        { title: "Event Info", icon: LayoutDashboard, id: "dashboard" },
-      ],
+      items: [{ title: "Event Info", icon: LayoutDashboard, id: "dashboard" }],
     },
     {
       id: "lead-management",
@@ -111,13 +102,13 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
       case "dashboard":
         return <EventPage params={Promise.resolve(params)} />
       case "attendees":
-        return <Attendees eventId={eventId} />
+        return <div>Attendees Component</div>
       case "exhibitors":
-        return <ExhibitorsManagement eventId={eventId} />
-      case "badge-settings":
-        return <VisitorBadgeSettings />
+        return <div>Exhibitors Component</div>
+      case "analytics":
+        return <div>Analytics Component</div>
       default:
-        return <div>Select a section</div>
+        return <div className="p-4">Select a section</div>
     }
   }
 
@@ -131,17 +122,18 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
 
   return (
     <div className="flex min-h-screen w-full bg-background">
+      {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <div
+      <aside
         className={`
-          fixed md:relative
+          fixed md:static
           w-64 min-h-screen bg-card border-r border-border z-50
           transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
@@ -149,6 +141,7 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
           flex flex-col
         `}
       >
+        {/* Mobile Header inside sidebar */}
         <div className="flex items-center justify-between p-4 border-b border-border md:hidden">
           <h2 className="text-lg font-semibold">Event Menu</h2>
           <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
@@ -156,39 +149,46 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
           </Button>
         </div>
 
-        {/* Groups */}
+        {/* Sidebar Groups */}
         <div className="flex-1 overflow-y-auto p-4">
           {sidebarGroups.map((group) => (
             <div key={group.id} className="mb-4">
+              {/* Group header */}
               <div
                 className="flex items-center justify-between cursor-pointer px-2 py-2 rounded hover:bg-muted"
                 onClick={() => toggleGroup(group.id)}
               >
-                <span>{group.label}</span>
+                <span className="font-medium">{group.label}</span>
                 {expandedGroups.includes(group.id) ? (
                   <ChevronDown className="w-4 h-4" />
                 ) : (
                   <ChevronRight className="w-4 h-4" />
                 )}
               </div>
+
+              {/* Items */}
               {expandedGroups.includes(group.id) && (
                 <div className="mt-2 space-y-1">
                   {group.items.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        setActiveSection(item.id)
-                        setSidebarOpen(false)
-                      }}
-                      className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
-                        activeSection === item.id
-                          ? "bg-primary/10 text-primary border-l-4 border-primary"
-                          : "hover:bg-muted"
-                      }`}
-                    >
-                      <item.icon className="w-4 h-4 flex-shrink-0" />
-                      <span>{item.title}</span>
-                    </button>
+                <button
+  key={item.id}
+  onClick={() => {
+    setActiveSection(item.id)
+    setSidebarOpen(false)
+  }}
+  className={`
+    w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors
+    border-l-4
+    ${activeSection === item.id
+      ? "bg-primary/10 text-primary border-primary"
+      : "border-transparent hover:bg-muted"
+    }
+  `}
+>
+  <item.icon className="w-4 h-4 flex-shrink-0" />
+  <span>{item.title}</span>
+</button>
+
                   ))}
                 </div>
               )}
@@ -196,24 +196,28 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
           ))}
         </div>
 
+        {/* Footer */}
         <div className="border-t border-border p-4 flex-shrink-0">
           <Button onClick={() => router.push("/events")} variant="outline" className="w-full">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Events
           </Button>
         </div>
-      </div>
+      </aside>
 
       {/* Content */}
       <div className="flex-1 flex flex-col min-h-screen">
+        {/* Mobile Top Bar */}
         <div className="md:hidden flex items-center justify-between p-4 bg-card border-b">
           <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
             <Menu className="h-4 w-4" />
           </Button>
-          <h1 className="text-lg font-semibold">{getCurrentSectionTitle()}</h1>
+          <h1 className="text-lg font-semibold truncate">{getCurrentSectionTitle()}</h1>
           <div className="w-8" />
         </div>
-        <main className="flex-1 p-6 overflow-auto">{renderContent()}</main>
+
+        {/* Main Content */}
+        <main className="flex-1 p-4 sm:p-6 overflow-auto">{renderContent()}</main>
       </div>
     </div>
   )
