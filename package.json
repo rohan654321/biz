@@ -40,6 +40,7 @@
     "keen-slider": "^6.8.6",
     "lucide-react": "^0.513.0",
     "mongodb": "^6.19.0",
+    "mongoose": "^8.18.3",
     "nanoid": "^5.1.5",
     "next": "15.3.3",
     "next-auth": "^4.24.11",

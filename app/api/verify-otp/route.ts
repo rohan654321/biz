@@ -1,66 +1,41 @@
 import { NextResponse } from "next/server";
-import { readOtpStore, writeOtpStore, cleanExpiredOtps } from "@/lib/otpStore";
+import dbConnect from "@/lib/dbConnect";
+import Otp from "@/models/otp";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    let { email, otp } = body;
-
+    const { email, otp } = await req.json();
     if (!email || !otp) {
-      return NextResponse.json(
-        { message: "Email & OTP required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: "Email & OTP are required" }, { status: 400 });
     }
 
-    // Clean expired OTPs first
-    cleanExpiredOtps();
+    await dbConnect();
 
-    // Normalize inputs
     const normalizedEmail = email.trim().toLowerCase();
-    const normalizedOtp = String(otp).trim();
 
-    console.log(`Verifying OTP for ${normalizedEmail}: ${normalizedOtp}`);
+    // Find OTP
+    const record = await Otp.findOne({ email: normalizedEmail }).sort({ createdAt: -1 });
 
-    // Read from storage
-    const otpStore = readOtpStore();
-    console.log('Stored OTPs:', otpStore);
-
-    const storedOtpData = otpStore[normalizedEmail];
-
-    if (!storedOtpData) {
-      return NextResponse.json(
-        { message: "OTP not found or expired" },
-        { status: 400 }
-      );
+    if (!record) {
+      return NextResponse.json({ message: "OTP not found" }, { status: 400 });
     }
 
-    // Check expiration
-    if (Date.now() > storedOtpData.expiresAt) {
-      delete otpStore[normalizedEmail]; // Clean up expired OTP
-      writeOtpStore(otpStore);
-      return NextResponse.json(
-        { message: "OTP has expired" },
-        { status: 400 }
-      );
+    // Check expiry
+    if (record.expiresAt < new Date()) {
+      return NextResponse.json({ message: "OTP expired" }, { status: 400 });
     }
 
-    // Verify OTP
-    if (storedOtpData.otp === normalizedOtp) {
-      delete otpStore[normalizedEmail]; // Clear after success
-      writeOtpStore(otpStore);
-      return NextResponse.json({ message: "OTP verified successfully" }, { status: 200 });
+    // Check match
+    if (record.otp !== otp) {
+      return NextResponse.json({ message: "Invalid OTP" }, { status: 400 });
     }
 
-    return NextResponse.json(
-      { message: "Invalid OTP" },
-      { status: 400 }
-    );
+    // ✅ OTP is valid → delete it (one-time use)
+    await Otp.deleteMany({ email: normalizedEmail });
+
+    return NextResponse.json({ message: "OTP verified successfully" });
   } catch (err) {
     console.error("Verify OTP error:", err);
-    return NextResponse.json(
-      { message: "Server error verifying OTP" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Failed to verify OTP" }, { status: 500 });
   }
 }
