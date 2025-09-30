@@ -39,7 +39,7 @@ interface AttendeesManagementProps {
   eventId: string
 }
 
-export default function AttendeesManagement({ eventId }: AttendeesManagementProps) {
+export default function ExhibitorManagement({ eventId }: AttendeesManagementProps) {
   const [attendees, setAttendees] = useState<Attendee[]>([])
   const [filteredAttendees, setFilteredAttendees] = useState<Attendee[]>([])
   const [loading, setLoading] = useState(true)

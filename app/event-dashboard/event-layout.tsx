@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState , useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,8 +19,9 @@ import {
   ChevronRight,
 } from "lucide-react"
 import EventPage from "./info"
-// import Attendees from "./attendees"
-// import Exhibitors from "./exhibitors"
+import AttendeesManagement from "./AttendeesManagement"
+import ExhibitorManagement from "./ExhibitorsManagement"
+import VisitorBadgeSettings from "./Visitor-Badge-Settings"
 // import Analytics from "./analytics"
 // ...create/import other components as needed
 
@@ -102,11 +103,11 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
       case "dashboard":
         return <EventPage params={Promise.resolve(params)} />
       case "attendees":
-        return <div>Attendees Component</div>
+       return <AttendeesManagement eventId={eventId} />
       case "exhibitors":
-        return <div>Exhibitors Component</div>
-      case "analytics":
-        return <div>Analytics Component</div>
+       return <ExhibitorManagement eventId={eventId} />
+      case "badge-settings":
+        return <VisitorBadgeSettings />
       default:
         return <div className="p-4">Select a section</div>
     }
