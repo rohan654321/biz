@@ -12,6 +12,7 @@ import GetAppSection from "@/components/GetAppSection";
 import ScrollBanner from "@/components/BannerCarousel";
 import BannerCarousel from "@/components/BannerCarousel";
 import ImageBannerCarousel from "@/components/BannerCarousel";
+import Navbar from "@/components/navbar";
   const bannerImages = [
     "/banners/banner1.jpg",
     "/banners/banner2.png",
@@ -21,6 +22,8 @@ import ImageBannerCarousel from "@/components/BannerCarousel";
 
 export default function Home() {
   return (
+    <div>
+      <Navbar />
     <div className="bg-white min-h-screen">
        <HeroSlideshow />
        <CategoryBrowse />
@@ -38,6 +41,7 @@ export default function Home() {
        <EventReviews />
        <GetAppSection />
        <div></div>
+    </div>
     </div>
   );
 }

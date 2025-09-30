@@ -40,40 +40,43 @@ export default function EventPage({ params }: EventPageProps) {
   const router = useRouter()
   const { toast } = useToast()
 
-  useEffect(() => {
-    async function fetchEvent() {
-      try {
-        setLoading(true)
-        setError(null)
+useEffect(() => {
+  async function fetchEvent() {
+    try {
+      setLoading(true)
+      setError(null)
 
-        const resolvedParams = await params
-        const eventId = resolvedParams.id
+      const resolvedParams = await params
+      const eventId = resolvedParams.id
 
-        const res = await fetch(`/api/events/${eventId}`)
+      const res = await fetch(`/api/events/${eventId}`)
 
-        if (!res.ok) {
-          if (res.status === 404) {
-            setError("Event not found")
-            return
-          }
-          throw new Error(`HTTP error! status: ${res.status}`)
+      if (!res.ok) {
+        if (res.status === 404) {
+          setError("Event not found")
+          return
         }
-
-        const data = await res.json()
-
-        setEvent(data.event)
-        setAverageRating(data.event.averageRating || 0)
-        setTotalReviews(data.event.totalReviews || 0)
-      } catch (err) {
-        console.error("Error fetching event:", err)
-        setError(err instanceof Error ? err.message : "An error occurred")
-      } finally {
-        setLoading(false)
+        throw new Error(`HTTP error! status: ${res.status}`)
       }
-    }
 
-    fetchEvent()
-  }, [params])
+      const data = await res.json()
+
+      // The API returns the event directly, not nested under 'event'
+      console.log("API Response:", data) // This will show you the actual structure
+      
+      setEvent(data) // Set the event directly
+      setAverageRating(data.averageRating || 0)
+      setTotalReviews(data.reviewCount || 0) // Use reviewCount from your API
+    } catch (err) {
+      console.error("Error fetching event:", err)
+      setError(err instanceof Error ? err.message : "An error occurred")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  fetchEvent()
+}, [params])
 
   // Check if event is saved on load
   useEffect(() => {
