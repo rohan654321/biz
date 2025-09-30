@@ -1,17 +1,34 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, User, Mail, Building, MapPin, CheckCircle, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from "next/image";
 
 const OrganizerSignup = () => {
+    const messages = [
+    {
+      title: "Enhance",
+      subtitle: "visibility, credibility, & connect with new audiences",
+    },
+    {
+      title: "Boost",
+      subtitle: "your event outreach with multi-channel promotions",
+    },
+    {
+      title: "Grow",
+      subtitle: "your audience and build genuine trust",
+    },
+  ];
   const [currentStep, setCurrentStep] = useState(1);
+  const [textIndex, setTextIndex] = useState(0);
+  // const [currentStep, setCurrentStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [otp, setOtp] = useState("");
   const [showOtpSection, setShowOtpSection] = useState(false);
   const [showMessage, setShowMessage] = useState(true);
   const [showPasswordFields, setShowPasswordFields] = useState(false);
+  const [showPopup, setShowPopup] = useState(true);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -28,82 +45,82 @@ const OrganizerSignup = () => {
       [e.target.name]: e.target.value
     });
   };
-  const handleInitialSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
-  setShowOtpSection(true);
-};
-//  const handleInitialSubmit = async (e: React.FormEvent) => {
-//   e.preventDefault();
-//   try {
-//     const res = await fetch("/api/send-otp", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({ email: formData.email }),
-//     });
+  //   const handleInitialSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setShowOtpSection(true);
+  // };
+  const handleInitialSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      });
 
-//     if (res.ok) {
-//       setShowOtpSection(true);
-//       setShowMessage(true);
-//     } else {
-//       const data = await res.json();
-//       alert(data.message || "Failed to send OTP");
-//     }
-//   } catch (err) {
-//     console.error(err);
-//     alert("Error sending OTP");
-//   }
-// }
-const handleOtpVerify = (e: React.FormEvent) => {
-  e.preventDefault();
-  // Proceed regardless of input
-  setShowOtpSection(false);
-  setCurrentStep(2);
-};
+      if (res.ok) {
+        setShowOtpSection(true);
+        setShowMessage(true);
+      } else {
+        const data = await res.json();
+        alert(data.message || "Failed to send OTP");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error sending OTP");
+    }
+  }
+  // const handleOtpVerify = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   // Proceed regardless of input
+  //   setShowOtpSection(false);
+  //   setCurrentStep(2);
+  // };
 
-// const handleOtpVerify = async (e: React.FormEvent) => {
-//   e.preventDefault();
-//   try {
-//     const res = await fetch("/api/verify-otp", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({ email: formData.email, otp }),
-//     });
+  const handleOtpVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, otp }),
+      });
 
-//     if (res.ok) {
-//       setShowOtpSection(false);
-//       setCurrentStep(2);
-//     } else {
-//       const data = await res.json();
-//       alert(data.message || "OTP verification failed");
-//     }
-//   } catch (err) {
-//     console.error(err);
-//     alert("Error verifying OTP");
-//   }
-// };
-const handleResendOtp = () => {
-  alert("OTP resent successfully!");
-};
-// const handleResendOtp = async () => {
-//   try {
-//     const res = await fetch("/api/send-otp", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({ email: formData.email }),
-//     });
+      if (res.ok) {
+        setShowOtpSection(false);
+        setCurrentStep(2);
+      } else {
+        const data = await res.json();
+        alert(data.message || "OTP verification failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error verifying OTP");
+    }
+  };
+  // const handleResendOtp = () => {
+  //   alert("OTP resent successfully!");
+  // };
+  const handleResendOtp = async () => {
+    try {
+      const res = await fetch("/api/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      });
 
-//     if (res.ok) {
-//       alert("OTP resent successfully!");
-//       setShowMessage(true);
-//     } else {
-//       const data = await res.json();
-//       alert(data.message || "Failed to resend OTP");
-//     }
-//   } catch (err) {
-//     console.error(err);
-//     alert("Error resending OTP");
-//   }
-// };
+      if (res.ok) {
+        alert("OTP resent successfully!");
+        setShowMessage(true);
+      } else {
+        const data = await res.json();
+        alert(data.message || "Failed to resend OTP");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error resending OTP");
+    }
+  };
   const handleBackToForm = () => {
     setShowOtpSection(false);
   };
@@ -141,6 +158,13 @@ const handleResendOtp = () => {
     // Redirect to dashboard or login
     console.log('Account created successfully');
   };
+    useEffect(() => {
+    const interval = setInterval(() => {
+      setTextIndex((prev) => (prev + 1) % messages.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Step 1: Initial Signup Form with OTP Section in same card
   if (currentStep === 1) {
@@ -169,32 +193,29 @@ const handleResendOtp = () => {
               </div>
             </Link>
 
-            <h1 className="text-5xl font-bold leading-tight mb-6 text-white">
-              Enhance <br />
-              <span className="font-normal text-2xl">
-                visibility, credibility, <br />
-                & connect with new audiences
-              </span>
-            </h1>
+            {/* Animated Text */}
+            <div
+              key={textIndex} // triggers animation on change
+              className="transition-opacity duration-1000 ease-in-out opacity-100 animate-fade"
+            >
+              <h1 className="text-5xl font-bold leading-tight mb-6 text-white">
+                {messages[textIndex].title}
+                <br />
+                <span className="font-normal text-2xl">
+                  {messages[textIndex].subtitle}
+                </span>
+              </h1>
+            </div>
 
             <p className="text-base mb-8 leading-relaxed text-white">
               Showcase your event to an engaged audience and build genuine trust using targeted, multi-channel outreach.
-              Reach potential attendees through platforms they prefer—social media, mobile updates, our dynamic website, 
+              Reach potential attendees through platforms they prefer—social media, mobile updates, our dynamic website,
               curated newsletters, and direct database access. Present your event as a credible industry opportunity.
             </p>
 
             <button className="bg-transparent border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-blue-900 transition-all">
               LEARN MORE
             </button>
-
-            {/* Pagination dots */}
-            <div className="flex space-x-2 mt-12">
-              <div className="w-3 h-3 bg-blue-900 rounded-full opacity-30"></div>
-              <div className="w-3 h-3 bg-blue-900 rounded-full opacity-30"></div>
-              <div className="w-3 h-3 bg-blue-900 rounded-full"></div>
-              <div className="w-3 h-3 bg-blue-900 rounded-full opacity-30"></div>
-              <div className="w-3 h-3 bg-blue-900 rounded-full opacity-30"></div>
-            </div>
           </div>
 
           {/* Right side signup form */}
@@ -256,7 +277,7 @@ const handleResendOtp = () => {
                   {showMessage && (
                     <div className="bg-green-500 text-white p-3 rounded-lg">
                       <p className="text-sm">
-                        We have sent an OTP to <strong>{formData.email}</strong>. 
+                        We have sent an OTP to <strong>{formData.email}</strong>.
                         Please check your inbox and enter it below to verify.
                       </p>
                     </div>
@@ -297,12 +318,12 @@ const handleResendOtp = () => {
                 </form>
 
                 <div className="text-center">
-                 <button
-  onClick={handleResendOtp} // Changed from handleResendEmail
-  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
->
-  Resend OTP
-</button>
+                  <button
+                    onClick={handleResendOtp} // Changed from handleResendEmail
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  >
+                    Resend OTP
+                  </button>
                 </div>
               </div>
             )}
@@ -418,11 +439,10 @@ const handleResendOtp = () => {
             </div>
 
             {/* Password Fields Section - Animated */}
-            <div className={`transition-all duration-700 ease-in-out overflow-hidden ${
-              showPasswordFields 
-                ? 'max-h-96 opacity-100 translate-y-0' 
+            <div className={`transition-all duration-700 ease-in-out overflow-hidden ${showPasswordFields
+                ? 'max-h-96 opacity-100 translate-y-0'
                 : 'max-h-0 opacity-0 -translate-y-4'
-            }`}>
+              }`}>
               {showPasswordFields && (
                 <div className="pt-6 border-t border-gray-200">
                   <div className="text-center mb-6">
@@ -501,47 +521,51 @@ const handleResendOtp = () => {
       </div>
     );
   }
-
   // Step 4: Success Screen
   if (currentStep === 4) {
+    // popup state
+
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-        <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-xl text-center">
-          <div className="bg-green-500 text-white p-4 rounded-lg mb-6 relative">
-            <p className="font-semibold">Your password has been set successfully!</p>
-            <button
-              onClick={handleFinalContinue}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white text-green-500 px-3 py-1 rounded text-sm font-semibold"
-            >
-              Ok
-            </button>
-          </div>
+        <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-xl text-center relative">
 
+          {/* Popup overlay inside card */}
+          {showPopup && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-3xl z-20">
+              <div className="bg-green-500 text-white p-6 rounded-xl shadow-lg w-80 relative">
+                <p className="font-semibold mb-4">
+                  Your password has been set successfully!
+                </p>
+                <button
+                  onClick={() => setShowPopup(false)}
+                  className="bg-white text-green-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-all"
+                >
+                  Ok
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Rest of success screen content */}
           <div className="space-y-4 mb-6">
             <div className="flex items-center justify-center space-x-2 text-sm">
               <span className="text-gray-600">Email Verified</span>
               <CheckCircle className="w-5 h-5 text-green-500" />
             </div>
-            
+
             <div className="bg-green-100 border border-green-200 text-green-800 p-4 rounded-lg text-sm">
-              You have successfully verified your email. To prevent your account from the unauthorized access, we recommend you to kindly reset the password.
+              You have successfully verified your email. To prevent your account from unauthorized access, we recommend you to kindly reset the password.
             </div>
           </div>
-{/* 
-          <div className="space-y-4 text-left">
-            <div className="flex justify-between py-2 border-b">
-              <span className="text-gray-600">Password</span>
-              <span>••••••••••</span>
-            </div>
-            <div className="flex justify-between py-2">
-              <span className="text-gray-600">Confirm Password</span>
-              <span>••••••••••</span>
-            </div>
-          </div> */}
 
           <div className="mt-8 text-center">
-            <p className="text-green-600 font-semibold mb-4">Account created successfully!</p>
-            <Link href="/login" className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all inline-block">
+            <p className="text-green-600 font-semibold mb-4">
+              Account created successfully!
+            </p>
+            <Link
+              href="/login"
+              className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all inline-block"
+            >
               Go to Login
             </Link>
           </div>
