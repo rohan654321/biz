@@ -4,14 +4,12 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-
-
 export async function GET(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
-    const { eventId } = params
+    const { eventId } =await params
     const { searchParams } = new URL(req.url)
     const statusParam = searchParams.get('status')
 
