@@ -1,45 +1,36 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
-import { readOtpStore, writeOtpStore, cleanExpiredOtps } from "@/lib/otpStore";
+import dbConnect from "@/lib/dbConnect"; // your MongoDB connection
+import Otp from "@/models/otp";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { email } = body;
-
+    const { email } = await req.json();
     if (!email) {
       return NextResponse.json({ message: "Email is required" }, { status: 400 });
     }
 
-    // Clean expired OTPs first
-    cleanExpiredOtps();
+    await dbConnect();
 
-    // Normalize email
     const normalizedEmail = email.trim().toLowerCase();
-    
-    // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    // Read current store
-    const otpStore = readOtpStore();
-    
-    // Store OTP with expiration (5 minutes)
-    otpStore[normalizedEmail] = {
-      otp,
-      expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes
-    };
 
-    // Write back to storage
-    writeOtpStore(otpStore);
+    // Expiry time = 5 mins
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    console.log(`OTP for ${normalizedEmail}: ${otp}`);
-    console.log('All stored OTPs:', otpStore);
+    // Remove old OTPs for this email
+    await Otp.deleteMany({ email: normalizedEmail });
 
+    // Save new OTP
+    await Otp.create({ email: normalizedEmail, otp, expiresAt });
+
+    // Setup nodemailer
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER || "mondalrohan201@gmail.com",
         pass: process.env.EMAIL_PASS || "vwpg xiry lmgg jgbp",
+
       },
     });
 
@@ -50,7 +41,7 @@ export async function POST(req: Request) {
       html: `<p>Your OTP code is <b>${otp}</b>. It will expire in 5 minutes.</p>`,
     });
 
-    return NextResponse.json({ message: "OTP sent successfully" }, { status: 200 });
+    return NextResponse.json({ message: "OTP sent successfully" });
   } catch (err) {
     console.error("Send OTP error:", err);
     return NextResponse.json({ message: "Failed to send OTP" }, { status: 500 });
