@@ -1,73 +1,70 @@
-"use client";
+"use client"
 
-import { useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { ChevronDown, Search, User } from 'lucide-react';
+import { useState } from "react"
+import Link from "next/link"
+import Image from "next/image"
+import { ChevronDown, Search, User } from "lucide-react"
 import { signIn, signOut, useSession } from "next-auth/react"
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation"
 
 export default function Navbar() {
-  const [exploreOpen, setExploreOpen] = useState(false);  
-  const [country, setCountry] = useState('IND');
+  const [exploreOpen, setExploreOpen] = useState(false)
+  const [country, setCountry] = useState("IND")
 
-  const router = useRouter();
+  const router = useRouter()
 
-  const toggleExplore = () => setExploreOpen((prev) => !prev);
+  const toggleExplore = () => setExploreOpen((prev) => !prev)
 
   const { data: session } = useSession()
   const [showMenu, setShowMenu] = useState(false)
 
   const handleAddevent = async () => {
     if (!session) {
-      alert("You are not logged in. Please login as an organizer.");
-      router.push("/login");
-      return;
+      alert("You are not logged in. Please login as an organizer.")
+      router.push("/login")
+      return
     }
 
-    const role = session.user?.role;
+    const role = session.user?.role
 
     if (role == "ORGANIZER") {
-      router.push(`/organizer-dashboard/${session.user?.id}`);
+      router.push(`/organizer-dashboard/${session.user?.id}`)
     } else {
       const confirmed = window.confirm(
-        `You are logged in as '${role}'.\n\nPlease login as an organizer to access this page.\n\nClick OK to logout and login as an organizer, or Cancel to stay logged in.`
-      );
+        `You are logged in as '${role}'.\n\nPlease login as an organizer to access this page.\n\nClick OK to logout and login as an organizer, or Cancel to stay logged in.`,
+      )
       if (confirmed) {
-        await signOut({ redirect: false });
-        router.push("/login");
+        await signOut({ redirect: false })
+        router.push("/login")
       }
     }
-  };
-
+  }
 
   const handleDashboard = () => {
-    const role = session?.user?.role; // 👈 adjust this depending on how your role is stored
+    const role = session?.user?.role
 
     if (role === "ORGANIZER") {
-      router.push(`/organizer-dashboard/${session?.user?.id}`);
+      router.push(`/organizer-dashboard/${session?.user?.id}`)
     } else if (role === "superadmin") {
-      router.push("/admin-dashboard");
+      router.push("/admin-dashboard")
     } else if (role === "ATTENDEE") {
-      router.push(`/dashboard/${session?.user?.id}`);
-    }else {
-      router.push("/login"); // fallback route
+      router.push(`/dashboard/${session?.user?.id}`)
+    } else {
+      router.push("/login")
     }
-  };
-
+  }
 
   const handleClick = () => {
     setShowMenu(!showMenu)
   }
 
   const handleLogin = () => {
-    signIn(undefined, { callbackUrl: "/" }) // Redirect after login
+    signIn(undefined, { callbackUrl: "/" })
   }
 
   const handleLogout = () => {
-    signOut({ callbackUrl: "/login" }) // Redirect after logout
+    signOut({ callbackUrl: "/login" })
   }
-
 
   return (
     <nav className="bg-white shadow-sm">
@@ -80,9 +77,9 @@ export default function Navbar() {
                 <Image
                   src="/logo/bizlogo.png"
                   alt="BizTradeFairs.com"
-                  width={160}  // Increase width
-                  height={80}  // Adjust proportionally
-                  className="h-42 w-auto " // Optional for responsiveness
+                  width={160}
+                  height={80}
+                  className="h-42 w-auto "
                 />
               </div>
             </Link>
@@ -100,13 +97,19 @@ export default function Navbar() {
                 <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
                   <ul className="py-1">
                     <li>
-                      <Link href="/trade-fairs"><p className="block px-4 py-2 hover:bg-gray-100">Trade Fairs</p></Link>
+                      <Link href="/trade-fairs">
+                        <p className="block px-4 py-2 hover:bg-gray-100">Trade Fairs</p>
+                      </Link>
                     </li>
                     <li>
-                      <Link href="/conferences"><p className="block px-4 py-2 hover:bg-gray-100">Conferences</p></Link>
+                      <Link href="/conferences">
+                        <p className="block px-4 py-2 hover:bg-gray-100">Conferences</p>
+                      </Link>
                     </li>
                     <li>
-                      <Link href="/webinars"><p className="block px-4 py-2 hover:bg-gray-100">Webinars</p></Link>
+                      <Link href="/webinars">
+                        <p className="block px-4 py-2 hover:bg-gray-100">Webinars</p>
+                      </Link>
                     </li>
                   </ul>
                 </div>
@@ -135,8 +138,9 @@ export default function Navbar() {
               <p className="text-gray-700 hover:text-gray-900">Speakers</p>
             </Link>
 
-            <p onClick={handleAddevent} className="text-gray-700 hover:text-gray-900  cursor-pointer">Add Event</p>
-
+            <p onClick={handleAddevent} className="text-gray-700 hover:text-gray-900  cursor-pointer">
+              Add Event
+            </p>
 
             {/* <div className="flex items-center space-x-1">
                <Image
@@ -181,7 +185,6 @@ export default function Navbar() {
                     >
                       Login
                     </button>
-
                   )}
                 </div>
               )}
@@ -190,5 +193,5 @@ export default function Navbar() {
         </div>
       </div>
     </nav>
-  );
+  )
 }
