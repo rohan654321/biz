@@ -19,6 +19,7 @@ import {
   Menu,
   X,
   HelpCircle,
+   Network, MessageSquare, Users
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import DashboardOverview from "./dashboard-overview"
@@ -27,6 +28,8 @@ import CreateEvent from "./create-event"
 import SettingsPanel from "./settings-panel"
 import OrganizerInfo from "./organizer-info"
 import { HelpSupport } from "@/components/HelpSupport"
+import MessagesCenter from "./messages-center"
+import { ConnectionsSection } from "../dashboard/connections-section"
 
 interface OrganizerDashboardPageProps {
   organizerId: string
@@ -175,8 +178,27 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
           icon: Plus,
           id: "create-event",
         },
+
+        
       ],
     },
+
+{
+  id: "network",
+  label: "Network",
+  items: [
+    {
+      title: "Connect",
+      icon: Users,          // 👥 Better than HelpCircle
+      id: "connect",
+    },
+    {
+      title: "Messages",
+      icon: MessageSquare,  // 💬 Better than Settings
+      id: "messages",
+    },
+  ],
+}
   ]
 
   const individualSidebarItems: SidebarItem[] = [
@@ -276,6 +298,10 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
         return <SettingsPanel organizerData={organizerData} />
       case "help-support":
         return <HelpSupport />
+      case "connect":
+        return <ConnectionsSection userId={organizerData.id}/>
+      case "messages":
+        return <MessagesCenter organizerId={organizerId}/>
       default:
         return <div>Select a section from the sidebar</div>
     }
