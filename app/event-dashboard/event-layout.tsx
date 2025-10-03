@@ -22,6 +22,13 @@ import EventPage from "./info"
 import AttendeesManagement from "./AttendeesManagement"
 import ExhibitorManagement from "./ExhibitorsManagement"
 import VisitorBadgeSettings from "./Visitor-Badge-Settings"
+import EventPromotion from "./promotions"
+import ActivePromotions from "./active-promotions"
+import FeedbackReplyManagement from "./FeedbackReplyManagement"
+import ExhibitorsManagement from "./TotalExhibitores"
+import AddExhibitor from "./AddExhibitor"
+import ExhibitorsForEvent from "./ExhibitorsForEvent"
+import { ExhibitorManualProfessional } from "../organizer-dashboard/exhibitor-manual/exhibitor-manual"
 // import Analytics from "./analytics"
 // ...create/import other components as needed
 
@@ -92,6 +99,18 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
       label: "Analytics",
       items: [{ title: "Analytics", icon: BarChart3, id: "analytics" }],
     },
+    {
+      id: "feedback",
+      label: "Feedback",
+      items: [{ title: "Feedback", icon: BarChart3, id: "feedback" }],
+    },
+    {
+      id: "exhibitor",
+      label: "Exhibitor",
+      items: [{ title: "Total Exhibitor", icon: BarChart3, id: "total-exhibitores" },
+      { title: "Add Exhibitor", icon: BarChart3, id: "add-exhibitores" },
+    { title: "Exhibitor Manual", icon: BarChart3, id: "exhibitor-manual" }],
+    },
   ]
 
   const renderContent = () => {
@@ -102,12 +121,24 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
     switch (activeSection) {
       case "dashboard":
         return <EventPage params={Promise.resolve(params)} />
+         case "promotions":
+        return <EventPromotion eventId={eventId} />
+         case "active-promotions":
+        return <ActivePromotions eventId={eventId} />
       case "attendees":
        return <AttendeesManagement eventId={eventId} />
       case "exhibitors":
        return <ExhibitorManagement eventId={eventId} />
+       case "feedback":
+         return <FeedbackReplyManagement eventId={eventId}  />
       case "badge-settings":
         return <VisitorBadgeSettings />
+      // case "total-exhibitores":
+      //   return <ExhibitorsForEvent eventId={eventId} />
+      // case "add-exhibitores":
+      //   return <AddExhibitor eventId={eventId} />
+      //   case "exhibitor-manual":
+      //   return <ExhibitorManualProfessional organizerId={eventId} />
       default:
         return <div className="p-4">Select a section</div>
     }

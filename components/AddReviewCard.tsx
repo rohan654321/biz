@@ -55,34 +55,30 @@ export default function Reviews({ eventId, isOrganizer = false }: ReviewsProps) 
       }
       
       const data = await res.json()
-      console.log('Fetched reviews:', data) // Debug log
+console.log('Fetched reviews:', data)
+
+// Use data.reviews instead of data
+const reviewsWithReplies = await Promise.all(
+  (data.reviews || []).map(async (review: Review) => {
+    try {
+      console.log(`Fetching replies for review ${review.id}`)
+      const repliesRes = await fetch(`/api/reviews/${review.id}/replies`)
       
-      // Always fetch replies for each review (not just for organizers)
-      const reviewsWithReplies = await Promise.all(
-        data.map(async (review: Review) => {
-          try {
-            console.log(`Fetching replies for review ${review.id}`) // Debug log
-            const repliesRes = await fetch(`/api/reviews/${review.id}/replies`)
-            console.log(`Replies response status for review ${review.id}:`, repliesRes.status) // Debug log
-            
-            if (repliesRes.ok) {
-              const repliesData = await repliesRes.json()
-              console.log(`Replies data for review ${review.id}:`, repliesData) // Debug log
-              return { ...review, replies: repliesData.replies || [] }
-            } else {
-              // Log the error response
-              const errorText = await repliesRes.text()
-              console.error(`Error fetching replies for review ${review.id}:`, repliesRes.status, errorText)
-            }
-          } catch (error) {
-            console.error(`Error fetching replies for review ${review.id}:`, error)
-          }
-          return { ...review, replies: [] }
-        })
-      )
+      if (repliesRes.ok) {
+        const repliesData = await repliesRes.json()
+        return { ...review, replies: repliesData.replies || [] }
+      }
+    } catch (error) {
+      console.error(`Error fetching replies for review ${review.id}:`, error)
+    }
+    return { ...review, replies: [] }
+  })
+)
+
+setReviews(reviewsWithReplies)
+
       
-      console.log('Reviews with replies:', reviewsWithReplies) // Debug log
-      setReviews(reviewsWithReplies)
+      
     } catch (err) {
       console.error('Error in fetchReviews:', err) // Debug log
       setError(err instanceof Error ? err.message : 'Failed to fetch reviews')
@@ -179,9 +175,9 @@ function ReviewCard({
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
-            {review.user.avatar ? (
+            {review.user?.avatar ? (
               <img
-                src={review.user.avatar}
+                src={review.user?.avatar}
                 alt={`${review.user.firstName} ${review.user.lastName}`}
                 className="w-10 h-10 rounded-full"
               />
@@ -303,7 +299,7 @@ function ReplyCard({ reply }: { reply: ReviewReply }) {
       <div className="flex items-start gap-3">
         {reply.user.avatar ? (
           <img
-            src={reply.user.avatar}
+            src={reply.user?.avatar}
             alt={`${reply.user.firstName} ${reply.user.lastName}`}
             className="w-8 h-8 rounded-full"
           />

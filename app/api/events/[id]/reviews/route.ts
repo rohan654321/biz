@@ -3,47 +3,75 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    const params = await context.params
-    const session = await getServerSession(authOptions)
 
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id: eventId } = await params
+    const { searchParams } = new URL(request.url)
+    const includeReplies = searchParams.get("includeReplies") === "true"
+
+    console.log("[v0] Fetching reviews for event ID:", eventId)
+
+    // Fetch event details
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: {
+        id: true,
+        title: true,
+      },
+    })
+
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
 
+    // Fetch reviews for this event
     const reviews = await prisma.review.findMany({
-      where: {
-        eventId: params.id,
-        isPublic: true
-      },
+      where: { eventId },
       include: {
         user: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
-            avatar: true
-          }
-        }
+            avatar: true,
+          },
+        },
+        event: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        ...(includeReplies && {
+          replies: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  avatar: true,
+                },
+              },
+            },
+            orderBy: { createdAt: "asc" },
+          },
+        }),
       },
-      orderBy: {
-        createdAt: 'desc'
-      }
+      orderBy: { createdAt: "desc" },
     })
 
-    return NextResponse.json(reviews)
+    return NextResponse.json({
+      event,
+      reviews,
+    })
   } catch (error) {
-    console.error('Error fetching reviews:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.error("[v0] Error fetching reviews:", error)
+    return NextResponse.json({ error: "Failed to fetch reviews" }, { status: 500 })
   }
 }
+
 
 export async function POST(
   request: NextRequest,
