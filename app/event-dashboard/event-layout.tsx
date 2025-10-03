@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState , useEffect } from "react"
+import { useState, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
@@ -36,6 +36,10 @@ import ExhibitorsManagement from "./TotalExhibitores"
 import AddExhibitor from "./AddExhibitor"
 import ExhibitorsForEvent from "./ExhibitorsForEvent"
 import { ExhibitorManualProfessional } from "../organizer-dashboard/exhibitor-manual/exhibitor-manual"
+import AddSpeaker from "./AddSpeaker"
+import SpeakerSessionsTable from "./SpeakerSessionsTable"
+import CreateConferenceAgenda from "./CreateConferenceAgenda"
+import ConferenceAgenda from "./ConferenceAgenda"
 // import Analytics from "./analytics"
 // ...create/import other components as needed
 
@@ -78,60 +82,60 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
     )
   }
 
- const sidebarGroups: SidebarGroup[] = [
-  {
-    id: "main",
-    label: "Main",
-    items: [{ title: "Event Info", icon: LayoutDashboard, id: "dashboard" }],
-  },
-  {
-    id: "lead-management",
-    label: "Lead Management",
-    items: [
-      { title: "Attendees", icon: Users, id: "attendees" },
-      { title: "Visitor Badge Settings", icon: IdCard, id: "badge-settings" },
-      { title: "Exhibitors", icon: Briefcase, id: "exhibitors" },
-    ],
-  },
-  {
-    id: "marketing",
-    label: "Marketing Campaigns",
-    items: [
-      { title: "Promotions", icon: Megaphone, id: "promotions" },
-      { title: "Active Promotions", icon: Tag, id: "active-promotions" },
-    ],
-  },
-  {
-    id: "analytics",
-    label: "Analytics",
-    items: [{ title: "Analytics", icon: BarChart3, id: "analytics" }],
-  },
-  {
-    id: "feedback",
-    label: "Feedback",
-    items: [{ title: "Feedback", icon: MessageSquare, id: "feedback" }],
-  },
-  {
-    id: "exhibitor",
-    label: "Exhibitor",
-    items: [
-      { title: "Total Exhibitor", icon: Users2, id: "total-exhibitores" },
-      { title: "Add Exhibitor", icon: UserPlus, id: "add-exhibitores" },
-      { title: "Exhibitor Manual", icon: FileText, id: "exhibitor-manual" },
-    ],
-  },
-{
-  id: "speaker",
-  label: "Speaker Management",
-  items: [
-    { title: "Conference Agenda", icon: CalendarDays, id: "conference-agenda" },
-    { title: "Create Conference Agenda", icon: FilePlus2, id: "create-conference-agenda" },
-    { title: "Speakers", icon: Presentation, id: "speakers" },
-    { title: "Add Speakers", icon: UserRoundPlus, id: "add-speaker" },
-  ],
-}
+  const sidebarGroups: SidebarGroup[] = [
+    {
+      id: "main",
+      label: "Main",
+      items: [{ title: "Event Info", icon: LayoutDashboard, id: "dashboard" }],
+    },
+    {
+      id: "lead-management",
+      label: "Lead Management",
+      items: [
+        { title: "Attendees", icon: Users, id: "attendees" },
+        { title: "Visitor Badge Settings", icon: IdCard, id: "badge-settings" },
+        { title: "Exhibitors", icon: Briefcase, id: "exhibitors" },
+      ],
+    },
+    {
+      id: "marketing",
+      label: "Marketing Campaigns",
+      items: [
+        { title: "Promotions", icon: Megaphone, id: "promotions" },
+        { title: "Active Promotions", icon: Tag, id: "active-promotions" },
+      ],
+    },
+    {
+      id: "analytics",
+      label: "Analytics",
+      items: [{ title: "Analytics", icon: BarChart3, id: "analytics" }],
+    },
+    {
+      id: "feedback",
+      label: "Feedback",
+      items: [{ title: "Feedback", icon: MessageSquare, id: "feedback" }],
+    },
+    {
+      id: "exhibitor",
+      label: "Exhibitor",
+      items: [
+        { title: "Total Exhibitor", icon: Users2, id: "total-exhibitores" },
+        { title: "Add Exhibitor", icon: UserPlus, id: "add-exhibitores" },
+        { title: "Exhibitor Manual", icon: FileText, id: "exhibitor-manual" },
+      ],
+    },
+    {
+      id: "speaker",
+      label: "Speaker Management",
+      items: [
+        { title: "Conference Agenda", icon: CalendarDays, id: "conference-agenda" },
+        { title: "Create Conference Agenda", icon: FilePlus2, id: "create-conference-agenda" },
+        { title: "Speakers", icon: Presentation, id: "speakers" },
+        { title: "Add Speakers", icon: UserRoundPlus, id: "add-speaker" },
+      ],
+    }
 
-]
+  ]
 
 
   const renderContent = () => {
@@ -142,24 +146,32 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
     switch (activeSection) {
       case "dashboard":
         return <EventPage params={Promise.resolve(params)} />
-         case "promotions":
+      case "promotions":
         return <EventPromotion eventId={eventId} />
-         case "active-promotions":
+      case "active-promotions":
         return <ActivePromotions eventId={eventId} />
       case "attendees":
-       return <AttendeesManagement eventId={eventId} />
+        return <AttendeesManagement eventId={eventId} />
       case "exhibitors":
-       return <ExhibitorManagement eventId={eventId} />
-       case "feedback":
-         return <FeedbackReplyManagement eventId={eventId}  />
+        return <ExhibitorManagement eventId={eventId} />
+      case "feedback":
+        return <FeedbackReplyManagement eventId={eventId} />
       case "badge-settings":
         return <VisitorBadgeSettings />
-      // case "total-exhibitores":
-      //   return <ExhibitorsForEvent eventId={eventId} />
-      // case "add-exhibitores":
-      //   return <AddExhibitor eventId={eventId} />
-      //   case "exhibitor-manual":
-      //   return <ExhibitorManualProfessional organizerId={eventId} />
+      case "total-exhibitores":
+        return <ExhibitorsForEvent eventId={eventId} />
+      case "add-exhibitores":
+        return <AddExhibitor eventId={eventId} />
+      case "exhibitor-manual":
+        return <ExhibitorManualProfessional organizerId={eventId} />
+      case "add-speaker":
+        return <AddSpeaker eventId={eventId} />
+      case "speakers":
+        return <SpeakerSessionsTable eventId={eventId} />
+      case "create-conference-agenda":
+        return <CreateConferenceAgenda organizerId={eventId} />
+      case "conference-agenda":
+        return <ConferenceAgenda organizerId={eventId} />
       default:
         return <div className="p-4">Select a section</div>
     }
@@ -223,24 +235,24 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
               {expandedGroups.includes(group.id) && (
                 <div className="mt-2 space-y-1">
                   {group.items.map((item) => (
-                <button
-  key={item.id}
-  onClick={() => {
-    setActiveSection(item.id)
-    setSidebarOpen(false)
-  }}
-  className={`
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveSection(item.id)
+                        setSidebarOpen(false)
+                      }}
+                      className={`
     w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors
     border-l-4
     ${activeSection === item.id
-      ? "bg-primary/10 text-primary border-primary"
-      : "border-transparent hover:bg-muted"
-    }
+                          ? "bg-primary/10 text-primary border-primary"
+                          : "border-transparent hover:bg-muted"
+                        }
   `}
->
-  <item.icon className="w-4 h-4 flex-shrink-0" />
-  <span>{item.title}</span>
-</button>
+                    >
+                      <item.icon className="w-4 h-4 flex-shrink-0" />
+                      <span>{item.title}</span>
+                    </button>
 
                   ))}
                 </div>
