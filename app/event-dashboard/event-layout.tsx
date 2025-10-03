@@ -5,19 +5,26 @@ import { useState , useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
-  LayoutDashboard,
-  Users,
-  IdCard,
-  Briefcase,
-  Megaphone,
-  Tag,
-  BarChart3,
-  ArrowLeft,
-  Menu,
-  X,
-  ChevronDown,
-  ChevronRight,
+  LayoutDashboard,   // Dashboard
+  Users,             // Attendees
+  IdCard,            // Visitor Badge Settings
+  Briefcase,         // Exhibitors
+  Megaphone,         // Promotions
+  Tag,               // Active Promotions
+  BarChart3,         // Analytics
+  MessageSquare,     // Feedback
+  Users2,            // Total Exhibitors
+  UserPlus,          // Add Exhibitor
+  FileText,          // Exhibitor Manual
+  X,                 // Close button (mobile sidebar)
+  ChevronDown,       // Expand group
+  ChevronRight,      // Collapse group
+  ArrowLeft,         // Back to Events
+  Menu,              // Mobile menu button
+  CalendarDays, FilePlus2, Presentation, UserRoundPlus
 } from "lucide-react"
+
+
 import EventPage from "./info"
 import AttendeesManagement from "./AttendeesManagement"
 import ExhibitorManagement from "./ExhibitorsManagement"
@@ -71,47 +78,61 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
     )
   }
 
-  const sidebarGroups: SidebarGroup[] = [
-    {
-      id: "main",
-      label: "Main",
-      items: [{ title: "Event Info", icon: LayoutDashboard, id: "dashboard" }],
-    },
-    {
-      id: "lead-management",
-      label: "Lead Management",
-      items: [
-        { title: "Attendees", icon: Users, id: "attendees" },
-        { title: "Visitor Badge Settings", icon: IdCard, id: "badge-settings" },
-        { title: "Exhibitors", icon: Briefcase, id: "exhibitors" },
-      ],
-    },
-    {
-      id: "marketing",
-      label: "Marketing Campaigns",
-      items: [
-        { title: "Promotions", icon: Megaphone, id: "promotions" },
-        { title: "Active Promotions", icon: Tag, id: "active-promotions" },
-      ],
-    },
-    {
-      id: "analytics",
-      label: "Analytics",
-      items: [{ title: "Analytics", icon: BarChart3, id: "analytics" }],
-    },
-    {
-      id: "feedback",
-      label: "Feedback",
-      items: [{ title: "Feedback", icon: BarChart3, id: "feedback" }],
-    },
-    {
-      id: "exhibitor",
-      label: "Exhibitor",
-      items: [{ title: "Total Exhibitor", icon: BarChart3, id: "total-exhibitores" },
-      { title: "Add Exhibitor", icon: BarChart3, id: "add-exhibitores" },
-    { title: "Exhibitor Manual", icon: BarChart3, id: "exhibitor-manual" }],
-    },
-  ]
+ const sidebarGroups: SidebarGroup[] = [
+  {
+    id: "main",
+    label: "Main",
+    items: [{ title: "Event Info", icon: LayoutDashboard, id: "dashboard" }],
+  },
+  {
+    id: "lead-management",
+    label: "Lead Management",
+    items: [
+      { title: "Attendees", icon: Users, id: "attendees" },
+      { title: "Visitor Badge Settings", icon: IdCard, id: "badge-settings" },
+      { title: "Exhibitors", icon: Briefcase, id: "exhibitors" },
+    ],
+  },
+  {
+    id: "marketing",
+    label: "Marketing Campaigns",
+    items: [
+      { title: "Promotions", icon: Megaphone, id: "promotions" },
+      { title: "Active Promotions", icon: Tag, id: "active-promotions" },
+    ],
+  },
+  {
+    id: "analytics",
+    label: "Analytics",
+    items: [{ title: "Analytics", icon: BarChart3, id: "analytics" }],
+  },
+  {
+    id: "feedback",
+    label: "Feedback",
+    items: [{ title: "Feedback", icon: MessageSquare, id: "feedback" }],
+  },
+  {
+    id: "exhibitor",
+    label: "Exhibitor",
+    items: [
+      { title: "Total Exhibitor", icon: Users2, id: "total-exhibitores" },
+      { title: "Add Exhibitor", icon: UserPlus, id: "add-exhibitores" },
+      { title: "Exhibitor Manual", icon: FileText, id: "exhibitor-manual" },
+    ],
+  },
+{
+  id: "speaker",
+  label: "Speaker Management",
+  items: [
+    { title: "Conference Agenda", icon: CalendarDays, id: "conference-agenda" },
+    { title: "Create Conference Agenda", icon: FilePlus2, id: "create-conference-agenda" },
+    { title: "Speakers", icon: Presentation, id: "speakers" },
+    { title: "Add Speakers", icon: UserRoundPlus, id: "add-speaker" },
+  ],
+}
+
+]
+
 
   const renderContent = () => {
     if (!params) {
