@@ -307,8 +307,12 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
 
       {/* Events List - two cards per row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filteredEvents.map((event) => (
-          <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-shadow w-full">
+        {filteredEvents.map((event: any) => (
+          <Card
+            key={event.id}
+            onClick={() => router.push(`/event-dashboard/${event.id}`)}
+            className="overflow-hidden hover:shadow-lg transition-shadow w-full cursor-pointer hover:scale-[1.01] duration-200"
+          >
             <div className="flex flex-col md:flex-row">
               {/* Image on left */}
               <div className="relative w-full md:w-1/3 h-48">
@@ -317,9 +321,6 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                   <Badge variant={getTimelineStatusColor(event.timelineStatus || "upcoming")}>
                     {getTimelineStatusLabel(event.timelineStatus || "upcoming")}
                   </Badge>
-                  {/* <Badge variant={getPublicationStatusColor(event.status)}>
-                    {getPublicationStatusLabel(event.status)}
-                  </Badge> */}
                 </div>
               </div>
 
@@ -360,141 +361,9 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                     <Badge variant={getPublicationStatusColor(event.status)}>
                       {getPublicationStatusLabel(event.status)}
                     </Badge>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => router.push(`/event-dashboard/${event.id}`)}
-                        className="text-green-600 hover:text-green-800"
-                        title="View Event Dashboard"
-                      >
-                        <LayoutDashboard className="w-4 h-4" />
-                      </Button>
 
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedEvent(event)}>
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>{selectedEvent?.title}</DialogTitle>
-                          </DialogHeader>
-                          {selectedEvent && (
-                            <div className="space-y-4">
-                              <div className="relative h-64 rounded-lg overflow-hidden">
-                                <Image
-                                  src={selectedEvent.bannerImage || defaultImage}
-                                  alt={selectedEvent.title}
-                                  fill
-                                  className="object-cover"
-                                />
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <h4 className="font-medium mb-2">Event Details</h4>
-                                  <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Timeline Status:</span>
-                                      <Badge
-                                        variant={getTimelineStatusColor(selectedEvent.timelineStatus || "upcoming")}
-                                      >
-                                        {getTimelineStatusLabel(selectedEvent.timelineStatus || "upcoming")}
-                                      </Badge>
-                                    </div>
-                                    {/* <div className="flex justify-between">
-                                      <span className="text-gray-600">Publication Status:</span>
-                                      <Badge variant={getPublicationStatusColor(selectedEvent.status)}>
-                                        {getPublicationStatusLabel(selectedEvent.status)}
-                                      </Badge>
-                                    </div> */}
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Type:</span>
-                                      <span>{selectedEvent.eventType}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Start Date:</span>
-                                      <span>{formatDate(selectedEvent.startDate)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">End Date:</span>
-                                      <span>{formatDate(selectedEvent.endDate)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Location:</span>
-                                      <span className="text-right">
-                                        {selectedEvent.venue}, {selectedEvent.city}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div>
-                                  <h4 className="font-medium mb-2">Pricing & Stats</h4>
-                                  <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">General:</span>
-                                      <span>{formatCurrency(selectedEvent.generalPrice)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">VIP:</span>
-                                      <span>{formatCurrency(selectedEvent.vipPrice)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Premium:</span>
-                                      <span>{formatCurrency(selectedEvent.premiumPrice)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Attendees:</span>
-                                      <span>{selectedEvent.attendees || 0}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Revenue:</span>
-                                      <span>{formatCurrency(selectedEvent.revenue || 0)}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              <div>
-                                <h4 className="font-medium mb-2">Description</h4>
-                                <p className="text-sm text-gray-600">{selectedEvent.description}</p>
-                              </div>
-                              {selectedEvent.tags && selectedEvent.tags.length > 0 && (
-                                <div>
-                                  <h4 className="font-medium mb-2">Tags</h4>
-                                  <div className="flex flex-wrap gap-2">
-                                    {selectedEvent.tags.map((tag, index) => (
-                                      <Badge key={index} variant="outline">
-                                        {tag}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </DialogContent>
-                      </Dialog>
+                    {/* Action Buttons (View, Edit, Delete) */}
 
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditSpecificEvent(event.id)}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteEvent(event.id)}
-                        disabled={loading}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                      </Button>
-                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -502,6 +371,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
           </Card>
         ))}
       </div>
+
 
       {filteredEvents.length === 0 && (
         <Card>

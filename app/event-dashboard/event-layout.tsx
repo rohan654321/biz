@@ -35,7 +35,7 @@ import FeedbackReplyManagement from "./FeedbackReplyManagement"
 import ExhibitorsManagement from "./TotalExhibitores"
 import AddExhibitor from "./AddExhibitor"
 import ExhibitorsForEvent from "./ExhibitorsForEvent"
-import { ExhibitorManualProfessional } from "../organizer-dashboard/exhibitor-manual/exhibitor-manual"
+import ExhibitorManualProfessional  from "../organizer-dashboard/exhibitor-manual/exhibitor-manual"
 import AddSpeaker from "./AddSpeaker"
 import SpeakerSessionsTable from "./SpeakerSessionsTable"
 import CreateConferenceAgenda from "./CreateConferenceAgenda"
@@ -163,7 +163,7 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
       case "add-exhibitores":
         return <AddExhibitor eventId={eventId} />
       case "exhibitor-manual":
-        return <ExhibitorManualProfessional organizerId={eventId} />
+        return <ExhibitorManualProfessional eventsId={eventId}  />
       case "add-speaker":
         return <AddSpeaker eventId={eventId} />
       case "speakers":
@@ -263,9 +263,9 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
 
         {/* Footer */}
         <div className="border-t border-border p-4 flex-shrink-0">
-          <Button onClick={() => router.push("/events")} variant="outline" className="w-full">
+          <Button onClick={() => router.back()} variant="outline" className="w-full">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Events
+            Back
           </Button>
         </div>
       </aside>

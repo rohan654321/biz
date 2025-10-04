@@ -370,7 +370,7 @@ const Footer: React.FC = () => {
         
 
         {/* Registered Office Section */}
-        <div className="border-t border-t-1 border-gray-500 pt-8">
+        <div className=" border-t-1 border-gray-500 pt-8">
           <div className="mb-6">
             <h5 className="text-gray-900 font-semibold mb-2">Registered Office:</h5>
             <p className="text-gray-600 text-sm leading-relaxed">
@@ -389,7 +389,7 @@ const Footer: React.FC = () => {
               brands does not imply endorsement.
             </p>
           </div>
-         <div className="border-t border-t-1 border-gray-500 pt-10"></div>
+         <div className="border-t-1 border-gray-500 pt-10"></div>
           <div className="text-gray-600 text-sm">Copyright © 2025 BZ Trade Fairs All rights reserved</div>
         </div>
       </div>
