@@ -1,396 +1,455 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Download, Plus, FileText, Calendar, MapPin, Settings, AlertTriangle } from "lucide-react"
-import { ContractorRegistrationForm } from "./forms/contractor-registration-form"
-import { ContractorSecurityDepositForm } from "./forms/contractor-security-deposit-form"
-import { NameOnFasciaForm } from "./forms/name-on-fascia-form"
-import { MachinesDisplayForm } from "./forms/machines-display-form"
-import { ExhibitorGuideDataForm } from "./forms/exhibitor-guide-data-form"
-import { ExhibitorPassesForm } from "./forms/exhibitor-passes-form"
-import { ElectricalRequirementForm } from "./forms/electrical-requirement-form"
-import { AdditionalFurnitureForm } from "./forms/additional-furniture-form"
-import { TemporaryStaffForm } from "./forms/temporary-staff-form"
-import { CompressedAirWaterForm } from "./forms/compressed-air-water-form"
-import { SecurityForm } from "./forms/security-form"
-import { AudioVisualForm } from "./forms/audio-visual-form"
-import { HousekeepingForm } from "./forms/housekeeping-form"
-import { CustomFormBuilder } from "./custom-form-builder"
+import React, { useState } from 'react';
+import { Download, ChevronDown, ChevronUp, FileText, Package, Users, Calendar, MapPin, Clock, Info, AlertCircle, CheckCircle, LucideIcon } from 'lucide-react';
 
-interface Event {
-  id: string
-  name: string
-  venue: string
-  startDate: string
-  endDate: string
-  description: string
+interface ExhibitorManualProps {
+  eventsId: string;
 }
 
-interface ExhibitorManualProfessionalProps {
-  organizerId: string
+interface SectionItem {
+  label: string;
+  value: string;
+  status?: 'urgent' | 'warning' | 'info';
 }
 
-export function ExhibitorManualProfessional({ organizerId }: ExhibitorManualProfessionalProps) {
-  const [selectedEventId, setSelectedEventId] = useState<string>("")
-  const [events, setEvents] = useState<Event[]>([])
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState("overview")
-
-  useEffect(() => {
-    fetchEvents()
-  }, [organizerId])
-
- const fetchEvents = async () => {
-  try {
-    const response = await fetch(`/api/organizers/${organizerId}/events`)
-    if (response.ok) {
-      const data = await response.json()
-      const eventsArray = Array.isArray(data) ? data : data.events ?? []  // 👈 normalize
-      setEvents(eventsArray)
-      if (eventsArray.length > 0) {
-        setSelectedEventId(eventsArray[0].id)
-      }
-    }
-  } catch (error) {
-    console.error("Error fetching events:", error)
-  } finally {
-    setLoading(false)
-  }
+interface SectionContent {
+  id: string;
+  title: string;
+  description?: string;
+  items?: SectionItem[];
+  list?: string[];
 }
 
+interface Section {
+  title: string;
+  icon: LucideIcon;
+  content: SectionContent[];
+}
 
-  const selectedEvent = events.find((event) => event.id === selectedEventId)
+interface Sections {
+  overview: Section;
+  booth: Section;
+  logistics: Section;
+  services: Section;
+  marketing: Section;
+  regulations: Section;
+}
 
-  const mandatoryForms = [
-    { id: "form1", title: "Registration of Contractor", component: ContractorRegistrationForm, deadline: "07.11.2025" },
-    {
-      id: "form2",
-      title: "Contractor Security Deposit",
-      component: ContractorSecurityDepositForm,
-      deadline: "07.11.2025",
+type SectionKey = keyof Sections;
+
+interface Tab {
+  id: SectionKey;
+  label: string;
+  icon: LucideIcon;
+}
+
+const ExhibitorManualProfessional: React.FC<ExhibitorManualProps> = ({ eventsId }) => {
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [activeTab, setActiveTab] = useState<SectionKey>('overview');
+
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
+  const sections: Sections = {
+    overview: {
+      title: 'Event Overview',
+      icon: Info,
+      content: [
+        {
+          id: 'event-details',
+          title: 'Event Details',
+          items: [
+            { label: 'Event Name', value: 'Trade Show 2025' },
+            { label: 'Date', value: 'March 15-17, 2025' },
+            { label: 'Venue', value: 'Convention Center, Hall A' },
+            { label: 'Setup Time', value: 'March 14, 8:00 AM - 6:00 PM' },
+            { label: 'Show Hours', value: '9:00 AM - 5:00 PM Daily' },
+            { label: 'Breakdown', value: 'March 17, 5:00 PM - 10:00 PM' }
+          ]
+        },
+        {
+          id: 'important-dates',
+          title: 'Important Dates & Deadlines',
+          items: [
+            { label: 'Booth Payment Deadline', value: 'February 1, 2025', status: 'urgent' },
+            { label: 'Service Order Deadline', value: 'February 15, 2025', status: 'warning' },
+            { label: 'Marketing Materials Due', value: 'February 20, 2025', status: 'warning' },
+            { label: 'Final Attendee List', value: 'March 1, 2025', status: 'info' }
+          ]
+        }
+      ]
     },
-    { id: "form3", title: "Name on Fascia", component: NameOnFasciaForm, deadline: "07.11.2025" },
-    {
-      id: "form4",
-      title: "Machines / Products to be Displayed",
-      component: MachinesDisplayForm,
-      deadline: "07.11.2025",
+    booth: {
+      title: 'Booth Information',
+      icon: Package,
+      content: [
+        {
+          id: 'booth-specs',
+          title: 'Booth Specifications',
+          items: [
+            { label: 'Booth Number', value: 'A-145' },
+            { label: 'Booth Size', value: '10ft x 10ft (Standard)' },
+            { label: 'Booth Type', value: 'Inline Booth' },
+            { label: 'Power Supply', value: '110V, 15 AMP' },
+            { label: 'Internet Access', value: 'WiFi Available (Order Required)' }
+          ]
+        },
+        {
+          id: 'booth-package',
+          title: 'Standard Booth Package Includes',
+          list: [
+            '8ft high back drape and 3ft high side drape',
+            'Company name sign (7" x 44")',
+            'One 6ft draped table',
+            'Two folding chairs',
+            'One waste basket',
+            'Standard carpet (gray)'
+          ]
+        },
+        {
+          id: 'booth-rules',
+          title: 'Booth Design Rules',
+          list: [
+            'Maximum height: 8ft for inline booths, 12ft for island booths',
+            'No signage or materials blocking neighboring booths',
+            'Maintain clear aisle space (minimum 10ft)',
+            'All structures must be approved by show management',
+            'Comply with local fire and safety regulations'
+          ]
+        }
+      ]
     },
-    { id: "form5", title: "Data for Exhibitor Guide", component: ExhibitorGuideDataForm, deadline: "07.11.2025" },
-    { id: "form6", title: "Exhibitor Passes", component: ExhibitorPassesForm, deadline: "07.11.2025" },
-    { id: "form7", title: "Electrical Requirement", component: ElectricalRequirementForm, deadline: "07.11.2025" },
-  ]
-
-  const additionalForms = [
-    { id: "form8", title: "Additional Furniture", component: AdditionalFurnitureForm, deadline: "07.11.2025" },
-    { id: "form9", title: "Temporary Staff (Hostess)", component: TemporaryStaffForm, deadline: "07.11.2025" },
-    { id: "form10", title: "Compressed Air & Water", component: CompressedAirWaterForm, deadline: "07.11.2025" },
-    { id: "form11", title: "Security for your Stall", component: SecurityForm, deadline: "07.11.2025" },
-    { id: "form12", title: "Audio Visual Equipment", component: AudioVisualForm, deadline: "07.11.2025" },
-    { id: "form13", title: "Housekeeping", component: HousekeepingForm, deadline: "07.11.2025" },
-  ]
-
-  const generateManualPDF = async () => {
-    if (!selectedEventId) return
-
-    try {
-      const response = await fetch(`/api/events/${selectedEventId}/exhibitor-manual/pdf`, {
-        method: "POST",
-      })
-
-      if (response.ok) {
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement("a")
-        a.href = url
-        a.download = `${selectedEvent?.name || "Event"}-Exhibitor-Manual.pdf`
-        document.body.appendChild(a)
-        a.click()
-        window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
-      }
-    } catch (error) {
-      console.error("Error generating PDF:", error)
+    logistics: {
+      title: 'Logistics & Shipping',
+      icon: MapPin,
+      content: [
+        {
+          id: 'shipping-info',
+          title: 'Shipping Instructions',
+          description: 'All shipments must be labeled with booth number and company name.',
+          items: [
+            { label: 'Advance Warehouse Address', value: 'Available in Service Kit' },
+            { label: 'Direct Shipping Dates', value: 'March 13-14, 2025' },
+            { label: 'Receiving Hours', value: '8:00 AM - 4:00 PM' },
+            { label: 'Material Handling', value: 'Charges apply per CWT' }
+          ]
+        },
+        {
+          id: 'move-in',
+          title: 'Move-In Procedures',
+          list: [
+            'Check in at exhibitor services desk',
+            'Obtain loading dock pass',
+            'Unload materials at designated area',
+            'Remove empty crates immediately',
+            'Complete setup by 6:00 PM on March 14'
+          ]
+        },
+        {
+          id: 'move-out',
+          title: 'Move-Out Procedures',
+          list: [
+            'Breakdown begins at 5:00 PM on last show day',
+            'All materials must be removed by 10:00 PM',
+            'Schedule pickup with carrier in advance',
+            'Return all rental items to service desk',
+            'Complete move-out form before leaving'
+          ]
+        }
+      ]
+    },
+    services: {
+      title: 'Services & Orders',
+      icon: FileText,
+      content: [
+        {
+          id: 'available-services',
+          title: 'Available Services',
+          list: [
+            'Electrical Service (110V, 220V, 440V)',
+            'Internet & Telecommunications',
+            'Furniture & Carpet Rental',
+            'Audio/Visual Equipment',
+            'Floral & Plants',
+            'Lead Retrieval Systems',
+            'Cleaning Services',
+            'Security Services'
+          ]
+        },
+        {
+          id: 'ordering',
+          title: 'How to Order Services',
+          description: 'Access the online service portal using your exhibitor credentials.',
+          items: [
+            { label: 'Portal URL', value: 'services.tradeshow2025.com' },
+            { label: 'Login', value: 'Use registration email' },
+            { label: 'Advance Order Deadline', value: 'Feb 15 (Discounted rates)' },
+            { label: 'On-Site Orders', value: 'Available at premium rates' }
+          ]
+        }
+      ]
+    },
+    marketing: {
+      title: 'Marketing & Promotion',
+      icon: Users,
+      content: [
+        {
+          id: 'pre-show',
+          title: 'Pre-Show Marketing',
+          list: [
+            'Submit company profile for event website and app',
+            'Provide high-resolution logo for marketing materials',
+            'Schedule social media posts with event hashtag',
+            'Send email invitations to clients and prospects',
+            'Order promotional materials and giveaways'
+          ]
+        },
+        {
+          id: 'show-floor',
+          title: 'Show Floor Marketing',
+          list: [
+            'Engage attendees with interactive displays',
+            'Collect leads using event app or lead scanner',
+            'Schedule product demonstrations',
+            'Offer exclusive show specials',
+            'Participate in show floor activities and contests'
+          ]
+        },
+        {
+          id: 'post-show',
+          title: 'Post-Show Follow-Up',
+          list: [
+            'Download lead data within 48 hours',
+            'Send thank you emails to booth visitors',
+            'Share show highlights on social media',
+            'Complete post-show survey',
+            'Schedule follow-up calls and meetings'
+          ]
+        }
+      ]
+    },
+    regulations: {
+      title: 'Rules & Regulations',
+      icon: AlertCircle,
+      content: [
+        {
+          id: 'general-rules',
+          title: 'General Show Rules',
+          list: [
+            'All exhibitors must wear official badges',
+            'Setup and breakdown only during designated hours',
+            'No soliciting outside assigned booth space',
+            'Music and audio must not disturb neighboring booths',
+            'Food and beverages served only with proper permits',
+            'Smoking prohibited in all indoor areas',
+            'Comply with ADA accessibility requirements'
+          ]
+        },
+        {
+          id: 'safety',
+          title: 'Safety Requirements',
+          list: [
+            'All materials must be flame-retardant',
+            'Keep aisles and exits clear at all times',
+            'No open flames or candles',
+            'Secure all hanging signs and displays',
+            'Report any incidents to security immediately',
+            'First aid stations located at main entrances'
+          ]
+        },
+        {
+          id: 'liability',
+          title: 'Insurance & Liability',
+          description: 'Exhibitors are responsible for their property and booth materials.',
+          items: [
+            { label: 'Required Coverage', value: '$1,000,000 General Liability' },
+            { label: 'Certificate Due', value: 'Before setup begins' },
+            { label: 'Additional Insured', value: 'Event organizer and venue' },
+            { label: 'Property Insurance', value: 'Recommended for all materials' }
+          ]
+        }
+      ]
     }
-  }
+  };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading events...</p>
-        </div>
-      </div>
-    )
-  }
+  const tabs: Tab[] = [
+    { id: 'overview', label: 'Overview', icon: Info },
+    { id: 'booth', label: 'Booth Info', icon: Package },
+    { id: 'logistics', label: 'Logistics', icon: MapPin },
+    { id: 'services', label: 'Services', icon: FileText },
+    { id: 'marketing', label: 'Marketing', icon: Users },
+    { id: 'regulations', label: 'Rules', icon: AlertCircle }
+  ];
+
+  const currentSection = sections[activeTab];
+  const Icon = currentSection.icon;
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-900 to-blue-700 text-white p-8 rounded-lg">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Exhibitor's Manual</h1>
-            <p className="text-blue-100 text-lg">Professional Event Management System</p>
-          </div>
-          <div className="text-right">
-            <FileText className="h-16 w-16 text-blue-200 mb-2" />
-            <p className="text-sm text-blue-200">Organized by</p>
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">Exhibitor Manual</h1>
+              <p className="text-slate-600 mt-1">Event ID: {eventsId}</p>
+            </div>
+            <button className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors shadow-md">
+              <Download className="w-5 h-5" />
+              Download PDF
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Event Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Select Event
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <Select value={selectedEventId} onValueChange={setSelectedEventId}>
-              <SelectTrigger className="w-full max-w-md">
-                <SelectValue placeholder="Select an event" />
-              </SelectTrigger>
-              <SelectContent>
-                {events.map((event) => (
-                  <SelectItem key={event.id} value={event.id}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{event.name}</span>
-                      <span className="text-sm text-gray-500">
-                        {event.venue} • {new Date(event.startDate).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {/* Navigation Tabs */}
+      <div className="bg-white border-b border-slate-200 sticky top-[104px] z-10 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex gap-1 overflow-x-auto">
+            {tabs.map(tab => {
+              const TabIcon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-6 py-4 border-b-2 transition-all whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? 'border-blue-600 text-blue-600 bg-blue-50'
+                      : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  <TabIcon className="w-4 h-4" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
-            {selectedEventId && (
-              <Button onClick={generateManualPDF} className="flex items-center gap-2">
-                <Download className="h-4 w-4" />
-                Download Manual PDF
-              </Button>
-            )}
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+          {/* Section Header */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
+            <div className="flex items-center gap-3 text-white">
+              <Icon className="w-8 h-8" />
+              <h2 className="text-2xl font-bold">{currentSection.title}</h2>
+            </div>
           </div>
 
-          {selectedEvent && (
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center gap-4">
-                <MapPin className="h-5 w-5 text-blue-600" />
-                <div>
-                  <h3 className="font-semibold text-blue-900">{selectedEvent.name}</h3>
-                  <p className="text-blue-700">{selectedEvent.venue}</p>
-                  <p className="text-sm text-blue-600">
-                    {new Date(selectedEvent.startDate).toLocaleDateString()} -{" "}
-                    {new Date(selectedEvent.endDate).toLocaleDateString()}
-                  </p>
-                </div>
+          {/* Section Content */}
+          <div className="p-8">
+            {currentSection.content.map((section, idx) => (
+              <div key={section.id} className={idx > 0 ? 'mt-8' : ''}>
+                <button
+                  onClick={() => toggleSection(section.id)}
+                  className="w-full flex items-center justify-between p-5 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
+                      {idx + 1}
+                    </div>
+                    <h3 className="text-xl font-semibold text-slate-900">{section.title}</h3>
+                  </div>
+                  {expandedSections[section.id] ? (
+                    <ChevronUp className="w-5 h-5 text-slate-600" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-slate-600" />
+                  )}
+                </button>
+
+                {expandedSections[section.id] && (
+                  <div className="mt-4 p-6 bg-white border border-slate-200 rounded-lg">
+                    {section.description && (
+                      <p className="text-slate-700 mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        {section.description}
+                      </p>
+                    )}
+
+                    {section.items && (
+                      <div className="space-y-3">
+                        {section.items.map((item, i) => (
+                          <div key={i} className="flex items-start justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
+                            <div className="flex items-start gap-3">
+                              {item.status === 'urgent' && <AlertCircle className="w-5 h-5 text-red-500 mt-0.5" />}
+                              {item.status === 'warning' && <Clock className="w-5 h-5 text-amber-500 mt-0.5" />}
+                              {item.status === 'info' && <Info className="w-5 h-5 text-blue-500 mt-0.5" />}
+                              {!item.status && <CheckCircle className="w-5 h-5 text-slate-400 mt-0.5" />}
+                              <div>
+                                <span className="font-medium text-slate-900">{item.label}</span>
+                              </div>
+                            </div>
+                            <span className={`text-right font-semibold ${
+                              item.status === 'urgent' ? 'text-red-600' :
+                              item.status === 'warning' ? 'text-amber-600' :
+                              item.status === 'info' ? 'text-blue-600' :
+                              'text-slate-700'
+                            }`}>
+                              {item.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {section.list && (
+                      <ul className="space-y-3">
+                        {section.list.map((item, i) => (
+                          <li key={i} className="flex items-start gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5">
+                              {i + 1}
+                            </div>
+                            <span className="text-slate-700 flex-1">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl shadow-lg p-8 text-white">
+          <div className="grid md:grid-cols-3 gap-6">
+            <div>
+              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                <Info className="w-5 h-5" />
+                Questions?
+              </h4>
+              <p className="text-slate-300">Contact Exhibitor Services</p>
+              <p className="text-slate-300">exhibitors@tradeshow.com</p>
+              <p className="text-slate-300">+1 (555) 123-4567</p>
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {selectedEventId && (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="mandatory">Mandatory Forms</TabsTrigger>
-            <TabsTrigger value="additional">Additional Forms</TabsTrigger>
-            <TabsTrigger value="guidelines">Guidelines</TabsTrigger>
-            <TabsTrigger value="custom">Custom Forms</TabsTrigger>
-          </TabsList>
-
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <FileText className="h-5 w-5 text-blue-600" />
-                    Mandatory Forms
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 mb-4">7 forms required for all exhibitors</p>
-                  <Badge variant="destructive" className="mb-2">
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                    Deadline: 07.11.2025
-                  </Badge>
-                  <p className="text-sm text-gray-500">Forms 1-7 must be completed and submitted by all exhibitors</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Plus className="h-5 w-5 text-green-600" />
-                    Additional Services
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 mb-4">6 optional service forms</p>
-                  <Badge variant="secondary" className="mb-2">
-                    Optional Services
-                  </Badge>
-                  <p className="text-sm text-gray-500">Furniture, staff, security, and other additional requirements</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Settings className="h-5 w-5 text-purple-600" />
-                    Custom Forms
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 mb-4">Create custom forms for specific needs</p>
-                  <Badge variant="outline" className="mb-2">
-                    Organizer Tool
-                  </Badge>
-                  <p className="text-sm text-gray-500">Build custom forms with dynamic fields and requirements</p>
-                </CardContent>
-              </Card>
+            <div>
+              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                Office Hours
+              </h4>
+              <p className="text-slate-300">Mon-Fri: 8:00 AM - 6:00 PM</p>
+              <p className="text-slate-300">Sat-Sun: 9:00 AM - 3:00 PM</p>
             </div>
-
-            {/* Welcome Message */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Welcome Message</CardTitle>
-              </CardHeader>
-              <CardContent className="prose max-w-none">
-                <p className="text-gray-700 leading-relaxed">
-                  It is with great pleasure that we extend to you a very warm welcome to{" "}
-                  <strong>{selectedEvent?.name}</strong>. We have taken special efforts to bring innovation and fresh
-                  ideas into this edition, ensuring that we consistently stay ahead and deliver an exhibition experience
-                  that not only meets but often exceeds your expectations.
-                </p>
-                <p className="text-gray-700 leading-relaxed mt-4">
-                  The Exhibitor Manual is designed to guide you in preparing effectively for the show. Please ensure
-                  that all mandatory forms are duly filled and submitted to us on or before the specified deadline.
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Mandatory Forms Tab */}
-          <TabsContent value="mandatory" className="space-y-6">
-            <div className="grid gap-6">
-              {mandatoryForms.map((form) => {
-                const FormComponent = form.component
-                return (
-                  <Card key={form.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2">
-                          <FileText className="h-5 w-5 text-red-600" />
-                          {form.title}
-                        </CardTitle>
-                        <Badge variant="destructive">Deadline: {form.deadline}</Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <FormComponent eventId={selectedEventId} organizerId={organizerId} />
-                    </CardContent>
-                  </Card>
-                )
-              })}
+            <div>
+              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                <MapPin className="w-5 h-5" />
+                On-Site Services
+              </h4>
+              <p className="text-slate-300">Booth #100 - Main Entrance</p>
+              <p className="text-slate-300">Available during show hours</p>
             </div>
-          </TabsContent>
-
-          {/* Additional Forms Tab */}
-          <TabsContent value="additional" className="space-y-6">
-            <div className="grid gap-6">
-              {additionalForms.map((form) => {
-                const FormComponent = form.component
-                return (
-                  <Card key={form.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2">
-                          <Plus className="h-5 w-5 text-blue-600" />
-                          {form.title}
-                        </CardTitle>
-                        <Badge variant="secondary">Optional - Deadline: {form.deadline}</Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <FormComponent eventId={selectedEventId} organizerId={organizerId} />
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-          </TabsContent>
-
-          {/* Guidelines Tab */}
-          <TabsContent value="guidelines" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Exhibitor Guidelines</CardTitle>
-              </CardHeader>
-              <CardContent className="prose max-w-none">
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Construction Guidelines</h3>
-                    <ul className="list-disc list-inside space-y-2 text-gray-700">
-                      <li>All construction work must be finished by the specified deadline</li>
-                      <li>Maximum allowable height for fabricated booths is 4 meters</li>
-                      <li>All structures must be self-supporting and secure</li>
-                      <li>Fire extinguishers required for booths ≥36 square meters</li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Safety Requirements</h3>
-                    <ul className="list-disc list-inside space-y-2 text-gray-700">
-                      <li>Personal Protective Equipment mandatory during setup/dismantling</li>
-                      <li>No flammable materials or substances producing toxic gases</li>
-                      <li>Emergency exits and aisles must remain clear at all times</li>
-                      <li>Smoking strictly prohibited within the venue</li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Electrical Guidelines</h3>
-                    <ul className="list-disc list-inside space-y-2 text-gray-700">
-                      <li>All electrical work must be done by licensed electricians</li>
-                      <li>Only ISI-marked materials to be used</li>
-                      <li>LED lights mandatory, halogen lights require transformers</li>
-                      <li>All connections must use appropriate industrial standard connectors</li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Custom Forms Tab */}
-          <TabsContent value="custom" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  Custom Form Builder
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CustomFormBuilder eventId={selectedEventId} organizerId={organizerId} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      )}
+          </div>
+        </div>
+      </div>
     </div>
-  )
-}
+  );
+};
+
+export default ExhibitorManualProfessional;
