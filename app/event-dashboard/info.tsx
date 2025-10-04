@@ -839,35 +839,7 @@ useEffect(() => {
             </Tabs>
           </div>
 
-          <div className="lg:w-80 space-y-6">
-            <Card className="hover:shadow-md transition-shadow border-r-2  rounded-lg">
-              <CardHeader>
-                <CardTitle className="text-lg">Featured Hotels</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-gray-600">No featured hotels available.</p>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-md transition-shadow border-r-2 rounded-lg">
-              <CardHeader>
-                <CardTitle className="text-lg">Featured Travel Partners</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-gray-600">No travel partners available.</p>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-md transition-shadow border-r-2 rounded-lg">
-              <CardHeader>
-                <CardTitle className="text-lg">Places to Visit in {event.city || "the area"}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-gray-600">No tourist attractions available.</p>
-              </CardContent>
-            </Card>
-
-          </div>
+        
         </div>
       </div>
     </div>

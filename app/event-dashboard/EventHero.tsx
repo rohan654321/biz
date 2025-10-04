@@ -83,25 +83,25 @@ export default function EventHero({ event }: EventHeroProps) {
         { type: "video", src: "/video/17564202-hd_1920_1080_30fps.mp4" },
       ]
 
-const handleSave = async () => {
-  try {
-    const res = await fetch(`/api/events/${event.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title }),
-    });
+// const handleSave = async () => {
+//   try {
+//     const res = await fetch(`/api/events/${event.id}`, {
+//       method: "PATCH",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({ title }),
+//     });
 
-    if (!res.ok) throw new Error("Failed to update event");
+//     if (!res.ok) throw new Error("Failed to update event");
 
-    const data = await res.json();
-    setTitle(data.event.title); // update local state with returned title
-    setIsEditing(false);
-    console.log("Event updated:", data.event);
-  } catch (error) {
-    console.error(error);
-    alert("Failed to save title. Try again.");
-  }
-};
+//     const data = await res.json();
+//     setTitle(data.event.title); // update local state with returned title
+//     setIsEditing(false);
+//     console.log("Event updated:", data.event);
+//   } catch (error) {
+//     console.error(error);
+//     alert("Failed to save title. Try again.");
+//   }
+// };
 
 
   return (
@@ -166,16 +166,16 @@ const handleSave = async () => {
                   onChange={(e) => setTitle(e.target.value)}
                   className="flex-1"
                 />
-                <Button size="sm" onClick={handleSave}>Save</Button>
+                {/* <Button size="sm" onClick={handleSave}>Save</Button> */}
               </div>
             ) : (
               <>
                 <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-black leading-snug">
                   {title}
                 </h2>
-                <button onClick={() => setIsEditing(true)}>
+                {/* <button onClick={() => setIsEditing(true)}>
                   <Pencil className="w-4 h-4 text-gray-500 hover:text-black" />
-                </button>
+                </button> */}
               </>
             )}
           </div>
