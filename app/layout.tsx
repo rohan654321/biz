@@ -4,6 +4,8 @@ import type { Metadata } from "next"
 // import { GeistMono } from "geist/font/mono"
 import "./globals.css"
 import { ClientLayout } from "./client-layout"
+import Navbar from "@/components/navbar"
+import Footer from "@/components/Footer"
 
 export const metadata: Metadata = {
   title: "Biz Trade Fairs",

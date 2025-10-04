@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { ExhibitorLayout } from "../exhibitor-layout"
 // import UserDashboard from "@/app/dashboard/dashboard-layout"
 import { NameBanner } from "@/app/dashboard/NameBanner"
+import Navbar from "../navbar"
 
 export default async function DashboardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -20,6 +21,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ id: 
 
   return (
     <div>
+      <Navbar/>
 
       <NameBanner
               name={session.user.name || "User"}
