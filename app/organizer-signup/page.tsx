@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Eye, EyeOff, User, Mail, CheckCircle, ChevronLeft } from 'lucide-react';
+import { signIn, useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 const OrganizerSignup = () => {
   const messages = useMemo(() => [
@@ -18,7 +20,7 @@ const OrganizerSignup = () => {
       subtitle: "your audience and build genuine trust",
     },
   ], []);
-  
+
   const [currentStep, setCurrentStep] = useState(1);
   const [textIndex, setTextIndex] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
@@ -40,8 +42,11 @@ const OrganizerSignup = () => {
     phone: ''
   });
 
+  const router = useRouter();
+  const { data: session, status } = useSession();
+
   // Optimized input handler using useCallback
-  const handleInputChange = useCallback((e:any) => {
+  const handleInputChange = useCallback((e: any) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -49,7 +54,7 @@ const OrganizerSignup = () => {
     }));
   }, []);
 
-  const handleInitialSubmit = async (e:any) => {
+  const handleInitialSubmit = async (e: any) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
@@ -74,7 +79,7 @@ const OrganizerSignup = () => {
     }
   };
 
-  const handleOtpVerify = async (e:any) => {
+  const handleOtpVerify = async (e: any) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
@@ -124,7 +129,7 @@ const OrganizerSignup = () => {
     setShowOtpSection(false);
   }, []);
 
-  const handleStep2Submit = useCallback((e:any) => {
+  const handleStep2Submit = useCallback((e: any) => {
     e.preventDefault();
     if (!formData.fullName || !formData.designation || !formData.companyName || !formData.city) {
       alert("Please fill in all fields");
@@ -133,9 +138,9 @@ const OrganizerSignup = () => {
     setShowPasswordFields(true);
   }, [formData.fullName, formData.designation, formData.companyName, formData.city]);
 
-  const handlePasswordSubmit = async (e:any) => {
+  const handlePasswordSubmit = async (e: any) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords don't match!");
       return;
@@ -157,11 +162,9 @@ const OrganizerSignup = () => {
         companyName: formData.companyName,
         designation: formData.designation,
         website: undefined,
-        userType: 'organiser',
-        city: formData.city
+        userType: "organiser",
+        city: formData.city,
       };
-
-      console.log("Sending registration data:", registrationData);
 
       const res = await fetch("/api/auth/register", {
         method: "POST",
@@ -173,7 +176,25 @@ const OrganizerSignup = () => {
 
       if (res.ok) {
         console.log("Registration successful:", data);
-        setCurrentStep(4);
+
+        // ✅ Automatically sign in the user right after registration
+        const loginRes = await signIn("credentials", {
+          redirect: false,
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (!loginRes?.error) {
+          // ✅ Redirect based on user role (same as your login logic)
+          if (data.user?.role === "ORGANIZER") {
+            router.push(`/organizer-dashboard/${data.user.id}`);
+          } else {
+            router.push(`/dashboard/${data.user.id}`);
+          }
+        } else {
+          alert("Account created, but auto-login failed. Please log in manually.");
+          router.push("/login");
+        }
       } else {
         console.error("Registration failed:", data);
         alert(data.error || data.details || "Registration failed. Please try again.");
@@ -185,6 +206,7 @@ const OrganizerSignup = () => {
       setIsSubmitting(false);
     }
   };
+
 
   const handleBackToDetails = useCallback(() => {
     setShowPasswordFields(false);
@@ -225,16 +247,17 @@ const OrganizerSignup = () => {
       <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-blue-100">
         <div className="absolute inset-0 w-full h-full">
           <div className="absolute inset-0 bg-black/40"></div>
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-blue-900"></div>
+          <div
+            className="absolute inset-0 w-full h-full bg-cover bg-center"
+            style={{
+              backgroundImage: "url('/organizer-signup/BG_ORG_DSH.jpg')", // <- your image path
+            }}
+          ></div>
         </div>
 
         <div className="relative z-10 flex items-center justify-between max-w-7xl mx-auto px-6 w-full">
           <div className="flex-1 text-blue-900 pr-12 max-w-lg">
-            <div className="inline-block mb-12">
-              <div className="w-50 h-40 relative">
-                <div className="text-4xl font-bold text-white">BizTradeFairs</div>
-              </div>
-            </div>
+
 
             {AnimatedText}
 
