@@ -275,7 +275,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Main Content */}
+      {/* Main Content  ...*/}
       <div className="flex items-center justify-center min-h-[calc(60vh-54px)] py-12 px-4">
         <div className="w-full">
           <div>
