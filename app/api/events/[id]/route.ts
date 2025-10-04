@@ -140,9 +140,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
+    const { id } =await params;
 
     if (!id || id.length !== 24) {
       return NextResponse.json({ error: "Invalid event ID" }, { status: 400 });

@@ -287,16 +287,16 @@ export default function SignupPage() {
               <CardContent className="space-y-3">
                 {/* User Type Selector */}
                 <Tabs value={userType} onValueChange={setUserType} className="w-full">
-                  <TabsList className="grid w-full grid-cols-5 h-auto p-1">
+                  <TabsList className="grid w-full grid-cols-4 h-auto p-1">
                     <TabsTrigger value="visitor" className="text-xs px-2 py-2">
                       Visitor
                     </TabsTrigger>
                     <TabsTrigger value="exhibitor" className="text-xs px-2 py-2">
                       Exhibitor
                     </TabsTrigger>
-                    <TabsTrigger value="organiser" className="text-xs px-2 py-2">
+                    {/* <TabsTrigger value="organiser" className="text-xs px-2 py-2">
                       Organiser
-                    </TabsTrigger>
+                    </TabsTrigger> */}
                     <TabsTrigger value="speaker" className="text-xs px-2 py-2">
                       Speaker
                     </TabsTrigger>
