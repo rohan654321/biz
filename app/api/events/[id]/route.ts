@@ -103,3 +103,102 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
+
+
+// export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+//   try {
+//     const { id } = params;
+
+//     if (!id || id.length !== 24) {
+//       return NextResponse.json({ error: "Invalid event ID" }, { status: 400 });
+//     }
+
+//     const body = await request.json();
+//     const { title, address, startDate, endDate } = body;
+
+//     // Validate required fields if needed
+//     if (!title) {
+//       return NextResponse.json({ error: "Title is required" }, { status: 400 });
+//     }
+
+//     const updatedEvent = await prisma.event.update({
+//       where: { id },
+//       data: {
+//         title,
+//         ...(address && { address }),
+//         ...(startDate && { startDate: new Date(startDate) }),
+//         ...(endDate && { endDate: new Date(endDate) }),
+//       },
+//     });
+
+//     return NextResponse.json({ success: true, event: updatedEvent });
+//   } catch (error) {
+//     console.error("Error updating event:", error);
+//     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+//   }
+// }
+
+
+
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } =await params;
+
+    if (!id || id.length !== 24) {
+      return NextResponse.json({ error: "Invalid event ID" }, { status: 400 });
+    }
+
+    const body = await request.json();
+
+    // Only allow certain fields to be updated
+    const allowedFields = ["title", "address", "startDate", "endDate", "description"];
+    const dataToUpdate: any = {};
+    allowedFields.forEach((key) => {
+      if (body[key] !== undefined) {
+        dataToUpdate[key] = key.includes("Date") ? new Date(body[key]) : body[key];
+      }
+    });
+
+    if (Object.keys(dataToUpdate).length === 0) {
+      return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+    }
+
+    const updatedEvent = await prisma.event.update({
+      where: { id },
+      data: dataToUpdate,
+    });
+
+    return NextResponse.json({ success: true, event: updatedEvent });
+  } catch (error) {
+    console.error("Error updating event:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+
+export async function PUT(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> } // note: params is a Promise
+) {
+  try {
+    const { id } = await params; // ✅ await params before using
+    const body = await req.json();
+    const { description, tags } = body;
+
+    const updatedEvent = await prisma.event.update({
+      where: { id },
+      data: {
+        ...(description && { description }),
+        ...(tags && { tags }),
+      },
+    });
+
+    return new Response(JSON.stringify(updatedEvent), { status: 200 });
+  } catch (err) {
+    console.error(err);
+    return new Response(
+      JSON.stringify({ error: "Failed to update event" }),
+      { status: 500 }
+    );
+  }
+}

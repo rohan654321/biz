@@ -138,16 +138,16 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
   ]
 
 
-  const renderContent = () => {
-    if (!params) {
-      return <div>Loading...</div>
-    }
+const renderContent = () => {
+  if (!params) {
+    return <div>Loading...</div>
+  }
 
-    switch (activeSection) {
-      case "dashboard":
-        return <EventPage params={Promise.resolve(params)} />
-      case "promotions":
-        return <EventPromotion eventId={eventId} />
+  switch (activeSection) {
+    case "dashboard":
+      return <EventPage params={params} />  // <-- remove Promise.resolve
+    case "promotions":
+      return <EventPromotion eventId={eventId} />
       case "active-promotions":
         return <ActivePromotions eventId={eventId} />
       case "attendees":
