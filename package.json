@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "postinstall": "prisma generate",
-    "build": "npm install && next build",
+     "build": "pnpm install --no-frozen-lockfile && next build",
     "start": "next start",
     "lint": "next lint"
   },
