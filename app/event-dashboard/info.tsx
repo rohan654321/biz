@@ -34,75 +34,75 @@ export default function EventPage({ params }: EventPageProps) {
   const [error, setError] = useState<string | null>(null)
   const [isSaved, setIsSaved] = useState(false)
   const [saving, setSaving] = useState(false)
-   const [averageRating, setAverageRating] = useState(0) // Add this state
+  const [averageRating, setAverageRating] = useState(0) // Add this state
   const [totalReviews, setTotalReviews] = useState(0) // Add this state
   const [editingSection, setEditingSection] = useState<string | null>(null);
-const [aboutText, setAboutText] = useState("");
-const [editingTags, setEditingTags] = useState(false);
-const [tagsText, setTagsText] = useState(""); // Will hold comma-separated tags
+  const [aboutText, setAboutText] = useState("");
+  const [editingTags, setEditingTags] = useState(false);
+  const [tagsText, setTagsText] = useState(""); // Will hold comma-separated tags
 
 
 
   const { data: session } = useSession()
   const router = useRouter()
   const { toast } = useToast()
-// Update editable fields when event is fetched
-useEffect(() => {
-  if (event) {
-    // About section
-    if (event.description) {
-      setAboutText(event.description);
-    }
-
-    // Tags section
-    if (event.tags) {
-      setTagsText(event.tags.join(", ")); // Convert array to comma-separated string
-    }
-  }
-}, [event]);
-
-
-useEffect(() => {
-  async function fetchEvent() {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const eventId = params.id
-      const res = await fetch(`/api/events/${eventId}`)
-
-      if (!res.ok) {
-        if (res.status === 404) setError("Event not found")
-        else throw new Error(`HTTP error! status: ${res.status}`)
-        return
+  // Update editable fields when event is fetched
+  useEffect(() => {
+    if (event) {
+      // About section
+      if (event.description) {
+        setAboutText(event.description);
       }
 
-      const data = await res.json()
-      
-      // Map API fields to frontend expected structure
-      setEvent({
-        ...data,
-        isRegistrationOpen: data.isAvailable,
-        spotsRemaining: data.availableTickets,
-        images: data.images || [data.bannerImage].filter(Boolean),
-        category: data.category || "General",
-        tags: data.tags || [],
-        venue: data.venue || {},
-        currency: "₹",
-      })
-
-      setAverageRating(data.averageRating || 0)
-      setTotalReviews(data.reviewCount || 0)
-    } catch (err) {
-      console.error("Error fetching event:", err)
-      setError(err instanceof Error ? err.message : "An error occurred")
-    } finally {
-      setLoading(false)
+      // Tags section
+      if (event.tags) {
+        setTagsText(event.tags.join(", ")); // Convert array to comma-separated string
+      }
     }
-  }
+  }, [event]);
 
-  fetchEvent()
-}, [params])
+
+  useEffect(() => {
+    async function fetchEvent() {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const eventId = params.id
+        const res = await fetch(`/api/events/${eventId}`)
+
+        if (!res.ok) {
+          if (res.status === 404) setError("Event not found")
+          else throw new Error(`HTTP error! status: ${res.status}`)
+          return
+        }
+
+        const data = await res.json()
+
+        // Map API fields to frontend expected structure
+        setEvent({
+          ...data,
+          isRegistrationOpen: data.isAvailable,
+          spotsRemaining: data.availableTickets,
+          images: data.images || [data.bannerImage].filter(Boolean),
+          category: data.category || "General",
+          tags: data.tags || [],
+          venue: data.venue || {},
+          currency: "₹",
+        })
+
+        setAverageRating(data.averageRating || 0)
+        setTotalReviews(data.reviewCount || 0)
+      } catch (err) {
+        console.error("Error fetching event:", err)
+        setError(err instanceof Error ? err.message : "An error occurred")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchEvent()
+  }, [params])
 
 
   // Check if event is saved on load
@@ -344,7 +344,7 @@ useEffect(() => {
                 </div>
               </div>
             </div>
-
+{/* 
             <div className="flex flex-col gap-4 pr-4 lg:pr-4">
               <p className="text-center text-gray-700 font-medium">Interested in this Event ?</p>
               <div className="flex gap-3 flex-col sm:flex-row">
@@ -359,7 +359,7 @@ useEffect(() => {
                   Exhibit
                 </Button>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
@@ -430,133 +430,133 @@ useEffect(() => {
               <TabsContent value="about" className="space-y-6">
                 <EventImageGallery images={event.images || [event.bannerImage].filter(Boolean)} />
 
-<Card>
-  <CardHeader>
-    <CardTitle className="flex items-center justify-between gap-2">
-      <span>About the Event</span>
-      <div className="flex gap-2">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => setEditingSection(editingSection === "about" ? null : "about")}
-        >
-          <Edit2 className="w-4 h-4" />
-        </Button>
-        {editingSection === "about" && (
-         <Button
-  size="sm"
-  onClick={async () => {
-    try {
-      const res = await fetch(`/api/events/${event.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: aboutText }),
-      });
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between gap-2">
+                      <span>About the Event</span>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingSection(editingSection === "about" ? null : "about")}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        {editingSection === "about" && (
+                          <Button
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(`/api/events/${event.id}`, {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ description: aboutText }),
+                                });
 
-      const data = await res.json(); // Optional: response from backend
+                                const data = await res.json(); // Optional: response from backend
 
-      // Update local state to reflect the change immediately
-      setEvent((prev: any) => ({ ...prev, description: aboutText }));
+                                // Update local state to reflect the change immediately
+                                setEvent((prev: any) => ({ ...prev, description: aboutText }));
 
-      toast({ title: "Saved", description: "About section updated" });
+                                toast({ title: "Saved", description: "About section updated" });
 
-      setEditingSection(null); // Exit editing mode
-    } catch (err) {
-      console.error(err);
-      toast({ title: "Error", description: "Failed to save changes" });
-    }
-  }}
->
-  Save
-</Button>
+                                setEditingSection(null); // Exit editing mode
+                              } catch (err) {
+                                console.error(err);
+                                toast({ title: "Error", description: "Failed to save changes" });
+                              }
+                            }}
+                          >
+                            Save
+                          </Button>
 
-        )}
-      </div>
-    </CardTitle>
-  </CardHeader>
+                        )}
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
 
-  <CardContent>
-    {editingSection === "about" ? (
-      <textarea
-        className="w-full p-2 border rounded"
-        value={aboutText}
-        onChange={(e) => setAboutText(e.target.value)}
-        rows={5}
-      />
-    ) : (
-      <p className="text-gray-700 mb-4 leading-relaxed">{aboutText}</p>
-    )}
-  </CardContent>
-</Card>
+                  <CardContent>
+                    {editingSection === "about" ? (
+                      <textarea
+                        className="w-full p-2 border rounded"
+                        value={aboutText}
+                        onChange={(e) => setAboutText(e.target.value)}
+                        rows={5}
+                      />
+                    ) : (
+                      <p className="text-gray-700 mb-4 leading-relaxed">{aboutText}</p>
+                    )}
+                  </CardContent>
+                </Card>
 
 
-        <Card>
-  <CardHeader>
-    <CardTitle className="flex items-center justify-between">
-      <span className="text-blue-700">Listed In</span>
-      <div className="flex gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setEditingTags(!editingTags)}
-        >
-          <Edit2 className="w-4 h-4" />
-        </Button>
-        {editingTags && (
-          <Button
-            size="sm"
-            onClick={async () => {
-              try {
-                const newTags = tagsText.split(",").map(tag => tag.trim()).filter(Boolean);
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span className="text-blue-700">Listed In</span>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingTags(!editingTags)}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        {editingTags && (
+                          <Button
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                const newTags = tagsText.split(",").map(tag => tag.trim()).filter(Boolean);
 
-                const res = await fetch(`/api/events/${event.id}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ tags: newTags }),
-                });
+                                const res = await fetch(`/api/events/${event.id}`, {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ tags: newTags }),
+                                });
 
-                if (!res.ok) throw new Error("Failed to update tags");
+                                if (!res.ok) throw new Error("Failed to update tags");
 
-                setEvent((prev: any) => ({ ...prev, tags: newTags }));
-                setEditingTags(false);
-                toast({ title: "Saved", description: "Tags updated successfully" });
-              } catch (err) {
-                console.error(err);
-                toast({ title: "Error", description: "Failed to save tags" });
-              }
-            }}
-          >
-            Save
-          </Button>
-        )}
-      </div>
-    </CardTitle>
-  </CardHeader>
-  <CardContent>
-    {editingTags ? (
-      <textarea
-        className="w-full p-2 border rounded"
-        value={tagsText}
-        onChange={(e) => setTagsText(e.target.value)}
-        placeholder="Enter tags separated by commas"
-        rows={2}
-      />
-    ) : event.tags?.length ? (
-      <div className="flex flex-wrap gap-2">
-        {event.tags.map((tag: string) => (
-          <span
-            key={tag}
-            className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full"
-          >
-            #{tag}
-          </span>
-        ))}
-      </div>
-    ) : (
-      <p className="text-gray-500">No tags available</p>
-    )}
-  </CardContent>
-</Card>
+                                setEvent((prev: any) => ({ ...prev, tags: newTags }));
+                                setEditingTags(false);
+                                toast({ title: "Saved", description: "Tags updated successfully" });
+                              } catch (err) {
+                                console.error(err);
+                                toast({ title: "Error", description: "Failed to save tags" });
+                              }
+                            }}
+                          >
+                            Save
+                          </Button>
+                        )}
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {editingTags ? (
+                      <textarea
+                        className="w-full p-2 border rounded"
+                        value={tagsText}
+                        onChange={(e) => setTagsText(e.target.value)}
+                        placeholder="Enter tags separated by commas"
+                        rows={2}
+                      />
+                    ) : event.tags?.length ? (
+                      <div className="flex flex-wrap gap-2">
+                        {event.tags.map((tag: string) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500">No tags available</p>
+                    )}
+                  </CardContent>
+                </Card>
 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ">
@@ -839,7 +839,7 @@ useEffect(() => {
             </Tabs>
           </div>
 
-        
+
         </div>
       </div>
     </div>
