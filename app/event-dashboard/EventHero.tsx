@@ -1,11 +1,13 @@
 "use client"
 
-import { Calendar, Clock, Ticket, Users, AlertTriangle } from "lucide-react"
+import { Calendar, Clock, Ticket, Users, AlertTriangle, Pencil } from "lucide-react"
 import { useKeenSlider } from "keen-slider/react"
 import "keen-slider/keen-slider.min.css"
 import Image from "next/image"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input" // ✅ assuming you have shadcn/ui Input
+import { Button } from "@/components/ui/button"
 import { isEventPostponed, getOriginalEventDates } from "@/lib/data/events"
 
 interface EventImage {
@@ -21,6 +23,19 @@ interface Event {
   endDate?: string
   postponedReason?: string
   images: EventImage[]
+  description: string
+  shortDescription: string
+  location: {
+    city: string
+    venue: string
+    address: string
+    country?: string
+    coordinates: {
+      lat: number
+      lng: number
+    }
+  }
+  
 }
 
 interface EventHeroProps {
@@ -28,6 +43,9 @@ interface EventHeroProps {
 }
 
 export default function EventHero({ event }: EventHeroProps) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [title, setTitle] = useState(event.title)
+
   const isPostponed = isEventPostponed(event.id)
   const originalDates = getOriginalEventDates(event.id)
 
@@ -64,6 +82,27 @@ export default function EventHero({ event }: EventHeroProps) {
         { type: "image", src: "/images/yogaslide.jpg" },
         { type: "video", src: "/video/17564202-hd_1920_1080_30fps.mp4" },
       ]
+
+const handleSave = async () => {
+  try {
+    const res = await fetch(`/api/events/${event.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title }),
+    });
+
+    if (!res.ok) throw new Error("Failed to update event");
+
+    const data = await res.json();
+    setTitle(data.event.title); // update local state with returned title
+    setIsEditing(false);
+    console.log("Event updated:", data.event);
+  } catch (error) {
+    console.error(error);
+    alert("Failed to save title. Try again.");
+  }
+};
+
 
   return (
     <div>
@@ -117,9 +156,29 @@ export default function EventHero({ event }: EventHeroProps) {
 
         {/* Info */}
         <div className="md:w-1/3 w-full bg-blue-50 p-4 sm:p-6 lg:p-8 flex flex-col justify-center space-y-3">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-black leading-snug">
-            {event.title}
-          </h2>
+          
+          {/* Title with edit option */}
+          <div className="flex items-center justify-between">
+            {isEditing ? (
+              <div className="flex w-full gap-2">
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="flex-1"
+                />
+                <Button size="sm" onClick={handleSave}>Save</Button>
+              </div>
+            ) : (
+              <>
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-black leading-snug">
+                  {title}
+                </h2>
+                <button onClick={() => setIsEditing(true)}>
+                  <Pencil className="w-4 h-4 text-gray-500 hover:text-black" />
+                </button>
+              </>
+            )}
+          </div>
 
           {isPostponed && event.postponedReason && (
             <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg border border-orange-200">
@@ -130,6 +189,7 @@ export default function EventHero({ event }: EventHeroProps) {
             </div>
           )}
 
+          {/* Date info */}
           <div className="space-y-3 text-xs sm:text-sm text-gray-800 py-2">
             <div className="flex items-center gap-2 sm:gap-3">
               <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-black" />

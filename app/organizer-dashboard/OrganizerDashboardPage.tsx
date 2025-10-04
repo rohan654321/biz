@@ -334,7 +334,9 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
         flex flex-col
       `}
       >
-        <div className="border-b border-gray-200 p-4 flex-shrink-0">
+
+         {/* Sidebar header */}
+        {/* <div className="border-b border-gray-200 p-4 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10">
@@ -355,7 +357,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
               <X className="w-4 h-4" />
             </Button>
           </div>
-        </div>
+        </div> */}
 
         <div className="flex-1 overflow-y-auto p-4">
           {sidebarGroups.map((group) => (
@@ -444,7 +446,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
       </div>
 
       <div className="flex-1 flex flex-col min-h-screen">
-        <header className="bg-white border-b border-gray-200 px-4 py-3">
+        {/* <header className="bg-white border-b border-gray-200 px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setSidebarOpen(true)}>
@@ -465,7 +467,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
               </Avatar>
             </div>
           </div>
-        </header>
+        </header> */}
 
         <main className="flex-1 p-6 overflow-auto">{renderContent()}</main>
       </div>
