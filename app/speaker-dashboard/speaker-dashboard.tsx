@@ -23,6 +23,9 @@ import {
   Twitter,
   Briefcase,
   HelpCircle,
+  FileText,
+  UserPlus,
+  MessageSquare,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
@@ -181,10 +184,10 @@ export function ExhibitorDashboard({userId}: UserDashboardProps) {
     { id: "myprofile", label: "Company Info", icon: Building2 },
     // { id: "events", label: "Events", icon: Calendar },
     { id: "mysessions", label: "mysessions", icon: Package },
-    { id: "materials", label: "materials", icon: Users },
+    { id: "materials", label: "materials", icon: FileText },
     // { id: "feedback", label: "feedback", icon: Calendar },
-    { id: "connection", label: "connection", icon: TrendingUp },
-    { id: "message", label: "message", icon: TrendingUp },
+    { id: "connection", label: "connection", icon: UserPlus  },
+    { id: "message", label: "message", icon: MessageSquare },
     // { id: "promotions", label: "Promotions", icon: Star },
     { id: "help", label: "Help & Support", icon: HelpCircle },
     { id: "settings", label: "Settings", icon: Settings },
@@ -211,7 +214,7 @@ export function ExhibitorDashboard({userId}: UserDashboardProps) {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <div className="w-64 bg-white shadow-sm border-r">
-        <div className="p-6 border-b">
+        {/* <div className="p-6 border-b">
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10">
               <AvatarImage src={exhibitor.avatar || "/placeholder.svg"} />
@@ -227,7 +230,7 @@ export function ExhibitorDashboard({userId}: UserDashboardProps) {
               <p className="text-sm text-gray-500">{exhibitor.jobTitle || "Exhibitor"}</p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         <nav className="p-4">
           <ul className="space-y-2">
@@ -271,7 +274,7 @@ export function ExhibitorDashboard({userId}: UserDashboardProps) {
           {/* {activeTab === "analytics" && < />} */}
           {/* {activeTab === "promotions" && < />} */}
           {activeTab === "help" && <HelpSupport />}
-          {activeTab === "settings" && <SpeakerSettings />}
+          {activeTab === "settings" && <SpeakerSettings speakerId={""}   />}
         </div>
       </div>
     </div>

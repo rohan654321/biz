@@ -251,7 +251,9 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
          case "help-support":
       return <HelpSupport /> 
       case "settings":
-        return <VenueSettings venueData={venueData} />
+        return <VenueSettings venueData={venueData} onUpdate={function (data: Partial<VenueData>): void {
+          throw new Error("Function not implemented.")
+        } } />
       default:
         return <div>Select a section from the sidebar</div>
     }

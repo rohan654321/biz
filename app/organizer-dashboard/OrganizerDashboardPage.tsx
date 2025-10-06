@@ -304,7 +304,9 @@ useEffect(() => {
       case "create-event":
         return <CreateEvent organizerId={organizerId} />
       case "settings":
-        return <SettingsPanel organizerData={organizerData} />
+        return <SettingsPanel organizerData={organizerData} onUpdate={function (data: Partial<OrganizerData>): void {
+          throw new Error("Function not implemented.")
+        } } />
       case "help-support":
         return <HelpSupport />
       case "connect":
