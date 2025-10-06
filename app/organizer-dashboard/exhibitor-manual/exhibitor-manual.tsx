@@ -1,455 +1,488 @@
 "use client"
 
-import React, { useState } from 'react';
-import { Download, ChevronDown, ChevronUp, FileText, Package, Users, Calendar, MapPin, Clock, Info, AlertCircle, CheckCircle, LucideIcon } from 'lucide-react';
+import type React from "react"
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { FileText, Download, Trash2, Eye, Loader2, Edit } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+
+interface PDFDocument {
+  id: string
+  fileName: string
+  fileUrl: string
+  fileSize: number
+  description: string | null
+  version: string
+  createdAt: string
+  uploadedBy: {
+    id: string
+    name: string | null
+    email: string
+  }
+}
 
 interface ExhibitorManualProps {
-  eventsId: string;
+  eventId: string
+  userId: string
 }
 
-interface SectionItem {
-  label: string;
-  value: string;
-  status?: 'urgent' | 'warning' | 'info';
-}
+export default function ExhibitorManual({ eventId, userId }: ExhibitorManualProps) {
+  const [documents, setDocuments] = useState<PDFDocument[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [editingDoc, setEditingDoc] = useState<PDFDocument | null>(null)
+  const [editDescription, setEditDescription] = useState("")
+  const [editVersion, setEditVersion] = useState("")
+  const [description, setDescription] = useState("")
+  const [viewingPdf, setViewingPdf] = useState<{ url: string; name: string } | null>(null)
+  const { toast } = useToast()
 
-interface SectionContent {
-  id: string;
-  title: string;
-  description?: string;
-  items?: SectionItem[];
-  list?: string[];
-}
+  useEffect(() => {
+    fetchDocuments()
+  }, [eventId])
 
-interface Section {
-  title: string;
-  icon: LucideIcon;
-  content: SectionContent[];
-}
+  const fetchDocuments = async () => {
+    try {
+      const response = await fetch(`/api/exhibitor-manual/list?eventId=${eventId}`)
+      if (!response.ok) throw new Error("Failed to fetch documents")
 
-interface Sections {
-  overview: Section;
-  booth: Section;
-  logistics: Section;
-  services: Section;
-  marketing: Section;
-  regulations: Section;
-}
-
-type SectionKey = keyof Sections;
-
-interface Tab {
-  id: SectionKey;
-  label: string;
-  icon: LucideIcon;
-}
-
-const ExhibitorManualProfessional: React.FC<ExhibitorManualProps> = ({ eventsId }) => {
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<SectionKey>('overview');
-
-  const toggleSection = (sectionId: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [sectionId]: !prev[sectionId]
-    }));
-  };
-
-  const sections: Sections = {
-    overview: {
-      title: 'Event Overview',
-      icon: Info,
-      content: [
-        {
-          id: 'event-details',
-          title: 'Event Details',
-          items: [
-            { label: 'Event Name', value: 'Trade Show 2025' },
-            { label: 'Date', value: 'March 15-17, 2025' },
-            { label: 'Venue', value: 'Convention Center, Hall A' },
-            { label: 'Setup Time', value: 'March 14, 8:00 AM - 6:00 PM' },
-            { label: 'Show Hours', value: '9:00 AM - 5:00 PM Daily' },
-            { label: 'Breakdown', value: 'March 17, 5:00 PM - 10:00 PM' }
-          ]
-        },
-        {
-          id: 'important-dates',
-          title: 'Important Dates & Deadlines',
-          items: [
-            { label: 'Booth Payment Deadline', value: 'February 1, 2025', status: 'urgent' },
-            { label: 'Service Order Deadline', value: 'February 15, 2025', status: 'warning' },
-            { label: 'Marketing Materials Due', value: 'February 20, 2025', status: 'warning' },
-            { label: 'Final Attendee List', value: 'March 1, 2025', status: 'info' }
-          ]
-        }
-      ]
-    },
-    booth: {
-      title: 'Booth Information',
-      icon: Package,
-      content: [
-        {
-          id: 'booth-specs',
-          title: 'Booth Specifications',
-          items: [
-            { label: 'Booth Number', value: 'A-145' },
-            { label: 'Booth Size', value: '10ft x 10ft (Standard)' },
-            { label: 'Booth Type', value: 'Inline Booth' },
-            { label: 'Power Supply', value: '110V, 15 AMP' },
-            { label: 'Internet Access', value: 'WiFi Available (Order Required)' }
-          ]
-        },
-        {
-          id: 'booth-package',
-          title: 'Standard Booth Package Includes',
-          list: [
-            '8ft high back drape and 3ft high side drape',
-            'Company name sign (7" x 44")',
-            'One 6ft draped table',
-            'Two folding chairs',
-            'One waste basket',
-            'Standard carpet (gray)'
-          ]
-        },
-        {
-          id: 'booth-rules',
-          title: 'Booth Design Rules',
-          list: [
-            'Maximum height: 8ft for inline booths, 12ft for island booths',
-            'No signage or materials blocking neighboring booths',
-            'Maintain clear aisle space (minimum 10ft)',
-            'All structures must be approved by show management',
-            'Comply with local fire and safety regulations'
-          ]
-        }
-      ]
-    },
-    logistics: {
-      title: 'Logistics & Shipping',
-      icon: MapPin,
-      content: [
-        {
-          id: 'shipping-info',
-          title: 'Shipping Instructions',
-          description: 'All shipments must be labeled with booth number and company name.',
-          items: [
-            { label: 'Advance Warehouse Address', value: 'Available in Service Kit' },
-            { label: 'Direct Shipping Dates', value: 'March 13-14, 2025' },
-            { label: 'Receiving Hours', value: '8:00 AM - 4:00 PM' },
-            { label: 'Material Handling', value: 'Charges apply per CWT' }
-          ]
-        },
-        {
-          id: 'move-in',
-          title: 'Move-In Procedures',
-          list: [
-            'Check in at exhibitor services desk',
-            'Obtain loading dock pass',
-            'Unload materials at designated area',
-            'Remove empty crates immediately',
-            'Complete setup by 6:00 PM on March 14'
-          ]
-        },
-        {
-          id: 'move-out',
-          title: 'Move-Out Procedures',
-          list: [
-            'Breakdown begins at 5:00 PM on last show day',
-            'All materials must be removed by 10:00 PM',
-            'Schedule pickup with carrier in advance',
-            'Return all rental items to service desk',
-            'Complete move-out form before leaving'
-          ]
-        }
-      ]
-    },
-    services: {
-      title: 'Services & Orders',
-      icon: FileText,
-      content: [
-        {
-          id: 'available-services',
-          title: 'Available Services',
-          list: [
-            'Electrical Service (110V, 220V, 440V)',
-            'Internet & Telecommunications',
-            'Furniture & Carpet Rental',
-            'Audio/Visual Equipment',
-            'Floral & Plants',
-            'Lead Retrieval Systems',
-            'Cleaning Services',
-            'Security Services'
-          ]
-        },
-        {
-          id: 'ordering',
-          title: 'How to Order Services',
-          description: 'Access the online service portal using your exhibitor credentials.',
-          items: [
-            { label: 'Portal URL', value: 'services.tradeshow2025.com' },
-            { label: 'Login', value: 'Use registration email' },
-            { label: 'Advance Order Deadline', value: 'Feb 15 (Discounted rates)' },
-            { label: 'On-Site Orders', value: 'Available at premium rates' }
-          ]
-        }
-      ]
-    },
-    marketing: {
-      title: 'Marketing & Promotion',
-      icon: Users,
-      content: [
-        {
-          id: 'pre-show',
-          title: 'Pre-Show Marketing',
-          list: [
-            'Submit company profile for event website and app',
-            'Provide high-resolution logo for marketing materials',
-            'Schedule social media posts with event hashtag',
-            'Send email invitations to clients and prospects',
-            'Order promotional materials and giveaways'
-          ]
-        },
-        {
-          id: 'show-floor',
-          title: 'Show Floor Marketing',
-          list: [
-            'Engage attendees with interactive displays',
-            'Collect leads using event app or lead scanner',
-            'Schedule product demonstrations',
-            'Offer exclusive show specials',
-            'Participate in show floor activities and contests'
-          ]
-        },
-        {
-          id: 'post-show',
-          title: 'Post-Show Follow-Up',
-          list: [
-            'Download lead data within 48 hours',
-            'Send thank you emails to booth visitors',
-            'Share show highlights on social media',
-            'Complete post-show survey',
-            'Schedule follow-up calls and meetings'
-          ]
-        }
-      ]
-    },
-    regulations: {
-      title: 'Rules & Regulations',
-      icon: AlertCircle,
-      content: [
-        {
-          id: 'general-rules',
-          title: 'General Show Rules',
-          list: [
-            'All exhibitors must wear official badges',
-            'Setup and breakdown only during designated hours',
-            'No soliciting outside assigned booth space',
-            'Music and audio must not disturb neighboring booths',
-            'Food and beverages served only with proper permits',
-            'Smoking prohibited in all indoor areas',
-            'Comply with ADA accessibility requirements'
-          ]
-        },
-        {
-          id: 'safety',
-          title: 'Safety Requirements',
-          list: [
-            'All materials must be flame-retardant',
-            'Keep aisles and exits clear at all times',
-            'No open flames or candles',
-            'Secure all hanging signs and displays',
-            'Report any incidents to security immediately',
-            'First aid stations located at main entrances'
-          ]
-        },
-        {
-          id: 'liability',
-          title: 'Insurance & Liability',
-          description: 'Exhibitors are responsible for their property and booth materials.',
-          items: [
-            { label: 'Required Coverage', value: '$1,000,000 General Liability' },
-            { label: 'Certificate Due', value: 'Before setup begins' },
-            { label: 'Additional Insured', value: 'Event organizer and venue' },
-            { label: 'Property Insurance', value: 'Recommended for all materials' }
-          ]
-        }
-      ]
+      const result = await response.json()
+      setDocuments(result.data)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load documents. Please refresh the page.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
-  const tabs: Tab[] = [
-    { id: 'overview', label: 'Overview', icon: Info },
-    { id: 'booth', label: 'Booth Info', icon: Package },
-    { id: 'logistics', label: 'Logistics', icon: MapPin },
-    { id: 'services', label: 'Services', icon: FileText },
-    { id: 'marketing', label: 'Marketing', icon: Users },
-    { id: 'regulations', label: 'Rules', icon: AlertCircle }
-  ];
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
 
-  const currentSection = sections[activeTab];
-  const Icon = currentSection.icon;
+    // Validate file type
+    if (file.type !== "application/pdf") {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a PDF file only.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload a file smaller than 10MB.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setUploading(true)
+
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("eventId", eventId)
+      formData.append("uploadedById", userId)
+      if (description) {
+        formData.append("description", description)
+      }
+
+      const response = await fetch("/api/exhibitor-manual/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Upload failed")
+      }
+
+      const result = await response.json()
+      setDocuments((prev) => [result.data, ...prev])
+
+      toast({
+        title: "Upload successful",
+        description: `${file.name} has been uploaded successfully.`,
+      })
+
+      // Reset input
+      event.target.value = ""
+      setDescription("")
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "There was an error uploading your file.",
+        variant: "destructive",
+      })
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch("/api/exhibitor-manual/delete", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Delete failed")
+      }
+
+      setDocuments((prev) => prev.filter((doc) => doc.id !== id))
+
+      toast({
+        title: "Document deleted",
+        description: "The document has been deleted successfully.",
+      })
+    } catch (error) {
+      toast({
+        title: "Delete failed",
+        description: "There was an error deleting the document. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setDeleteId(null)
+    }
+  }
+
+  const handleUpdate = async () => {
+    if (!editingDoc) return
+
+    try {
+      const response = await fetch("/api/exhibitor-manual/update", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: editingDoc.id,
+          description: editDescription,
+          version: editVersion,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Update failed")
+      }
+
+      const result = await response.json()
+      setDocuments((prev) => prev.map((doc) => (doc.id === editingDoc.id ? result.data : doc)))
+
+      toast({
+        title: "Document updated",
+        description: "The document has been updated successfully.",
+      })
+
+      setEditingDoc(null)
+    } catch (error) {
+      toast({
+        title: "Update failed",
+        description: "There was an error updating the document. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+ const handleView = (url: string, name: string) => {
+  const proxyUrl = `/api/exhibitor-manual/view?url=${encodeURIComponent(url)}`
+  setViewingPdf({ url: proxyUrl, name })
+}
+
+  const handleDownload = async (url: string, name: string) => {
+    try {
+      const response = await fetch(url)
+      const blob = await response.blob()
+      const downloadUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = downloadUrl
+      link.download = name
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(downloadUrl)
+
+      toast({
+        title: "Download started",
+        description: `Downloading ${name}...`,
+      })
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: "There was an error downloading the file. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return "0 Bytes"
+    const k = 1024
+    const sizes = ["Bytes", "KB", "MB", "GB"]
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i]
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      {/* Header */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900">Exhibitor Manual</h1>
-              <p className="text-slate-600 mt-1">Event ID: {eventsId}</p>
-            </div>
-            <button className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors shadow-md">
-              <Download className="w-5 h-5" />
-              Download PDF
-            </button>
-          </div>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Exhibitor Manual</h1>
+        <p className="text-muted-foreground mt-2">Upload, view, download, and manage PDF documents for exhibitors</p>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="bg-white border-b border-slate-200 sticky top-[104px] z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex gap-1 overflow-x-auto">
-            {tabs.map(tab => {
-              const TabIcon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-6 py-4 border-b-2 transition-all whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? 'border-blue-600 text-blue-600 bg-blue-50'
-                      : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-                >
-                  <TabIcon className="w-4 h-4" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-          {/* Section Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
-            <div className="flex items-center gap-3 text-white">
-              <Icon className="w-8 h-8" />
-              <h2 className="text-2xl font-bold">{currentSection.title}</h2>
+      {/* Upload Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Upload PDF Document</CardTitle>
+          <CardDescription>Upload exhibitor manual documents (PDF only, max 10MB)</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid w-full items-center gap-2">
+              <Label htmlFor="description">Description (Optional)</Label>
+              <Textarea
+                id="description"
+                placeholder="Enter a description for this document..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                disabled={uploading}
+                rows={3}
+              />
             </div>
-          </div>
-
-          {/* Section Content */}
-          <div className="p-8">
-            {currentSection.content.map((section, idx) => (
-              <div key={section.id} className={idx > 0 ? 'mt-8' : ''}>
-                <button
-                  onClick={() => toggleSection(section.id)}
-                  className="w-full flex items-center justify-between p-5 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
-                      {idx + 1}
-                    </div>
-                    <h3 className="text-xl font-semibold text-slate-900">{section.title}</h3>
-                  </div>
-                  {expandedSections[section.id] ? (
-                    <ChevronUp className="w-5 h-5 text-slate-600" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-slate-600" />
-                  )}
-                </button>
-
-                {expandedSections[section.id] && (
-                  <div className="mt-4 p-6 bg-white border border-slate-200 rounded-lg">
-                    {section.description && (
-                      <p className="text-slate-700 mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                        {section.description}
-                      </p>
-                    )}
-
-                    {section.items && (
-                      <div className="space-y-3">
-                        {section.items.map((item, i) => (
-                          <div key={i} className="flex items-start justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
-                            <div className="flex items-start gap-3">
-                              {item.status === 'urgent' && <AlertCircle className="w-5 h-5 text-red-500 mt-0.5" />}
-                              {item.status === 'warning' && <Clock className="w-5 h-5 text-amber-500 mt-0.5" />}
-                              {item.status === 'info' && <Info className="w-5 h-5 text-blue-500 mt-0.5" />}
-                              {!item.status && <CheckCircle className="w-5 h-5 text-slate-400 mt-0.5" />}
-                              <div>
-                                <span className="font-medium text-slate-900">{item.label}</span>
-                              </div>
-                            </div>
-                            <span className={`text-right font-semibold ${
-                              item.status === 'urgent' ? 'text-red-600' :
-                              item.status === 'warning' ? 'text-amber-600' :
-                              item.status === 'info' ? 'text-blue-600' :
-                              'text-slate-700'
-                            }`}>
-                              {item.value}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {section.list && (
-                      <ul className="space-y-3">
-                        {section.list.map((item, i) => (
-                          <li key={i} className="flex items-start gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5">
-                              {i + 1}
-                            </div>
-                            <span className="text-slate-700 flex-1">{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+            <div className="grid w-full items-center gap-2">
+              <Label htmlFor="pdf-upload">Select PDF File</Label>
+              <div className="flex items-center gap-4">
+                <Input
+                  id="pdf-upload"
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                  className="cursor-pointer"
+                />
+                {uploading && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Uploading...
                   </div>
                 )}
               </div>
-            ))}
+            </div>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Footer */}
-        <div className="mt-8 bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl shadow-lg p-8 text-white">
-          <div className="grid md:grid-cols-3 gap-6">
-            <div>
-              <h4 className="font-semibold mb-2 flex items-center gap-2">
-                <Info className="w-5 h-5" />
-                Questions?
-              </h4>
-              <p className="text-slate-300">Contact Exhibitor Services</p>
-              <p className="text-slate-300">exhibitors@tradeshow.com</p>
-              <p className="text-slate-300">+1 (555) 123-4567</p>
+      {/* Documents List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Uploaded Documents</CardTitle>
+          <CardDescription>
+            {documents.length === 0
+              ? "No documents uploaded yet"
+              : `${documents.length} document${documents.length > 1 ? "s" : ""} available`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {documents.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-sm text-muted-foreground">
+                No documents uploaded yet. Upload your first exhibitor manual above.
+              </p>
             </div>
-            <div>
-              <h4 className="font-semibold mb-2 flex items-center gap-2">
-                <Clock className="w-5 h-5" />
-                Office Hours
-              </h4>
-              <p className="text-slate-300">Mon-Fri: 8:00 AM - 6:00 PM</p>
-              <p className="text-slate-300">Sat-Sun: 9:00 AM - 3:00 PM</p>
+          ) : (
+            <div className="space-y-3">
+              {documents.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="flex flex-col gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="flex-shrink-0">
+                        <FileText className="h-8 w-8 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{doc.fileName}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {formatFileSize(doc.fileSize)} • {formatDate(doc.createdAt)} • v{doc.version}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Uploaded by {doc.uploadedBy.name || doc.uploadedBy.email}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditingDoc(doc)
+                          setEditDescription(doc.description || "")
+                          setEditVersion(doc.version)
+                        }}
+                        title="Edit details"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleView(doc.fileUrl, doc.fileName)}
+                        title="View PDF"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownload(doc.fileUrl, doc.fileName)}
+                        title="Download PDF"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDeleteId(doc.id)}
+                        title="Delete PDF"
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  {doc.description && <p className="text-sm text-muted-foreground pl-11">{doc.description}</p>}
+                </div>
+              ))}
             </div>
-            <div>
-              <h4 className="font-semibold mb-2 flex items-center gap-2">
-                <MapPin className="w-5 h-5" />
-                On-Site Services
-              </h4>
-              <p className="text-slate-300">Booth #100 - Main Entrance</p>
-              <p className="text-slate-300">Available during show hours</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* PDF Viewer Modal */}
+      <Dialog open={viewingPdf !== null} onOpenChange={() => setViewingPdf(null)}>
+        <DialogContent className="max-w-6xl h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>{viewingPdf?.name}</DialogTitle>
+            <DialogDescription>View the PDF document below</DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 w-full h-full min-h-0">
+            {viewingPdf && (
+              <iframe src={viewingPdf.url} className="w-full h-full border rounded-md" title={viewingPdf.name} />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Document Dialog */}
+      <Dialog open={editingDoc !== null} onOpenChange={() => setEditingDoc(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Document Details</DialogTitle>
+            <DialogDescription>Update the description and version of this document.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                id="edit-description"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-version">Version</Label>
+              <Input
+                id="edit-version"
+                value={editVersion}
+                onChange={(e) => setEditVersion(e.target.value)}
+                placeholder="e.g., 1.0, 2.1"
+              />
             </div>
           </div>
-        </div>
-      </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingDoc(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdate}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the document from the server.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteId && handleDelete(deleteId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
-  );
-};
-
-export default ExhibitorManualProfessional;
+  )
+}

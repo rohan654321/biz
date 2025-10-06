@@ -35,11 +35,12 @@ import FeedbackReplyManagement from "./FeedbackReplyManagement"
 import ExhibitorsManagement from "./TotalExhibitores"
 import AddExhibitor from "./AddExhibitor"
 import ExhibitorsForEvent from "./ExhibitorsForEvent"
-import ExhibitorManualProfessional  from "../organizer-dashboard/exhibitor-manual/exhibitor-manual"
+import ExhibitorManual from "../organizer-dashboard/exhibitor-manual/exhibitor-manual"
 import AddSpeaker from "./AddSpeaker"
 import SpeakerSessionsTable from "./SpeakerSessionsTable"
 import CreateConferenceAgenda from "./CreateConferenceAgenda"
 import ConferenceAgenda from "./ConferenceAgenda"
+import { useSession } from "next-auth/react"
 // import Analytics from "./analytics"
 // ...create/import other components as needed
 
@@ -66,6 +67,8 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
   const [expandedGroups, setExpandedGroups] = useState<string[]>(["main", "lead-management"])
   const [activeSection, setActiveSection] = useState("dashboard")
   const [params, setParams] = useState<{ id: string } | null>(null)
+  const { data: session } = useSession()
+const userId = session?.user?.id
 
   useEffect(() => {
     // Simulate async params resolution
@@ -163,7 +166,8 @@ const renderContent = () => {
       case "add-exhibitores":
         return <AddExhibitor eventId={eventId} />
       case "exhibitor-manual":
-        return <ExhibitorManualProfessional eventsId={eventId}  />
+     return <ExhibitorManual userId={userId!} eventId={eventId} />
+
       case "add-speaker":
         return <AddSpeaker eventId={eventId} />
       case "speakers":
