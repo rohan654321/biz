@@ -17,7 +17,9 @@ export default function ConditionalLayout({
     pathname.startsWith("/event-dashboard") ||
     pathname.startsWith("/dashboard")||
     pathname.startsWith("/exhibitor-dashboard")||
-    pathname.startsWith("/speaker-dashboard")
+    pathname.startsWith("/speaker-dashboard")||
+    pathname.startsWith("/venue-dashboard")
+    
 
   return (
     <>
