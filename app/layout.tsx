@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import "./globals.css"
 import { ClientLayout } from "./client-layout"
+import ConditionalLayout from "./conditional-layout"
 
 export const metadata: Metadata = {
   title: "Biz Trade Fairs",
