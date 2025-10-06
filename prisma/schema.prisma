@@ -32,7 +32,6 @@ model User {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-
   // Profile Information
   bio               String?
   website           String?
@@ -47,9 +46,6 @@ model User {
   language          String   @default("en")
   interests         String[] @default([])
 
-
-  
-
   // Organizer-specific fields
   organizationName  String?
   description       String?
@@ -59,7 +55,6 @@ model User {
   specialties       String[]
   achievements      String[]
   certifications    String[]
-  
   
   // Business Information
   businessEmail     String?
@@ -77,6 +72,7 @@ model User {
   organizedEvents   Event[]  @relation("EventOrganizer")
   registrations     EventRegistration[]
   speakerSessions   SpeakerSession[]
+  speakerMaterials  Material[] @relation("SpeakerMaterials")
   exhibitorBooths   ExhibitorBooth[]
   venueBookings     VenueBooking[] 
   sentMessages      Message[] @relation("MessageSender")
@@ -94,29 +90,28 @@ model User {
   venueAnalytics VenueAnalytics[]
   meetingSpaces MeetingSpace[] 
   leads           EventLead[]
-  promotions   Promotion[] // ✅ back relation for event promotions
-  savedEvents SavedEvent[] // Add this line
+  promotions   Promotion[]
+  savedEvents SavedEvent[]
   replies ReviewReply[]
-  // Add these for connections 👇
   connectionsSent    Connection[] @relation("ConnectionSender")
   connectionsReceived Connection[] @relation("ConnectionReceiver")
 
-    // Relations for organizer-speaker
+  // Relations for organizer-speaker
   organizerId String? @db.ObjectId
   organizer   User?   @relation("OrganizerSpeakers", fields: [organizerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   speakers    User[]  @relation("OrganizerSpeakers")
   
-   // Exhibitor relation
+  // Exhibitor relation
   organizerIdForExhibitor String? @db.ObjectId
   organizerForExhibitor   User?   @relation("OrganizerExhibitors", fields: [organizerIdForExhibitor], references: [id], onDelete: NoAction, onUpdate: NoAction)
   exhibitors              User[]  @relation("OrganizerExhibitors")
   
-   // Venue Manager relation
+  // Venue Manager relation
   organizerIdForVenueManager String? @db.ObjectId
   organizerForVenueManager   User?   @relation("OrganizerVenueManagers", fields: [organizerIdForVenueManager], references: [id], onDelete: NoAction, onUpdate: NoAction)
   venueManagers              User[]  @relation("OrganizerVenueManagers")
 
-  //venue
+  // Venue fields
   venueName         String?
   venueDescription  String?
   venueAddress      String?
@@ -142,15 +137,14 @@ model User {
   latitude          Float?
   longitude         Float?
 
-  //speaker
-   speakingExperience String?
+  // Speaker fields
+  speakingExperience String?
 
   // Appointment relationships
   appointmentsRequested Appointment[] @relation("AppointmentRequester")
   appointmentsReceived  Appointment[] @relation("AppointmentExhibitor")
 
-  // In the User model, add this line in the relationships section (around line 80-90):
- exhibitorManuals ExhibitorManual[] @relation("ExhibitorManualUploads")
+  exhibitorManuals ExhibitorManual[] @relation("ExhibitorManualUploads")
 
   @@map("users")
 } 
@@ -176,7 +170,6 @@ model Event {
   tags      String[]
   eventType String[]
 
-  // New flags
   isFeatured Boolean? @default(false)
   isVIP      Boolean? @default(false)  
   
@@ -202,7 +195,6 @@ model Event {
   // Capacity and Pricing
   maxAttendees     Int?
   currentAttendees Int @default(0)
-  
   currency         String @default("USD")  
   
   // Media
@@ -232,7 +224,6 @@ model Event {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Add these for ratings
   averageRating   Float    @default(0)
   totalReviews    Int      @default(0)
 
@@ -244,12 +235,10 @@ model Event {
   analytics       EventAnalytics[]
   campaigns       Campaign[]
   leads           EventLead[]
-  promotions Promotion[] // ✅ back relation for event promotions
-  savedEvents SavedEvent[] // Add this line
-  appointments Appointment[] // Add appointments relation
+  promotions Promotion[]
+  savedEvents SavedEvent[]
+  appointments Appointment[]
   ticketTypes      TicketType[]
-
-  // In the Event model, add this line in the relationships section (around line 250):
   exhibitorManuals ExhibitorManual[]
 
   @@map("events")
@@ -279,19 +268,15 @@ model TicketType {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   
-  // Relationships
   eventLeads      EventLead[]
-  // registrations   Event[]
 
   @@map("ticket_types")
 }
-
 
 // Appointment Management Model
 model Appointment {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   
-  // Event and participants
   eventId         String   @db.ObjectId
   event           Event    @relation(fields: [eventId], references: [id])
   requesterId     String   @db.ObjectId
@@ -299,44 +284,37 @@ model Appointment {
   exhibitorId     String   @db.ObjectId
   exhibitor       User     @relation("AppointmentExhibitor", fields: [exhibitorId], references: [id])
   
-  // Meeting details
   title           String
   description     String?
   type            AppointmentType @default(CONSULTATION)
   status          AppointmentStatus @default(PENDING)
   priority        AppointmentPriority @default(MEDIUM)
   
-  // Scheduling
   requestedDate   DateTime
-  requestedTime   String   // "10:00", "14:30", etc.
-  duration        Int      // in minutes
+  requestedTime   String
+  duration        Int
   confirmedDate   DateTime?
   confirmedTime   String?
   
-  // Location and meeting details  
   meetingType     MeetingType @default(IN_PERSON)
   location        String?
   meetingLink     String?
   
-  // Additional information
   purpose         String?
   agenda          String[]
   notes           String?
   outcome         String?
   
-  // Tracking
   reminderSent    Boolean  @default(false)
   followUpRequired Boolean @default(true)
   
-  // Metadata
   requesterCompany String?
   requesterTitle   String?
   requesterPhone   String?
   requesterEmail   String?
   
-  // Cancellation
   cancellationReason String?
-  cancelledBy        String? // "requester" or "exhibitor"
+  cancelledBy        String?
   cancelledAt        DateTime?
   
   createdAt       DateTime @default(now())
@@ -377,7 +355,6 @@ enum MeetingType {
   HYBRID
 }
 
-// Updated ExhibitionSpace model in your schema.prisma
 model ExhibitionSpace {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   eventId         String   @db.ObjectId
@@ -390,40 +367,33 @@ model ExhibitionSpace {
   area            Float
   location        String?
 
-  // Pricing - updated to match frontend
-  basePrice       Float    // Main price (per sqm or per unit)
-  pricePerSqm     Float?   // Specific price per square meter
-  minArea         Float?   // Minimum area required
+  basePrice       Float
+  pricePerSqm     Float?
+  minArea         Float?
   currency        String   @default("USD")
 
-  // Services - updated to match frontend data
   powerIncluded       Boolean  @default(false)
   additionalPowerRate Float?
   compressedAirRate   Float?
   
-  // Unit-based pricing (for services like power, compressed air)
-  unit            String?  // "KW", "HP", etc.
-  pricePerUnit    Float?   // Price per unit
+  unit            String?
+  pricePerUnit    Float?
   
-  // Status and configuration
-  isFixed         Boolean  @default(false) // Whether this is a standard/fixed space type
+  isFixed         Boolean  @default(false)
   isAvailable     Boolean  @default(true)
   maxBooths       Int?
   bookedBooths    Int      @default(0)
 
-  // Setup Requirements
   setupRequirements Json?
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  // Relationships
   exhibitorBooths ExhibitorBooth[]
 
   @@map("exhibition_spaces")
 }
 
-// You might also want to add these space types to your enum
 enum ExhibitionSpaceType {
   SHELL_SPACE
   RAW_SPACE
@@ -431,9 +401,9 @@ enum ExhibitionSpaceType {
   THREE_SIDE_OPEN
   FOUR_SIDE_OPEN
   MEZZANINE
-  ADDITIONAL_POWER    // New
-  COMPRESSED_AIR      // New
-  CUSTOM             // For user-defined space types
+  ADDITIONAL_POWER
+  COMPRESSED_AIR
+  CUSTOM
 }
 
 model ExhibitorBooth {
@@ -444,13 +414,12 @@ model ExhibitorBooth {
   exhibitor       User     @relation(fields: [exhibitorId], references: [id])
   spaceId         String   @db.ObjectId
   space           ExhibitionSpace @relation(fields: [spaceId], references: [id])
-  spaceReference String?   // ← add this line
+  spaceReference String?
   
   boothNumber     String
   companyName     String
   description     String?
 
-  // Services
   additionalPower Float    @default(0)
   compressedAir   Float    @default(0)
 
@@ -465,7 +434,7 @@ model ExhibitorBooth {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@unique([eventId, exhibitorId]) // 👈 Add this line
+  @@unique([eventId, exhibitorId])
   @@map("exhibitor_booths")
 }
 
@@ -478,7 +447,7 @@ model Promotion {
   event     Event?   @relation(fields: [eventId], references: [id])
 
   packageType     String
-  targetCategories String[]   // ✅ no @db.Array
+  targetCategories String[]
   status          String   @default("PENDING")
   amount          Float
   duration        Int
@@ -520,21 +489,18 @@ model SpeakerSession {
   title           String
   description     String
   sessionType     SessionType
-  duration        Int      // in minutes
+  duration        Int
   startTime       DateTime
   endTime         DateTime
   room            String?
   
-  // Content
   abstract        String?
   learningObjectives String[]
   targetAudience  String?
-  materials       String[]
+  materials       Material[]
   
-  // Status
   status          SessionStatus @default(SCHEDULED)
   
-  // Ratings
   averageRating   Float    @default(0)
   totalRatings    Int      @default(0)
   
@@ -568,6 +534,56 @@ enum BoothStatus {
   CANCELLED
 }
 
+// Material Management
+model Material {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  sessionId       String   @db.ObjectId
+  session         SpeakerSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  speakerId       String   @db.ObjectId
+  speaker         User     @relation("SpeakerMaterials", fields: [speakerId], references: [id], onDelete: Cascade)
+  
+  fileName        String
+  fileUrl         String
+  publicId        String
+  fileSize        Int
+  fileType        MaterialType?
+  mimeType        String
+  
+  status          MaterialStatus? @default(DRAFT)
+  allowDownload   Boolean  @default(true)
+  description     String?
+  version         String?  @default("1.0")
+  
+  uploadedAt      DateTime @default(now())
+  lastModified    DateTime @updatedAt
+  deadline        DateTime?
+  
+  downloadCount   Int      @default(0)
+  viewCount       Int      @default(0)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([sessionId])
+  @@index([speakerId])
+  @@map("materials")
+}
+
+enum MaterialType {
+  PRESENTATION
+  DOCUMENT
+  VIDEO
+  IMAGE
+  OTHER
+}
+
+enum MaterialStatus {
+  DRAFT
+  FINAL
+  ARCHIVED
+}
+
 // Registration Management
 model EventRegistration {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -581,14 +597,11 @@ model EventRegistration {
   totalAmount     Float
   currency        String   @default("USD")
   
-  // Status
   status          RegistrationStatus @default(PENDING)
   
-  // Additional Info
   specialRequests String?
   dietaryRestrictions String?
   
-  // Payment
   paymentId       String?  @db.ObjectId
   payment         Payment? @relation(fields: [paymentId], references: [id])
   
@@ -606,7 +619,6 @@ enum RegistrationStatus {
   WAITLISTED
 }
 
-// Venue Booking - now references User instead of Venue
 model VenueBooking {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   venueId         String   @db.ObjectId
@@ -617,17 +629,13 @@ model VenueBooking {
   totalAmount     Float
   currency        String   @default("USD")
   
-  // Spaces
-  meetingSpaces   String[] // IDs of booked meeting spaces
+  meetingSpaces   String[]
   
-  // Status
   status          BookingStatus @default(PENDING)
   
-  // Additional Info
   purpose         String?
   specialRequests String?
   
-  // Payment
   paymentId       String?  @db.ObjectId
   payment         Payment? @relation(fields: [paymentId], references: [id])
   
@@ -646,7 +654,6 @@ enum BookingStatus {
   PARTIALLY_REFUNDED
 }
 
-// Payment Management
 model Payment {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   userId          String   @db.ObjectId
@@ -656,15 +663,12 @@ model Payment {
   currency        String   @default("USD")
   status          PaymentStatus
   
-  // Payment Gateway
-  gateway         String   // stripe, paypal, etc.
+  gateway         String
   gatewayTransactionId String?
   
-  // Metadata
   description     String?
   metadata        Json?
   
-  // Refund
   refundAmount    Float?
   refundReason    String?
   refundedAt      DateTime?
@@ -672,7 +676,6 @@ model Payment {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   
-  // Relationships
   eventRegistrations EventRegistration[]
   venueBookings   VenueBooking[]
 
@@ -688,7 +691,6 @@ enum PaymentStatus {
   PARTIALLY_REFUNDED
 }
 
-// Communication System
 model Message {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   senderId        String   @db.ObjectId
@@ -700,11 +702,9 @@ model Message {
   content         String
   attachments     String[]
   
-  // Threading
   threadId        String?
   replyToId       String?  @db.ObjectId
   
-  // Status
   isRead          Boolean  @default(false)
   readAt          DateTime?
   
@@ -714,7 +714,6 @@ model Message {
   @@map("messages")
 }
 
-// Notification System
 model Notification {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   userId          String   @db.ObjectId
@@ -724,16 +723,13 @@ model Notification {
   title           String
   message         String
   
-  // Channels
   channels        NotificationChannel[]
   
-  // Status
   isRead          Boolean  @default(false)
   readAt          DateTime?
 
-  priority  String   @default("NORMAL") // LOW, NORMAL, MEDIUM, HIGH
+  priority  String   @default("NORMAL")
   
-  // Metadata
   metadata        Json?
   
   createdAt       DateTime @default(now())
@@ -749,10 +745,10 @@ enum NotificationType {
   MESSAGE_RECEIVED
   BOOKING_CONFIRMATION
   SYSTEM_UPDATE
-  CONNECTION_REQUEST   // 👈 add this
-  CONNECTION_ACCEPTED  // 👈 (optional, future use)
-  CONNECTION_UPDATE   // 👈 add this
-  APPOINTMENT_REQUEST  // New for appointments
+  CONNECTION_REQUEST
+  CONNECTION_ACCEPTED
+  CONNECTION_UPDATE
+  APPOINTMENT_REQUEST
   APPOINTMENT_CONFIRMED
   APPOINTMENT_CANCELLED
   APPOINTMENT_REMINDER
@@ -764,34 +760,27 @@ enum NotificationChannel {
   SMS
 }
 
-// Campaign Management
 model Campaign {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   name            String
   description     String?
   type            CampaignType
   
-  // Targeting
   targetAudience  Json
   
-  // Content
   subject         String?
   content         String
   template        String?
   
-  // Scheduling
   scheduledAt     DateTime?
   sentAt          DateTime?
   
-  // Status
   status          CampaignStatus @default(DRAFT)
   
-  // Analytics
   totalSent       Int      @default(0)
   totalOpened     Int      @default(0)
   totalClicked    Int      @default(0)
   
-  // Relationships
   createdById     String   @db.ObjectId
   createdBy       User     @relation(fields: [createdById], references: [id])
   eventId         String?  @db.ObjectId
@@ -816,25 +805,21 @@ enum CampaignStatus {
   CANCELLED
 }
 
-// Review System - updated to handle venue reviews through User
-// Add this to your existing Review model to include rating
 model Review {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   userId          String   @db.ObjectId
   user            User     @relation(fields: [userId], references: [id])
   
-  // Target (Event or Venue via User)
   eventId         String?  @db.ObjectId
   event           Event?   @relation(fields: [eventId], references: [id])
   venueId         String?  @db.ObjectId
   venue           User?    @relation("VenueReviews", fields: [venueId], references: [id])
   replies ReviewReply[]
-  // Rating information (added to existing model)
-  rating          Int      // 1-5
+  
+  rating          Int
   title           String?
   comment         String?
   
-  // Status
   isApproved      Boolean  @default(false)
   isPublic        Boolean  @default(true)
   
@@ -844,21 +829,17 @@ model Review {
   @@map("reviews")
 }
 
-// Analytics
 model Analytics {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   
-  // Target
-  entityType      String   // event, venue, user, etc.
+  entityType      String
   entityId        String   @db.ObjectId
   
-  // Metrics
   views           Int      @default(0)
   clicks          Int      @default(0)
   conversions     Int      @default(0)
   revenue         Float    @default(0)
   
-  // Dimensions
   date            DateTime
   source          String?
   medium          String?
@@ -873,27 +854,22 @@ model Analytics {
   @@map("analytics")
 }
 
-// Specialized Analytics
 model EventAnalytics {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   eventId         String   @db.ObjectId
   event           Event    @relation(fields: [eventId], references: [id])
   
-  // Registration Metrics
   totalRegistrations Int   @default(0)
   totalRevenue    Float    @default(0)
   conversionRate  Float    @default(0)
   
-  // Engagement Metrics
   pageViews       Int      @default(0)
   uniqueVisitors  Int      @default(0)
   averageTimeOnPage Float  @default(0)
   
-  // Geographic Data
   topCountries    Json?
   topCities       Json?
   
-  // Traffic Sources
   trafficSources  Json?
   
   date            DateTime
@@ -907,13 +883,11 @@ model UserAnalytics {
   userId          String   @db.ObjectId
   user            User     @relation(fields: [userId], references: [id])
   
-  // Activity Metrics
   loginCount      Int      @default(0)
   eventsAttended  Int      @default(0)
   eventsOrganized Int      @default(0)
   totalSpent      Float    @default(0)
   
-  // Engagement
   lastActiveAt    DateTime?
   averageSessionDuration Float @default(0)
   
@@ -923,18 +897,15 @@ model UserAnalytics {
   @@map("user_analytics")
 }
 
-// Venue Analytics - now references User instead of Venue
 model VenueAnalytics {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   venueId         String   @db.ObjectId
   venue           User     @relation(fields: [venueId], references: [id])
   
-  // Booking Metrics
   totalBookings   Int      @default(0)
   totalRevenue    Float    @default(0)
   occupancyRate   Float    @default(0)
   
-  // Performance
   averageRating   Float    @default(0)
   totalReviews    Int      @default(0)
   
@@ -944,28 +915,23 @@ model VenueAnalytics {
   @@map("venue_analytics")
 }
 
-// Settings
 model Settings {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   userId          String   @unique @db.ObjectId
   user            User     @relation(fields: [userId], references: [id])
   
-  // Notification Preferences
   emailNotifications Boolean @default(true)
   pushNotifications Boolean  @default(true)
   smsNotifications Boolean   @default(false)
   
-  // Privacy Settings
-  profileVisibility String  @default("public") // public, private, friends
+  profileVisibility String  @default("public")
   showEmail         Boolean @default(false)
   showPhone         Boolean @default(false)
   
-  // Communication Preferences
   marketingEmails   Boolean @default(true)
   eventUpdates      Boolean @default(true)
   
-  // Display Preferences
-  theme             String  @default("light") // light, dark, auto
+  theme             String  @default("light")
   language          String  @default("en")
   timezone          String  @default("UTC")
   
@@ -979,20 +945,17 @@ model Broadcast {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   content     String
-  type        String   // EMAIL, SMS, WHATSAPP, PUSH, ALL
-  status      String   @default("DRAFT") // DRAFT, SCHEDULED, SENT, FAILED
+  type        String
+  status      String   @default("DRAFT")
   scheduledAt DateTime?
   sentAt      DateTime?
   
-  // Sender info
   senderId    String   @db.ObjectId
   sender      User     @relation("BroadcastSender", fields: [senderId], references: [id])
   
-  // Timestamps
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
-  // Relations
   recipients  BroadcastRecipient[]
   
   @@map("broadcasts")
@@ -1002,13 +965,12 @@ model BroadcastRecipient {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   broadcastId String   @db.ObjectId
   userId      String   @db.ObjectId
-  status      String   @default("PENDING") // PENDING, SENT, DELIVERED, FAILED, READ
+  status      String   @default("PENDING")
   sentAt      DateTime?
   deliveredAt DateTime?
   readAt      DateTime?
   errorMessage String?
   
-  // Relations
   broadcast   Broadcast @relation(fields: [broadcastId], references: [id])
   user        User      @relation(fields: [userId], references: [id])
   
@@ -1016,7 +978,6 @@ model BroadcastRecipient {
   @@map("broadcast_recipients")
 }
 
-// Event Lead Management
 model EventLead {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   eventId         String   @db.ObjectId
@@ -1024,12 +985,10 @@ model EventLead {
   userId          String   @db.ObjectId
   user            User     @relation(fields: [userId], references: [id])
 
-  // Add ticket type relation
   ticketTypeId    String?  @db.ObjectId
   ticketType      TicketType? @relation(fields: [ticketTypeId], references: [id])
   
-  
-  type            LeadType // attendee, exhibitor, etc.
+  type            LeadType
   status          LeadStatus @default(NEW)
   notes           String?
   
@@ -1060,7 +1019,6 @@ enum LeadStatus {
   FOLLOW_UP
 }
 
-// Connection System
 model Connection {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   senderId    String   @db.ObjectId

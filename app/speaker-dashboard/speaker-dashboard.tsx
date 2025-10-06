@@ -267,7 +267,7 @@ export function ExhibitorDashboard({userId}: UserDashboardProps) {
         <div className="p-8">
           {activeTab === "myprofile" && <MyProfile speakerId={exhibitor.id} />}
           {activeTab === "mysessions" && <MySessions speakerId={exhibitor.id} />}
-          {activeTab === "materials" && <PresentationMaterials />}
+          {activeTab === "materials" && <PresentationMaterials speakerId={exhibitor.id} />}
           {/* {activeTab === "feedback" && <FeedbackRatings />} */}
           {activeTab === "message" && <MessagesCenter organizerId={exhibitor.id}  />}
            {activeTab === "connection" &&<ConnectionsSection  userId={exhibitor.id}/>}

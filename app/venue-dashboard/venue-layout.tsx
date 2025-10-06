@@ -35,6 +35,7 @@ import { promise } from "zod"
 import { MeetingSpace } from "@prisma/client"
 import { ConnectionsSection } from "../dashboard/connections-section"
 import { HelpSupport } from "@/components/HelpSupport"
+import FeedbackReplyManagement from "./feedback"
 
 type VenueData = {
   id: string
@@ -245,7 +246,7 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
       case "connection":
         return <ConnectionsSection userId={venueData.id} />
       case "ratings-reviews":
-        return <RatingsReviews />
+        return <FeedbackReplyManagement organizerId={venueData.id} />
       case "legal-documentation":
         return <LegalDocumentation />
          case "help-support":

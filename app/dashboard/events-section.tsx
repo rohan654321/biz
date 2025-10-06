@@ -22,6 +22,7 @@ import { format } from "date-fns"
  * - Shows role badge (Visitor / Exhibitor) using `leadType`
  * - Timeline dot color changes by leadType
  * - Handles loading and error states
+ * - Automatically filters out expired events
  *
  * Paste this file in your React/Next.js component folder and adjust imports if needed.
  */
@@ -210,6 +211,18 @@ export function EventsSection({ userId }: EventsSectionProps) {
   // Clear date filter
   const clearDateFilter = () => setDateFilter({ from: undefined, to: undefined })
 
+  // Filter out expired events (events that ended before today)
+  const filterOutExpiredEvents = (events: Event[]) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    return events.filter((event) => {
+      const eventEndDate = new Date(event.endDate || event.startDate)
+      eventEndDate.setHours(0, 0, 0, 0)
+      return eventEndDate >= today
+    })
+  }
+
   // Filter events by date range; inclusive of start/end overlap
   const filterEventsByDate = (events: Event[]) => {
     if (!dateFilter.from && !dateFilter.to) return events
@@ -238,7 +251,9 @@ export function EventsSection({ userId }: EventsSectionProps) {
     })
   }
 
-  const filteredEvents = filterEventsByDate(interestedEvents)
+  // Apply both filters: first date range, then remove expired events
+  const filteredEvents = filterOutExpiredEvents(filterEventsByDate(interestedEvents))
+  const expiredEventsCount = filterEventsByDate(interestedEvents).length - filteredEvents.length
 
   /* ---------- UI: Loading / Error States ---------- */
   if (status === "loading" || interestedLoading) {
@@ -278,6 +293,15 @@ export function EventsSection({ userId }: EventsSectionProps) {
           Find Events
         </Button>
       </div>
+
+      {/* Show expired events count if any were filtered out */}
+      {/* {expiredEventsCount > 0 && (
+        <Alert className="bg-blue-50 border-blue-200">
+          <AlertDescription className="text-blue-800">
+            {expiredEventsCount} expired event{expiredEventsCount > 1 ? 's' : ''} hidden from display
+          </AlertDescription>
+        </Alert>
+      )} */}
 
       {/* Calendar Filter Section */}
       <div className="flex flex-col gap-4 p-4 border rounded-lg bg-gray-50">
@@ -355,10 +379,6 @@ export function EventsSection({ userId }: EventsSectionProps) {
 
       {/* Tabs (only All for now) */}
       <Tabs defaultValue="all" className="w-full">
-        {/* <TabsList>
-          <TabsTrigger value="all">All Events ({filteredEvents.length})</TabsTrigger>
-        </TabsList> */}
-
         <TabsContent value="all" className="space-y-8">
           {filteredEvents.length > 0 ? (
             <div className="relative border-l-2 border-gray-200 ml-6">
@@ -437,9 +457,6 @@ export function EventsSection({ userId }: EventsSectionProps) {
                                       ? event.address.replace(/(.{12})/g, "$1\n")
                                       : "Location TBD"}
                                   </span>
-
-
-
                                 </div>
 
                                 <div className="flex items-center">
@@ -497,6 +514,8 @@ export function EventsSection({ userId }: EventsSectionProps) {
                 <p className="text-gray-600 mb-4">
                   {dateFilter.from || dateFilter.to
                     ? "No events match your filter criteria."
+                    : interestedEvents.length > 0
+                    ? "All your interested events have expired."
                     : "No interested events yet."}
                 </p>
                 <div className="flex items-center justify-center gap-2">
