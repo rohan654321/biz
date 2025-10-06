@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "postinstall": "prisma generate",
-    "build": "pnpm install --no-frozen-lockfile && next build",
+     "build": "pnpm install --no-frozen-lockfile && next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -40,7 +40,7 @@
     "keen-slider": "^6.8.6",
     "lucide-react": "^0.513.0",
     "mongodb": "^6.19.0",
-    "mongoose": "^8.18.3",
+    "mongoose": "^8.19.0",
     "nanoid": "^5.1.5",
     "next": "15.3.3",
     "next-auth": "^4.24.11",

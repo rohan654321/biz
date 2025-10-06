@@ -100,31 +100,40 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
   const [error, setError] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  useEffect(() => {
-    const fetchOrganizerData = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch(`/api/organizers/${organizerId}`)
-        if (!response.ok) throw new Error("Failed to fetch organizer data")
-        const data = await response.json()
-        setOrganizerData(data.organizer)
-      } catch (error) {
-        console.error("Error fetching organizer data:", error)
-        setError("Failed to load organizer data")
-        toast({
-          title: "Error",
-          description: "Failed to load organizer data",
-          variant: "destructive",
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
+useEffect(() => {
+  const fetchOrganizerData = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/organizers/${organizerId}`)
+      if (!response.ok) throw new Error("Failed to fetch organizer data")
+      const data = await response.json()
 
-    if (organizerId) {
-      fetchOrganizerData()
+      setOrganizerData(data.organizer)
+
+      // 👇 If the organizer has no events, default to Create Event
+      if (data.organizer?.totalEvents === 0) {
+        setActiveSection("create-event")
+      } else {
+        setActiveSection("dashboard")
+      }
+    } catch (error) {
+      console.error("Error fetching organizer data:", error)
+      setError("Failed to load organizer data")
+      toast({
+        title: "Error",
+        description: "Failed to load organizer data",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
-  }, [organizerId, toast])
+  }
+
+  if (organizerId) {
+    fetchOrganizerData()
+  }
+}, [organizerId, toast])
+
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -336,28 +345,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
         flex flex-col
       `}
       >
-        <div className="border-b border-gray-200 p-4 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={organizerData?.avatar || "/placeholder.svg"} />
-                <AvatarFallback>
-                  {organizerData?.name
-                    ?.split(" ")
-                    .map((n) => n[0])
-                    .join("") || "?"}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="font-semibold text-sm">{organizerData?.company || "Loading..."}</div>
-                <div className="text-xs text-gray-600">Event Organizer</div>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setSidebarOpen(false)}>
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+       
 
         <div className="flex-1 overflow-y-auto p-4">
           {sidebarGroups.map((group) => (
@@ -400,16 +388,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
             </div>
           ))}
 
-          {/* <div className="mb-4">
-            <Button
-              onClick={() => (window.location.href = `/event-dashboard/${organizerId}`)}
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
-            >
-              <Calendar className="mr-2 h-4 w-4" />
-              <span>Event Dashboard</span>
-            </Button>
-          </div> */}
-
+        
           <div className="mt-8 space-y-1">
             {individualSidebarItems.map((item) => (
               <button
@@ -446,28 +425,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
       </div>
 
       <div className="flex-1 flex flex-col min-h-screen">
-        <header className="bg-white border-b border-gray-200 px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setSidebarOpen(true)}>
-                <Menu className="w-5 h-5" />
-              </Button>
-              <h1 className="text-xl font-semibold text-gray-900">{getCurrentSectionTitle()}</h1>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={organizerData?.avatar || "/placeholder.svg"} />
-                <AvatarFallback>
-                  {organizerData?.name
-                    ?.split(" ")
-                    .map((n) => n[0])
-                    .join("") || "?"}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-          </div>
-        </header>
+      
 
         <main className="flex-1 p-6 overflow-auto">{renderContent()}</main>
       </div>

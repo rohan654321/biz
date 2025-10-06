@@ -1,4 +1,5 @@
 import EventSidebar from "../event-layout"
+import Navbar from "../navbar"
 
 interface EventPageProps {
   params: Promise<{ id: string }>
@@ -6,5 +7,10 @@ interface EventPageProps {
 
 export default async function EventPage({ params }: EventPageProps) {
   const { id } = await params
-  return <EventSidebar eventId={id} />
+  return (
+    <div>
+    <Navbar />
+  <EventSidebar eventId={id} />
+  </div>
+  )
 }
