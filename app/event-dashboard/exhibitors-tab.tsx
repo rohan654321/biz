@@ -33,7 +33,7 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
   const [exhibitors, setExhibitors] = useState<Exhibitor[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [creating, setCreating] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
   const { toast } = useToast()
   const { data: session } = useSession()
 
@@ -65,61 +65,38 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
     }
   }, [eventId])
 
-  const handleScheduleMeeting = async (exhibitor: Exhibitor) => {
+  const handleDelete = async (exhibitor: Exhibitor) => {
+    if (!confirm(`Are you sure you want to delete ${exhibitor.company}? This action cannot be undone.`)) {
+      return
+    }
+
     try {
-      setCreating(exhibitor.id)
+      setDeleting(exhibitor.id)
 
-      if (!session?.user?.id) {
-        toast({
-          title: "Authentication Required",
-          description: "Please log in to schedule meetings.",
-          variant: "destructive",
-        })
-        return
-      }
-
-      const exhibitorUserId = exhibitor.userId || exhibitor.id
-
-      const body = {
-        eventId,
-        exhibitorId: exhibitorUserId,
-        requesterId: session.user.id,
-        title: `Meeting with ${exhibitor.company}`,
-        description: `Meeting request with ${exhibitor.name} from ${exhibitor.company}`,
-        requestedDate: new Date().toISOString().split("T")[0],
-        requestedTime: "09:00",
-        duration: 30,
-        purpose: "Networking",
-      }
-
-      console.log("Scheduling meeting with body:", body)
-
-      const res = await fetch(`/api/appointments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+      const res = await fetch(`/api/events/${eventId}/exhibitors/${exhibitor.id}`, {
+        method: "DELETE",
       })
 
-      const data = await res.json()
-      console.log("API response:", data)
-
       if (!res.ok) {
-        throw new Error(data.error || `Failed to create appointment: ${res.status}`)
+        const data = await res.json()
+        throw new Error(data.error || "Failed to delete exhibitor")
       }
+
+      setExhibitors((prev) => prev.filter((e) => e.id !== exhibitor.id))
 
       toast({
         title: "Success",
-        description: `Meeting request sent to ${exhibitor.company}!`,
+        description: `${exhibitor.company} has been removed.`,
       })
     } catch (err) {
-      console.error("Error scheduling meeting:", err)
+      console.error("Error deleting exhibitor:", err)
       toast({
         title: "Error",
-        description: err instanceof Error ? err.message : "Failed to schedule meeting",
+        description: err instanceof Error ? err.message : "Failed to delete exhibitor",
         variant: "destructive",
       })
     } finally {
-      setCreating(null)
+      setDeleting(null)
     }
   }
 
@@ -213,16 +190,16 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
               </div>
 
               <button
-                onClick={() => handleScheduleMeeting(exhibitor)}
-                disabled={creating === exhibitor.id}
-                className={`w-full mt-4 border-2 text-sm py-2 rounded-full font-semibold transition flex items-center justify-center border-red-600 text-white bg-red-600 hover:bg-red-700`}
+                onClick={() => handleDelete(exhibitor)}
+                disabled={deleting === exhibitor.id}
+                className={`w-full mt-4 border-2 text-sm py-2 rounded-full font-semibold transition flex items-center justify-center border-red-600 text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                {creating === exhibitor.id ? (
+                {deleting === exhibitor.id ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Scheduling...
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Deleting...
                   </>
                 ) : (
-                  "Schedule Meeting"
+                  "Delete"
                 )}
               </button>
             </CardContent>
