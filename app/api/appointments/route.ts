@@ -113,29 +113,35 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform to match expected format
-    const formattedAppointments = appointments.map((appointment: any) => ({
-      id: appointment.id,
-      visitorName: appointment.requester
-        ? `${appointment.requester.firstName || ""} ${appointment.requester.lastName || ""}`.trim()
-        : "Unknown Visitor",
-      visitorEmail: appointment.requester?.email || appointment.requesterEmail || "",
-      visitorPhone: appointment.requester?.phone || appointment.requesterPhone || "",
-      company: appointment.requester?.company || appointment.requesterCompany || "Unknown",
-      designation: appointment.requester?.jobTitle || appointment.requesterTitle || "Unknown",
-      requestedDate: appointment.requestedDate
-        ? new Date(appointment.requestedDate).toISOString().split("T")[0]
-        : new Date().toISOString().split("T")[0],
-      requestedTime: appointment.requestedTime || "09:00",
-      duration: `${appointment.duration || 60} minutes`,
-      purpose: appointment.purpose || appointment.description || "General meeting",
-      status: appointment.status || "PENDING",
-      priority: appointment.priority || "MEDIUM",
-      profileViews: Math.floor(Math.random() * 50) + 1,
-      previousMeetings: Math.floor(Math.random() * 5),
-      notes: appointment.notes || "",
-      meetingLink: appointment.meetingLink || "",
-      location: appointment.location || "",
-    }))
+// Transform to match expected format
+const formattedAppointments = appointments.map((appointment: any) => ({
+  id: appointment.id,
+  eventId: appointment.event?.id || appointment.eventId,
+  eventName: appointment.event?.title || "Unknown Event",
+  eventStartDate: appointment.event?.startDate || null,
+  eventEndDate: appointment.event?.endDate || null,
+  visitorName: appointment.requester
+    ? `${appointment.requester.firstName || ""} ${appointment.requester.lastName || ""}`.trim()
+    : "Unknown Visitor",
+  visitorEmail: appointment.requester?.email || appointment.requesterEmail || "",
+  visitorPhone: appointment.requester?.phone || appointment.requesterPhone || "",
+  company: appointment.requester?.company || appointment.requesterCompany || "Unknown",
+  designation: appointment.requester?.jobTitle || appointment.requesterTitle || "Unknown",
+  requestedDate: appointment.requestedDate
+    ? new Date(appointment.requestedDate).toISOString().split("T")[0]
+    : new Date().toISOString().split("T")[0],
+  requestedTime: appointment.requestedTime || "09:00",
+  duration: `${appointment.duration || 60} minutes`,
+  purpose: appointment.purpose || appointment.description || "General meeting",
+  status: appointment.status || "PENDING",
+  priority: appointment.priority || "MEDIUM",
+  profileViews: Math.floor(Math.random() * 50) + 1,
+  previousMeetings: Math.floor(Math.random() * 5),
+  notes: appointment.notes || "",
+  meetingLink: appointment.meetingLink || "",
+  location: appointment.location || "",
+}));
+
 
     return NextResponse.json({
       success: true,
@@ -329,6 +335,7 @@ export async function POST(request: NextRequest) {
               email: true,
               company: true,
               avatar: true,
+              // title: true,
             },
           },
           event: {
@@ -463,6 +470,7 @@ export async function PUT(request: NextRequest) {
         include: {
           requester: true,
           exhibitor: true,
+          // title: true,
         },
       })
 
