@@ -14,9 +14,7 @@ export async function getFeaturedEvents() {
       startDate: true,
       bannerImage: true,
       images: true,
-      city: true,
-      location: true,
-      address: true,
+     
       category:true,
     },
     orderBy: { startDate: "asc" },

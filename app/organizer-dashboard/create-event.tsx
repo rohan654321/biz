@@ -16,6 +16,7 @@ import { Progress } from "@/components/ui/progress"
 import { Calendar, MapPin, Clock, IndianRupee, Upload, X, Plus, Eye, Save, Send } from "lucide-react"
 import Image from "next/image"
 import { useToast } from "@/hooks/use-toast"
+import AddVenue from "./add-venue"
 
 interface SpaceCost {
   type: string
@@ -28,9 +29,9 @@ interface SpaceCost {
 }
 
 interface TicketType {
-  name: string;
-  price: number;
-  currency?: string;
+  name: string
+  price: number
+  currency?: string
 }
 
 interface EventFormData {
@@ -44,6 +45,7 @@ interface EventFormData {
   dailyStart: string
   dailyEnd: string
   timezone: string
+  venueId: string
   venue: string
   city: string
   address: string
@@ -66,7 +68,7 @@ interface EventFormData {
   // Space Costs
   spaceCosts: SpaceCost[]
 
-  ticketTypes: TicketType[];
+  ticketTypes: TicketType[]
 
   // Media
   images: string[]
@@ -140,6 +142,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     dailyStart: "09:00",
     dailyEnd: "18:00",
     timezone: "Asia/Kolkata",
+    venueId: "",
     venue: "",
     city: "",
     address: "",
@@ -262,6 +265,23 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const brochureInputRef = useRef<HTMLInputElement>(null)
   const layoutPlanInputRef = useRef<HTMLInputElement>(null)
+
+  const handleVenueChange = (venueData: {
+    venueId?: string
+    venueName: string
+    venueAddress: string
+    city: string
+    state?: string
+    country?: string
+  }) => {
+    setFormData((prev) => ({
+      ...prev,
+      venueId: venueData.venueId || "",
+      venue: venueData.venueName,
+      address: venueData.venueAddress,
+      city: venueData.city,
+    }))
+  }
 
   const eventTypes = [
     "Conference",
@@ -449,9 +469,6 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     if (!formData.eventType.trim()) newValidationErrors.eventType = "Event type is required for publishing"
     if (!formData.startDate.trim()) newValidationErrors.startDate = "Start date is required for publishing"
     if (!formData.endDate.trim()) newValidationErrors.endDate = "End date is required for publishing"
-    if (!formData.venue.trim()) newValidationErrors.venue = "Venue is required for publishing"
-    if (!formData.city.trim()) newValidationErrors.city = "City is required for publishing"
-    if (!formData.address.trim()) newValidationErrors.address = "Address is required for publishing"
 
     // Event Details - only tags required
     if (formData.tags.length === 0) newValidationErrors.tags = "Event tags & keywords are required for publishing"
@@ -466,38 +483,38 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     try {
       // 🔥 FIX: Transform spaceCosts to exhibitionSpaces format - corrected mapping
       const exhibitionSpaces = formData.spaceCosts
-        .filter(cost => cost.type.trim() !== "") // Only include spaces with names
-        .map(cost => {
+        .filter((cost) => cost.type.trim() !== "") // Only include spaces with names
+        .map((cost) => {
           // Map space types to enum values - fixed logic
-          let spaceType;
-          const spaceName = cost.type?.toLowerCase() || '';
+          let spaceType
+          const spaceName = cost.type?.toLowerCase() || ""
 
-          if (spaceName.includes('shell space') || spaceName.includes('standard booth')) {
-            spaceType = 'SHELL_SPACE';
-          } else if (spaceName.includes('raw space')) {
-            spaceType = 'RAW_SPACE';
-          } else if (spaceName.includes('2 side open')) {
-            spaceType = 'TWO_SIDE_OPEN';
-          } else if (spaceName.includes('3 side open')) {
-            spaceType = 'THREE_SIDE_OPEN';
-          } else if (spaceName.includes('4 side open')) {
-            spaceType = 'FOUR_SIDE_OPEN';
-          } else if (spaceName.includes('mezzanine')) {
-            spaceType = 'MEZZANINE';
-          } else if (spaceName.includes('additional power')) {
-            spaceType = 'ADDITIONAL_POWER';
-          } else if (spaceName.includes('compressed air')) {
-            spaceType = 'COMPRESSED_AIR';
+          if (spaceName.includes("shell space") || spaceName.includes("standard booth")) {
+            spaceType = "SHELL_SPACE"
+          } else if (spaceName.includes("raw space")) {
+            spaceType = "RAW_SPACE"
+          } else if (spaceName.includes("2 side open")) {
+            spaceType = "TWO_SIDE_OPEN"
+          } else if (spaceName.includes("3 side open")) {
+            spaceType = "THREE_SIDE_OPEN"
+          } else if (spaceName.includes("4 side open")) {
+            spaceType = "FOUR_SIDE_OPEN"
+          } else if (spaceName.includes("mezzanine")) {
+            spaceType = "MEZZANINE"
+          } else if (spaceName.includes("additional power")) {
+            spaceType = "ADDITIONAL_POWER"
+          } else if (spaceName.includes("compressed air")) {
+            spaceType = "COMPRESSED_AIR"
           } else {
-            spaceType = 'CUSTOM';
+            spaceType = "CUSTOM"
           }
 
           return {
             spaceType: spaceType,
             name: cost.type,
-            description: cost.description || '',
+            description: cost.description || "",
             area: cost.minArea || 0,
-            dimensions: cost.minArea ? `${cost.minArea} sq.m` : '',
+            dimensions: cost.minArea ? `${cost.minArea} sq.m` : "",
             location: null,
             basePrice: cost.pricePerSqm || cost.pricePerUnit || 0,
             pricePerSqm: cost.pricePerSqm || null,
@@ -506,14 +523,14 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
             unit: cost.unit || null,
             currency: formData.currency,
             powerIncluded: false,
-            additionalPowerRate: cost.type.toLowerCase().includes('power') ? (cost.pricePerUnit || 0) : null,
-            compressedAirRate: cost.type.toLowerCase().includes('air') ? (cost.pricePerUnit || 0) : null,
+            additionalPowerRate: cost.type.toLowerCase().includes("power") ? cost.pricePerUnit || 0 : null,
+            compressedAirRate: cost.type.toLowerCase().includes("air") ? cost.pricePerUnit || 0 : null,
             isFixed: cost.isFixed || false,
             isAvailable: true,
             maxBooths: null,
             bookedBooths: 0,
             setupRequirements: null,
-          };
+          }
         })
 
       // Transform form data to match backend expectations
@@ -534,7 +551,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         city: formData.city,
         state: "",
         country: "India",
-        venue: formData.venue,
+        venue: formData.venueId,
         currency: formData.currency,
         bannerImage: formData.images[0] || null,
         thumbnailImage: formData.images[0] || null,
@@ -549,31 +566,30 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         eventType: [formData.eventType],
         maxAttendees: null,
         // Include ticket pricing
-       ticketTypes: [
-        {
-          name: "General",
-          description: "General admission ticket",
-          price: formData.generalPrice,
-          quantity: 1000,
-          isActive: formData.generalPrice > 0
-        },
-        {
-          name: "Student", 
-          description: "Student discount ticket",
-          price: formData.studentPrice,
-          quantity: 500,
-          isActive: formData.studentPrice > 0
-        },
-        {
-          name: "VIP",
-          description: "VIP access ticket", 
-          price: formData.vipPrice,
-          quantity: 100,
-          isActive: formData.vipPrice > 0
-        }
-      ].filter(ticket => ticket.isActive),
-    }
-
+        ticketTypes: [
+          {
+            name: "General",
+            description: "General admission ticket",
+            price: formData.generalPrice,
+            quantity: 1000,
+            isActive: formData.generalPrice > 0,
+          },
+          {
+            name: "Student",
+            description: "Student discount ticket",
+            price: formData.studentPrice,
+            quantity: 500,
+            isActive: formData.studentPrice > 0,
+          },
+          {
+            name: "VIP",
+            description: "VIP access ticket",
+            price: formData.vipPrice,
+            quantity: 100,
+            isActive: formData.vipPrice > 0,
+          },
+        ].filter((ticket) => ticket.isActive),
+      }
 
       console.log("[v0] Publishing event with transformed data:", eventData)
       console.log("[v0] Exhibition spaces being sent:", exhibitionSpaces)
@@ -610,6 +626,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         dailyStart: "09:00",
         dailyEnd: "18:00",
         timezone: "Asia/Kolkata",
+        venueId: "",
         venue: "",
         city: "",
         address: "",
@@ -624,7 +641,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         ageLimit: "18+",
         featured: false,
         vip: false,
-        ticketTypes:[],
+        ticketTypes: [],
         spaceCosts: [
           {
             type: "Shell Space (Standard Booth)",
@@ -1000,55 +1017,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="w-5 h-5" />
-                Location Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="venue">Venue Name *</Label>
-                  <Input
-                    id="venue"
-                    value={formData.venue}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, venue: e.target.value }))}
-                    placeholder="Enter venue name"
-                  />
-                  {showValidationErrors && (!formData.venue || formData.venue.trim() === "") && (
-                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="city">City *</Label>
-                  <Input
-                    id="city"
-                    value={formData.city}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))}
-                    placeholder="Enter city"
-                  />
-                  {showValidationErrors && (!formData.city || formData.city.trim() === "") && (
-                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
-                  )}
-                </div>
-
-                <div className="md:col-span-2">
-                  <Label htmlFor="address">Full Address *</Label>
-                  <Textarea
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, address: e.target.value }))}
-                    placeholder="Enter complete address"
-                    rows={2}
-                  />
-                  {showValidationErrors && (!formData.address || formData.address.trim() === "") && (
-                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
+            <AddVenue organizerId={organizerId} onVenueChange={handleVenueChange} />
           </Card>
         </TabsContent>
 

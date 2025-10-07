@@ -81,9 +81,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         location: event.isVirtual
           ? "Virtual Event"
           : (event.venue ? `${event.venue.firstName} ${event.venue.lastName ?? ""}`.trim() : null) ||
-          event.location ||
-          `${event.city}, ${event.state}` ||
-          event.address ||
+          // event.location ||
+          // `${event.city}, ${event.state}` ||
+          // event.address ||
           "TBD",
         status: event.status,
         attendees: confirmedRegistrations,
@@ -149,12 +149,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         timezone: body.timezone || "UTC",
         isVirtual: body.isVirtual || false,
         virtualLink: body.virtualLink || null,
-        address: body.address || null,
-        location: body.location || null,
-        city: body.city || null,
-        state: body.state || null,
-        country: body.country || null,
-        zipCode: body.zipCode || null,
+       
         venueId: ObjectId.isValid(body.venue) ? body.venue : null,
         maxAttendees: body.maxAttendees || null,
         currency: body.currency || "USD",

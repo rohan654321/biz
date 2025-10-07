@@ -55,7 +55,7 @@ export async function GET(
             title: true,
             startDate: true,
             endDate: true,
-            location: true,
+            // location: true,
             status: true
           }
         }

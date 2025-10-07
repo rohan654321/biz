@@ -185,12 +185,6 @@ model Event {
   venue     User?    @relation("EventVenue", fields: [venueId], references: [id])
   isVirtual Boolean  @default(false)
   virtualLink String?
-  address   String?
-  location  String?
-  city      String?
-  state     String?
-  country   String?
-  zipCode   String?
   
   // Capacity and Pricing
   maxAttendees     Int?
