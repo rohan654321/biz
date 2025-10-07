@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
           select: {
             firstName: true,
             lastName: true,
+            linkedin: true,
           },
         },
       },
