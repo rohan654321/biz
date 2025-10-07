@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 
+// Disable static generation for this route
+export const dynamic = 'force-dynamic';
+
 // POST: Create a new review
 export async function POST(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -18,7 +21,8 @@ export async function POST(
     }
 
     // Await params before using
-    const { id: exhibitorId } = context.params;
+    const params = await context.params;
+    const exhibitorId = params.id;
 
     if (!exhibitorId) {
       return NextResponse.json({ error: 'Invalid exhibitor ID' }, { status: 400 });
@@ -113,10 +117,11 @@ export async function POST(
 // GET: Fetch reviews for an exhibitor
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: exhibitorId } = context.params;
+    const params = await context.params;
+    const exhibitorId = params.id;
 
     if (!exhibitorId) {
       return NextResponse.json({ error: 'Invalid exhibitor ID' }, { status: 400 });
