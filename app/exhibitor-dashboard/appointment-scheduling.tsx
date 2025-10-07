@@ -28,7 +28,10 @@ import {
 
 interface AppointmentSchedulingProps {
   exhibitorId: string
+  showStatsCard?: boolean
+ onCountChange?: (count: number) => void   // ✅ add this line
 }
+
 
 interface Appointment {
   id: string
@@ -50,7 +53,8 @@ interface Appointment {
   location?: string
 }
 
-export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedulingProps) {
+export default function AppointmentScheduling({ exhibitorId, onCountChange }: AppointmentSchedulingProps) {
+
   const { toast } = useToast()
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
@@ -65,36 +69,33 @@ export default function AppointmentScheduling({ exhibitorId }: AppointmentSchedu
     }
   }, [exhibitorId])
 
-  const fetchAppointments = async () => {
-    try {
-      setLoading(true)
-      setError(null)
+const fetchAppointments = async () => {
+  try {
+    setLoading(true)
+    setError(null)
 
-      const response = await fetch(`/api/appointments?exhibitorId=${exhibitorId}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
+    const response = await fetch(`/api/appointments?exhibitorId=${exhibitorId}`)
+    if (!response.ok) throw new Error("Failed to fetch appointments")
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch appointments")
-      }
+    const data = await response.json()
+    const fetchedAppointments = data.appointments || []
+    setAppointments(fetchedAppointments)
 
-      const data = await response.json()
-      setAppointments(data.appointments || [])
-    } catch (err) {
-      console.error("Error fetching appointments:", err)
-      setError(err instanceof Error ? err.message : "An error occurred")
-      toast({
-        title: "Error",
-        description: "Failed to load appointments. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
+    // ✅ Update parent count whenever appointments change
+    if (onCountChange) onCountChange(fetchedAppointments.length)
+
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "An error occurred")
+    toast({
+      title: "Error",
+      description: "Failed to load appointments. Please try again.",
+      variant: "destructive",
+    })
+  } finally {
+    setLoading(false)
   }
+}
+
 
   const updateAppointment = async (appointmentId: string, updates: Partial<Appointment>) => {
     try {

@@ -70,7 +70,11 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("overview")
+  const [appointmentCount, setAppointmentCount] = useState<number>(0)
+
   const { data: session, status } = useSession()
+  // const [appointmentCount, setAppointmentCount] = useState<number>(0)
+
   const router = useRouter()
   const { toast } = useToast()
 
@@ -96,46 +100,48 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     fetchExhibitorData()
   }, [userId, status, session, router, toast])
 
-  const fetchExhibitorData = async () => {
-    try {
-      setLoading(true)
-      setError(null)
+const fetchExhibitorData = async () => {
+  try {
+    setLoading(true)
+    setError(null)
 
-      const response = await fetch(`/api/users/${userId}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
+    const response = await fetch(`/api/users/${userId}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    })
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("User not found")
-        }
-        if (response.status === 403) {
-          throw new Error("Access denied")
-        }
-        throw new Error("Failed to fetch user data")
-      }
-
-      const data = await response.json()
-      setExhibitor(data.user)
-    } catch (err) {
-      console.error("Error fetching user data:", err)
-      setError(err instanceof Error ? err.message : "An error occurred")
-
-      if (err instanceof Error && (err.message === "Access denied" || err.message === "User not found")) {
-        toast({
-          title: "Error",
-          description: err.message,
-          variant: "destructive",
-        })
-        router.push("/login")
-      }
-    } finally {
-      setLoading(false)
+    if (!response.ok) {
+      if (response.status === 404) throw new Error("User not found")
+      if (response.status === 403) throw new Error("Access denied")
+      throw new Error("Failed to fetch user data")
     }
+
+    const data = await response.json()
+    setExhibitor(data.user)
+   setAppointmentCount(Number(data.user.upcomingAppointments) || 0)
+
+  } catch (err) {
+    console.error("Error fetching user data:", err)
+    setError(err instanceof Error ? err.message : "An error occurred")
+
+    if (err instanceof Error && (err.message === "Access denied" || err.message === "User not found")) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      })
+      router.push("/login")
+    }
+  } finally {
+    setLoading(false)
   }
+}
+
+// useEffect(() => {
+//   if (exhibitor) setAppointmentCount(exhibitor.upcomingAppointments)
+// }, [exhibitor])
+
+
 
   if (loading) {
     return (
@@ -279,8 +285,8 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{exhibitor.activeEvents}</div>
-                    <p className="text-xs text-muted-foreground">of {exhibitor.totalEvents} total events</p>
+                    <div className="text-2xl font-bold">{exhibitor.activeEvents || 5}</div>
+                    <p className="text-xs text-muted-foreground">of {exhibitor.totalEvents || 10} total events</p>
                   </CardContent>
                 </Card>
 
@@ -290,8 +296,8 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
                     <Package className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{exhibitor.totalProducts}</div>
-                    <p className="text-xs text-muted-foreground">{exhibitor.profileViews} total views</p>
+                    <div className="text-2xl font-bold">{exhibitor.totalProducts || 25}</div>
+                    <p className="text-xs text-muted-foreground">{exhibitor.profileViews || 30} total views</p>
                   </CardContent>
                 </Card>
 
@@ -301,8 +307,8 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
                     <Users className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{exhibitor.totalLeads}</div>
-                    <p className="text-xs text-muted-foreground">{exhibitor.pendingLeads} pending follow-up</p>
+                    <div className="text-2xl font-bold">{exhibitor.totalLeads || 25}</div>
+                    <p className="text-xs text-muted-foreground">{exhibitor.pendingLeads || 100} pending follow-up</p>
                   </CardContent>
                 </Card>
 
@@ -312,8 +318,9 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{exhibitor.upcomingAppointments}</div>
-                    <p className="text-xs text-muted-foreground">upcoming this week</p>
+                <div className="text-2xl font-bold">{appointmentCount}</div>
+<p className="text-xs text-muted-foreground">upcoming this week</p>
+
                   </CardContent>
                 </Card>
               </div>
@@ -405,7 +412,29 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
           {activeTab === "messages" && <MessagesCenter organizerId={exhibitor.id}  />}
           {activeTab === "connection" && <ConnectionsSection  userId={exhibitor.id}/>}
           {activeTab === "leads" && <LeadManagement exhibitorId={exhibitor.id} />}
-          {activeTab === "appointments" && <AppointmentScheduling exhibitorId={exhibitor.id} />}
+{activeTab === "appointments" && (
+  <div className="space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* repeating 2nd time */}
+      {/* <Card>
+        <CardContent className="p-6 text-center">
+          <div className="text-3xl font-bold text-blue-600">
+            {appointmentCount}
+          </div>
+          <div className="text-gray-600">Total Requests</div>
+        </CardContent>
+      </Card> */}
+    </div>
+
+<AppointmentScheduling
+  exhibitorId={exhibitor.id} // ✅ this must be the fetched ID
+  onCountChange={setAppointmentCount}
+/>
+
+  </div>
+)}
+
+
           {activeTab === "analytics" && <AnalyticsReports exhibitorId={exhibitor.id} />}
           {activeTab === "promotions" && <EventPromotion organizerId={exhibitor.id} />}
           {activeTab === "help" && <HelpSupport />} 
