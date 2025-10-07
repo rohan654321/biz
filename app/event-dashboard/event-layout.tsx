@@ -190,6 +190,8 @@ const renderContent = () => {
   }
 
   return (
+    <div>
+      
     <div className="flex min-h-screen w-full bg-background">
       {/* Mobile Overlay */}
       {sidebarOpen && (
@@ -288,6 +290,7 @@ const renderContent = () => {
         {/* Main Content */}
         <main className="flex-1 p-4 sm:p-6 overflow-auto">{renderContent()}</main>
       </div>
+    </div>
     </div>
   )
 }

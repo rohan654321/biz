@@ -18,8 +18,8 @@ export async function GET() {
         startDate: true,
         endDate: true,
         bannerImage: true,
-        city: true,
-        country: true,
+        // city: true,
+        // country: true,
         maxAttendees: true,
         _count: {
           select: {

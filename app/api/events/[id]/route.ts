@@ -1,19 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const { id } =await params
+    const { id } = await params
 
-    // Validate ObjectId format for MongoDB
     if (!id || id.length !== 24) {
       return NextResponse.json({ error: "Invalid event ID format" }, { status: 400 })
     }
 
     const event = await prisma.event.findUnique({
-      where: {
-        id: id,
-      },
+      where: { id },
       include: {
         organizer: {
           select: {
@@ -26,26 +26,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             description: true,
           },
         },
-        venue: {
-          select: {
-            id: true,
-            venueName: true,
-            venueAddress: true,
-            venueCity: true,
-            venueState: true,
-            venueCountry: true,
-            maxCapacity: true,
-            amenities: true,
-            averageRating: true,
-          },
-        },
+        venue: true ,
         ticketTypes: {
-          where: {
-            isActive: true,
-          },
-          orderBy: {
-            price: "asc",
-          },
+          where: { isActive: true },
+          orderBy: { price: "asc" },
         },
         speakerSessions: {
           include: {
@@ -61,21 +45,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               },
             },
           },
-          orderBy: {
-            startTime: "asc",
-          },
+          orderBy: { startTime: "asc" },
         },
-        exhibitionSpaces: {
-          where: {
-            isAvailable: true,
-          },
-        },
-        _count: {
-          select: {
-            registrations: true,
-            reviews: true,
-          },
-        },
+        exhibitionSpaces: { where: { isAvailable: true } },
+        _count: { select: { registrations: true, reviews: true } },
       },
     })
 
@@ -83,18 +56,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
 
-    // Calculate availability
-    const availableTickets = event.ticketTypes.reduce((total, ticket) => {
-      return total + (ticket.quantity - ticket.sold)
-    }, 0)
+    const availableTickets =
+      event.ticketTypes?.reduce(
+        (total: number, ticket: { quantity: number; sold: number }) =>
+          total + (ticket.quantity - ticket.sold),
+        0
+      ) ?? 0
 
-    // Format response
     const eventData = {
       ...event,
       availableTickets,
       isAvailable: availableTickets > 0 && new Date() < event.registrationEnd,
-      registrationCount: event._count.registrations,
-      reviewCount: event._count.reviews,
+      registrationCount: event._count?.registrations ?? 0,
+      reviewCount: event._count?.reviews ?? 0,
     }
 
     return NextResponse.json(eventData)
@@ -103,42 +77,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
-
-
-// export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-//   try {
-//     const { id } = params;
-
-//     if (!id || id.length !== 24) {
-//       return NextResponse.json({ error: "Invalid event ID" }, { status: 400 });
-//     }
-
-//     const body = await request.json();
-//     const { title, address, startDate, endDate } = body;
-
-//     // Validate required fields if needed
-//     if (!title) {
-//       return NextResponse.json({ error: "Title is required" }, { status: 400 });
-//     }
-
-//     const updatedEvent = await prisma.event.update({
-//       where: { id },
-//       data: {
-//         title,
-//         ...(address && { address }),
-//         ...(startDate && { startDate: new Date(startDate) }),
-//         ...(endDate && { endDate: new Date(endDate) }),
-//       },
-//     });
-
-//     return NextResponse.json({ success: true, event: updatedEvent });
-//   } catch (error) {
-//     console.error("Error updating event:", error);
-//     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-//   }
-// }
-
-
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

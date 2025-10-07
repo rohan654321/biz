@@ -65,9 +65,9 @@ export async function GET() {
         endDate: event.endDate.toISOString(),
         timezone: event.timezone,
         venue: event.venue?.venueName || "",   // ✅ now safe
-        address: event.address || "",
-        city: event.city || "",
-        country: event.country || "",
+        // address: event.address || "",
+        // city: event.city || "",
+        // country: event.country || "",
         isVirtual: event.isVirtual,
         virtualLink: event.virtualLink || null,
 

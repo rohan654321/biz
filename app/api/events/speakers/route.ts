@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       abstract,
       learningObjectives,
       targetAudience,
-      materials,
+      // materials,
     } = body
 
     // Validate required fields
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
         abstract,
         learningObjectives: learningObjectives || [],
         targetAudience,
-        materials: materials || [],
+        // materials: materials || [],
       },
       include: {
         speaker: {

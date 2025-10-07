@@ -32,11 +32,12 @@ import {
   Zap,
   Home,
   Globe,
+  CheckCircle2,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface Venue {
-  id: string
+  id?: string
   firstName: string
   lastName: string
   email: string
@@ -66,12 +67,20 @@ interface MeetingSpace {
 
 interface AddVenueProps {
   organizerId: string
+  onVenueChange?: (venueData: {
+    venueId?: string
+    venueName: string
+    venueAddress: string
+    city: string
+    state?: string
+    country?: string
+  }) => void
 }
 
-export default function AddVenue({ organizerId }: AddVenueProps) {
+export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) {
   const [venues, setVenues] = useState<Venue[]>([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedVenues, setSelectedVenues] = useState<string[]>([])
+  const [selectedVenueId, setSelectedVenueId] = useState<string>("")
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("existing")
   const { toast } = useToast()
@@ -172,7 +181,26 @@ export default function AddVenue({ organizerId }: AddVenueProps) {
   })
 
   const handleVenueSelect = (venueId: string) => {
-    setSelectedVenues((prev) => (prev.includes(venueId) ? prev.filter((id) => id !== venueId) : [...prev, venueId]))
+    setSelectedVenueId(venueId)
+
+    if (onVenueChange) {
+      const selectedVenue = venues.find((v) => v.id === venueId)
+      if (selectedVenue) {
+        onVenueChange({
+          venueId: selectedVenue.id,
+          venueName: selectedVenue.venueName || `${selectedVenue.firstName} ${selectedVenue.lastName}'s Venue`,
+          venueAddress: selectedVenue.venueAddress || "Address not provided",
+          city: selectedVenue.city || "City not provided",
+          state: selectedVenue.state,
+          country: selectedVenue.country,
+        })
+
+        toast({
+          title: "Venue Selected",
+          description: `${selectedVenue.venueName || "Venue"} has been added to your event.`,
+        })
+      }
+    }
   }
 
   const handleAmenityToggle = (amenity: string) => {
@@ -220,48 +248,6 @@ export default function AddVenue({ organizerId }: AddVenueProps) {
     )
   }
 
-  const handleAddExistingVenues = async () => {
-    if (selectedVenues.length === 0) {
-      toast({
-        title: "No Venues Selected",
-        description: "Please select at least one venue to add to your network.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setLoading(true)
-    try {
-      const response = await fetch("/api/organizers/venues", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          organizerId,
-          venueIds: selectedVenues,
-        }),
-      })
-
-      if (response.ok) {
-        toast({
-          title: "Success",
-          description: `${selectedVenues.length} venue(s) added to your network.`,
-        })
-        setSelectedVenues([])
-      } else {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to add venues")
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add venues to your network.",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handleCreateVenue = async () => {
     if (!newVenue.firstName || !newVenue.lastName || !newVenue.email || !newVenue.venueName) {
       toast({
@@ -279,7 +265,7 @@ export default function AddVenue({ organizerId }: AddVenueProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           venueName: newVenue.venueName,
-          logo: "", // Add logo field if needed
+          logo: "",
           contactPerson: `${newVenue.firstName} ${newVenue.lastName}`,
           email: newVenue.email,
           mobile: newVenue.phone,
@@ -297,10 +283,23 @@ export default function AddVenue({ organizerId }: AddVenueProps) {
       })
 
       if (response.ok) {
+        const responseData = await response.json()
+
         toast({
           title: "Success",
-          description: "Venue created successfully.",
+          description: "Venue created and added to your event.",
         })
+
+        if (onVenueChange) {
+          onVenueChange({
+            venueId: responseData.venueId || responseData.id,
+            venueName: newVenue.venueName,
+            venueAddress: newVenue.venueAddress || "Address not provided",
+            city: newVenue.city || "City not provided",
+            state: newVenue.state,
+            country: newVenue.country,
+          })
+        }
 
         // Reset form
         setNewVenue({
@@ -355,13 +354,16 @@ export default function AddVenue({ organizerId }: AddVenueProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building className="w-5 h-5" />
-            Add Venue to Network
+            Add Venue to Event
           </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Select an existing venue or create a new one. The selected venue will be used when you publish the event.
+          </p>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="existing">Add Existing Venue</TabsTrigger>
+              <TabsTrigger value="existing">Select Existing Venue</TabsTrigger>
               <TabsTrigger value="new">Create New Venue</TabsTrigger>
             </TabsList>
 
@@ -377,15 +379,26 @@ export default function AddVenue({ organizerId }: AddVenueProps) {
                 />
               </div>
 
+              {selectedVenueId && (
+                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  <span className="text-sm font-medium text-green-800">
+                    Venue selected! This venue will be used when you publish the event.
+                  </span>
+                </div>
+              )}
+
               {/* Venues List */}
               <div className="grid gap-4 max-h-96 overflow-y-auto">
                 {filteredVenues.map((venue) => (
                   <Card
                     key={venue.id}
-                    className={`cursor-pointer transition-colors ${
-                      selectedVenues.includes(venue.id) ? "ring-2 ring-blue-500 bg-blue-50" : "hover:bg-gray-50"
+                    className={`cursor-pointer transition-all ${
+                      selectedVenueId === venue.id
+                        ? "ring-2 ring-green-500 bg-green-50 shadow-md"
+                        : "hover:bg-gray-50 hover:shadow-sm"
                     }`}
-                    onClick={() => handleVenueSelect(venue.id)}
+                    onClick={() => handleVenueSelect(venue.id!)}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-start gap-4">
@@ -398,13 +411,16 @@ export default function AddVenue({ organizerId }: AddVenueProps) {
                         </Avatar>
 
                         <div className="flex-1 space-y-2">
-                          <div>
-                            <h3 className="text-lg font-semibold">
-                              {venue.venueName || `${venue.firstName} ${venue.lastName}'s Venue`}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              Managed by {venue.firstName} {venue.lastName}
-                            </p>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="text-lg font-semibold flex items-center gap-2">
+                                {venue.venueName || `${venue.firstName} ${venue.lastName}'s Venue`}
+                                {selectedVenueId === venue.id && <CheckCircle2 className="w-5 h-5 text-green-600" />}
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                Managed by {venue.firstName} {venue.lastName}
+                              </p>
+                            </div>
                           </div>
 
                           <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -471,15 +487,6 @@ export default function AddVenue({ organizerId }: AddVenueProps) {
                   </Card>
                 ))}
               </div>
-
-              {selectedVenues.length > 0 && (
-                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-                  <span className="text-sm font-medium">{selectedVenues.length} venue(s) selected</span>
-                  <Button onClick={handleAddExistingVenues} disabled={loading}>
-                    {loading ? "Adding..." : "Add to Network"}
-                  </Button>
-                </div>
-              )}
             </TabsContent>
 
             <TabsContent value="new" className="space-y-6">

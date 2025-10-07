@@ -120,20 +120,21 @@ export async function POST(request: NextRequest) {
 }
 
 
+
 export async function GET(request: NextRequest) {
   try {
-    console.log("[v0] GET /api/events/exhibitors called")
+    console.log("[v1] GET /api/events/exhibitors called")
 
     const { searchParams } = new URL(request.url)
     const eventId = searchParams.get("eventId")
     const organizerId = searchParams.get("organizerId")
 
     if (!eventId && !organizerId) {
-      console.log("[v0] Missing eventId or organizerId in query params")
+      console.log("[v1] Missing eventId or organizerId in query params")
       return NextResponse.json({ error: "eventId or organizerId is required" }, { status: 400 })
     }
 
-    console.log("[v0] Fetching booths for:", eventId ? `eventId: ${eventId}` : `organizerId: ${organizerId}`)
+    console.log("[v1] Fetching booths for:", eventId ? `eventId: ${eventId}` : `organizerId: ${organizerId}`)
 
     const booths = await prisma.exhibitorBooth.findMany({
       where: eventId
@@ -142,18 +143,24 @@ export async function GET(request: NextRequest) {
           ? {
               event: {
                 organizerId: {
-                  equals: organizerId, // ✅ Explicit filter
+                  equals: organizerId,
                 },
               },
             }
-          : undefined, // ✅ If both missing, Prisma gets no condition
+          : undefined,
       include: {
         exhibitor: {
           select: {
+            id: true, // 👈 important
+            
             firstName: true,
             lastName: true,
             company: true,
             email: true,
+            phone: true,
+            
+            description: true,
+          
           },
         },
         event: {
@@ -175,9 +182,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "No exhibitor booths found", booths: [] }, { status: 200 })
     }
 
-    return NextResponse.json({ booths }, { status: 200 })
+    // Clean response mapping
+    const formattedBooths = booths.map((b) => ({
+      id: b.exhibitor?.id || "", // exhibitor record id
+      // userId: b.exhibitor?.userId || "", // 👈 used in meeting creation
+      boothId: b.id,
+      boothNumber: b.boothNumber,
+      company: b.exhibitor?.company || "N/A",
+      name: `${b.exhibitor?.firstName || ""} ${b.exhibitor?.lastName || ""}`.trim(),
+      email: b.exhibitor?.email || "",
+      phone: b.exhibitor?.phone || "",
+      // logo: b.exhibitor?.logo || "",
+      description: b.exhibitor?.description || "",
+      // status: b.exhibitor?.status || "UNKNOWN",
+      totalCost: b.totalCost || 0,
+      event: b.event,
+    }))
+
+    return NextResponse.json({ booths: formattedBooths }, { status: 200 })
   } catch (error) {
-    console.error("[v0] Error fetching exhibitor booths:", error)
+    console.error("[v1] Error fetching exhibitor booths:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

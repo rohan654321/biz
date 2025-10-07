@@ -66,7 +66,7 @@ export default function EventPage({ params }: EventPageProps) {
 
         setEvent({
           ...data,
-          
+
           isRegistrationOpen: data.isAvailable,
           spotsRemaining: data.availableTickets,
           images: data.images || [data.bannerImage].filter(Boolean),
@@ -502,7 +502,7 @@ export default function EventPage({ params }: EventPageProps) {
               </TabsContent>
 
               <TabsContent value="exhibitors">
-               <ExhibitorsTab eventId={event.id} />
+                <ExhibitorsTab eventId={event.id} />
               </TabsContent>
 
               <TabsContent value="space-cost">
@@ -651,20 +651,52 @@ export default function EventPage({ params }: EventPageProps) {
                   <CardHeader>
                     <CardTitle>Venue Information</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
                     <div className="space-y-4">
+                      {/* Venue Header */}
                       <div>
-                        <h4 className="font-semibold">{event.venue?.firstName || "Venue Name"}</h4>
-                        <p className="text-gray-600">{event.address || "Address not available"}</p>
-                        <p className="text-gray-600">
-                          {event.city && event.state ? `${event.city}, ${event.state}` : "Location TBA"}
-                        </p>
-                        {event.country && <p className="text-gray-600">{event.country}</p>}
+                        <h4 className="text-xl font-bold text-gray-800">{event.venue?.company}</h4>
+                        {/* Bio / Description */}
+                        {event.venue?.bio && (
+                          <p className="text-gray-600 text-sm">{event.venue.bio}</p>
+                        )}
+                        <p className="text-gray-500">{event.venue?.location}</p>
+                        {event.venue?.website && (
+                          <a
+                            href={event.venue.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:underline"
+                          >
+                            {event.venue.website}
+                          </a>
+                        )}
                       </div>
+
+                      {/* Amenities */}
+                      {event.venue?.amenities?.length > 0 && (
+                        <div>
+                          <h5 className="font-semibold text-gray-700 mb-2">Amenities</h5>
+                          <div className="flex flex-wrap gap-2">
+                            {event.venue.amenities.map((amenity: any, idx: any) => (
+                              <span
+                                key={idx}
+                                className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded-full"
+                              >
+                                {amenity}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+
                     </div>
                   </CardContent>
+
                 </Card>
               </TabsContent>
+
 
               <TabsContent value="speakers">
                 <Card>

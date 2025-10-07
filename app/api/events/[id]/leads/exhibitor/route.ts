@@ -39,10 +39,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     return NextResponse.json({
-  exhibitorLeads,
-  total: exhibitorLeads.length,
-})
-
+      attendeeLeads: exhibitorLeads,
+      total: exhibitorLeads.length,
+    })
   } catch (error) {
     console.error("Error fetching exhibitor leads:", error)
     return NextResponse.json({ error: "Failed to fetch exhibitor leads" }, { status: 500 })

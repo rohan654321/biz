@@ -1,3 +1,4 @@
+import { NameBanner } from "@/app/dashboard/NameBanner"
 import EventSidebar from "../event-layout"
 import Navbar from "../navbar"
 
@@ -10,6 +11,7 @@ export default async function EventPage({ params }: EventPageProps) {
   return (
     <div>
     <Navbar />
+    
   <EventSidebar eventId={id} />
   </div>
   )

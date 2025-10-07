@@ -12,9 +12,7 @@ export async function getVipEvents() {
       startDate: true,
       bannerImage: true,
       images: true,
-      city: true,
-      location: true,
-      address: true,
+      
     },
     orderBy: { startDate: "asc" },
   })
@@ -79,7 +77,7 @@ export default async function HeroSlideshow() {
                 month={new Date(event.startDate).toLocaleString("default", { month: "short" })}
                 year={new Date(event.startDate).getFullYear().toString()}
                 title={event.title}
-                location={event.location}
+                // location={event.location}
               />
             </Link>
           ))}
