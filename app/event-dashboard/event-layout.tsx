@@ -41,6 +41,7 @@ import SpeakerSessionsTable from "./SpeakerSessionsTable"
 import CreateConferenceAgenda from "./CreateConferenceAgenda"
 import ConferenceAgenda from "./ConferenceAgenda"
 import { useSession } from "next-auth/react"
+import AnalyticsDashboard from "./analytics"
 // import Analytics from "./analytics"
 // ...create/import other components as needed
 
@@ -167,6 +168,8 @@ const renderContent = () => {
         return <AddExhibitor eventId={eventId} />
       case "exhibitor-manual":
      return <ExhibitorManual userId={userId!} eventId={eventId} />
+     case "analytics":
+     return <AnalyticsDashboard  exhibitorId={eventId} />
 
       case "add-speaker":
         return <AddSpeaker eventId={eventId} />

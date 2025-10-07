@@ -492,6 +492,7 @@ model SpeakerSession {
   learningObjectives String[]
   targetAudience  String?
   materials       Material[]
+  youtube    String[]
   
   status          SessionStatus @default(SCHEDULED)
   

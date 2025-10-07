@@ -9,7 +9,21 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { Upload, FileText, Video, ImageIcon, Download, Trash2, Eye, AlertCircle, Calendar } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import {
+  Upload,
+  FileText,
+  Video,
+  ImageIcon,
+  Download,
+  Trash2,
+  Eye,
+  AlertCircle,
+  Calendar,
+  Youtube,
+  Plus,
+  X,
+} from "lucide-react"
 import { Loader2 } from "lucide-react"
 
 interface Material {
@@ -32,6 +46,7 @@ interface SessionWithMaterials {
   deadline: string
   startTime: string
   room: string | null
+  youtube: string[]
   event: {
     id: string
     name: string
@@ -50,6 +65,8 @@ export function PresentationMaterials({ speakerId }: PresentationMaterialsProps)
   const [error, setError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [youtubeInput, setYoutubeInput] = useState<{ [sessionId: string]: string }>({})
+  const [addingYoutube, setAddingYoutube] = useState<string | null>(null)
 
   useEffect(() => {
     fetchSessions()
@@ -250,6 +267,83 @@ export function PresentationMaterials({ speakerId }: PresentationMaterialsProps)
     }
   }
 
+  const getYoutubeVideoId = (url: string): string | null => {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+      /youtube\.com\/watch\?.*v=([^&\n?#]+)/,
+    ]
+
+    for (const pattern of patterns) {
+      const match = url.match(pattern)
+      if (match && match[1]) {
+        return match[1]
+      }
+    }
+    return null
+  }
+
+  const handleAddYoutubeLink = async (sessionId: string) => {
+    const url = youtubeInput[sessionId]?.trim()
+    if (!url) return
+
+    setAddingYoutube(sessionId)
+    try {
+      const session = sessions.find((s) => s.id === sessionId)
+      if (!session) throw new Error("Session not found")
+
+      const updatedYoutubeLinks = [...(session.youtube || []), url]
+
+      const response = await fetch(`/api/sessions/${sessionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ youtube: updatedYoutubeLinks }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to add YouTube link")
+      }
+
+      const data = await response.json()
+
+      setSessions((prevSessions) =>
+        prevSessions.map((s) => (s.id === sessionId ? { ...s, youtube: data.session.youtube } : s)),
+      )
+
+      setYoutubeInput((prev) => ({ ...prev, [sessionId]: "" }))
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add YouTube link")
+    } finally {
+      setAddingYoutube(null)
+    }
+  }
+
+  const handleRemoveYoutubeLink = async (sessionId: string, urlToRemove: string) => {
+    try {
+      const session = sessions.find((s) => s.id === sessionId)
+      if (!session) throw new Error("Session not found")
+
+      const updatedYoutubeLinks = session.youtube.filter((url) => url !== urlToRemove)
+
+      const response = await fetch(`/api/sessions/${sessionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ youtube: updatedYoutubeLinks }),
+      })
+
+      if (!response.ok) throw new Error("Failed to remove YouTube link")
+
+      const data = await response.json()
+
+      setSessions((prevSessions) =>
+        prevSessions.map((s) => (s.id === sessionId ? { ...s, youtube: data.session.youtube } : s)),
+      )
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to remove YouTube link")
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -387,6 +481,97 @@ export function PresentationMaterials({ speakerId }: PresentationMaterialsProps)
                     <p>No materials uploaded yet</p>
                   </div>
                 )}
+
+                {/* YouTube Videos Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                      <Youtube className="h-5 w-5 text-red-600" />
+                      YouTube Videos
+                    </h3>
+                  </div>
+
+                  {/* Display existing YouTube videos */}
+                  {session.youtube && session.youtube.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {session.youtube.map((url, index) => {
+                        const videoId = getYoutubeVideoId(url)
+                        return (
+                          <div key={index} className="relative group">
+                            {videoId ? (
+                              <div className="relative">
+                                <iframe
+                                  className="w-full aspect-video rounded-lg"
+                                  src={`https://www.youtube.com/embed/${videoId}`}
+                                  title={`YouTube video ${index + 1}`}
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                />
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={() => handleRemoveYoutubeLink(session.id, url)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <a
+                                  href={url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-blue-600 hover:underline truncate flex-1"
+                                >
+                                  {url}
+                                </a>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-700"
+                                  onClick={() => handleRemoveYoutubeLink(session.id, url)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Add new YouTube link */}
+                  <div className="flex gap-2">
+                    <Input
+                      type="url"
+                      placeholder="Paste YouTube video URL (e.g., https://youtube.com/watch?v=...)"
+                      value={youtubeInput[session.id] || ""}
+                      onChange={(e) => setYoutubeInput((prev) => ({ ...prev, [session.id]: e.target.value }))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleAddYoutubeLink(session.id)
+                        }
+                      }}
+                      className="flex-1"
+                    />
+                    <Button
+                      onClick={() => handleAddYoutubeLink(session.id)}
+                      disabled={!youtubeInput[session.id]?.trim() || addingYoutube === session.id}
+                      size="sm"
+                    >
+                      {addingYoutube === session.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add Video
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
 
                 <div
                   className={`
