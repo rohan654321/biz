@@ -170,7 +170,6 @@ const renderContent = () => {
      return <ExhibitorManual userId={userId!} eventId={eventId} />
      case "analytics":
      return <AnalyticsDashboard  exhibitorId={eventId} />
-
       case "add-speaker":
         return <AddSpeaker eventId={eventId} />
       case "speakers":

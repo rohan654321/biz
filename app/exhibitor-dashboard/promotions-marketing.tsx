@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState , useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -38,15 +38,15 @@ interface PromotionsMarketingProps {
 }
 
 interface Event {
-  id: number
+  id: string
   title: string
   date: string
   location: string
   status: string
-  attendees: number
-  revenue: number
-  registrations: number
-  type: string
+  attendees?: number
+  revenue?: number
+  registrations?: number
+  type?: string
 }
 
 interface PromotionPackage {
@@ -71,48 +71,38 @@ interface CategoryFilter {
 }
 
 export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketingProps) {
-  const [selectedTab, setSelectedTab] = useState("platform-promotion")
+   const [selectedTab, setSelectedTab] = useState("platform-promotion")
   const [selectedEvent, setSelectedEvent] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedPackage, setSelectedPackage] = useState("")
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
+  const [exhibitorEvents, setExhibitorEvents] = useState<Event[]>([])
+  const [loadingEvents, setLoadingEvents] = useState(true)
 
-  // Mock events data for exhibitors
-  const exhibitorEvents: Event[] = [
-    {
-      id: 1,
-      title: "Global Tech Expo 2025",
-      date: "2025-03-15",
-      location: "Mumbai, India",
-      status: "Confirmed",
-      attendees: 5000,
-      revenue: 150000,
-      registrations: 4500,
-      type: "Technology",
-    },
-    {
-      id: 2,
-      title: "Healthcare Innovation Summit",
-      date: "2025-04-20",
-      location: "Delhi, India",
-      status: "Pending",
-      attendees: 3000,
-      revenue: 90000,
-      registrations: 2800,
-      type: "Healthcare",
-    },
-    {
-      id: 3,
-      title: "Manufacturing Excellence Fair",
-      date: "2025-05-10",
-      location: "Bangalore, India",
-      status: "Confirmed",
-      attendees: 4200,
-      revenue: 120000,
-      registrations: 3900,
-      type: "Manufacturing",
-    },
-  ]
+  useEffect(() => {
+  if (!exhibitorId) return
+
+ const fetchEvents = async () => {
+  try {
+    setLoadingEvents(true)
+    const res = await fetch(`/api/exhibitors/promotions?exhibitorId=${exhibitorId}`)
+    if (!res.ok) throw new Error("Failed to fetch exhibitor events")
+    const data = await res.json()
+
+    // Frontend now reads from data.events
+    setExhibitorEvents(data.events || [])
+  } catch (error) {
+    console.error("Error fetching exhibitor events:", error)
+  } finally {
+    setLoadingEvents(false)
+  }
+}
+
+  fetchEvents()
+}, [exhibitorId])
+
+  
+
 
   // Platform promotion packages
   const promotionPackages: PromotionPackage[] = [

@@ -111,6 +111,9 @@ model User {
   organizerForVenueManager   User?   @relation("OrganizerVenueManagers", fields: [organizerIdForVenueManager], references: [id], onDelete: NoAction, onUpdate: NoAction)
   venueManagers              User[]  @relation("OrganizerVenueManagers")
 
+  followers       Follow[] @relation("UserFollowing")
+  following       Follow[] @relation("UserFollowers")
+
   // Venue fields
   venueName         String?
   venueDescription  String?
@@ -1099,4 +1102,19 @@ model ExhibitorManual {
   updatedAt       DateTime @updatedAt
 
   @@map("exhibitor_manuals")
+}
+
+model Follow {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  followerId  String   @db.ObjectId
+  followingId String   @db.ObjectId
+  createdAt   DateTime @default(now())
+
+  follower    User     @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follows")
 }

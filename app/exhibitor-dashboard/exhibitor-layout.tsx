@@ -34,10 +34,11 @@ import ProductListing from "./product-listing"
 import LeadManagement from "./lead-management"
 import AppointmentScheduling from "./appointment-scheduling"
 import AnalyticsReports from "./analytics-reports"
-// import PromotionsMarketing from "./promotions-marketing"
+import PromotionsMarketing from "./promotions-marketing"
 import ExhibitorSettings from "./settings"
 import { ConnectionsSection } from "@/app/dashboard/connections-section"
 import { HelpSupport } from "@/components/HelpSupport"
+import { FollowManagement } from "./follow-management"
 
 interface ExhibitorData {
   id: string
@@ -189,7 +190,7 @@ const fetchExhibitorData = async () => {
     { id: "company", label: "Company Info", icon: Building2 },
     { id: "events", label: "Events", icon: Calendar },
     { id: "products", label: "Products", icon: Package },
-    { id: "leads", label: "Leads", icon: Users },
+    { id: "follow", label: "Follow", icon: Users },
     { id: "messages", label: "messages", icon: Users },
     { id: "connection", label: "connection", icon: Users },
     { id: "appointments", label: "Appointments", icon: Calendar },
@@ -411,7 +412,7 @@ const fetchExhibitorData = async () => {
           {activeTab === "products" && <ProductListing exhibitorId={exhibitor.id} />}
           {activeTab === "messages" && <MessagesCenter organizerId={exhibitor.id}  />}
           {activeTab === "connection" && <ConnectionsSection  userId={exhibitor.id}/>}
-          {activeTab === "leads" && <LeadManagement exhibitorId={exhibitor.id} />}
+         {activeTab === "follow" && <FollowManagement userId={exhibitor.id} />}
 {activeTab === "appointments" && (
   <div className="space-y-6">
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -436,7 +437,8 @@ const fetchExhibitorData = async () => {
 
 
           {activeTab === "analytics" && <AnalyticsReports exhibitorId={exhibitor.id} />}
-          {activeTab === "promotions" && <EventPromotion organizerId={exhibitor.id} />}
+          {/* {activeTab === "promotions" && <EventPromotion organizerId={exhibitor.id} />} */}
+           {activeTab === "promotions" && <PromotionsMarketing exhibitorId={exhibitor.id} />}
           {activeTab === "help" && <HelpSupport />} 
           {activeTab === "settings" && <ExhibitorSettings exhibitorId={exhibitor.id} />}
         </div>

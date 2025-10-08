@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useSession } from "next-auth/react"
 import Image from "next/image"
 import {
   MapPin,
@@ -25,6 +26,8 @@ import {
 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { format } from "date-fns"
+import ScheduleMeetingButton from "@/components/ScheduleMeetingButton"
+import { FollowButton } from "@/components/follow-button"
 
 // Define types for exhibitor data
 interface Exhibitor {
@@ -50,6 +53,7 @@ interface Exhibitor {
 
 // Define types for event data based on your MongoDB structure
 interface Event {
+  id:string
   rating: any
   images: any
   _id: string
@@ -346,6 +350,8 @@ export default function ExhibitorPage() {
   const params = useParams()
   const router = useRouter()
   const exhibitorId = params.id as string
+
+    const { data: session } = useSession()
 
   const [activeTab, setActiveTab] = useState("overview")
   const [eventsTab, setEventsTab] = useState("upcoming")
@@ -665,7 +671,7 @@ export default function ExhibitorPage() {
               <div className="space-x-3">
                 <Button className="bg-white text-blue-600 hover:bg-blue-50">
                   <Heart className="w-4 h-4 mr-2" />
-                  Follow
+                 <FollowButton userId={exhibitor.id} currentUserId={session?.user.id} variant="default" size="default" />
                 </Button>
                 <Button
                   variant="outline"
@@ -689,8 +695,8 @@ export default function ExhibitorPage() {
                   Share
                 </Button>
               </div>
-              <button className="bg-red-500 text-white w-50 py-2 rounded-sm">
-                Schedule Meeting
+              <button>
+                <ScheduleMeetingButton exhibitor={exhibitor} eventId={exhibitorEvents[0]?.id} />
               </button>
 
               {/* <Button

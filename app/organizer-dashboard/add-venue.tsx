@@ -493,7 +493,7 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
               {/* Create New Venue Form */}
               <div className="space-y-8">
                 {/* Manager Information */}
-                <div>
+                {/* <div>
                   <h3 className="text-lg font-semibold mb-4">Venue Manager Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -537,7 +537,7 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                       />
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Venue Information */}
                 <div>
@@ -564,7 +564,7 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <Label htmlFor="website">Website</Label>
                         <Input
@@ -573,9 +573,9 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                           onChange={(e) => setNewVenue({ ...newVenue, website: e.target.value })}
                           placeholder="https://venue.com"
                         />
-                      </div>
+                      </div> */}
 
-                      <div>
+                      {/* <div>
                         <Label htmlFor="maxCapacity">Max Capacity</Label>
                         <Input
                           id="maxCapacity"
@@ -584,9 +584,9 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                           onChange={(e) => setNewVenue({ ...newVenue, maxCapacity: e.target.value })}
                           placeholder="500"
                         />
-                      </div>
+                      </div> */}
 
-                      <div>
+                      {/* <div>
                         <Label htmlFor="totalHalls">Total Halls</Label>
                         <Input
                           id="totalHalls"
@@ -595,7 +595,7 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                           onChange={(e) => setNewVenue({ ...newVenue, totalHalls: e.target.value })}
                           placeholder="3"
                         />
-                      </div>
+                      </div> */}
                     </div>
 
                     <div>
@@ -671,7 +671,7 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                 </div>
 
                 {/* Amenities */}
-                <div>
+                {/* <div>
                   <h3 className="text-lg font-semibold mb-4">Amenities</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {availableAmenities.map((amenity) => {
@@ -691,10 +691,10 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                       )
                     })}
                   </div>
-                </div>
+                </div> */}
 
                 {/* Meeting Spaces */}
-                <div>
+                {/* <div>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-medium">Meeting Spaces</h3>
                     <Button onClick={addMeetingSpace} variant="outline" size="sm">
@@ -786,14 +786,14 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                       </Card>
                     ))}
                   </div>
-                </div>
+                </div> */}
 
                 <div className="flex justify-end">
                   <Button onClick={handleCreateVenue} disabled={loading}>
                     {loading ? "Creating..." : "Create Venue"}
                   </Button>
                 </div>
-              </div>
+              {/* </div> */}
             </TabsContent>
           </Tabs>
         </CardContent>
