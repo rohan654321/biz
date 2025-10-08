@@ -1,6 +1,6 @@
 "use client"
 
-import { useState , useEffect } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
 import {
   Megaphone,
   Users,
@@ -31,6 +32,7 @@ import {
   Code,
   Stethoscope,
   Star,
+  Loader2,
 } from "lucide-react"
 
 interface PromotionsMarketingProps {
@@ -58,6 +60,7 @@ interface PromotionPackage {
   userCount: number
   categories: string[]
   duration: string
+  durationDays: number
   recommended?: boolean
 }
 
@@ -71,40 +74,37 @@ interface CategoryFilter {
 }
 
 export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketingProps) {
-   const [selectedTab, setSelectedTab] = useState("platform-promotion")
+  const [selectedTab, setSelectedTab] = useState("platform-promotion")
   const [selectedEvent, setSelectedEvent] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedPackage, setSelectedPackage] = useState("")
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
   const [exhibitorEvents, setExhibitorEvents] = useState<Event[]>([])
   const [loadingEvents, setLoadingEvents] = useState(true)
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
-  if (!exhibitorId) return
+    if (!exhibitorId) return
 
- const fetchEvents = async () => {
-  try {
-    setLoadingEvents(true)
-    const res = await fetch(`/api/exhibitors/promotions?exhibitorId=${exhibitorId}`)
-    if (!res.ok) throw new Error("Failed to fetch exhibitor events")
-    const data = await res.json()
+    const fetchEvents = async () => {
+      try {
+        setLoadingEvents(true)
+        const res = await fetch(`/api/exhibitors/promotions?exhibitorId=${exhibitorId}`)
+        if (!res.ok) throw new Error("Failed to fetch exhibitor events")
+        const data = await res.json()
 
-    // Frontend now reads from data.events
-    setExhibitorEvents(data.events || [])
-  } catch (error) {
-    console.error("Error fetching exhibitor events:", error)
-  } finally {
-    setLoadingEvents(false)
-  }
-}
+        setExhibitorEvents(data.events || [])
+      } catch (error) {
+        console.error("Error fetching exhibitor events:", error)
+      } finally {
+        setLoadingEvents(false)
+      }
+    }
 
-  fetchEvents()
-}, [exhibitorId])
+    fetchEvents()
+  }, [exhibitorId])
 
-  
-
-
-  // Platform promotion packages
   const promotionPackages: PromotionPackage[] = [
     {
       id: "basic",
@@ -121,6 +121,7 @@ export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketing
       userCount: 5000,
       categories: ["selected"],
       duration: "7 days",
+      durationDays: 7,
     },
     {
       id: "premium",
@@ -139,6 +140,7 @@ export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketing
       userCount: 15000,
       categories: ["multiple"],
       duration: "14 days",
+      durationDays: 14,
       recommended: true,
     },
     {
@@ -159,10 +161,10 @@ export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketing
       userCount: 50000,
       categories: ["all"],
       duration: "30 days",
+      durationDays: 30,
     },
   ]
 
-  // User categories with engagement data
   const userCategories: CategoryFilter[] = [
     {
       id: "technology",
@@ -288,6 +290,80 @@ export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketing
   const handlePackageSelect = (packageId: string) => {
     setSelectedPackage(packageId)
     setIsPaymentDialogOpen(true)
+  }
+
+  const handlePayment = async () => {
+    console.log("[v0] Payment initiated")
+    console.log("[v0] Selected package:", selectedPackageData)
+    console.log("[v0] Selected event:", selectedEvent)
+    console.log("[v0] Selected categories:", selectedCategories)
+
+    if (!selectedPackageData || !selectedEvent) {
+      console.log("[v0] Validation failed - missing package or event")
+      toast({
+        title: "Error",
+        description: "Please select an event and package",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (selectedCategories.length === 0) {
+      console.log("[v0] Validation failed - no categories selected")
+      toast({
+        title: "Error",
+        description: "Please select at least one target category",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsProcessingPayment(true)
+
+    try {
+      console.log("[v0] Sending API request...")
+      const response = await fetch("/api/promotions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          exhibitorId,
+          eventId: selectedEvent,
+          packageType: selectedPackageData.name,
+          targetCategories: selectedCategories,
+          amount: selectedPackageData.price,
+          duration: selectedPackageData.durationDays, // Using durationDays from package
+        }),
+      })
+
+      console.log("[v0] API response status:", response.status)
+      const data = await response.json()
+      console.log("[v0] API response data:", data)
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to process payment")
+      }
+
+      toast({
+        title: "Success!",
+        description: "Your promotion has been activated successfully",
+      })
+
+      setIsPaymentDialogOpen(false)
+      setSelectedEvent("")
+      setSelectedCategories([])
+      setSelectedPackage("")
+    } catch (error) {
+      console.error("[v0] Payment error:", error)
+      toast({
+        title: "Payment Failed",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      })
+    } finally {
+      setIsProcessingPayment(false)
+    }
   }
 
   const selectedPackageData = promotionPackages.find((p) => p.id === selectedPackage)
@@ -607,12 +683,25 @@ export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketing
 
               {/* Action Buttons */}
               <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
+                <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)} disabled={isProcessingPayment}>
                   Cancel
                 </Button>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Pay ₹{selectedPackageData.price.toLocaleString()}
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={handlePayment}
+                  disabled={isProcessingPayment}
+                >
+                  {isProcessingPayment ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      Pay ₹{selectedPackageData.price.toLocaleString()}
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

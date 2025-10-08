@@ -39,6 +39,9 @@ import ExhibitorSettings from "./settings"
 import { ConnectionsSection } from "@/app/dashboard/connections-section"
 import { HelpSupport } from "@/components/HelpSupport"
 import { FollowManagement } from "./follow-management"
+import { ActiveEventsCard } from "./TotalExhibitorEvent"
+import { FollowersCountCard } from "./FollowersCountCard"
+import { AppointmentsCountCard } from "./AppointmentsCountCard"
 
 interface ExhibitorData {
   id: string
@@ -101,46 +104,46 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     fetchExhibitorData()
   }, [userId, status, session, router, toast])
 
-const fetchExhibitorData = async () => {
-  try {
-    setLoading(true)
-    setError(null)
+  const fetchExhibitorData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
 
-    const response = await fetch(`/api/users/${userId}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    })
-
-    if (!response.ok) {
-      if (response.status === 404) throw new Error("User not found")
-      if (response.status === 403) throw new Error("Access denied")
-      throw new Error("Failed to fetch user data")
-    }
-
-    const data = await response.json()
-    setExhibitor(data.user)
-   setAppointmentCount(Number(data.user.upcomingAppointments) || 0)
-
-  } catch (err) {
-    console.error("Error fetching user data:", err)
-    setError(err instanceof Error ? err.message : "An error occurred")
-
-    if (err instanceof Error && (err.message === "Access denied" || err.message === "User not found")) {
-      toast({
-        title: "Error",
-        description: err.message,
-        variant: "destructive",
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
       })
-      router.push("/login")
-    }
-  } finally {
-    setLoading(false)
-  }
-}
 
-// useEffect(() => {
-//   if (exhibitor) setAppointmentCount(exhibitor.upcomingAppointments)
-// }, [exhibitor])
+      if (!response.ok) {
+        if (response.status === 404) throw new Error("User not found")
+        if (response.status === 403) throw new Error("Access denied")
+        throw new Error("Failed to fetch user data")
+      }
+
+      const data = await response.json()
+      setExhibitor(data.user)
+      setAppointmentCount(Number(data.user.upcomingAppointments) || 0)
+
+    } catch (err) {
+      console.error("Error fetching user data:", err)
+      setError(err instanceof Error ? err.message : "An error occurred")
+
+      if (err instanceof Error && (err.message === "Access denied" || err.message === "User not found")) {
+        toast({
+          title: "Error",
+          description: err.message,
+          variant: "destructive",
+        })
+        router.push("/login")
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // useEffect(() => {
+  //   if (exhibitor) setAppointmentCount(exhibitor.upcomingAppointments)
+  // }, [exhibitor])
 
 
 
@@ -248,8 +251,8 @@ const fetchExhibitorData = async () => {
                   <button
                     onClick={() => setActiveTab(item.id)}
                     className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${activeTab === item.id
-                        ? "bg-blue-50 text-blue-700 border border-blue-200"
-                        : "text-gray-600 hover:bg-gray-50"
+                      ? "bg-blue-50 text-blue-700 border border-blue-200"
+                      : "text-gray-600 hover:bg-gray-50"
                       }`}
                   >
                     <Icon className="h-5 w-5" />
@@ -287,8 +290,8 @@ const fetchExhibitorData = async () => {
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{exhibitor.activeEvents || 5}</div>
-                    <p className="text-xs text-muted-foreground">of {exhibitor.totalEvents || 10} total events</p>
+                    <ActiveEventsCard exhibitorId={exhibitor.id} />
+                    <p className="text-xs text-muted-foreground">Active Events</p>
                   </CardContent>
                 </Card>
 
@@ -309,8 +312,8 @@ const fetchExhibitorData = async () => {
                     <Users className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{exhibitor.totalLeads || 25}</div>
-                    <p className="text-xs text-muted-foreground">{exhibitor.pendingLeads || 100} pending follow-up</p>
+                    <FollowersCountCard exhibitorId={exhibitor.id} />
+                    <p className="text-xs text-muted-foreground">Totel Leades</p>
                   </CardContent>
                 </Card>
 
@@ -320,8 +323,8 @@ const fetchExhibitorData = async () => {
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                <div className="text-2xl font-bold">{appointmentCount}</div>
-<p className="text-xs text-muted-foreground">upcoming this week</p>
+                    <AppointmentsCountCard exhibitorId={exhibitor.id} />
+                    <p className="text-xs text-muted-foreground">Total Appointments</p>
 
                   </CardContent>
                 </Card>
@@ -411,14 +414,14 @@ const fetchExhibitorData = async () => {
           {activeTab === "company" && <CompanyInfo exhibitorId={exhibitor.id} onUpdate={handleUpdate} exhibitorData={exhibitor} />}
           {activeTab === "events" && <EventParticipation exhibitorId={exhibitor.id} />}
           {activeTab === "products" && <ProductListing exhibitorId={exhibitor.id} />}
-          {activeTab === "messages" && <MessagesCenter organizerId={exhibitor.id}  />}
-          {activeTab === "connection" && <ConnectionsSection  userId={exhibitor.id}/>}
-         {activeTab === "follow" && <FollowManagement userId={exhibitor.id} />}
-{activeTab === "appointments" && (
-  <div className="space-y-6">
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-      {/* repeating 2nd time */}
-      {/* <Card>
+          {activeTab === "messages" && <MessagesCenter organizerId={exhibitor.id} />}
+          {activeTab === "connection" && <ConnectionsSection userId={exhibitor.id} />}
+          {activeTab === "follow" && <FollowManagement userId={exhibitor.id} />}
+          {activeTab === "appointments" && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {/* repeating 2nd time */}
+                {/* <Card>
         <CardContent className="p-6 text-center">
           <div className="text-3xl font-bold text-blue-600">
             {appointmentCount}
@@ -426,21 +429,21 @@ const fetchExhibitorData = async () => {
           <div className="text-gray-600">Total Requests</div>
         </CardContent>
       </Card> */}
-    </div>
+              </div>
 
-<AppointmentScheduling
-  exhibitorId={exhibitor.id} // ✅ this must be the fetched ID
-  onCountChange={setAppointmentCount}
-/>
+              <AppointmentScheduling
+                exhibitorId={exhibitor.id} // ✅ this must be the fetched ID
+                onCountChange={setAppointmentCount}
+              />
 
-  </div>
-)}
+            </div>
+          )}
 
 
           {activeTab === "analytics" && <AnalyticsReports exhibitorId={exhibitor.id} />}
           {/* {activeTab === "promotions" && <EventPromotion organizerId={exhibitor.id} />} */}
-           {activeTab === "promotions" && <PromotionsMarketing exhibitorId={exhibitor.id} />}
-          {activeTab === "help" && <HelpSupport />} 
+          {activeTab === "promotions" && <PromotionsMarketing exhibitorId={exhibitor.id} />}
+          {activeTab === "help" && <HelpSupport />}
           {activeTab === "settings" && <ExhibitorSettings exhibitorId={exhibitor.id} />}
         </div>
       </div>

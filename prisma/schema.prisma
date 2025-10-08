@@ -90,7 +90,8 @@ model User {
   venueAnalytics VenueAnalytics[]
   meetingSpaces MeetingSpace[] 
   leads           EventLead[]
-  promotions   Promotion[]
+  organizerPromotions   Promotion[] @relation("OrganizerPromotions")
+  exhibitorPromotions   Promotion[] @relation("ExhibitorPromotions")
   savedEvents SavedEvent[]
   replies ReviewReply[]
   connectionsSent    Connection[] @relation("ConnectionSender")
@@ -438,8 +439,13 @@ model ExhibitorBooth {
 
 model Promotion {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  organizerId     String   @db.ObjectId
-  organizer       User     @relation(fields: [organizerId], references: [id])
+  organizerId     String?   @db.ObjectId
+  organizer       User?     @relation("OrganizerPromotions",fields: [organizerId], references: [id])
+
+  exhibitorId   String? @db.ObjectId
+  exhibitor      User?  @relation("ExhibitorPromotions",fields: [exhibitorId], references: [id])
+
+
 
   eventId   String?  @db.ObjectId
   event     Event?   @relation(fields: [eventId], references: [id])
