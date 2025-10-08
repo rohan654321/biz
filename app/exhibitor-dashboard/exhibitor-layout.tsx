@@ -276,6 +276,7 @@ const fetchExhibitorData = async () => {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Exhibitor Dashboard</h1>
                 <p className="text-gray-600">Welcome back, {exhibitor.firstName}!</p>
+                {/* <p className="text-gray-600">Welco {exhibitor.totalEvents.title}!</p> */}
               </div>
 
               {/* Stats Cards */}

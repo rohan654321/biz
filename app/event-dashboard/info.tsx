@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import ExhibitorsTab from "./exhibitors-tab"
+import EventHero from "./EventHero"
 
 interface EventPageProps {
   params: { id: string }
@@ -318,8 +319,12 @@ export default function EventPage({ params }: EventPageProps) {
   }
 
   return (
-    <div className="max-w-7xl bg-gray-50 py-8 mx-10">
+    <div className="max-w-7xl bg-gray-50 py-0 mx-10">
       <div className="max-w-7xl mx-auto">
+              {/* Hero Section */}
+      <div className="mb-10">
+        <EventHero event={event} />
+      </div>
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1">
             <Tabs defaultValue="about" className="w-full">
