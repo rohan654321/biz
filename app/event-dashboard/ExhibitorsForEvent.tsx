@@ -94,23 +94,23 @@ export default function ExhibitorsForEvent({ eventId }: ExhibitorsForEventProps)
               </TableRow>
             </TableHeader>
             <TableBody>
-              {booths.map((booth) => (
+              {booths?.map((booth) => (
                 <TableRow key={booth.id}>
                   <TableCell className="font-medium flex items-center gap-2">
                     <Building className="w-4 h-4 text-gray-500" />
-                    {booth.exhibitor.firstName} {booth.exhibitor.lastName}
+                    {booth.exhibitor?.firstName} {booth.exhibitor?.lastName}
                   </TableCell>
                   <TableCell className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-gray-500" />
-                    {booth.exhibitor.email}
+                    {booth.exhibitor?.email}
                   </TableCell>
-                  <TableCell>{booth.companyName || booth.exhibitor.company}</TableCell>
+                  <TableCell>{booth?.companyName || booth.exhibitor?.company}</TableCell>
                   <TableCell className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-gray-500" />
-                    {booth.event.title}
+                    {booth.event?.title}
                   </TableCell>
-                  <TableCell>{booth.boothNumber}</TableCell>
-                  <TableCell>{booth.status}</TableCell>
+                  <TableCell>{booth?.boothNumber}</TableCell>
+                  <TableCell>{booth?.status}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
