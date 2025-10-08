@@ -2,10 +2,10 @@ import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
 // GET a specific conference
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params:Promise< { id: string }> }) {
   try {
     const conference = await prisma.conference.findUnique({
-      where: { id: params.id },
+      where: { id:(await params).id },
       include: {
         sessions: {
           orderBy: { order: "asc" },
@@ -25,18 +25,18 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PUT update a conference
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const body = await request.json()
     const { date, day, theme, sessions, isPublished } = body
 
     // Delete existing sessions and create new ones
     await prisma.conferenceSession.deleteMany({
-      where: { conferenceId: params.id },
+      where: { conferenceId:(await params).id },
     })
 
     const conference = await prisma.conference.update({
-      where: { id: params.id },
+      where: { id:(await params).id },
       data: {
         date,
         day,
@@ -68,11 +68,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE a conference
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params:Promise<{ id: string }> }) {
   try {
     // Sessions will be deleted automatically due to cascade
     await prisma.conference.delete({
-      where: { id: params.id },
+      where: { id:(await params).id },
     })
 
     return NextResponse.json({ message: "Conference deleted successfully" })
