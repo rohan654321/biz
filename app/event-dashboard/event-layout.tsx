@@ -38,8 +38,8 @@ import ExhibitorsForEvent from "./ExhibitorsForEvent"
 import ExhibitorManual from "../organizer-dashboard/exhibitor-manual/exhibitor-manual"
 import AddSpeaker from "./AddSpeaker"
 import SpeakerSessionsTable from "./SpeakerSessionsTable"
-import CreateConferenceAgenda from "./CreateConferenceAgenda"
-import ConferenceAgenda from "./ConferenceAgenda"
+import {CreateConferenceAgenda} from "./CreateConferenceAgenda"
+import {ConferenceList} from "./ConferenceAgenda"
 import { useSession } from "next-auth/react"
 import AnalyticsDashboard from "./analytics"
 // import Analytics from "./analytics"
@@ -70,6 +70,14 @@ export default function EventSidebar({ eventId }: EventLayoutProps) {
   const [params, setParams] = useState<{ id: string } | null>(null)
   const { data: session } = useSession()
 const userId = session?.user?.id
+
+ const [refreshKey, setRefreshKey] = useState(0)
+   const [activeTab, setActiveTab] = useState("list")
+
+   const handleSuccess = () => {
+    setActiveTab("list")
+    setRefreshKey((prev) => prev + 1)
+  }
 
   useEffect(() => {
     // Simulate async params resolution
@@ -175,9 +183,9 @@ const renderContent = () => {
       case "speakers":
         return <SpeakerSessionsTable eventId={eventId} />
       case "create-conference-agenda":
-        return <CreateConferenceAgenda organizerId={eventId} />
+        return <CreateConferenceAgenda eventId={eventId} />
       case "conference-agenda":
-        return <ConferenceAgenda organizerId={eventId} />
+        return <ConferenceList eventId={eventId} refreshKey={refreshKey} onCreateNew={() => setActiveTab("create")} />
       default:
         return <div className="p-4">Select a section</div>
     }

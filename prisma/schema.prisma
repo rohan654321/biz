@@ -237,6 +237,7 @@ model Event {
   appointments Appointment[]
   ticketTypes      TicketType[]
   exhibitorManuals ExhibitorManual[]
+  conference Conference[]
 
   @@map("events")
 }
@@ -1074,9 +1075,6 @@ model ReviewReply {
   @@map("review_replies")
 }
 
-// Add this model after the ExhibitorBooth model (around line 500)
-
-// Exhibitor Manual Management
 model ExhibitorManual {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   eventId         String   @db.ObjectId
@@ -1104,6 +1102,8 @@ model ExhibitorManual {
   @@map("exhibitor_manuals")
 }
 
+
+
 model Follow {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   followerId  String   @db.ObjectId
@@ -1117,4 +1117,50 @@ model Follow {
   @@index([followerId])
   @@index([followingId])
   @@map("follows")
+}
+
+model Conference {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId     String   @db.ObjectId
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  date        String
+  day         String
+  theme       String
+  
+  isPublished Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  sessions    ConferenceSession[]
+  
+  @@map("conferences")
+}
+
+model ConferenceSession {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  conferenceId  String   @db.ObjectId
+  conference    Conference @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
+  
+  time          String
+  title         String
+  description   String?
+  speaker       String?
+  type          ConferenceSessionType @default(SESSION)
+  
+  order         Int      @default(0)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("conference_sessions")
+}
+
+enum ConferenceSessionType {
+  SESSION
+  BREAK
+  KEYNOTE
+  PANEL
+  NETWORKING
 }
