@@ -115,17 +115,18 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
       }
 
       const data = await response.json()
-
-      // Handle both possible response structures
-      if (data.user && data.user.venue) {
-        setVenueData(data.user.venue)
-      } else if (data.venue) {
-        setVenueData(data.venue)
-      } else if (data.user) {
-        setVenueData(data.user)
-      } else {
-        throw new Error("Invalid data structure in response")
-      }
+// Handle all possible backend response shapes
+if (data.data) {
+  setVenueData(data.data)
+} else if (data.user?.venue) {
+  setVenueData(data.user.venue)
+} else if (data.venue) {
+  setVenueData(data.venue)
+} else if (data.user) {
+  setVenueData(data.user)
+} else {
+  throw new Error("Invalid data structure in response")
+}
 
     } catch (err) {
       console.error("Error fetching user data:", err)

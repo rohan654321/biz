@@ -510,7 +510,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Max Capacity</span>
-                    <span className="font-semibold">{venueData.maxCapacity.toLocaleString()}</span>
+                    <span className="font-semibold">{venueData?.maxCapacity?.toLocaleString?.() ?? "N/A"}</span>
                   </div>
                 </CardContent>
               </Card>
