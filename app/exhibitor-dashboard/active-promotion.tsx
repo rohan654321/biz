@@ -39,7 +39,7 @@ export default function ActivePromotions({ exhibitorId }: ActivePromotionsProps)
   const fetchPromotions = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/exhibitors/${exhibitorId}/promotions`)
+      const response = await fetch(`/api/exhibitors/promotions?exhibitorId=${exhibitorId}`)
       if (!response.ok) throw new Error("Failed to fetch promotions")
       const data = await response.json()
       setPromotions(data.promotions || [])
