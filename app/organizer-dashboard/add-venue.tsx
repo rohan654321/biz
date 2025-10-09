@@ -95,6 +95,7 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
 
     // Venue Information
     venueName: "",
+
     venueDescription: "",
     website: "",
     maxCapacity: "",
@@ -103,10 +104,10 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
 
     // Address Information
     venueAddress: "",
-    city: "",
-    state: "",
-    country: "",
-    postalCode: "",
+    venuecity: "",
+    venuestate: "",
+    venuecountry: "",
+    venuepostalCode: "",
 
     // Amenities
     amenities: [] as string[],
@@ -123,35 +124,9 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
     },
   ])
 
-  const availableAmenities = [
-    { name: "WiFi", icon: Wifi },
-    { name: "Parking", icon: Car },
-    { name: "Catering", icon: Utensils },
-    { name: "Coffee", icon: Coffee },
-    { name: "Accessibility", icon: Accessibility },
-    { name: "Photography", icon: Camera },
-    { name: "Audio System", icon: Mic },
-    { name: "Projector", icon: Projector },
-    { name: "Security", icon: Shield },
-    { name: "Power Backup", icon: Zap },
-    { name: "Air Conditioning", icon: Home },
-    { name: "Internet", icon: Globe },
-  ]
 
-  const spaceFeatures = [
-    "Projector",
-    "Audio System",
-    "WiFi",
-    "Air Conditioning",
-    "Natural Light",
-    "Whiteboard",
-    "Flip Chart",
-    "Video Conferencing",
-    "Stage",
-    "Podium",
-    "Microphone",
-    "Lighting Control",
-  ]
+
+
 
   useEffect(() => {
     fetchVenues()
@@ -212,18 +187,7 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
     }))
   }
 
-  const addMeetingSpace = () => {
-    setMeetingSpaces((prev) => [
-      ...prev,
-      {
-        name: "",
-        capacity: 0,
-        area: 0,
-        hourlyRate: 0,
-        features: [],
-      },
-    ])
-  }
+
 
   const removeMeetingSpace = (index: number) => {
     setMeetingSpaces((prev) => prev.filter((_, i) => i !== index))
@@ -238,25 +202,26 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
       prev.map((space, i) =>
         i === spaceIndex
           ? {
-              ...space,
-              features: space.features.includes(feature)
-                ? space.features.filter((f) => f !== feature)
-                : [...space.features, feature],
-            }
+            ...space,
+            features: space.features.includes(feature)
+              ? space.features.filter((f) => f !== feature)
+              : [...space.features, feature],
+          }
           : space,
       ),
     )
   }
 
   const handleCreateVenue = async () => {
-    if (!newVenue.firstName || !newVenue.lastName || !newVenue.email || !newVenue.venueName) {
+    if (!newVenue.venueName) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields.",
+        description: "Please enter the venue name.",
         variant: "destructive",
       })
       return
     }
+
 
     setLoading(true)
     try {
@@ -269,9 +234,13 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
           contactPerson: `${newVenue.firstName} ${newVenue.lastName}`,
           email: newVenue.email,
           mobile: newVenue.phone,
-          address: newVenue.venueAddress,
+          venueAddress: newVenue.venueAddress,
+          venueCity: newVenue.venuecity,
+          venueState: newVenue.venuestate,
+          venueCountry: newVenue.venuecountry,
+          venueZipCode: newVenue.venuepostalCode,
           website: newVenue.website,
-          description: newVenue.venueDescription,
+          venueDescription: newVenue.venueDescription,
           maxCapacity: newVenue.maxCapacity ? Number.parseInt(newVenue.maxCapacity) : 0,
           totalHalls: newVenue.totalHalls ? Number.parseInt(newVenue.totalHalls) : 0,
           activeBookings: 0,
@@ -279,7 +248,8 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
           totalReviews: 0,
           amenities: newVenue.amenities,
           meetingSpaces: meetingSpaces.filter((space) => space.name.trim() !== ""),
-        }),
+        })
+
       })
 
       if (response.ok) {
@@ -295,9 +265,9 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
             venueId: responseData.venueId || responseData.id,
             venueName: newVenue.venueName,
             venueAddress: newVenue.venueAddress || "Address not provided",
-            city: newVenue.city || "City not provided",
-            state: newVenue.state,
-            country: newVenue.country,
+            city: newVenue.venuecity || "City not provided",
+            state: newVenue.venuestate,
+            country: newVenue.venuecountry,
           })
         }
 
@@ -314,10 +284,10 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
           totalHalls: "",
           basePrice: "",
           venueAddress: "",
-          city: "",
-          state: "",
-          country: "",
-          postalCode: "",
+          venuecity: "",
+          venuestate: "",
+          venuecountry: "",
+          venuepostalCode: "",
           amenities: [],
         })
         setMeetingSpaces([
@@ -393,11 +363,10 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                 {filteredVenues.map((venue) => (
                   <Card
                     key={venue.id}
-                    className={`cursor-pointer transition-all ${
-                      selectedVenueId === venue.id
+                    className={`cursor-pointer transition-all ${selectedVenueId === venue.id
                         ? "ring-2 ring-green-500 bg-green-50 shadow-md"
                         : "hover:bg-gray-50 hover:shadow-sm"
-                    }`}
+                      }`}
                     onClick={() => handleVenueSelect(venue.id!)}
                   >
                     <CardContent className="p-4">
@@ -564,235 +533,79 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                       />
                     </div>
 
-                    {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="website">Website</Label>
-                        <Input
-                          id="website"
-                          value={newVenue.website}
-                          onChange={(e) => setNewVenue({ ...newVenue, website: e.target.value })}
-                          placeholder="https://venue.com"
-                        />
-                      </div> */}
 
-                      {/* <div>
-                        <Label htmlFor="maxCapacity">Max Capacity</Label>
-                        <Input
-                          id="maxCapacity"
-                          type="number"
-                          value={newVenue.maxCapacity}
-                          onChange={(e) => setNewVenue({ ...newVenue, maxCapacity: e.target.value })}
-                          placeholder="500"
-                        />
-                      </div> */}
+                  </div>
 
-                      {/* <div>
-                        <Label htmlFor="totalHalls">Total Halls</Label>
-                        <Input
-                          id="totalHalls"
-                          type="number"
-                          value={newVenue.totalHalls}
-                          onChange={(e) => setNewVenue({ ...newVenue, totalHalls: e.target.value })}
-                          placeholder="3"
-                        />
-                      </div> */}
+
+                </div>
+              </div>
+
+              {/* Address Information */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Address Information</h3>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="venueAddress">Street Address</Label>
+                    <Input
+                      id="venueAddress"
+                      value={newVenue.venueAddress}
+                      onChange={(e) => setNewVenue({ ...newVenue, venueAddress: e.target.value })}
+                      placeholder="123 Convention Street"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <Label htmlFor="city">City</Label>
+                      <Input
+                        id="city"
+                        value={newVenue.venuecity}
+                        onChange={(e) => setNewVenue({ ...newVenue, venuecity: e.target.value })}
+                        placeholder="San Francisco"
+                      />
                     </div>
 
                     <div>
-                      <Label htmlFor="basePrice">Base Price (per day)</Label>
+                      <Label htmlFor="state">State/Province</Label>
                       <Input
-                        id="basePrice"
-                        type="number"
-                        step="0.01"
-                        value={newVenue.basePrice}
-                        onChange={(e) => setNewVenue({ ...newVenue, basePrice: e.target.value })}
-                        placeholder="1500.00"
+                        id="state"
+                        value={newVenue.venuestate}
+                        onChange={(e) => setNewVenue({ ...newVenue, venuestate: e.target.value })}
+                        placeholder="California"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="country">Country</Label>
+                      <Input
+                        id="country"
+                        value={newVenue.venuecountry}
+                        onChange={(e) => setNewVenue({ ...newVenue, venuecountry: e.target.value })}
+                        placeholder="United States"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="postalCode">Postal Code</Label>
+                      <Input
+                        id="postalCode"
+                        value={newVenue.venuepostalCode}
+                        onChange={(e) => setNewVenue({ ...newVenue, venuepostalCode: e.target.value })}
+                        placeholder="94102"
                       />
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Address Information */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Address Information</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="venueAddress">Street Address</Label>
-                      <Input
-                        id="venueAddress"
-                        value={newVenue.venueAddress}
-                        onChange={(e) => setNewVenue({ ...newVenue, venueAddress: e.target.value })}
-                        placeholder="123 Convention Street"
-                      />
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div>
-                        <Label htmlFor="city">City</Label>
-                        <Input
-                          id="city"
-                          value={newVenue.city}
-                          onChange={(e) => setNewVenue({ ...newVenue, city: e.target.value })}
-                          placeholder="San Francisco"
-                        />
-                      </div>
 
-                      <div>
-                        <Label htmlFor="state">State/Province</Label>
-                        <Input
-                          id="state"
-                          value={newVenue.state}
-                          onChange={(e) => setNewVenue({ ...newVenue, state: e.target.value })}
-                          placeholder="California"
-                        />
-                      </div>
 
-                      <div>
-                        <Label htmlFor="country">Country</Label>
-                        <Input
-                          id="country"
-                          value={newVenue.country}
-                          onChange={(e) => setNewVenue({ ...newVenue, country: e.target.value })}
-                          placeholder="United States"
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="postalCode">Postal Code</Label>
-                        <Input
-                          id="postalCode"
-                          value={newVenue.postalCode}
-                          onChange={(e) => setNewVenue({ ...newVenue, postalCode: e.target.value })}
-                          placeholder="94102"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Amenities */}
-                {/* <div>
-                  <h3 className="text-lg font-semibold mb-4">Amenities</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {availableAmenities.map((amenity) => {
-                      const IconComponent = amenity.icon
-                      return (
-                        <div key={amenity.name} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={amenity.name}
-                            checked={newVenue.amenities.includes(amenity.name)}
-                            onCheckedChange={() => handleAmenityToggle(amenity.name)}
-                          />
-                          <Label htmlFor={amenity.name} className="flex items-center gap-2 cursor-pointer">
-                            <IconComponent className="w-4 h-4" />
-                            {amenity.name}
-                          </Label>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div> */}
-
-                {/* Meeting Spaces */}
-                {/* <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium">Meeting Spaces</h3>
-                    <Button onClick={addMeetingSpace} variant="outline" size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Space
-                    </Button>
-                  </div>
-
-                  <div className="space-y-6">
-                    {meetingSpaces.map((space, index) => (
-                      <Card key={index} className="p-4">
-                        <div className="flex items-center justify-between mb-4">
-                          <h4 className="font-medium">Meeting Space {index + 1}</h4>
-                          {meetingSpaces.length > 1 && (
-                            <Button
-                              onClick={() => removeMeetingSpace(index)}
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                          <div>
-                            <Label>Space Name</Label>
-                            <Input
-                              value={space.name}
-                              onChange={(e) => updateMeetingSpace(index, "name", e.target.value)}
-                              placeholder="Conference Room A"
-                            />
-                          </div>
-
-                          <div>
-                            <Label>Capacity</Label>
-                            <Input
-                              type="number"
-                              value={space.capacity}
-                              onChange={(e) =>
-                                updateMeetingSpace(index, "capacity", Number.parseInt(e.target.value) || 0)
-                              }
-                              placeholder="50"
-                            />
-                          </div>
-
-                          <div>
-                            <Label>Area (sq ft)</Label>
-                            <Input
-                              type="number"
-                              value={space.area}
-                              onChange={(e) => updateMeetingSpace(index, "area", Number.parseInt(e.target.value) || 0)}
-                              placeholder="500"
-                            />
-                          </div>
-
-                          <div>
-                            <Label>Hourly Rate ($)</Label>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={space.hourlyRate}
-                              onChange={(e) =>
-                                updateMeetingSpace(index, "hourlyRate", Number.parseFloat(e.target.value) || 0)
-                              }
-                              placeholder="100.00"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <Label className="text-sm font-medium mb-2 block">Features</Label>
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                            {spaceFeatures.map((feature) => (
-                              <div key={feature} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`${index}-${feature}`}
-                                  checked={space.features.includes(feature)}
-                                  onCheckedChange={() => toggleSpaceFeature(index, feature)}
-                                />
-                                <Label htmlFor={`${index}-${feature}`} className="text-sm cursor-pointer">
-                                  {feature}
-                                </Label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div> */}
-
-                <div className="flex justify-end">
-                  <Button onClick={handleCreateVenue} disabled={loading}>
-                    {loading ? "Creating..." : "Create Venue"}
-                  </Button>
-                </div>
+              <div className="flex justify-end">
+                <Button onClick={handleCreateVenue} disabled={loading}>
+                  {loading ? "Creating..." : "Create Venue"}
+                </Button>
+              </div>
               {/* </div> */}
             </TabsContent>
           </Tabs>

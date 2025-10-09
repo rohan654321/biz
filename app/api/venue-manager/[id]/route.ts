@@ -184,9 +184,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       contactPerson,
       email,
       mobile,
-      address,
+      venueAddress,
+      venueCity,
+      venueState,
+      venueZipCode,
+      venueCountry,
       website,
-      description,
+      venueDescription,
       maxCapacity,
       totalHalls,
       activeBookings,
@@ -197,10 +201,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     } = body
 
     // Validate required fields
-    if (!email) {
-      console.log("[v0] Validation failed: Email is required")
-      return NextResponse.json({ success: false, error: "Email is required" }, { status: 400 })
-    }
+    
 
     if (!organizerId) {
       console.log("[v0] Validation failed: Organizer ID is required")
@@ -233,23 +234,42 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       firstName = parts[0] || ""
       lastName = parts.slice(1).join(" ") || ""
     }
+      
+
+ 
 
     // Use transaction to create venue manager and link to organizer
     const result = await prisma.$transaction(async (tx) => {
+         let emailToUse = email;
+
+// If email is not provided, generate a unique one
+if (!email) {
+  // Count existing VENUE_MANAGER users
+  const venueCount = await prisma.user.count({
+    where: { role: "VENUE_MANAGER" },
+  });
+
+  // Generate email like venue1@gmail.com, venue2@gmail.com, etc.
+  emailToUse = `venue${venueCount + 1}@gmail.com`;
+}
       // Create the venue manager user with just the ID reference
       const newVenueManager = await tx.user.create({
         data: {
           role: "VENUE_MANAGER",
-          email: email,
-          firstName: firstName || "Venue",
+          email:emailToUse,
+          firstName: venueName || "Venue",
           lastName: lastName || "Manager",
           password: "TEMP_PASSWORD",
           company: venueName || null,
           avatar: logo || null,
           phone: mobile || null,
-          location: address || null,
+          location: venueAddress || null,
+          venueCity:venueCity || null,
+          venueCountry:venueCountry || null,
+          venueState:venueState || null,
+          venueZipCode:venueZipCode || null,
           website: website || null,
-          bio: description || null,
+          bio: venueDescription || null,
           maxCapacity: maxCapacity ? Number.parseInt(maxCapacity) : 0,
           totalHalls: totalHalls ? Number.parseInt(totalHalls) : 0,
           activeBookings: activeBookings ? Number.parseInt(activeBookings) : 0,
