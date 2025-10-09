@@ -24,6 +24,8 @@ import {
   Twitter,
   Briefcase,
   HelpCircle,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
@@ -42,6 +44,7 @@ import { FollowManagement } from "./follow-management"
 import { ActiveEventsCard } from "./TotalExhibitorEvent"
 import { FollowersCountCard } from "./FollowersCountCard"
 import { AppointmentsCountCard } from "./AppointmentsCountCard"
+import ActivePromotions from "./active-promotion"
 
 interface ExhibitorData {
   id: string
@@ -69,16 +72,14 @@ interface UserDashboardProps {
 }
 
 export function ExhibitorLayout({ userId }: UserDashboardProps) {
-  // const { data: session } = useSession()
   const [exhibitor, setExhibitor] = useState<ExhibitorData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("overview")
   const [appointmentCount, setAppointmentCount] = useState<number>(0)
+  const [openMenus, setOpenMenus] = useState<string[]>(["main"])
 
   const { data: session, status } = useSession()
-  // const [appointmentCount, setAppointmentCount] = useState<number>(0)
-
   const router = useRouter()
   const { toast } = useToast()
 
@@ -90,7 +91,6 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
       return
     }
 
-    // Check if user can access this dashboard
     if (session?.user.id !== userId && session?.user.role !== "admin") {
       toast({
         title: "Access Denied",
@@ -123,7 +123,6 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
       const data = await response.json()
       setExhibitor(data.user)
       setAppointmentCount(Number(data.user.upcomingAppointments) || 0)
-
     } catch (err) {
       console.error("Error fetching user data:", err)
       setError(err instanceof Error ? err.message : "An error occurred")
@@ -141,11 +140,13 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     }
   }
 
-  // useEffect(() => {
-  //   if (exhibitor) setAppointmentCount(exhibitor.upcomingAppointments)
-  // }, [exhibitor])
+  const toggleMenu = (menu: string) => {
+    setOpenMenus((prev) => (prev.includes(menu) ? prev.filter((m) => m !== menu) : [...prev, menu]))
+  }
 
-
+  const handleTabClick = (tabId: string) => {
+    setActiveTab(tabId)
+  }
 
   if (loading) {
     return (
@@ -188,21 +189,6 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     )
   }
 
-  const sidebarItems = [
-    { id: "overview", label: "Overview", icon: BarChart3 },
-    { id: "company", label: "Company Info", icon: Building2 },
-    { id: "events", label: "Events", icon: Calendar },
-    { id: "products", label: "Products", icon: Package },
-    { id: "follow", label: "Follow", icon: Users },
-    { id: "messages", label: "messages", icon: Users },
-    { id: "connection", label: "connection", icon: Users },
-    { id: "appointments", label: "Appointments", icon: Calendar },
-    { id: "analytics", label: "Analytics", icon: TrendingUp },
-    { id: "promotions", label: "Promotions", icon: Star },
-    { id: "help", label: "Help & Support", icon: HelpCircle },
-    { id: "settings", label: "Settings", icon: Settings },
-  ]
-
   const handleUpdate = async (updates: Partial<any>) => {
     try {
       const res = await fetch(`/api/exhibitors/${userId}`, {
@@ -220,54 +206,209 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     }
   }
 
+  // Helper function for menu item styling
+  const menuItemClass = (tabId: string) => {
+    return `cursor-pointer pl-3 py-1 border-l-4 ${
+      activeTab === tabId 
+        ? "border-blue-500 text-blue-600 font-medium" 
+        : "border-transparent hover:text-blue-600"
+    }`
+  }
+
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <div className="w-64 bg-white shadow-sm border-r">
-        <div className="p-6 border-b">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={exhibitor.avatar || "/placeholder.svg"} />
-              <AvatarFallback>
-                {exhibitor.firstName[0]}
-                {exhibitor.lastName[0]}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h2 className="font-semibold text-gray-900">
-                {exhibitor.firstName} {exhibitor.lastName}
-              </h2>
-              <p className="text-sm text-gray-500">{exhibitor.jobTitle || "Exhibitor"}</p>
-            </div>
-          </div>
-        </div>
-
-        <nav className="p-4">
-          <ul className="space-y-2">
-            {sidebarItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <li key={item.id}>
-                  <button
-                    onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${activeTab === item.id
-                      ? "bg-blue-50 text-blue-700 border border-blue-200"
-                      : "text-gray-600 hover:bg-gray-50"
-                      }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span>{item.label}</span>
-                  </button>
-                </li>
-              )
-            })}
-            <Button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="w-full bg-red-500 hover:bg-red-600 text-white my-10"
+        <nav className="p-4 text-sm space-y-2">
+          {/* Main Dropdown */}
+          <div>
+            <button 
+              className="flex items-center justify-between w-full py-2 font-medium" 
+              onClick={() => toggleMenu("main")}
             >
-              Logout
-            </Button>
-          </ul>
+              <span className="flex items-center gap-2">
+                <BarChart3 size={16} />
+                Main
+              </span>
+              {openMenus.includes("main") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+            {openMenus.includes("main") && (
+              <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
+                <li
+                  onClick={() => handleTabClick("overview")}
+                  className={menuItemClass("overview")}
+                >
+                  Overview
+                </li>
+                <li
+                  onClick={() => handleTabClick("company")}
+                  className={menuItemClass("company")}
+                >
+                  Company
+                </li>
+              </ul>
+            )}
+          </div>
+
+          {/* Lead Management Dropdown */}
+          <div>
+            <button 
+              className="flex items-center justify-between w-full py-2 font-medium" 
+              onClick={() => toggleMenu("leadManagement")}
+            >
+              <span className="flex items-center gap-2">
+                <Users size={16} />
+                Lead Management
+              </span>
+              {openMenus.includes("leadManagement") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+            {openMenus.includes("leadManagement") && (
+              <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
+                <li
+                  onClick={() => handleTabClick("events")}
+                  className={menuItemClass("events")}
+                >
+                  Events
+                </li>
+                <li
+                  onClick={() => handleTabClick("products")}
+                  className={menuItemClass("products")}
+                >
+                  Products
+                </li>
+              </ul>
+            )}
+          </div>
+
+          {/* Marketing Campaigns Dropdown */}
+          <div>
+            <button 
+              className="flex items-center justify-between w-full py-2 font-medium" 
+              onClick={() => toggleMenu("marketingCampaigns")}
+            >
+              <span className="flex items-center gap-2">
+                <Star size={16} />
+                Marketing Campaigns
+              </span>
+              {openMenus.includes("marketingCampaigns") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+            {openMenus.includes("marketingCampaigns") && (
+              <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
+                <li
+                  onClick={() => handleTabClick("promotions")}
+                  className={menuItemClass("promotions")}
+                >
+                  Promotion
+                </li>
+                <li
+                  onClick={() => handleTabClick("active-promotions")}
+                  className={menuItemClass("active-promotions")}
+                >
+                  Active Promotion
+                </li>
+              </ul>
+            )}
+          </div>
+
+          {/* Analytics Dropdown */}
+          <div>
+            <button 
+              className="flex items-center justify-between w-full py-2 font-medium" 
+              onClick={() => toggleMenu("analytics")}
+            >
+              <span className="flex items-center gap-2">
+                <TrendingUp size={16} />
+                Analytics
+              </span>
+              {openMenus.includes("analytics") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+            {openMenus.includes("analytics") && (
+              <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
+                <li
+                  onClick={() => handleTabClick("analytics")}
+                  className={menuItemClass("analytics")}
+                >
+                  Analytics
+                </li>
+              </ul>
+            )}
+          </div>
+
+          {/* Network Dropdown */}
+          <div>
+            <button 
+              className="flex items-center justify-between w-full py-2 font-medium" 
+              onClick={() => toggleMenu("network")}
+            >
+              <span className="flex items-center gap-2">
+                <Users size={16} />
+                Network
+              </span>
+              {openMenus.includes("network") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+            {openMenus.includes("network") && (
+              <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
+                <li
+                  onClick={() => handleTabClick("follow")}
+                  className={menuItemClass("follow")}
+                >
+                  Follow
+                </li>
+                <li
+                  onClick={() => handleTabClick("messages")}
+                  className={menuItemClass("messages")}
+                >
+                  Messages
+                </li>
+                <li
+                  onClick={() => handleTabClick("connection")}
+                  className={menuItemClass("connection")}
+                >
+                  Connection
+                </li>
+                <li
+                  onClick={() => handleTabClick("appointments")}
+                  className={menuItemClass("appointments")}
+                >
+                  Appointments
+                </li>
+              </ul>
+            )}
+          </div>
+
+          {/* Help & Support (No Dropdown) */}
+          <div>
+            <button
+              onClick={() => handleTabClick("help")}
+              className={`flex items-center gap-2 w-full py-2 font-medium ${
+                activeTab === "help" ? "text-blue-600 font-medium" : "hover:text-blue-600"
+              }`}
+            >
+              <HelpCircle size={16} />
+              Help & Support
+            </button>
+          </div>
+
+          {/* Settings (No Dropdown) */}
+          <div>
+            <button
+              onClick={() => handleTabClick("settings")}
+              className={`flex items-center gap-2 w-full py-2 font-medium ${
+                activeTab === "settings" ? "text-blue-600 font-medium" : "hover:text-blue-600"
+              }`}
+            >
+              <Settings size={16} />
+              Settings
+            </button>
+          </div>
+
+          {/* Logout Button */}
+          <Button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="w-full bg-red-500 hover:bg-red-600 text-white mt-10"
+          >
+            Logout
+          </Button>
         </nav>
       </div>
 
@@ -279,7 +420,6 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Exhibitor Dashboard</h1>
                 <p className="text-gray-600">Welcome back, {exhibitor.firstName}!</p>
-                {/* <p className="text-gray-600">Welco {exhibitor.totalEvents.title}!</p> */}
               </div>
 
               {/* Stats Cards */}
@@ -313,7 +453,7 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
                   </CardHeader>
                   <CardContent>
                     <FollowersCountCard exhibitorId={exhibitor.id} />
-                    <p className="text-xs text-muted-foreground">Totel Leades</p>
+                    <p className="text-xs text-muted-foreground">Total Leads</p>
                   </CardContent>
                 </Card>
 
@@ -325,7 +465,6 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
                   <CardContent>
                     <AppointmentsCountCard exhibitorId={exhibitor.id} />
                     <p className="text-xs text-muted-foreground">Total Appointments</p>
-
                   </CardContent>
                 </Card>
               </div>
@@ -410,7 +549,6 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
             </div>
           )}
 
-
           {activeTab === "company" && <CompanyInfo exhibitorId={exhibitor.id} onUpdate={handleUpdate} exhibitorData={exhibitor} />}
           {activeTab === "events" && <EventParticipation exhibitorId={exhibitor.id} />}
           {activeTab === "products" && <ProductListing exhibitorId={exhibitor.id} />}
@@ -420,29 +558,17 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
           {activeTab === "appointments" && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {/* repeating 2nd time */}
-                {/* <Card>
-        <CardContent className="p-6 text-center">
-          <div className="text-3xl font-bold text-blue-600">
-            {appointmentCount}
-          </div>
-          <div className="text-gray-600">Total Requests</div>
-        </CardContent>
-      </Card> */}
+                {/* Add any appointment stats cards here if needed */}
               </div>
-
               <AppointmentScheduling
-                exhibitorId={exhibitor.id} // ✅ this must be the fetched ID
+                exhibitorId={exhibitor.id}
                 onCountChange={setAppointmentCount}
               />
-
             </div>
           )}
-
-
           {activeTab === "analytics" && <AnalyticsReports exhibitorId={exhibitor.id} />}
-          {/* {activeTab === "promotions" && <EventPromotion organizerId={exhibitor.id} />} */}
           {activeTab === "promotions" && <PromotionsMarketing exhibitorId={exhibitor.id} />}
+          {activeTab === "active-promotions" && <ActivePromotions exhibitorId={exhibitor.id} />}
           {activeTab === "help" && <HelpSupport />}
           {activeTab === "settings" && <ExhibitorSettings exhibitorId={exhibitor.id} />}
         </div>
