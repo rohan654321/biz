@@ -74,6 +74,7 @@ model User {
   speakerSessions   SpeakerSession[]
   speakerMaterials  Material[] @relation("SpeakerMaterials")
   exhibitorBooths   ExhibitorBooth[]
+  products          Product[]
   venueBookings     VenueBooking[] 
   sentMessages      Message[] @relation("MessageSender")
   receivedMessages  Message[] @relation("MessageReceiver")
@@ -1169,4 +1170,20 @@ enum ConferenceSessionType {
   KEYNOTE
   PANEL
   NETWORKING
+}
+
+
+model Product{
+  id   String   @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+  category String?
+  description String?
+  price Float?
+  currency String?
+  images String[]
+  brochure String[]
+  exhibitorId     String   @db.ObjectId
+  exhibitor       User     @relation(fields: [exhibitorId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

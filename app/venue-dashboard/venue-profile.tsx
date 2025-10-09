@@ -35,28 +35,53 @@ interface VenueProfileProps {
   venueData: VenueData
 }
 
+// Map backend response to your VenueData interface
+const mapBackendToVenueData = (data: any): VenueData => ({
+  id: data.id,
+  venueName: data.name,
+  logo: data.images?.[0] || "/placeholder.svg",
+  contactPerson: data.manager?.name || "",
+  email: data.manager?.email || data.contact?.email || "",
+  mobile: data.manager?.phone || data.contact?.phone || "",
+  address: data.location?.address || "",
+  website: data.manager?.website || data.contact?.website || "",
+  description: data.description || "",
+  maxCapacity: data.capacity?.total || 0,
+  totalHalls: data.capacity?.halls || 0,
+  totalEvents: data.events?.length || 0,
+  activeBookings: data.stats?.activeBookings || 0,
+  averageRating: data.stats?.averageRating || 0,
+  totalReviews: data.stats?.totalReviews || 0,
+  amenities: data.amenities || [],
+  meetingSpaces: data.meetingSpaces || [],
+})
+
+
 export default function VenueProfile({ venueData }: VenueProfileProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [profileData, setProfileData] = useState<VenueData | null>(null)
 
-  useEffect(() => {
-    const fetchVenue = async () => {
-      try {
-        const res = await fetch(`/api/venue-manager/${venueData.id}`)
-        const data = await res.json()
-        if (data.success) {
-          const venue = data.user?.venue || data.venue
-          setProfileData(venue)
-          setAmenities(venue?.amenities || []) // ✅ sync
-          setMeetingSpaces(venue?.meetingSpaces || [])
-        }
-      } catch (err) {
-        console.error(err)
+useEffect(() => {
+  const fetchVenue = async () => {
+    try {
+      const res = await fetch(`/api/venue-manager/${venueData.id}`)
+      const data = await res.json()
+      if (data.success) {
+        const venue = mapBackendToVenueData(data.data) // 🔑 map here
+        setProfileData(venue)
+        setAmenities(venue.amenities)
+        setMeetingSpaces(venue.meetingSpaces)
       }
+    } catch (err) {
+      console.error(err)
     }
+  }
 
-    fetchVenue()
-  }, [venueData.id])
+  fetchVenue()
+}, [venueData.id])
+
+
+  
 
   const [images, setImages] = useState([
     "/placeholder.svg?height=300&width=400&text=Main+Hall",
@@ -465,26 +490,38 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                     Capacity Information
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">500</div>
-                      <div className="text-sm text-gray-600">Theater Style</div>
-                    </div>
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">300</div>
-                      <div className="text-sm text-gray-600">Banquet Style</div>
-                    </div>
-                    <div className="text-center p-4 bg-purple-50 rounded-lg">
-                      <div className="text-2xl font-bold text-purple-600">400</div>
-                      <div className="text-sm text-gray-600">Cocktail Style</div>
-                    </div>
-                    <div className="text-center p-4 bg-orange-50 rounded-lg">
-                      <div className="text-2xl font-bold text-orange-600">150</div>
-                      <div className="text-sm text-gray-600">Classroom Style</div>
-                    </div>
-                  </div>
-                </CardContent>
+             <CardContent>
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="text-center p-4 bg-blue-50 rounded-lg">
+      <div className="text-2xl font-bold text-blue-600">
+        {profileData?.maxCapacity?.toLocaleString?.() ?? "N/A"}
+      </div>
+      <div className="text-sm text-gray-600">Max Capacity</div>
+    </div>
+
+    <div className="text-center p-4 bg-green-50 rounded-lg">
+      <div className="text-2xl font-bold text-green-600">
+        {profileData?.totalHalls?.toLocaleString?.() ?? "N/A"}
+      </div>
+      <div className="text-sm text-gray-600">Total Halls</div>
+    </div>
+
+    <div className="text-center p-4 bg-purple-50 rounded-lg">
+      <div className="text-2xl font-bold text-purple-600">
+        {profileData?.totalEvents?.toLocaleString?.() ?? "N/A"}
+      </div>
+      <div className="text-sm text-gray-600">Total Events</div>
+    </div>
+
+    <div className="text-center p-4 bg-orange-50 rounded-lg">
+      <div className="text-2xl font-bold text-orange-600">
+        {profileData?.averageRating?.toLocaleString?.() ?? "N/A"}
+      </div>
+      <div className="text-sm text-gray-600">Average Rating</div>
+    </div>
+  </div>
+</CardContent>
+
               </Card>
             </div>
 
@@ -510,7 +547,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Max Capacity</span>
-                    <span className="font-semibold">{venueData.maxCapacity.toLocaleString()}</span>
+                    <span className="font-semibold">{venueData?.maxCapacity?.toLocaleString?.() ?? "N/A"}</span>
                   </div>
                 </CardContent>
               </Card>

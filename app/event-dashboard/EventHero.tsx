@@ -163,7 +163,7 @@ export default function EventHero({ event }: EventHeroProps) {
               <div className="flex w-full gap-2">
                 <Input
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => setTitle(e.target.value)} 
                   className="flex-1"
                 />
                 {/* <Button size="sm" onClick={handleSave}>Save</Button> */}
