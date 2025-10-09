@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { redirect } from "next/navigation"
-import { ExhibitorDashboard } from "../speaker-dashboard"
+import { SpeakerDashboard } from "../speaker-dashboard"
 import { NameBanner } from "@/app/dashboard/NameBanner"
 import Navbar from "../navbar"
 
@@ -29,7 +29,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ id: 
             : session.user.role || ""
         }
       />
-      <ExhibitorDashboard userId={id} />
+      <SpeakerDashboard userId={id} />
     </div>
   )
 }
