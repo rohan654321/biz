@@ -215,7 +215,7 @@ if (data.data) {
       case "ratings-reviews":
         return <FeedbackReplyManagement organizerId={venueData.id} />
       case "legal-documentation":
-        return <LegalDocumentation />
+        return <LegalDocumentation venueId={venueData.id} />
       case "help-support":
         return <HelpSupport /> 
       case "settings":

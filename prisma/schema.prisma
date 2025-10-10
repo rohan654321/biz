@@ -80,6 +80,7 @@ model User {
   receivedMessages  Message[] @relation("MessageReceiver")
   reviews           Review[]
   payments          Payment[] 
+  legaldoc          LegalDocument[] @relation("VenueLegalDocuments")
   notifications     Notification[]
   analytics         UserAnalytics[]
   settings          Settings?
@@ -1187,4 +1188,82 @@ model Product{
   exhibitor       User     @relation(fields: [exhibitorId], references: [id])
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model LegalDocument {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  name            String
+  description     String?
+  type            LegalDocumentType
+  category        LegalDocumentCategory
+  
+  fileName        String?
+  fileUrl         String?
+  fileSize        Int?
+  mimeType        String?
+  
+  version         String   @default("1.0")
+  
+  status          LegalDocumentStatus @default(ACTIVE)
+  
+  venueId         String   @db.ObjectId
+  venue           User?     @relation("VenueLegalDocuments", fields: [venueId], references: [id], onDelete: Cascade)
+  
+  eventId         String?  @db.ObjectId
+  organizerName   String?
+  organizerId     String?  @db.ObjectId
+  contractValue   Float?
+  currency        String?  @default("INR")
+  eventDate       DateTime?
+  signedDate      DateTime?
+  
+  issuingAuthority String?
+  certificateNumber String?
+  issueDate        DateTime?
+  expiryDate       DateTime?
+  
+  downloadCount   Int      @default(0)
+  lastDownloadedAt DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([venueId])
+  @@index([type])
+  @@index([category])
+  @@index([status])
+  @@map("legal_documents")
+}
+
+enum LegalDocumentType {
+  STANDARD_DOCUMENT
+  EVENT_CONTRACT
+  COMPLIANCE_CERTIFICATE
+}
+
+enum LegalDocumentCategory {
+  TERMS_CONDITIONS
+  CONTRACT_TEMPLATE
+  WAIVER
+  SERVICE_AGREEMENT
+  BOOKING_AGREEMENT
+  FIRE_SAFETY
+  OCCUPANCY_CERTIFICATE
+  FOOD_LICENSE
+  ENTERTAINMENT_LICENSE
+  BUILDING_PERMIT
+  INSURANCE
+  OTHER
+}
+
+enum LegalDocumentStatus {
+  ACTIVE
+  INACTIVE
+  DRAFT
+  SIGNED
+  PENDING_SIGNATURE
+  EXPIRED
+  VALID
+  EXPIRING_SOON
 }
