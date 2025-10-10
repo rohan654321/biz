@@ -43,6 +43,7 @@ return NextResponse.json({
       website: venueManager.website || "",
       address: venueManager.venueAddress || "",
       description: venueManager.venueDescription || "",
+      venueName: venueManager.venueName || "Unnamed Venue",
       
     },
     location: {
