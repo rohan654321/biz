@@ -3,10 +3,10 @@ import { prisma } from "@/lib/prisma"
 import cloudinary from "@/lib/cloudinary"
 
 // GET - Fetch single legal document
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const document = await prisma.legalDocument.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         venue: {
           select: {
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     // Increment download count
     await prisma.legalDocument.update({
-      where: { id: params.id },
+      where: { id:(await params).id },
       data: {
         downloadCount: { increment: 1 },
         lastDownloadedAt: new Date(),
@@ -42,14 +42,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PATCH - Update legal document
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const formData = await request.formData()
     const file = formData.get("file") as File | null
 
     // Get existing document
     const existingDocument = await prisma.legalDocument.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
     })
 
     if (!existingDocument) {
@@ -138,7 +138,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     if (expiryDate !== null) updateData.expiryDate = new Date(expiryDate)
 
     const document = await prisma.legalDocument.update({
-      where: { id: params.id },
+      where: { id: (await params).id },
       data: updateData,
       include: {
         venue: {
@@ -160,10 +160,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 }
 
 // DELETE - Delete legal document
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const document = await prisma.legalDocument.findUnique({
-      where: { id: params.id },
+      where: { id:(await params).id },
     })
 
     if (!document) {
@@ -182,7 +182,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
     // Delete document from database
     await prisma.legalDocument.delete({
-      where: { id: params.id },
+      where: { id:(await params).id },
     })
 
     return NextResponse.json({ message: "Document deleted successfully" }, { status: 200 })
