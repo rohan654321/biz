@@ -73,6 +73,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         currency: body.currency || null,
         images: body.images || [],
         brochure: body.brochure || [],
+        youtube: Array.isArray(body.youtube) ? body.youtube : [body.youtube],
         exhibitorId: exhibitorId,
       },
     })

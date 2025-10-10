@@ -258,7 +258,7 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
             >
               <span className="flex items-center gap-2">
                 <Users size={16} />
-                Lead Management
+                Event & Products
               </span>
               {openMenus.includes("leadManagement") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>

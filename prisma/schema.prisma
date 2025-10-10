@@ -1182,6 +1182,7 @@ model Product{
   currency String?
   images String[]
   brochure String[]
+  youtube String[]
   exhibitorId     String   @db.ObjectId
   exhibitor       User     @relation(fields: [exhibitorId], references: [id])
   createdAt   DateTime  @default(now())

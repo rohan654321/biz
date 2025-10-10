@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,13 +11,14 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
-import { Package, Plus, Upload, FileText, Edit, Trash2, ExternalLink, X } from "lucide-react"
+import { Package, Plus, Upload, FileText, Edit, Trash2, ExternalLink, X, Youtube } from "lucide-react"
 
 interface ProductListingProps {
   exhibitorId: string
 }
 
 interface Product {
+  youtube: string
   id: string
   name: string
   category: string
@@ -29,6 +29,196 @@ interface Product {
   currency?: string
 }
 
+// Move ProductForm to a separate component to prevent unnecessary re-renders
+const ProductForm = ({ 
+  isEdit = false, 
+  onSubmit, 
+  onCancel,
+  initialData,
+  uploading 
+}: { 
+  isEdit?: boolean
+  onSubmit: (data: any) => void
+  onCancel: () => void
+  initialData?: any
+  uploading: boolean
+}) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "",
+    description: "",
+    price: "",
+    youtube: "",
+    currency: "USD",
+  })
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [brochureFiles, setBrochureFiles] = useState<File[]>([])
+
+  // Initialize form when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        name: initialData.name || "",
+        category: initialData.category || "",
+        description: initialData.description || "",
+        price: initialData.price?.toString() || "",
+        youtube: initialData.youtube || "",
+        currency: initialData.currency || "USD",
+      })
+    } else {
+      setFormData({
+        name: "",
+        category: "",
+        description: "",
+        price: "",
+        youtube: "",
+        currency: "USD",
+      })
+    }
+    setImageFiles([])
+    setBrochureFiles([])
+  }, [initialData])
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setImageFiles(Array.from(e.target.files))
+    }
+  }
+
+  const handleBrochureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setBrochureFiles(Array.from(e.target.files))
+    }
+  }
+
+  const handleSubmit = () => {
+    onSubmit({
+      ...formData,
+      imageFiles,
+      brochureFiles
+    })
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="product-name">Product Name</Label>
+          <Input
+            id="product-name"
+            placeholder="Enter product name"
+            value={formData.name}
+            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="category">Category</Label>
+          <Input
+            id="category"
+            placeholder="Enter category"
+            value={formData.category}
+            onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          rows={4}
+          placeholder="Describe your product or service..."
+          value={formData.description}
+          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="youtube">YouTube Link</Label>
+        <Input
+          id="youtube"
+          placeholder="Enter YouTube link..."
+          value={formData.youtube}
+          onChange={(e) => setFormData(prev => ({ ...prev, youtube: e.target.value }))}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="price">Price (Optional)</Label>
+          <Input
+            id="price"
+            type="number"
+            placeholder="0.00"
+            value={formData.price}
+            onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="currency">Currency</Label>
+          <Input
+            id="currency"
+            placeholder="USD"
+            value={formData.currency}
+            onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="images">Product Images {isEdit && "(Add More)"}</Label>
+        <div className="border-2 border-dashed border-input rounded-lg p-6 text-center">
+          <input 
+            id="images" 
+            type="file" 
+            accept="image/*" 
+            multiple 
+            onChange={handleImageChange} 
+            className="hidden" 
+          />
+          <label htmlFor="images" className="cursor-pointer">
+            <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+            <p className="text-muted-foreground">Click to upload images or drag and drop</p>
+            <p className="text-sm text-muted-foreground">PNG, JPG up to 10MB</p>
+            {imageFiles.length > 0 && <p className="text-sm text-primary mt-2">{imageFiles.length} file(s) selected</p>}
+          </label>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="brochures">Brochures/Catalogues {isEdit && "(Add More)"}</Label>
+        <div className="border-2 border-dashed border-input rounded-lg p-6 text-center">
+          <input 
+            id="brochures" 
+            type="file" 
+            accept=".pdf" 
+            multiple 
+            onChange={handleBrochureChange} 
+            className="hidden" 
+          />
+          <label htmlFor="brochures" className="cursor-pointer">
+            <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+            <p className="text-muted-foreground">Upload PDF brochures and catalogues</p>
+            <p className="text-sm text-muted-foreground">PDF files up to 25MB</p>
+            {brochureFiles.length > 0 && (
+              <p className="text-sm text-primary mt-2">{brochureFiles.length} file(s) selected</p>
+            )}
+          </label>
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-3">
+        <Button variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button onClick={handleSubmit} disabled={uploading}>
+          {uploading ? "Uploading..." : isEdit ? "Update Product" : "Add Product"}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 export default function ProductListing({ exhibitorId }: ProductListingProps) {
   const { toast } = useToast()
   const [isAddProductOpen, setIsAddProductOpen] = useState(false)
@@ -37,15 +227,6 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
-  const [formData, setFormData] = useState({
-    name: "",
-    category: "",
-    description: "",
-    price: "",
-    currency: "USD",
-  })
-  const [imageFiles, setImageFiles] = useState<File[]>([])
-  const [brochureFiles, setBrochureFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
@@ -109,13 +290,13 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
     return uploadedUrls
   }
 
-  const handleAddProduct = async () => {
+  const handleAddProduct = async (formData: any) => {
     try {
       setUploading(true)
 
       // Upload images and brochures first
-      const imageUrls = imageFiles.length > 0 ? await uploadFiles(imageFiles, "image") : []
-      const brochureUrls = brochureFiles.length > 0 ? await uploadFiles(brochureFiles, "pdf") : []
+      const imageUrls = formData.imageFiles.length > 0 ? await uploadFiles(formData.imageFiles, "image") : []
+      const brochureUrls = formData.brochureFiles.length > 0 ? await uploadFiles(formData.brochureFiles, "pdf") : []
 
       const response = await fetch(`/api/exhibitors/${exhibitorId}/products`, {
         method: "POST",
@@ -123,8 +304,12 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ...formData,
+          name: formData.name,
+          category: formData.category,
+          description: formData.description,
+          youtube: formData.youtube,
           price: formData.price ? Number.parseFloat(formData.price) : undefined,
+          currency: formData.currency,
           images: imageUrls,
           brochure: brochureUrls,
         }),
@@ -135,17 +320,8 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
       }
 
       const data = await response.json()
-      setProducts([data.product, ...products])
+      setProducts(prev => [data.product, ...prev])
       setIsAddProductOpen(false)
-      setFormData({
-        name: "",
-        category: "",
-        description: "",
-        price: "",
-        currency: "USD",
-      })
-      setImageFiles([])
-      setBrochureFiles([])
 
       toast({
         title: "Success",
@@ -163,15 +339,15 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
     }
   }
 
-  const handleEditProduct = async () => {
+  const handleEditProduct = async (formData: any) => {
     if (!editingProduct) return
 
     try {
       setUploading(true)
 
       // Upload new images and brochures if any
-      const newImageUrls = imageFiles.length > 0 ? await uploadFiles(imageFiles, "image") : []
-      const newBrochureUrls = brochureFiles.length > 0 ? await uploadFiles(brochureFiles, "pdf") : []
+      const newImageUrls = formData.imageFiles.length > 0 ? await uploadFiles(formData.imageFiles, "image") : []
+      const newBrochureUrls = formData.brochureFiles.length > 0 ? await uploadFiles(formData.brochureFiles, "pdf") : []
 
       const response = await fetch(`/api/exhibitors/${exhibitorId}/products/${editingProduct.id}`, {
         method: "PUT",
@@ -179,8 +355,12 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ...formData,
+          name: formData.name,
+          category: formData.category,
+          description: formData.description,
+          youtube: formData.youtube,
           price: formData.price ? Number.parseFloat(formData.price) : undefined,
+          currency: formData.currency,
           images: [...editingProduct.images, ...newImageUrls],
           brochure: [...editingProduct.brochure, ...newBrochureUrls],
         }),
@@ -191,18 +371,9 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
       }
 
       const data = await response.json()
-      setProducts(products.map((p) => (p.id === editingProduct.id ? data.product : p)))
+      setProducts(prev => prev.map((p) => (p.id === editingProduct.id ? data.product : p)))
       setIsEditProductOpen(false)
       setEditingProduct(null)
-      setFormData({
-        name: "",
-        category: "",
-        description: "",
-        price: "",
-        currency: "USD",
-      })
-      setImageFiles([])
-      setBrochureFiles([])
 
       toast({
         title: "Success",
@@ -232,7 +403,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
         throw new Error("Failed to delete product")
       }
 
-      setProducts(products.filter((p) => p.id !== productId))
+      setProducts(prev => prev.filter((p) => p.id !== productId))
 
       toast({
         title: "Success",
@@ -250,28 +421,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
 
   const openEditDialog = (product: Product) => {
     setEditingProduct(product)
-    setFormData({
-      name: product.name,
-      category: product.category,
-      description: product.description,
-      price: product.price?.toString() || "",
-      currency: product.currency || "USD",
-    })
-    setImageFiles([])
-    setBrochureFiles([])
     setIsEditProductOpen(true)
-  }
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setImageFiles(Array.from(e.target.files))
-    }
-  }
-
-  const handleBrochureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setBrochureFiles(Array.from(e.target.files))
-    }
   }
 
   const removeImage = async (productId: string, imageUrl: string) => {
@@ -305,7 +455,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
       })
 
       const data = await response.json()
-      setProducts(products.map((p) => (p.id === productId ? data.product : p)))
+      setProducts(prev => prev.map((p) => (p.id === productId ? data.product : p)))
 
       toast({
         title: "Success",
@@ -385,163 +535,44 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
                 </Button>
               ))}
             </div>
+            
+            {product.youtube && product.youtube.length > 0 && (
+              <div className="mt-4">
+                <Label className="text-sm font-semibold mb-2 block">YouTube Links</Label>
+                <div className="flex flex-wrap gap-2">
+                  {Array.isArray(product.youtube)
+                    ? product.youtube.map((link, index) => (
+                        <Button
+                          key={index}
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-2 bg-transparent"
+                          onClick={() => window.open(link, "_blank")}
+                        >
+                          <Youtube className="w-4 h-4 text-red-600" />
+                          Video {index + 1}
+                          <ExternalLink className="w-3 h-3" />
+                        </Button>
+                      ))
+                    : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-2 bg-transparent"
+                          onClick={() => window.open(product.youtube, "_blank")}
+                        >
+                          <Youtube className="w-4 h-4 text-red-600" />
+                          Watch Video
+                          <ExternalLink className="w-3 h-3" />
+                        </Button>
+                      )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
     </Card>
-  )
-
-  const ProductForm = ({ isEdit = false }: { isEdit?: boolean }) => (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="product-name">Product Name</Label>
-          <Input
-            id="product-name"
-            placeholder="Enter product name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="category">Category</Label>
-          <Input
-            id="category"
-            placeholder="Enter category"
-            value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          rows={4}
-          placeholder="Describe your product or service..."
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="price">Price (Optional)</Label>
-          <Input
-            id="price"
-            type="number"
-            placeholder="0.00"
-            value={formData.price}
-            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="currency">Currency</Label>
-          <Input
-            id="currency"
-            placeholder="USD"
-            value={formData.currency}
-            onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-          />
-        </div>
-      </div>
-
-      {isEdit && editingProduct && editingProduct.images.length > 0 && (
-        <div className="space-y-2">
-          <Label>Current Images</Label>
-          <div className="flex flex-wrap gap-2">
-            {editingProduct.images.map((img, idx) => (
-              <div key={idx} className="relative">
-                <img
-                  src={img || "/placeholder.svg"}
-                  alt={`Product ${idx + 1}`}
-                  className="w-20 h-20 object-cover rounded"
-                />
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
-                  onClick={() => removeImage(editingProduct.id, img)}
-                >
-                  <X className="w-3 h-3" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <Label htmlFor="images">Product Images {isEdit && "(Add More)"}</Label>
-        <div className="border-2 border-dashed border-input rounded-lg p-6 text-center">
-          <input id="images" type="file" accept="image/*" multiple onChange={handleImageChange} className="hidden" />
-          <label htmlFor="images" className="cursor-pointer">
-            <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-muted-foreground">Click to upload images or drag and drop</p>
-            <p className="text-sm text-muted-foreground">PNG, JPG up to 10MB</p>
-            {imageFiles.length > 0 && <p className="text-sm text-primary mt-2">{imageFiles.length} file(s) selected</p>}
-          </label>
-        </div>
-      </div>
-
-      {isEdit && editingProduct && editingProduct.brochure.length > 0 && (
-        <div className="space-y-2">
-          <Label>Current Brochures</Label>
-          <div className="flex flex-wrap gap-2">
-            {editingProduct.brochure.map((brochure, idx) => (
-              <Button key={idx} variant="outline" size="sm" onClick={() => window.open(brochure, "_blank")}>
-                <FileText className="w-4 h-4 mr-2" />
-                Brochure {idx + 1}
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <Label htmlFor="brochures">Brochures/Catalogues {isEdit && "(Add More)"}</Label>
-        <div className="border-2 border-dashed border-input rounded-lg p-6 text-center">
-          <input id="brochures" type="file" accept=".pdf" multiple onChange={handleBrochureChange} className="hidden" />
-          <label htmlFor="brochures" className="cursor-pointer">
-            <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-muted-foreground">Upload PDF brochures and catalogues</p>
-            <p className="text-sm text-muted-foreground">PDF files up to 25MB</p>
-            {brochureFiles.length > 0 && (
-              <p className="text-sm text-primary mt-2">{brochureFiles.length} file(s) selected</p>
-            )}
-          </label>
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-3">
-        <Button
-          variant="outline"
-          onClick={() => {
-            if (isEdit) {
-              setIsEditProductOpen(false)
-              setEditingProduct(null)
-            } else {
-              setIsAddProductOpen(false)
-            }
-            setFormData({
-              name: "",
-              category: "",
-              description: "",
-              price: "",
-              currency: "USD",
-            })
-            setImageFiles([])
-            setBrochureFiles([])
-          }}
-        >
-          Cancel
-        </Button>
-        <Button onClick={isEdit ? handleEditProduct : handleAddProduct} disabled={uploading}>
-          {uploading ? "Uploading..." : isEdit ? "Update Product" : "Add Product"}
-        </Button>
-      </div>
-    </div>
   )
 
   if (loading) {
@@ -582,7 +613,11 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
             <DialogHeader>
               <DialogTitle>Add New Product/Service</DialogTitle>
             </DialogHeader>
-            <ProductForm />
+            <ProductForm 
+              onSubmit={handleAddProduct}
+              onCancel={() => setIsAddProductOpen(false)}
+              uploading={uploading}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -592,7 +627,16 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
           <DialogHeader>
             <DialogTitle>Edit Product/Service</DialogTitle>
           </DialogHeader>
-          <ProductForm isEdit />
+          <ProductForm 
+            isEdit 
+            onSubmit={handleEditProduct}
+            onCancel={() => {
+              setIsEditProductOpen(false)
+              setEditingProduct(null)
+            }}
+            initialData={editingProduct}
+            uploading={uploading}
+          />
         </DialogContent>
       </Dialog>
 

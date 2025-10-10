@@ -37,6 +37,7 @@ import {
 
 interface PromotionsMarketingProps {
   exhibitorId: string
+  onPromotionCreated?: () => void
 }
 
 interface Event {
@@ -73,7 +74,7 @@ interface CategoryFilter {
   color: string
 }
 
-export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketingProps) {
+export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }: PromotionsMarketingProps) {
   const [selectedTab, setSelectedTab] = useState("platform-promotion")
   const [selectedEvent, setSelectedEvent] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
@@ -97,13 +98,18 @@ export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketing
         setExhibitorEvents(data.events || [])
       } catch (error) {
         console.error("Error fetching exhibitor events:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load events",
+          variant: "destructive",
+        })
       } finally {
         setLoadingEvents(false)
       }
     }
 
     fetchEvents()
-  }, [exhibitorId])
+  }, [exhibitorId, toast])
 
   const promotionPackages: PromotionPackage[] = [
     {
@@ -288,6 +294,24 @@ export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketing
   }
 
   const handlePackageSelect = (packageId: string) => {
+    if (!selectedEvent) {
+      toast({
+        title: "Event Required",
+        description: "Please select an event first",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (selectedCategories.length === 0) {
+      toast({
+        title: "Categories Required",
+        description: "Please select at least one target category",
+        variant: "destructive",
+      })
+      return
+    }
+
     setSelectedPackage(packageId)
     setIsPaymentDialogOpen(true)
   }
@@ -333,7 +357,7 @@ export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketing
           packageType: selectedPackageData.name,
           targetCategories: selectedCategories,
           amount: selectedPackageData.price,
-          duration: selectedPackageData.durationDays, // Using durationDays from package
+          duration: selectedPackageData.durationDays,
         }),
       })
 
@@ -354,6 +378,11 @@ export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketing
       setSelectedEvent("")
       setSelectedCategories([])
       setSelectedPackage("")
+      
+      // Trigger refresh in parent component
+      if (onPromotionCreated) {
+        onPromotionCreated()
+      }
     } catch (error) {
       console.error("[v0] Payment error:", error)
       toast({
@@ -396,26 +425,44 @@ export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketing
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Select value={selectedEvent} onValueChange={setSelectedEvent}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Choose an event to promote" />
-                </SelectTrigger>
-                <SelectContent>
-                  {exhibitorEvents.map((event) => (
-                    <SelectItem key={event.id} value={event.id.toString()}>
-                      <div className="flex items-center justify-between w-full">
-                        <span>{event.title}</span>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <MapPin className="w-4 h-4" />
-                          {event.location}
-                          <Calendar className="w-4 h-4" />
-                          {event.date}
-                        </div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {loadingEvents ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="w-6 h-6 animate-spin text-gray-500 mr-2" />
+                  <span className="text-gray-500">Loading events...</span>
+                </div>
+              ) : (
+                <Select value={selectedEvent} onValueChange={setSelectedEvent}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Choose an event to promote" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {exhibitorEvents.length === 0 ? (
+                      <SelectItem value="no-events" disabled>
+                        No events found for your account
+                      </SelectItem>
+                    ) : (
+                      exhibitorEvents.map((event) => (
+                        <SelectItem key={event.id} value={event.id.toString()}>
+                          <div className="flex items-center justify-between w-full">
+                            <span className="font-medium">{event.title}</span>
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              <MapPin className="w-4 h-4" />
+                              {event.location}
+                              <Calendar className="w-4 h-4" />
+                              {event.date}
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
+              {exhibitorEvents.length === 0 && !loadingEvents && (
+                <p className="text-sm text-gray-500 mt-2">
+                  You need to have events in your account to create promotions.
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -488,7 +535,7 @@ export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketing
                         <div>
                           <span className="text-gray-600">Expected Leads:</span>
                           <div className="text-2xl font-bold text-purple-600">
-                            {Math.round(calculateEstimatedReach() * (calculateEstimatedEngagement() / 100) * 0.12)}
+                            {Math.round(calculateEstimatedReach() * (calculateEstimatedEngagement() / 100) * 0.12).toLocaleString()}
                           </div>
                         </div>
                       </div>
@@ -514,8 +561,10 @@ export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketing
                       {promotionPackages.map((pkg) => (
                         <div
                           key={pkg.id}
-                          className={`relative p-6 border-2 rounded-lg ${
-                            pkg.recommended ? "border-blue-500 bg-blue-50" : "border-gray-200"
+                          className={`relative p-6 border-2 rounded-lg transition-all ${
+                            pkg.recommended 
+                              ? "border-blue-500 bg-blue-50 shadow-md" 
+                              : "border-gray-200 hover:border-gray-300"
                           }`}
                         >
                           {pkg.recommended && (
@@ -531,7 +580,7 @@ export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketing
                             <h3 className="text-xl font-bold">{pkg.name}</h3>
                             <p className="text-sm text-gray-600 mt-1">{pkg.description}</p>
                             <div className="mt-3">
-                              <span className="text-3xl font-bold text-blue-600">₹{pkg.price.toLocaleString()}</span>
+                              <span className="text-3xl font-bold text-blue-600">${pkg.price.toLocaleString()}</span>
                               <span className="text-sm text-gray-500">/{pkg.duration}</span>
                             </div>
                           </div>
@@ -637,7 +686,7 @@ export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketing
                   <div className="border-t pt-2 mt-2">
                     <div className="flex justify-between font-semibold">
                       <span>Total Amount:</span>
-                      <span className="text-blue-600">₹{selectedPackageData.price.toLocaleString()}</span>
+                      <span className="text-blue-600">${selectedPackageData.price.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -699,7 +748,7 @@ export default function PromotionsMarketing({ exhibitorId }: PromotionsMarketing
                   ) : (
                     <>
                       <CreditCard className="w-4 h-4 mr-2" />
-                      Pay ₹{selectedPackageData.price.toLocaleString()}
+                      Pay ${selectedPackageData.price.toLocaleString()}
                     </>
                   )}
                 </Button>
