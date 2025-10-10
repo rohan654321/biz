@@ -87,7 +87,7 @@ model User {
   broadcastsSent    Broadcast[] @relation("BroadcastSender")
   broadcastsReceived   BroadcastRecipient[]
   venueEvents Event[] @relation("EventVenue")
-  venueReviews Review[] @relation("VenueReviews")
+  exhibitorReviews Review[] @relation("ExhibitorReviews")
   venueAnalytics VenueAnalytics[]
   meetingSpaces MeetingSpace[] 
   leads           EventLead[]
@@ -818,8 +818,8 @@ model Review {
   
   eventId         String?  @db.ObjectId
   event           Event?   @relation(fields: [eventId], references: [id])
-  venueId         String?  @db.ObjectId
-  venue           User?    @relation("VenueReviews", fields: [venueId], references: [id])
+  exhibitorId         String?  @db.ObjectId
+  exhibitor           User?    @relation("ExhibitorReviews", fields: [exhibitorId], references: [id])
   replies ReviewReply[]
   
   rating          Int
@@ -1182,6 +1182,7 @@ model Product{
   currency String?
   images String[]
   brochure String[]
+  youtube String[]
   exhibitorId     String   @db.ObjectId
   exhibitor       User     @relation(fields: [exhibitorId], references: [id])
   createdAt   DateTime  @default(now())

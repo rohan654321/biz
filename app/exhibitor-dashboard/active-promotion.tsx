@@ -24,9 +24,10 @@ interface Promotion {
 
 interface ActivePromotionsProps {
   exhibitorId: string
+  refetchTrigger?: number
 }
 
-export default function ActivePromotions({ exhibitorId }: ActivePromotionsProps) {
+export default function ActivePromotions({ exhibitorId, refetchTrigger }: ActivePromotionsProps) {
   const { toast } = useToast()
   const [promotions, setPromotions] = useState<Promotion[]>([])
   const [loading, setLoading] = useState(true)
@@ -34,7 +35,7 @@ export default function ActivePromotions({ exhibitorId }: ActivePromotionsProps)
   useEffect(() => {
     if (!exhibitorId) return
     fetchPromotions()
-  }, [exhibitorId])
+  }, [exhibitorId, refetchTrigger])
 
   const fetchPromotions = async () => {
     try {
@@ -65,18 +66,34 @@ export default function ActivePromotions({ exhibitorId }: ActivePromotionsProps)
     return (conversions / clicks) * 100
   }
 
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case "ACTIVE":
+        return "default"
+      case "COMPLETED":
+        return "secondary"
+      case "PENDING":
+        return "outline"
+      default:
+        return "secondary"
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-40">
         <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
+        <span className="ml-2 text-gray-500">Loading promotions...</span>
       </div>
     )
   }
 
   if (!promotions || promotions.length === 0) {
     return (
-      <div className="flex items-center justify-center h-40 text-gray-500">
-        No active promotions found
+      <div className="flex flex-col items-center justify-center h-40 text-gray-500 space-y-2">
+        <TrendingUp className="w-8 h-8 text-gray-300" />
+        <p>No active promotions found</p>
+        <p className="text-sm text-gray-400">Create your first promotion to get started</p>
       </div>
     )
   }
@@ -92,17 +109,20 @@ export default function ActivePromotions({ exhibitorId }: ActivePromotionsProps)
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {promotions.map((promotion) => (
-            <Card key={promotion.id} className="p-4 border-2 border-blue-100 bg-blue-50">
+            <Card 
+              key={promotion.id} 
+              className="p-4 border-2 border-blue-100 bg-blue-50 hover:border-blue-200 transition-colors"
+            >
               <div className="flex items-center justify-between mb-3">
-                <Badge variant={promotion.status === "ACTIVE" ? "default" : "secondary"}>
+                <Badge variant={getStatusVariant(promotion.status)}>
                   {promotion.status}
                 </Badge>
-                <span className="text-sm font-medium text-gray-700 bg-white px-2 py-1 rounded">
+                <span className="text-sm font-medium text-gray-700 bg-white px-2 py-1 rounded border">
                   {promotion.packageType}
                 </span>
               </div>
               
-              <h3 className="font-semibold text-lg mb-2 text-gray-900">
+              <h3 className="font-semibold text-lg mb-2 text-gray-900 line-clamp-2">
                 {promotion.eventName}
               </h3>
               
@@ -144,6 +164,31 @@ export default function ActivePromotions({ exhibitorId }: ActivePromotionsProps)
                     {calculateConversionRate(promotion.conversions, promotion.clicks).toFixed(2)}%
                   </span>
                 </div>
+                
+                {promotion.targetCategories && promotion.targetCategories.length > 0 && (
+                  <div className="border-t pt-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-gray-600 text-xs">Target Categories:</span>
+                      <span className="text-xs font-medium">{promotion.targetCategories.length}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {promotion.targetCategories.slice(0, 3).map((category, index) => (
+                        <span 
+                          key={index}
+                          className="text-xs bg-white px-1.5 py-0.5 rounded border"
+                        >
+                          {category}
+                        </span>
+                      ))}
+                      {promotion.targetCategories.length > 3 && (
+                        <span className="text-xs text-gray-500">
+                          +{promotion.targetCategories.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
                 {promotion.amount > 0 && (
                   <div className="flex items-center justify-between border-t pt-2">
                     <span className="text-gray-600 font-medium">Investment</span>

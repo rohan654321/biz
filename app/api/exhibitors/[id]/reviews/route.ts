@@ -65,7 +65,7 @@ export async function POST(
     const review = await prisma.review.create({
       data: {
         userId: user.id,
-        venueId: exhibitorId, // Storing exhibitor as venueId
+        exhibitorId: exhibitorId, // Storing exhibitor as venueId
         rating: parseInt(rating),
         title: title || '',
         comment,
@@ -80,7 +80,7 @@ export async function POST(
 
     // Update exhibitor's average rating and total reviews
     const allReviews = await prisma.review.findMany({
-      where: { venueId: exhibitorId, isApproved: true, isPublic: true }
+      where: { exhibitorId: exhibitorId, isApproved: true, isPublic: true }
     });
 
     const totalReviews = allReviews.length;
@@ -141,7 +141,7 @@ export async function GET(
     const skip = (page - 1) * limit;
 
     const reviews = await prisma.review.findMany({
-      where: { venueId: exhibitorId, isApproved: true, isPublic: true },
+      where: { exhibitorId: exhibitorId, isApproved: true, isPublic: true },
       include: {
         user: { select: { id: true, firstName: true, lastName: true, avatar: true } },
         replies: {
@@ -157,7 +157,7 @@ export async function GET(
     });
 
     const totalReviews = await prisma.review.count({
-      where: { venueId: exhibitorId, isApproved: true, isPublic: true }
+      where: { exhibitorId: exhibitorId, isApproved: true, isPublic: true }
     });
 
     return NextResponse.json({
