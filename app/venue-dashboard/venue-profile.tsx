@@ -38,7 +38,8 @@ interface VenueProfileProps {
 // Map backend response to your VenueData interface
 const mapBackendToVenueData = (data: any): VenueData => ({
   id: data.id,
-  venueName: data.name,
+  // venueName: data.name,
+  venueName: data.manager?.venueName || data.name || "",
   logo: data.images?.[0] || "/placeholder.svg",
   contactPerson: data.manager?.name || "",
   email: data.manager?.email || data.contact?.email || "",
