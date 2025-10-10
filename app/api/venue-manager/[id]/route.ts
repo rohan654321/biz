@@ -41,6 +41,9 @@ return NextResponse.json({
       isVerified: true, // 🔹 Add this
       bio: venueManager.bio || "",
       website: venueManager.website || "",
+      address: venueManager.venueAddress || "",
+      description: venueManager.venueDescription || "",
+      
     },
     location: {
       address: venueManager.location || "",
