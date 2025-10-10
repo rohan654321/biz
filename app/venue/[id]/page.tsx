@@ -24,6 +24,8 @@ import {
   ArrowLeft,
   Loader2,
 } from "lucide-react"
+import { VenueReviewCard } from "../../../components/VenueReviewCard"
+import { AddVenueReview } from "../../../components/AddVenueReview"
 
 interface Venue {
   id: string
@@ -132,19 +134,36 @@ interface VenueResponse {
   data: Venue
 }
 
+interface Review {
+  id: string
+  rating: number
+  title: string
+  comment: string
+  createdAt: string
+  user: {
+    id: string
+    firstName: string
+    lastName: string
+    avatar?: string
+  }
+}
+
 export default function VenueDetailPage() {
   const params = useParams()
   const router = useRouter()
   const venueId = params.id as string
 
   const [venue, setVenue] = useState<Venue | null>(null)
+  const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
+  const [reviewsLoading, setReviewsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   useEffect(() => {
     if (venueId) {
       fetchVenue()
+      fetchReviews()
     }
   }, [venueId])
 
@@ -170,6 +189,40 @@ export default function VenueDetailPage() {
       console.error("Error fetching venue:", err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchReviews = async () => {
+    if (!venueId) return;
+
+    setReviewsLoading(true);
+    try {
+      const res = await fetch(`/api/venues/${venueId}/reviews`)
+      if (res.ok) {
+        const data = await res.json()
+        setReviews(data.reviews || [])
+      } else {
+        console.error("Failed to fetch reviews")
+      }
+    } catch (error) {
+      console.error("Error fetching reviews:", error)
+    } finally {
+      setReviewsLoading(false);
+    }
+  }
+
+  const handleReviewAdded = (newReview: Review) => {
+    setReviews(prevReviews => [newReview, ...prevReviews])
+    // Update venue stats if needed
+    if (venue) {
+      setVenue(prev => prev ? {
+        ...prev,
+        stats: {
+          ...prev.stats,
+          totalReviews: prev.stats.totalReviews + 1,
+          averageRating: (prev.stats.averageRating * prev.stats.totalReviews + newReview.rating) / (prev.stats.totalReviews + 1)
+        }
+      } : null)
     }
   }
 
@@ -200,6 +253,19 @@ export default function VenueDetailPage() {
     }
     const currentImage = venue.images[currentImageIndex]
     return currentImage || "/placeholder.svg?height=400&width=800&text=No+Image+Available"
+  }
+
+  // Calculate review statistics
+  const reviewStats = {
+    averageRating: reviews.length > 0 
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+      : 0,
+    totalReviews: reviews.length,
+    ratingDistribution: [1, 2, 3, 4, 5].map(stars => ({
+      stars,
+      count: reviews.filter(review => review.rating === stars).length,
+      percentage: reviews.length > 0 ? (reviews.filter(review => review.rating === stars).length / reviews.length) * 100 : 0
+    }))
   }
 
   if (loading) {
@@ -331,7 +397,7 @@ export default function VenueDetailPage() {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="spaces">Meeting Spaces</TabsTrigger>
             <TabsTrigger value="events">Events</TabsTrigger>
-            <TabsTrigger value="reviews">Reviews</TabsTrigger>
+            <TabsTrigger value="reviews">Reviews ({reviews.length})</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -509,11 +575,53 @@ export default function VenueDetailPage() {
 
           {/* Reviews Tab */}
           <TabsContent value="reviews" className="space-y-6">
-            <div className="text-center py-12">
-              <Star className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No reviews yet</h3>
-              <p className="text-gray-600">Be the first to review this venue!</p>
-              <Button className="mt-4">Write a Review</Button>
+            <div className="max-w-4xl mx-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Review Form and All Reviews */}
+                <div className="lg:col-span-3 space-y-6">
+                  <AddVenueReview venueId={venueId} onReviewAdded={handleReviewAdded} />
+
+                  {/* All Reviews Section in Scrollable Card */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2">
+                        <Star className="w-5 h-5 text-yellow-400" />
+                        All Reviews ({reviews.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      {reviewsLoading ? (
+                        <div className="text-center py-12">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                          <p className="mt-2 text-gray-500">Loading reviews...</p>
+                        </div>
+                      ) : reviews.length > 0 ? (
+                        <div
+                          className="space-y-4 max-h-[600px] overflow-y-auto p-6 pt-0"
+                          style={{
+                            scrollbarWidth: 'thin',
+                            scrollbarColor: '#cbd5e0 #f7fafc'
+                          }}
+                        >
+                          {reviews.map((review) => (
+                            <div key={review.id} className="pb-4 border-b last:border-b-0 last:pb-0">
+                              <VenueReviewCard review={review} />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-12 px-6">
+                          <Star className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                          <h3 className="text-lg font-semibold mb-2 text-gray-700">No Reviews Yet</h3>
+                          <p className="text-gray-500 max-w-md mx-auto">
+                            Be the first to share your experience with this venue! Your review will help others make better decisions.
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
