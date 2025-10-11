@@ -1,29 +1,22 @@
-// components/EventReviews.tsx
 "use client"
 
 import { useState, useEffect } from "react"
-import { Star } from "lucide-react"
+import { Calendar, MapPin, UserPlus, Users } from "lucide-react"
 
 export interface Event {
   id: string
   title: string
   bannerImage?: string
   logo?: string
-  images?: string[]
+  edition?: string
+  categories?: string[]
+  followers?: number
   startDate: string
-  city?: string
-  categories?: string
-  featured?: boolean
-  timings?: {
-    startDate: string
-    endDate?: string
-  }
+  endDate?: string
   location?: {
     city: string
-    venue: string
-    address: string
+    venue?: string
     country?: string
-    coordinates: { lat: number; lng: number }
   }
 }
 
@@ -35,8 +28,6 @@ export default function EventReviews() {
       try {
         const response = await fetch("/api/events?featured=true")
         const data = await response.json()
-
-        // Shuffle + pick 3 random events
         const shuffled = data.events.sort(() => 0.5 - Math.random())
         setNearByEvents(shuffled.slice(0, 3))
       } catch (error) {
@@ -64,45 +55,86 @@ export default function EventReviews() {
         {nearByEvents.map((event, index) => (
           <div
             key={event.id || index}
-            className="bg-white shadow-md rounded-md overflow-hidden hover:shadow-lg transition"
+            className="bg-white shadow-md  overflow-hidden hover:shadow-xl transition-all border border-gray-100 text-center"
           >
-            {/* Top Image */}
-            <div className="h-32 bg-gray-200 overflow-hidden">
+            {/* Gradient Top Banner */}
+            <div className="relative h-64 w-full overflow-hidden ">
+              {/* Background Image */}
               <img
-                src={event.bannerImage || event.logo || "/herosection-images/food.jpg"}
-                alt={event.title}
-                className="w-full h-full object-cover"
+                src={event.logo || "/herosection-images/food.jpg"}
+                alt="event logo"
+                className="absolute inset-0 w-full h-full object-cover"
               />
-            </div>
 
-            {/* Content */}
-            <div className="p-4">
-              <h3 className="font-bold text-lg">{event.title}</h3>
-              <p className="text-sm text-gray-500">{event.location?.city || "Location not available"}</p>
+              {/* Edition Tag */}
+              <div className="absolute top-2 left-2 flex items-center z-10">
+                <span className="bg-red-600 text-white text-sm font-bold px-1.5 py-0.5 rounded-sm mr-1">
+                  2
+                </span>
+                <span className="bg-white text-[#0A2B61] font-semibold text-sm px-2 py-0.5 rounded-r-md">
+                  Edition
+                </span>
+              </div>
 
-              {/* Mock review text since your API doesn’t have reviews */}
-              <p className="text-sm mt-3">
-                Amazing experience! Great opportunity to connect with people.
-              </p>
-
-              {/* Rating */}
-              <div className="flex items-center mt-3">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    size={16}
-                    className={`${
-                      i < 4 ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                    }`}
-                  />
+              {/* Categories */}
+              <div className="absolute top-2 right-2 flex gap-2 z-10">
+                {event.categories?.map((cat, idx) => (
+                  <span
+                    key={idx}
+                    className="bg-white text-gray-700 text-xs px-2 py-0.5 rounded-full shadow-sm"
+                  >
+                    {cat}
+                  </span>
                 ))}
               </div>
+            </div>
 
-              {/* Reviewer - mock for now */}
-              <div className="flex justify-between items-center mt-3 text-sm text-gray-600">
-                <span className="font-medium">Eventgoer</span>
-                <span>{new Date(event.startDate).toLocaleDateString("en-US")}</span>
+
+
+            {/* Content */}
+            <div className="p-5">
+              {/* Followers + Follow Button */}
+              <div className="flex justify-center items-center gap-18 mb-5">
+                <span className="text-gray-700 text-sm flex items-center gap-1">
+                  <Users size={18} className="text-gray-500" />
+                  {event.followers || 131} Followers
+                </span>
+                <button className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md text-sm shadow-sm">
+                  <UserPlus className="w-4 h-4 mr-1" />
+                  Follow
+                </button>
               </div>
+
+              {/* Event Title */}
+              <h3 className="font-extrabold text-lg text-black">
+                {event.title || "DIEMEX 2025"}
+              </h3>
+
+              {/* Location */}
+              <p className="flex justify-center items-center font-bold text-gray-700 text-sm mt-1 flex-wrap-none">
+                {event.location?.venue
+                  ? `${event.location.venue}, `
+                  : "International Die & Mould Exhibition, "}
+                {event.location?.city || "Chennai Trade Center"}, {event.location?.country || "INDIA"}
+              </p>
+
+
+              {/* Dates */}
+              <p className="flex justify-center items-center text-gray-900 font-bold mt-3">
+                <Calendar className="w-5 h-5 mr-1 text-gray-600" />
+                {new Date(event.startDate).toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })}
+                {event.endDate
+                  ? ` - ${new Date(event.endDate).toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}`
+                  : ""}
+              </p>
             </div>
           </div>
         ))}

@@ -12,7 +12,7 @@ interface ImageBannerCarouselProps {
 export default function ImageBannerCarousel({
   images,
   autoPlay = true,
-  interval = 15000,
+  interval = 100000,
 }: ImageBannerCarouselProps) {
   const [current, setCurrent] = useState(0)
 
@@ -26,7 +26,13 @@ export default function ImageBannerCarousel({
   }, [autoPlay, interval, images.length])
 
   return (
-    <div className="relative w-full h-52 md:h-64 lg:h-80 overflow-hidden shadow">
+    <div
+      className="relative w-full overflow-hidden shadow"
+      style={{
+        height: "250px", // reduced height (slimmer look)
+        aspectRatio: "16/5", // slightly flatter aspect ratio for balance
+      }}
+    >
       <AnimatePresence mode="wait">
         <motion.img
           key={current}
@@ -41,7 +47,7 @@ export default function ImageBannerCarousel({
       </AnimatePresence>
 
       {/* Dots */}
-      <div className="absolute bottom-2 w-full flex justify-center gap-2">
+      {/* <div className="absolute bottom-2 w-full flex justify-center gap-2">
         {images.map((_, index) => (
           <button
             key={index}
@@ -51,7 +57,7 @@ export default function ImageBannerCarousel({
             }`}
           />
         ))}
-      </div>
+      </div> */}
     </div>
   )
 }

@@ -7,50 +7,50 @@ import Image from "next/image"
 const cities = [
   {
     id: 1,
-    name: "Bangalore",
-    icon: "/icon/bangalore.png",
+    name: "Amsterdam",
+    icon: "/icon/Amsterdam.png",
     events: "44",
     color: "text-blue-600"
   },
   {
     id: 2,
-    name: "New Delhi",
-    icon: "/icon/india-gate.png",
+    name: "Berlin",
+    icon: "/icon/berlin.png",
     events: "44",
     color: "text-red-600"
   },
   {
     id: 3,
-    name: "Kolkata",
-    icon: "/icon/city.png",
+    name: "Dubai",
+    icon: "/icon/Dubai.png",
     events: "44",
     color: "text-yellow-600"
   },
   {
     id: 4,
-    name: "Mumbai",
-    icon: "/icon/Gateway Mumbai.png",
+    name: "Egypt",
+    icon: "/icon/egypt-01.png",
     events: "44",
     color: "text-purple-600"
   },
   {
     id: 5,
-    name: "Punjab",
-    icon: "/icon/amritsar.png",
+    name: "Italy",
+    icon: "/icon/italy-01.png",
     events: "44",
     color: "text-green-600"
   },
   {
     id: 6,
-    name: "Bangalore",
-    icon: "/icon/bangalore.png",
+    name: "Japan",
+    icon: "/icon/Japan-01.png",
     events: "44",
     color: "text-blue-600"
   },
   {
     id: 7,
-    name: "New Delhi",
-    icon: "/icon/india-gate.png",
+    name: "London",
+    icon: "/icon/London-01.png",
     events: "44",
     color: "text-red-600"
   },
@@ -63,22 +63,29 @@ const cities = [
   },
   {
     id: 9,
-    name: "Mumbai",
-    icon: "/icon/Gateway Mumbai.png",
+    name: "New York",
+    icon: "/icon/new york-01.png",
     events: "44",
     color: "text-purple-600"
   },
   {
     id: 10,
-    name: "Punjab",
-    icon: "/icon/amritsar.png",
+    name: "Paris",
+    icon: "/icon/paris-01.png",
     events: "44",
     color: "text-green-600"
   },
   {
     id: 11,
-    name: "Mumbai",
-    icon: "/icon/Gateway Mumbai.png",
+    name: "Rome",
+    icon: "/icon/Rome-01.png",
+    events: "44",
+    color: "text-purple-600"
+  },
+    {
+    id: 12,
+    name: "Russia",
+    icon: "/icon/Russia-01.png",
     events: "44",
     color: "text-purple-600"
   },
@@ -101,7 +108,7 @@ export default function BrowseByCity() {
       <div className="overflow-hidden">
         {/* Header */}
         <div className="px-6 py-6 border-b border-gray-200 text-left">
-          <h2 className="text-3xl font-semibold text-gray-900 mb-1">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-1">
             Browse Event By City
           </h2>
         </div>
@@ -132,7 +139,7 @@ export default function BrowseByCity() {
             ))}
 
             {/* View All Button (same size as others) */}
-            <button
+            {/* <button
               onClick={handleViewAllClick}
               className="aspect-[4/3] flex flex-col items-center justify-center border border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 shadow-sm hover:shadow-lg hover:scale-105 bg-gray-50"
             >
@@ -140,7 +147,7 @@ export default function BrowseByCity() {
               <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600">
                 View All
               </span>
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

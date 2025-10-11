@@ -53,7 +53,7 @@ export async function GET() {
         return {
           id: organizer.id,
           name: organizer.organizationName || `${organizer.firstName} ${organizer.lastName}`,
-          image: organizer.avatar || "/images/signupimg.png",
+          image: organizer.avatar || "/Organizers/maxx.png",
           rating: 4.5, // placeholder
           reviewCount: 0,
           location: organizer.location || "Not specified",
@@ -114,7 +114,7 @@ export async function POST(req: Request) {
         lastName: "",  // or null if allowed
         email,
         phone: phone || "",
-        avatar: avatar || "/images/signupimg.png",
+        avatar: avatar || "/Organizers/maxx.png",
         website: website || "",
         location: location || "",
         organizationName: name, // map `name` → DB `organizationName`
