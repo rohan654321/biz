@@ -66,7 +66,7 @@ export async function POST(
       data: {
         userId: user.id,
         exhibitorId: venueId, // Storing exhibitor as venueId
-        rating: parseInt(rating),
+        rating: parseInt(rating), 
         title: title || '',
         comment,
         isApproved: true,
