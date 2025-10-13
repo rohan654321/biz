@@ -66,7 +66,7 @@ export async function POST(
       data: {
         userId: user.id,
         exhibitorId: venueId, // Storing exhibitor as venueId
-        rating: parseInt(rating), 
+        rating: parseInt(rating),
         title: title || '',
         comment,
         isApproved: true,
@@ -114,77 +114,72 @@ export async function POST(
   }
 }
 
-// GET: Fetch reviews for an exhibitor
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const params = await context.params;
-    const venueId = params.id;
+    const { id: venueId } = await params
+    const { searchParams } = new URL(request.url)
+    const includeReplies = searchParams.get("includeReplies") === "true"
 
-    if (!venueId) {
-      return NextResponse.json({ error: 'Invalid exhibitor ID' }, { status: 400 });
-    }
+    console.log("[v0] Fetching reviews for event ID:", venueId)
 
-    const exhibitor = await prisma.user.findFirst({
-      where: { id: venueId, role: 'EXHIBITOR' }
-    });
-
-    if (!exhibitor) {
-      return NextResponse.json({ error: 'Exhibitor not found' }, { status: 404 });
-    }
-
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const skip = (page - 1) * limit;
-
-    const reviews = await prisma.review.findMany({
-      where: { venueId: venueId, isApproved: true, isPublic: true },
-      include: {
-        user: { select: { id: true, firstName: true, lastName: true, avatar: true } },
-        replies: {
-          include: {
-            user: { select: { id: true, firstName: true, lastName: true, avatar: true } }
-          },
-          orderBy: { createdAt: 'asc' }
-        }
+    // Fetch event details
+    const event = await prisma.user.findUnique({
+      where: { id: venueId },
+      select: {
+        id: true,
+        // title: true,
       },
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: limit
-    });
+    })
 
-    const totalReviews = await prisma.review.count({
-      where: { venueId: venueId, isApproved: true, isPublic: true }
-    });
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 })
+    }
+
+    // Fetch reviews for this event
+    const reviews = await prisma.review.findMany({
+      where: { venueId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatar: true,
+          },
+        },
+        event: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        ...(includeReplies && {
+          replies: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  avatar: true,
+                },
+              },
+            },
+            orderBy: { createdAt: "asc" },
+          },
+        }),
+      },
+      orderBy: { createdAt: "desc" },
+    })
 
     return NextResponse.json({
-      reviews: reviews.map((r) => ({
-        id: r.id,
-        rating: r.rating,
-        title: r.title,
-        comment: r.comment,
-        createdAt: r.createdAt.toISOString(),
-        user: r.user,
-        replies: r.replies.map((rep) => ({
-          id: rep.id,
-          content: rep.content,
-          createdAt: rep.createdAt.toISOString(),
-          isOrganizerReply: rep.isOrganizerReply,
-          user: rep.user
-        }))
-      })),
-      pagination: {
-        page,
-        limit,
-        total: totalReviews,
-        pages: Math.ceil(totalReviews / limit)
-      }
-    });
+      event,
+      reviews,
+    })
   } catch (error) {
-    console.error('Error fetching exhibitor reviews:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("[v0] Error fetching reviews:", error)
+    return NextResponse.json({ error: "Failed to fetch reviews" }, { status: 500 })
   }
 }
+
+

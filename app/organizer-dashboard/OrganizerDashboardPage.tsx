@@ -30,6 +30,7 @@ import OrganizerInfo from "./organizer-info"
 import { HelpSupport } from "@/components/HelpSupport"
 import MessagesCenter from "./messages-center"
 import { ConnectionsSection } from "../dashboard/connections-section"
+import { MyAppointments } from "./my-appointments"
 
 interface OrganizerDashboardPageProps {
   organizerId: string
@@ -206,6 +207,11 @@ useEffect(() => {
       icon: MessageSquare,  // 💬 Better than Settings
       id: "messages",
     },
+    {
+      title: "Venue Booking",
+      icon: MessageSquare,  // 💬 Better than Settings
+      id: "venue-booking",
+    },
   ],
 }
   ]
@@ -299,6 +305,8 @@ useEffect(() => {
         )
       case "info":
         return <OrganizerInfo organizerData={organizerData} />
+        case "venue-booking":
+        return <MyAppointments userId={organizerId} />
       case "events":
         return <MyEvents organizerId={organizerId} />
       case "create-event":

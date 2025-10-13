@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Building2, Star, Users, Camera, Plus, Edit, Trash2, CheckCircle, Upload, Save, MapPin } from "lucide-react"
+import { Building2, Star, Users, Camera, Plus, Edit, Trash2, CheckCircle, Upload, Save } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface VenueData {
   id: string
@@ -19,6 +20,10 @@ interface VenueData {
   email: string
   mobile: string
   address: string
+  city: string
+  state: string
+  country: string
+  zipCode: string
   website: string
   description: string
   maxCapacity: number
@@ -29,105 +34,63 @@ interface VenueData {
   totalReviews: number
   amenities: string[]
   meetingSpaces: any[]
+  venueImages: string[]
+  venueVideos: string[]
+  floorPlans: string[]
+  virtualTour: string
+  latitude: number
+  longitude: number
+  basePrice: number
+  currency: string
 }
 
 interface VenueProfileProps {
   venueData: VenueData
 }
 
-// Map backend response to your VenueData interface
+// Map backend response to VenueData interface
 const mapBackendToVenueData = (data: any): VenueData => ({
   id: data.id,
-  // venueName: data.name,
   venueName: data.manager?.venueName || data.name || "",
-  logo: data.images?.[0] || "/placeholder.svg",
+  logo: data.manager?.avatar || data.images?.[0] || "/placeholder.svg",
   contactPerson: data.manager?.name || "",
   email: data.manager?.email || data.contact?.email || "",
   mobile: data.manager?.phone || data.contact?.phone || "",
-  address: data.manager?.address || "",
+  address: data.location?.address || data.manager?.address || "",
+  city: data.location?.city || "",
+  state: data.location?.state || "",
+  country: data.location?.country || "",
+  zipCode: data.location?.zipCode || "",
   website: data.manager?.website || data.contact?.website || "",
-  description: data.manager?.description || "",
+  description: data.manager?.description || data.description || "",
   maxCapacity: data.capacity?.total || 0,
   totalHalls: data.capacity?.halls || 0,
-  totalEvents: data.events?.length || 0,
+  totalEvents: data.stats?.totalEvents || 0,
   activeBookings: data.stats?.activeBookings || 0,
   averageRating: data.stats?.averageRating || 0,
   totalReviews: data.stats?.totalReviews || 0,
   amenities: data.amenities || [],
   meetingSpaces: data.meetingSpaces || [],
+  venueImages: data.images || [],
+  venueVideos: data.videos || [],
+  floorPlans: data.floorPlans || [],
+  virtualTour: data.virtualTour || "",
+  latitude: data.location?.coordinates?.lat || 0,
+  longitude: data.location?.coordinates?.lng || 0,
+  basePrice: data.pricing?.basePrice || 0,
+  currency: data.pricing?.currency || "₹",
 })
-
 
 export default function VenueProfile({ venueData }: VenueProfileProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [profileData, setProfileData] = useState<VenueData | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
 
-useEffect(() => {
-  const fetchVenue = async () => {
-    try {
-      const res = await fetch(`/api/venue-manager/${venueData.id}`)
-      const data = await res.json()
-      if (data.success) {
-        const venue = mapBackendToVenueData(data.data) // 🔑 map here
-        setProfileData(venue)
-        setAmenities(venue.amenities)
-        setMeetingSpaces(venue.meetingSpaces)
-      }
-    } catch (err) {
-      console.error(err)
-    }
-  }
-
-  fetchVenue()
-}, [venueData.id])
-
-
-  
-
-  const [images, setImages] = useState([
-    "/placeholder.svg?height=300&width=400&text=Main+Hall",
-    "/placeholder.svg?height=300&width=400&text=Conference+Room",
-    "/placeholder.svg?height=300&width=400&text=Banquet+Hall",
-    "/placeholder.svg?height=300&width=400&text=Reception+Area",
-  ])
-
-  const [amenities, setAmenities] = useState([
-    "Free WiFi",
-    "Parking Available",
-    "Air Conditioning",
-    "Audio/Visual Equipment",
-    "Catering Services",
-    "Security",
-    "Wheelchair Accessible",
-    "Stage/Platform",
-  ])
-
-  const [meetingSpaces, setMeetingSpaces] = useState([
-    {
-      id: "1",
-      name: "Grand Ballroom",
-      capacity: 500,
-      area: 5000,
-      hourlyRate: 15000,
-      features: ["Stage", "A/V Equipment", "Dance Floor", "Bar Area"],
-    },
-    {
-      id: "2",
-      name: "Conference Hall A",
-      capacity: 100,
-      area: 1200,
-      hourlyRate: 5000,
-      features: ["Projector", "Whiteboard", "Conference Table", "WiFi"],
-    },
-    {
-      id: "3",
-      name: "Meeting Room B",
-      capacity: 25,
-      area: 400,
-      hourlyRate: 2000,
-      features: ["TV Screen", "Conference Phone", "Whiteboard"],
-    },
-  ])
+  const [amenities, setAmenities] = useState<string[]>([])
+  const [meetingSpaces, setMeetingSpaces] = useState<any[]>([])
+  const [images, setImages] = useState<string[]>([])
+  const [floorPlans, setFloorPlans] = useState<string[]>([])
 
   const [newAmenity, setNewAmenity] = useState("")
   const [newSpace, setNewSpace] = useState({
@@ -138,10 +101,127 @@ useEffect(() => {
     features: "",
   })
 
+  useEffect(() => {
+    const fetchVenue = async () => {
+      try {
+        setIsLoading(true)
+        const res = await fetch(`/api/venue-manager/${venueData.id}`)
+        const data = await res.json()
+        if (data.success) {
+          const venue = mapBackendToVenueData(data.data)
+          setProfileData(venue)
+          setAmenities(venue.amenities)
+          setMeetingSpaces(venue.meetingSpaces)
+          setImages(venue.venueImages)
+          setFloorPlans(venue.floorPlans)
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to load venue data",
+            variant: "destructive",
+          })
+        }
+      } catch (err) {
+        console.error(err)
+        toast({
+          title: "Error",
+          description: "Failed to load venue data",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchVenue()
+  }, [venueData.id, toast])
+
+  const handleImageUpload = async (file: File, type: "venue" | "floorplan" | "logo") => {
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("type", type)
+
+      const res = await fetch(`/api/venue-manager/${venueData.id}/upload-image`, {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await res.json()
+
+      if (data.success) {
+        const imageUrl = data.data.secure_url
+
+        if (type === "venue") {
+          setImages((prev) => [...prev, imageUrl])
+        } else if (type === "floorplan") {
+          setFloorPlans((prev) => [...prev, imageUrl])
+        } else if (type === "logo") {
+          setProfileData((prev) => (prev ? { ...prev, logo: imageUrl } : null))
+        }
+
+        toast({
+          title: "Success",
+          description: "Image uploaded successfully",
+        })
+
+        return imageUrl
+      } else {
+        throw new Error(data.error)
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error)
+      toast({
+        title: "Error",
+        description: "Failed to upload image",
+        variant: "destructive",
+      })
+      return null
+    }
+  }
+
+  const handleImageDelete = async (imageUrl: string, type: "venue" | "floorplan") => {
+    try {
+      // Extract public ID from Cloudinary URL
+      const urlParts = imageUrl.split("/")
+      const publicIdWithExt = urlParts.slice(-3).join("/")
+      const publicId = publicIdWithExt.split(".")[0]
+
+      const res = await fetch(`/api/venue-manager/${venueData.id}/delete-image?publicId=${publicId}`, {
+        method: "DELETE",
+      })
+
+      const data = await res.json()
+
+      if (data.success) {
+        if (type === "venue") {
+          setImages((prev) => prev.filter((img) => img !== imageUrl))
+        } else if (type === "floorplan") {
+          setFloorPlans((prev) => prev.filter((img) => img !== imageUrl))
+        }
+
+        toast({
+          title: "Success",
+          description: "Image deleted successfully",
+        })
+      } else {
+        throw new Error(data.error)
+      }
+    } catch (error) {
+      console.error("Error deleting image:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete image",
+        variant: "destructive",
+      })
+    }
+  }
+
   const handleSave = async () => {
     if (!profileData) return
 
     try {
+      setIsLoading(true)
       const res = await fetch(`/api/venue-manager/${venueData.id}`, {
         method: "PUT",
         headers: {
@@ -149,77 +229,48 @@ useEffect(() => {
         },
         body: JSON.stringify({
           ...profileData,
-          amenities, // ✅ push updated amenities too
+          amenities,
+          meetingSpaces,
+          venueImages: images,
+          floorPlans,
         }),
       })
 
       const data = await res.json()
 
       if (data.success) {
-        setProfileData(data.venue) // refresh with server response
+        setProfileData(data.venue)
         setIsEditing(false)
+        toast({
+          title: "Success",
+          description: "Venue updated successfully",
+        })
       } else {
-        console.error("Failed to update venue:", data.error)
+        throw new Error(data.error)
       }
     } catch (err) {
       console.error("Error updating venue:", err)
+      toast({
+        title: "Error",
+        description: "Failed to update venue",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleAddAmenity = async () => {
     if (!newAmenity.trim()) return
 
-    try {
-      const updated = [...amenities, newAmenity.trim()]
-
-      const res = await fetch(`/api/venue-manager/${venueData.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...profileData,
-          amenities: updated,
-        }),
-      })
-
-      const data = await res.json()
-
-      if (data.success) {
-        setAmenities(data.venue.amenities) // refresh from DB response
-        setProfileData(data.venue)
-        setNewAmenity("")
-      } else {
-        console.error("Failed to add amenity:", data.error)
-      }
-    } catch (err) {
-      console.error("Error adding amenity:", err)
-    }
+    const updated = [...amenities, newAmenity.trim()]
+    setAmenities(updated)
+    setNewAmenity("")
   }
 
   const handleRemoveAmenity = async (index: number) => {
     const updatedAmenities = amenities.filter((_, i) => i !== index)
-
-    try {
-      const res = await fetch(`/api/venue-manager/${venueData.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...profileData,
-          amenities: updatedAmenities,
-        }),
-      })
-
-      const data = await res.json()
-      if (data.success) {
-        setAmenities(data.venue.amenities)
-        setProfileData(data.venue)
-      } else {
-        console.error("Failed to remove amenity:", data.error)
-      }
-    } catch (err) {
-      console.error("Error removing amenity:", err)
-    }
+    setAmenities(updatedAmenities)
   }
 
   const handleAddSpace = async () => {
@@ -237,67 +288,39 @@ useEffect(() => {
       },
     ]
 
-    try {
-      const res = await fetch(`/api/venue-manager/${venueData.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...profileData,
-          meetingSpaces: updatedSpaces,
-        }),
-      })
-
-      const data = await res.json()
-      if (data.success) {
-        setMeetingSpaces(data.venue.meetingSpaces)
-        setProfileData(data.venue)
-        setNewSpace({ name: "", capacity: "", area: "", hourlyRate: "", features: "" })
-      } else {
-        console.error("Failed to add space:", data.error)
-      }
-    } catch (err) {
-      console.error("Error adding space:", err)
-    }
+    setMeetingSpaces(updatedSpaces)
+    setNewSpace({ name: "", capacity: "", area: "", hourlyRate: "", features: "" })
   }
 
   const handleRemoveSpace = async (id: string) => {
     const updatedSpaces = meetingSpaces.filter((space) => space.id !== id)
+    setMeetingSpaces(updatedSpaces)
+  }
 
-    try {
-      const res = await fetch(`/api/venue-manager/${venueData.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...profileData,
-          meetingSpaces: updatedSpaces,
-        }),
-      })
-
-      const data = await res.json()
-      if (data.success) {
-        setMeetingSpaces(data.venue.meetingSpaces)
-        setProfileData(data.venue)
-      } else {
-        console.error("Failed to remove space:", data.error)
-      }
-    } catch (err) {
-      console.error("Error removing space:", err)
-    }
+  if (isLoading && !profileData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading venue data...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Venue Profile</h1>
+        <h1 className="text-3xl font-bold text-foreground">Venue Profile</h1>
         <div className="flex items-center gap-2">
           {isEditing ? (
             <>
-              <Button variant="outline" onClick={() => setIsEditing(false)}>
+              <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isLoading}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} className="flex items-center gap-2">
+              <Button onClick={handleSave} className="flex items-center gap-2" disabled={isLoading}>
                 <Save className="w-4 h-4" />
-                Save Changes
+                {isLoading ? "Saving..." : "Save Changes"}
               </Button>
             </>
           ) : (
@@ -316,7 +339,6 @@ useEffect(() => {
           <TabsTrigger value="amenities">Amenities</TabsTrigger>
           <TabsTrigger value="spaces">Meeting Spaces</TabsTrigger>
           <TabsTrigger value="floorplan">Floor Plan</TabsTrigger>
-          <TabsTrigger value="location">Location & Maps</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -347,7 +369,7 @@ useEffect(() => {
                           }
                         />
                       ) : (
-                        <div className="p-2 bg-gray-50 rounded">{profileData?.venueName}</div>
+                        <div className="p-2 bg-muted rounded">{profileData?.venueName}</div>
                       )}
                     </div>
 
@@ -368,7 +390,7 @@ useEffect(() => {
                           }
                         />
                       ) : (
-                        <div className="p-2 bg-gray-50 rounded">{profileData?.contactPerson}</div>
+                        <div className="p-2 bg-muted rounded">{profileData?.contactPerson}</div>
                       )}
                     </div>
 
@@ -390,7 +412,7 @@ useEffect(() => {
                           }
                         />
                       ) : (
-                        <div className="p-2 bg-gray-50 rounded">{profileData?.email}</div>
+                        <div className="p-2 bg-muted rounded">{profileData?.email}</div>
                       )}
                     </div>
 
@@ -411,7 +433,7 @@ useEffect(() => {
                           }
                         />
                       ) : (
-                        <div className="p-2 bg-gray-50 rounded">{profileData?.mobile}</div>
+                        <div className="p-2 bg-muted rounded">{profileData?.mobile}</div>
                       )}
                     </div>
 
@@ -432,7 +454,7 @@ useEffect(() => {
                           }
                         />
                       ) : (
-                        <div className="p-2 bg-gray-50 rounded">{profileData?.website}</div>
+                        <div className="p-2 bg-muted rounded">{profileData?.website}</div>
                       )}
                     </div>
 
@@ -453,7 +475,7 @@ useEffect(() => {
                           }
                         />
                       ) : (
-                        <div className="p-2 bg-gray-50 rounded">{profileData?.address}</div>
+                        <div className="p-2 bg-muted rounded">{profileData?.address}</div>
                       )}
                     </div>
                   </div>
@@ -477,7 +499,7 @@ useEffect(() => {
                         placeholder="Describe your venue, its unique features, and what makes it special..."
                       />
                     ) : (
-                      <div className="p-2 bg-gray-50 rounded min-h-[100px]">{profileData?.description}</div>
+                      <div className="p-2 bg-muted rounded min-h-[100px]">{profileData?.description}</div>
                     )}
                   </div>
                 </CardContent>
@@ -491,38 +513,37 @@ useEffect(() => {
                     Capacity Information
                   </CardTitle>
                 </CardHeader>
-             <CardContent>
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-    <div className="text-center p-4 bg-blue-50 rounded-lg">
-      <div className="text-2xl font-bold text-blue-600">
-        {profileData?.maxCapacity?.toLocaleString?.() ?? "N/A"}
-      </div>
-      <div className="text-sm text-gray-600">Max Capacity</div>
-    </div>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {profileData?.maxCapacity?.toLocaleString?.() ?? "N/A"}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Max Capacity</div>
+                    </div>
 
-    <div className="text-center p-4 bg-green-50 rounded-lg">
-      <div className="text-2xl font-bold text-green-600">
-        {profileData?.totalHalls?.toLocaleString?.() ?? "N/A"}
-      </div>
-      <div className="text-sm text-gray-600">Total Halls</div>
-    </div>
+                    <div className="text-center p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {profileData?.totalHalls?.toLocaleString?.() ?? "N/A"}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Total Halls</div>
+                    </div>
 
-    <div className="text-center p-4 bg-purple-50 rounded-lg">
-      <div className="text-2xl font-bold text-purple-600">
-        {profileData?.totalEvents?.toLocaleString?.() ?? "N/A"}
-      </div>
-      <div className="text-sm text-gray-600">Total Events</div>
-    </div>
+                    <div className="text-center p-4 bg-purple-50 dark:bg-purple-950 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                        {profileData?.totalEvents?.toLocaleString?.() ?? "N/A"}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Total Events</div>
+                    </div>
 
-    <div className="text-center p-4 bg-orange-50 rounded-lg">
-      <div className="text-2xl font-bold text-orange-600">
-        {profileData?.averageRating?.toLocaleString?.() ?? "N/A"}
-      </div>
-      <div className="text-sm text-gray-600">Average Rating</div>
-    </div>
-  </div>
-</CardContent>
-
+                    <div className="text-center p-4 bg-orange-50 dark:bg-orange-950 rounded-lg">
+                      <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                        {profileData?.averageRating?.toFixed(1) ?? "N/A"}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Average Rating</div>
+                    </div>
+                  </div>
+                </CardContent>
               </Card>
             </div>
 
@@ -535,20 +556,20 @@ useEffect(() => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Total Events</span>
-                    <span className="font-semibold">{venueData.totalEvents}</span>
+                    <span className="text-muted-foreground">Total Events</span>
+                    <span className="font-semibold">{profileData?.totalEvents}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Active Bookings</span>
-                    <span className="font-semibold">{venueData.activeBookings}</span>
+                    <span className="text-muted-foreground">Active Bookings</span>
+                    <span className="font-semibold">{profileData?.activeBookings}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Total Halls</span>
-                    <span className="font-semibold">{venueData.totalHalls}</span>
+                    <span className="text-muted-foreground">Total Halls</span>
+                    <span className="font-semibold">{profileData?.totalHalls}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Max Capacity</span>
-                    <span className="font-semibold">{venueData?.maxCapacity?.toLocaleString?.() ?? "N/A"}</span>
+                    <span className="text-muted-foreground">Max Capacity</span>
+                    <span className="font-semibold">{profileData?.maxCapacity?.toLocaleString?.() ?? "N/A"}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -559,23 +580,27 @@ useEffect(() => {
                   <CardTitle>Customer Rating</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center">
-                  <div className="text-3xl font-bold text-blue-600 mb-2">{venueData.averageRating}</div>
+                  <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                    {profileData?.averageRating?.toFixed(1)}
+                  </div>
                   <div className="flex items-center justify-center gap-1 mb-2">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
                         className={`w-5 h-5 ${
-                          i < Math.floor(venueData.averageRating) ? "text-yellow-400 fill-current" : "text-gray-300"
+                          i < Math.floor(profileData?.averageRating || 0)
+                            ? "text-yellow-400 fill-current"
+                            : "text-gray-300"
                         }`}
                       />
                     ))}
                   </div>
-                  <p className="text-gray-600">{venueData.totalReviews} reviews</p>
+                  <p className="text-muted-foreground">{profileData?.totalReviews} reviews</p>
                 </CardContent>
               </Card>
 
               {/* Verification Status */}
-              <Card>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle>Verification Status</CardTitle>
                 </CardHeader>
@@ -597,7 +622,7 @@ useEffect(() => {
                     <span className="text-sm">Insurance Coverage</span>
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
             </div>
           </div>
         </TabsContent>
@@ -610,7 +635,7 @@ useEffect(() => {
                 <Camera className="w-5 h-5" />
                 Venue Images
               </CardTitle>
-              <p className="text-sm text-gray-600">Upload high-quality images to showcase your venue</p>
+              <p className="text-sm text-muted-foreground">Upload high-quality images to showcase your venue</p>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
@@ -623,28 +648,43 @@ useEffect(() => {
                       height={200}
                       className="w-full h-48 object-cover rounded-lg"
                     />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => setImages(images.filter((_, i) => i !== index))}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    {isEditing && (
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                        <Button variant="destructive" size="sm" onClick={() => handleImageDelete(image, "venue")}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
 
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Images</h3>
-                <p className="text-gray-600 mb-4">Drag and drop images here, or click to select files</p>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Images
-                </Button>
-              </div>
+              {isEditing && (
+                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+                  <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">Upload Images</h3>
+                  <p className="text-muted-foreground mb-4">Drag and drop images here, or click to select files</p>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files || [])
+                      for (const file of files) {
+                        await handleImageUpload(file, "venue")
+                      }
+                    }}
+                    className="hidden"
+                    id="venue-image-upload"
+                  />
+                  <Button asChild>
+                    <label htmlFor="venue-image-upload" className="cursor-pointer">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Images
+                    </label>
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -654,37 +694,41 @@ useEffect(() => {
           <Card>
             <CardHeader>
               <CardTitle>Venue Amenities</CardTitle>
-              <p className="text-sm text-gray-600">Manage the amenities and features available at your venue</p>
+              <p className="text-sm text-muted-foreground">Manage the amenities and features available at your venue</p>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
                 {amenities.map((amenity, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <span className="text-sm">{amenity}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveAmenity(index)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    {isEditing && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveAmenity(index)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>
 
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add new amenity..."
-                  value={newAmenity}
-                  onChange={(e) => setNewAmenity(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleAddAmenity()}
-                />
-                <Button onClick={handleAddAmenity}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add
-                </Button>
-              </div>
+              {isEditing && (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add new amenity..."
+                    value={newAmenity}
+                    onChange={(e) => setNewAmenity(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && handleAddAmenity()}
+                  />
+                  <Button onClick={handleAddAmenity}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -694,7 +738,7 @@ useEffect(() => {
           <Card>
             <CardHeader>
               <CardTitle>Meeting Spaces</CardTitle>
-              <p className="text-sm text-gray-600">Manage individual spaces within your venue</p>
+              <p className="text-sm text-muted-foreground">Manage individual spaces within your venue</p>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -702,225 +746,98 @@ useEffect(() => {
                   <div key={space.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-semibold text-lg">{space.name}</h3>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveSpace(space.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {isEditing && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveSpace(space.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
 
                     <div className="space-y-2 mb-4">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Capacity:</span>
+                        <span className="text-muted-foreground">Capacity:</span>
                         <span className="font-medium">{space.capacity} people</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Area:</span>
+                        <span className="text-muted-foreground">Area:</span>
                         <span className="font-medium">{space.area} sq ft</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Hourly Rate:</span>
-                        <span className="font-medium text-blue-600">₹{space.hourlyRate.toLocaleString()}</span>
+                        <span className="text-muted-foreground">Hourly Rate:</span>
+                        <span className="font-medium text-blue-600 dark:text-blue-400">
+                          {profileData?.currency}
+                          {space.hourlyRate.toLocaleString()}
+                        </span>
                       </div>
                     </div>
 
-                    <div>
-                      <h4 className="font-medium text-sm mb-2">Features:</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {space.features?.map((feature, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {feature}
-                          </Badge>
-                        ))}
+                    {space.features && space.features.length > 0 && (
+                      <div>
+                        <h4 className="font-medium text-sm mb-2">Features:</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {space.features.map((feature: string, index: number) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {feature}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>
 
               {/* Add New Space Form */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                <h3 className="font-semibold mb-4">Add New Meeting Space</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              {isEditing && (
+                <div className="border-2 border-dashed border-border rounded-lg p-6">
+                  <h3 className="font-semibold mb-4">Add New Meeting Space</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <Input
+                      placeholder="Space name"
+                      value={newSpace.name}
+                      onChange={(e) => setNewSpace({ ...newSpace, name: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Capacity (people)"
+                      type="number"
+                      value={newSpace.capacity}
+                      onChange={(e) => setNewSpace({ ...newSpace, capacity: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Area (sq ft)"
+                      type="number"
+                      value={newSpace.area}
+                      onChange={(e) => setNewSpace({ ...newSpace, area: e.target.value })}
+                    />
+                    <Input
+                      placeholder={`Hourly rate (${profileData?.currency})`}
+                      type="number"
+                      value={newSpace.hourlyRate}
+                      onChange={(e) => setNewSpace({ ...newSpace, hourlyRate: e.target.value })}
+                    />
+                  </div>
                   <Input
-                    placeholder="Space name"
-                    value={newSpace.name}
-                    onChange={(e) => setNewSpace({ ...newSpace, name: e.target.value })}
+                    placeholder="Features (comma separated)"
+                    value={newSpace.features}
+                    onChange={(e) => setNewSpace({ ...newSpace, features: e.target.value })}
+                    className="mb-4"
                   />
-                  <Input
-                    placeholder="Capacity (people)"
-                    type="number"
-                    value={newSpace.capacity}
-                    onChange={(e) => setNewSpace({ ...newSpace, capacity: e.target.value })}
-                  />
-                  <Input
-                    placeholder="Area (sq ft)"
-                    type="number"
-                    value={newSpace.area}
-                    onChange={(e) => setNewSpace({ ...newSpace, area: e.target.value })}
-                  />
-                  <Input
-                    placeholder="Hourly rate (₹)"
-                    type="number"
-                    value={newSpace.hourlyRate}
-                    onChange={(e) => setNewSpace({ ...newSpace, hourlyRate: e.target.value })}
-                  />
+                  <Button onClick={handleAddSpace}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Space
+                  </Button>
                 </div>
-                <Input
-                  placeholder="Features (comma separated)"
-                  value={newSpace.features}
-                  onChange={(e) => setNewSpace({ ...newSpace, features: e.target.value })}
-                  className="mb-4"
-                />
-                <Button onClick={handleAddSpace}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Space
-                </Button>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Location & Maps Tab */}
-        <TabsContent value="location" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Google Maps Integration */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  Google Maps Location
-                </CardTitle>
-                <p className="text-sm text-gray-600">Manage your venue's location and map visibility</p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="google-maps-url">Google Maps Embed URL</Label>
-                  {isEditing ? (
-                    <Input
-                      id="google-maps-url"
-                      placeholder="https://www.google.com/maps/embed?pb=..."
-                      defaultValue="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3769.8!2d72.8406!3d19.1796!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTnCsDEwJzQ4LjAiTiA3MsKwNTAnMjQuMCJF!5e0!3m2!1sen!2sin!4v1234567890123"
-                    />
-                  ) : (
-                    <div className="aspect-video rounded-lg overflow-hidden border">
-                      <iframe
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3769.8!2d72.8406!3d19.1796!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTnCsDEwJzQ4LjAiTiA3MsKwNTAnMjQuMCJF!5e0!3m2!1sen!2sin!4v1234567890123"
-                        width="100%"
-                        height="100%"
-                        style={{ border: 0 }}
-                        allowFullScreen
-                        loading="lazy"
-                        referrerPolicy="no-referrer-when-downgrade"
-                        title="Venue Location"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="latitude">Latitude</Label>
-                    {isEditing ? (
-                      <Input id="latitude" placeholder="19.1796" defaultValue="19.1796" />
-                    ) : (
-                      <div className="p-2 bg-gray-50 rounded">19.1796</div>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="longitude">Longitude</Label>
-                    {isEditing ? (
-                      <Input id="longitude" placeholder="72.8406" defaultValue="72.8406" />
-                    ) : (
-                      <div className="p-2 bg-gray-50 rounded">72.8406</div>
-                    )}
-                  </div>
-                </div>
-
-                {!isEditing && (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      className="flex-1 bg-transparent"
-                      onClick={() =>
-                        window.open("https://www.google.com/maps/dir/?api=1&destination=19.1796,72.8406", "_blank")
-                      }
-                    >
-                      Get Directions
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex-1 bg-transparent"
-                      onClick={() => window.open("https://maps.google.com/?q=19.1796,72.8406", "_blank")}
-                    >
-                      View in Maps
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Address Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Address Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="full-address">Full Address</Label>
-                  {isEditing ? (
-                    <Textarea id="full-address" rows={3} defaultValue={profileData?.address} />
-                  ) : (
-                    <div className="p-2 bg-gray-50 rounded min-h-[80px]">{profileData?.address}</div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    {isEditing ? (
-                      <Input id="city" defaultValue="Mumbai" />
-                    ) : (
-                      <div className="p-2 bg-gray-50 rounded">Mumbai</div>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state">State</Label>
-                    {isEditing ? (
-                      <Input id="state" defaultValue="Maharashtra" />
-                    ) : (
-                      <div className="p-2 bg-gray-50 rounded">Maharashtra</div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="zipcode">ZIP Code</Label>
-                    {isEditing ? (
-                      <Input id="zipcode" defaultValue="400001" />
-                    ) : (
-                      <div className="p-2 bg-gray-50 rounded">400001</div>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="country">Country</Label>
-                    {isEditing ? (
-                      <Input id="country" defaultValue="India" />
-                    ) : (
-                      <div className="p-2 bg-gray-50 rounded">India</div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Floor Plans Management */}
+        {/* Floor Plans Tab */}
         <TabsContent value="floorplan" className="space-y-6">
           <Card>
             <CardHeader>
@@ -928,132 +845,65 @@ useEffect(() => {
                 <Building2 className="w-5 h-5" />
                 Floor Plans Management
               </CardTitle>
-              <p className="text-sm text-gray-600">Upload and manage floor plans for different levels of your venue</p>
+              <p className="text-sm text-muted-foreground">
+                Upload and manage floor plans for different levels of your venue
+              </p>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Ground Floor Plan */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">Ground Floor</h3>
-                    <Badge variant="secondary">Active</Badge>
-                  </div>
-                  <div className="relative aspect-square bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 overflow-hidden group">
-                    <Image
-                      src="/placeholder.svg?height=300&width=300&text=Ground+Floor+Plan"
-                      alt="Ground Floor Plan"
-                      fill
-                      className="object-contain p-4"
-                    />
-                    {isEditing && (
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="secondary">
-                            <Upload className="w-4 h-4 mr-2" />
-                            Replace
-                          </Button>
-                          <Button size="sm" variant="destructive">
+                {floorPlans.map((plan, index) => (
+                  <div key={index} className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold">Floor Plan {index + 1}</h3>
+                      <Badge variant="secondary">Active</Badge>
+                    </div>
+                    <div className="relative aspect-square bg-muted rounded-lg border-2 border-dashed border-border overflow-hidden group">
+                      <Image
+                        src={plan || "/placeholder.svg"}
+                        alt={`Floor Plan ${index + 1}`}
+                        fill
+                        className="object-contain p-4"
+                      />
+                      {isEditing && (
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Button size="sm" variant="destructive" onClick={() => handleImageDelete(plan, "floorplan")}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Main Hall:</span>
-                      <span className="font-medium">500 capacity</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Reception:</span>
-                      <span className="font-medium">100 capacity</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Total Area:</span>
-                      <span className="font-medium">5,000 sq ft</span>
+                      )}
                     </div>
                   </div>
-                </div>
-
-                {/* First Floor Plan */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">First Floor</h3>
-                    <Badge variant="secondary">Active</Badge>
-                  </div>
-                  <div className="relative aspect-square bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 overflow-hidden group">
-                    <Image
-                      src="/placeholder.svg?height=300&width=300&text=First+Floor+Plan"
-                      alt="First Floor Plan"
-                      fill
-                      className="object-contain p-4"
-                    />
-                    {isEditing && (
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="secondary">
-                            <Upload className="w-4 h-4 mr-2" />
-                            Replace
-                          </Button>
-                          <Button size="sm" variant="destructive">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Conference Halls:</span>
-                      <span className="font-medium">200 capacity</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Meeting Rooms:</span>
-                      <span className="font-medium">75 capacity</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Total Area:</span>
-                      <span className="font-medium">3,000 sq ft</span>
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
 
               {/* Add New Floor Plan */}
               {isEditing && (
-                <div className="mt-6 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Add New Floor Plan</h3>
-                  <p className="text-gray-600 mb-4">Upload floor plans for additional levels or outdoor spaces</p>
-                  <Button>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Upload Floor Plan
+                <div className="mt-6 border-2 border-dashed border-border rounded-lg p-6 text-center">
+                  <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">Add New Floor Plan</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Upload floor plans for additional levels or outdoor spaces
+                  </p>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        await handleImageUpload(file, "floorplan")
+                      }
+                    }}
+                    className="hidden"
+                    id="floorplan-upload"
+                  />
+                  <Button asChild>
+                    <label htmlFor="floorplan-upload" className="cursor-pointer">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Upload Floor Plan
+                    </label>
                   </Button>
                 </div>
               )}
-
-              {/* Floor Plan Legend */}
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium mb-3">Floor Plan Legend</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-green-500 rounded"></div>
-                    <span>Available Spaces</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-red-500 rounded"></div>
-                    <span>Booked Areas</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                    <span>Common Areas</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-yellow-500 rounded"></div>
-                    <span>Emergency Exits</span>
-                  </div>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>

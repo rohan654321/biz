@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useToast } from "@/hooks/use-toast"
+import { useSession } from "next-auth/react"
 import {
   MapPin,
   Phone,
@@ -24,8 +26,8 @@ import {
   ArrowLeft,
   Loader2,
 } from "lucide-react"
-import { VenueReviewCard } from "../../../components/VenueReviewCard"
-import { AddVenueReview } from "../../../components/AddVenueReview"
+import { VenueReviewCard } from "./VenueReviewCard"
+import { AddVenueReview } from "./AddVenueReview"
 
 interface Venue {
   id: string
@@ -159,6 +161,9 @@ export default function VenueDetailPage() {
   const [reviewsLoading, setReviewsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [schedulingMeeting, setSchedulingMeeting] = useState(false)
+  const { toast } = useToast()
+  const { data: session } = useSession()
 
   useEffect(() => {
     if (venueId) {
@@ -193,9 +198,9 @@ export default function VenueDetailPage() {
   }
 
   const fetchReviews = async () => {
-    if (!venueId) return;
+    if (!venueId) return
 
-    setReviewsLoading(true);
+    setReviewsLoading(true)
     try {
       const res = await fetch(`/api/venues/${venueId}/reviews`)
       if (res.ok) {
@@ -207,22 +212,86 @@ export default function VenueDetailPage() {
     } catch (error) {
       console.error("Error fetching reviews:", error)
     } finally {
-      setReviewsLoading(false);
+      setReviewsLoading(false)
     }
   }
 
   const handleReviewAdded = (newReview: Review) => {
-    setReviews(prevReviews => [newReview, ...prevReviews])
+    setReviews((prevReviews) => [newReview, ...prevReviews])
     // Update venue stats if needed
     if (venue) {
-      setVenue(prev => prev ? {
-        ...prev,
-        stats: {
-          ...prev.stats,
-          totalReviews: prev.stats.totalReviews + 1,
-          averageRating: (prev.stats.averageRating * prev.stats.totalReviews + newReview.rating) / (prev.stats.totalReviews + 1)
-        }
-      } : null)
+      setVenue((prev) =>
+        prev
+          ? {
+              ...prev,
+              stats: {
+                ...prev.stats,
+                totalReviews: prev.stats.totalReviews + 1,
+                averageRating:
+                  (prev.stats.averageRating * prev.stats.totalReviews + newReview.rating) /
+                  (prev.stats.totalReviews + 1),
+              },
+            }
+          : null,
+      )
+    }
+  }
+
+  const handleScheduleMeeting = async () => {
+    if (!venue) return
+
+    try {
+      setSchedulingMeeting(true)
+
+      // Verify we have a valid session
+      if (!session?.user?.id) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to schedule meetings.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const body = {
+        venueId: venue.manager.id, // The venue manager's ID
+        title: `Meeting at ${venue.name}`,
+        description: `Meeting request with ${venue.manager.name} at ${venue.name}`,
+        type: "VENUE_TOUR",
+        requestedDate: new Date().toISOString().split("T")[0],
+        requestedTime: "09:00",
+        duration: 30,
+        meetingType: "IN_PERSON",
+        purpose: "Venue Inquiry and Tour",
+        location: venue.location.address,
+        meetingSpacesInterested: venue.meetingSpaces.map((space) => space.name),
+      }
+
+      const res = await fetch(`/api/venue-appointments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || `Failed to create appointment: ${res.status}`)
+      }
+
+      toast({
+        title: "Success",
+        description: `Meeting request sent to ${venue.manager.name}!`,
+      })
+    } catch (err) {
+      console.error("Error scheduling meeting:", err)
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to schedule meeting",
+        variant: "destructive",
+      })
+    } finally {
+      setSchedulingMeeting(false)
     }
   }
 
@@ -257,15 +326,14 @@ export default function VenueDetailPage() {
 
   // Calculate review statistics
   const reviewStats = {
-    averageRating: reviews.length > 0 
-      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
-      : 0,
+    averageRating: reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0,
     totalReviews: reviews.length,
-    ratingDistribution: [1, 2, 3, 4, 5].map(stars => ({
+    ratingDistribution: [1, 2, 3, 4, 5].map((stars) => ({
       stars,
-      count: reviews.filter(review => review.rating === stars).length,
-      percentage: reviews.length > 0 ? (reviews.filter(review => review.rating === stars).length / reviews.length) * 100 : 0
-    }))
+      count: reviews.filter((review) => review.rating === stars).length,
+      percentage:
+        reviews.length > 0 ? (reviews.filter((review) => review.rating === stars).length / reviews.length) * 100 : 0,
+    })),
   }
 
   if (loading) {
@@ -294,14 +362,14 @@ export default function VenueDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Back Button */}
-      <div className="bg-white border-b">
+      {/* <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Button variant="ghost" onClick={() => router.push("/venues")} className="flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" />
             Back to Venues
           </Button>
         </div>
-      </div>
+      </div> */}
 
       {/* Hero Section */}
       <div className="relative h-96 overflow-hidden">
@@ -368,7 +436,24 @@ export default function VenueDetailPage() {
                   <Share2 className="w-4 h-4 mr-2" />
                   Share
                 </Button>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">Book Now</Button>
+                <Button
+                  onClick={handleScheduleMeeting}
+                  disabled={schedulingMeeting}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {schedulingMeeting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Scheduling...
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Schedule Meeting
+                    </>
+                  )}
+                </Button>
+                {/* <Button className="bg-blue-600 hover:bg-blue-700 text-white">Book Now</Button> */}
               </div>
             </div>
           </div>
@@ -469,6 +554,23 @@ export default function VenueDetailPage() {
                       </div>
                     </div>
                     {venue.manager.bio && <p className="text-sm text-gray-600">{venue.manager.bio}</p>}
+                    <Button
+                      onClick={handleScheduleMeeting}
+                      disabled={schedulingMeeting}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      {schedulingMeeting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Scheduling...
+                        </>
+                      ) : (
+                        <>
+                          <Calendar className="w-4 h-4 mr-2" />
+                          Schedule Meeting
+                        </>
+                      )}
+                    </Button>
                   </CardContent>
                 </Card>
 
@@ -599,8 +701,8 @@ export default function VenueDetailPage() {
                         <div
                           className="space-y-4 max-h-[600px] overflow-y-auto p-6 pt-0"
                           style={{
-                            scrollbarWidth: 'thin',
-                            scrollbarColor: '#cbd5e0 #f7fafc'
+                            scrollbarWidth: "thin",
+                            scrollbarColor: "#cbd5e0 #f7fafc",
                           }}
                         >
                           {reviews.map((review) => (
@@ -614,7 +716,8 @@ export default function VenueDetailPage() {
                           <Star className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                           <h3 className="text-lg font-semibold mb-2 text-gray-700">No Reviews Yet</h3>
                           <p className="text-gray-500 max-w-md mx-auto">
-                            Be the first to share your experience with this venue! Your review will help others make better decisions.
+                            Be the first to share your experience with this venue! Your review will help others make
+                            better decisions.
                           </p>
                         </div>
                       )}

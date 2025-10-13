@@ -1,580 +1,579 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Star, MessageSquare, Building, TrendingUp, Search, Reply, ThumbsUp, AlertCircle } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Star, Filter, Calendar, User, MessageSquare, Reply, Send, ChevronDown, ChevronUp } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { Skeleton } from "@/components/ui/skeleton"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-export default function RatingsReviews() {
-  const [filterRating, setFilterRating] = useState("all")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [replyText, setReplyText] = useState("")
-  const [selectedReview, setSelectedReview] = useState<number | null>(null)
-
-  type RatingKey = 1 | 2 | 3 | 4 | 5;
-
-  // Mock reviews data
-  const reviews = [
-    {
-      id: 1,
-      eventName: "Global Tech Conference 2025",
-      organizer: {
-        name: "Rajesh Kumar",
-        company: "TechEvents India",
-        avatar: "/placeholder.svg?height=40&width=40",
-      },
-      rating: 5,
-      date: "2025-01-15",
-      title: "Outstanding venue and exceptional service!",
-      review:
-        "The Grand Convention Center exceeded all our expectations. The facilities were top-notch, the staff was incredibly helpful, and the technical support was flawless. Our 1500 attendees were impressed with the venue. The Grand Ballroom was perfect for our keynote sessions, and the breakout rooms were well-equipped. Highly recommend for large-scale conferences.",
-      helpful: 12,
-      categories: {
-        facilities: 5,
-        staff: 5,
-        location: 4,
-        value: 4,
-        cleanliness: 5,
-      },
-      reply: null,
-      verified: true,
-    },
-    {
-      id: 2,
-      eventName: "Healthcare Innovation Summit",
-      organizer: {
-        name: "Dr. Priya Sharma",
-        company: "MedTech Solutions",
-        avatar: "/placeholder.svg?height=40&width=40",
-      },
-      rating: 4,
-      date: "2025-01-10",
-      title: "Great venue with minor issues",
-      review:
-        "Overall, we had a positive experience at the venue. The Executive Halls were well-suited for our summit, and the AV equipment worked perfectly. The catering service was excellent. However, we faced some parking issues during peak hours, and the WiFi was slow in some areas. The staff was responsive and tried to resolve issues quickly.",
-      helpful: 8,
-      categories: {
-        facilities: 4,
-        staff: 5,
-        location: 3,
-        value: 4,
-        cleanliness: 4,
-      },
-      reply: {
-        date: "2025-01-12",
-        message:
-          "Thank you for your feedback, Dr. Sharma. We're glad you had a positive experience overall. We've since upgraded our WiFi infrastructure and are working on expanding our parking facilities. We appreciate your patience and look forward to hosting you again.",
-      },
-      verified: true,
-    },
-    {
-      id: 3,
-      eventName: "Annual Sales Meeting",
-      organizer: {
-        name: "Amit Patel",
-        company: "Corporate Solutions Ltd",
-        avatar: "/placeholder.svg?height=40&width=40",
-      },
-      rating: 5,
-      date: "2025-01-05",
-      title: "Perfect for corporate events",
-      review:
-        "Excellent venue for our annual sales meeting. The meeting rooms were perfectly sized for our 80 attendees, and the boardroom setup was exactly what we needed. The staff was professional and attentive to our requirements. The location is convenient with good transport connectivity. Will definitely book again for future events.",
-      helpful: 6,
-      categories: {
-        facilities: 5,
-        staff: 5,
-        location: 5,
-        value: 4,
-        cleanliness: 5,
-      },
-      reply: {
-        date: "2025-01-07",
-        message:
-          "Thank you so much, Amit! We're delighted that our venue met all your requirements for the sales meeting. Our team takes pride in providing professional service for corporate events. We look forward to hosting your future events.",
-      },
-      verified: true,
-    },
-    {
-      id: 4,
-      eventName: "Product Launch Event",
-      organizer: {
-        name: "Sneha Reddy",
-        company: "Innovation Corp",
-        avatar: "/placeholder.svg?height=40&width=40",
-      },
-      rating: 3,
-      date: "2024-12-28",
-      title: "Good venue but room for improvement",
-      review:
-        "The venue has good facilities and the location is convenient. However, we experienced some issues with the sound system during our product launch, which caused delays. The staff was helpful in resolving the issue, but it affected our event timeline. The catering was average. Overall, it's a decent venue but there's room for improvement in technical support.",
-      helpful: 4,
-      categories: {
-        facilities: 3,
-        staff: 4,
-        location: 4,
-        value: 3,
-        cleanliness: 4,
-      },
-      reply: null,
-      verified: true,
-    },
-    {
-      id: 5,
-      eventName: "Startup Pitch Competition",
-      organizer: {
-        name: "Karan Singh",
-        company: "Startup Hub",
-        avatar: "/placeholder.svg?height=40&width=40",
-      },
-      rating: 4,
-      date: "2024-12-20",
-      title: "Great atmosphere for startup events",
-      review:
-        "The Executive Hall A was perfect for our startup pitch competition. The acoustics were excellent, and the lighting created a great atmosphere for presentations. The registration area was well-organized, and the staff helped with smooth check-ins. The only minor issue was that the air conditioning was a bit too cold in the evening. Overall, a great experience!",
-      helpful: 9,
-      categories: {
-        facilities: 4,
-        staff: 4,
-        location: 4,
-        value: 4,
-        cleanliness: 4,
-      },
-      reply: {
-        date: "2024-12-22",
-        message:
-          "Thank you for the wonderful feedback, Karan! We're thrilled that the venue provided the perfect atmosphere for your startup pitch competition. We've noted your feedback about the air conditioning and will ensure better temperature control for evening events.",
-      },
-      verified: true,
-    },
-  ]
-
-  const overallStats = {
-    averageRating: 4.2,
-    totalReviews: 89,
-    ratingDistribution: {
-      5: 45,
-      4: 28,
-      3: 12,
-      2: 3,
-      1: 1,
-    },
-    categoryAverages: {
-      facilities: 4.3,
-      staff: 4.6,
-      location: 4.1,
-      value: 3.9,
-      cleanliness: 4.4,
-    },
+interface Review {
+  id: string
+  rating: number
+  title: string
+  comment: string
+  isPublic: boolean
+  isApproved: boolean
+  createdAt: string
+  user: {
+    id: string
+    firstName: string
+    lastName: string
+    avatar: string | null
   }
+  venue: {
+    id: string
+    businessName: string
+  }
+  replies: ReviewReply[]
+}
 
-  const filteredReviews = reviews.filter((review) => {
-    const matchesRating = filterRating === "all" || review.rating.toString() === filterRating
-    const matchesSearch =
-      review.eventName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      review.organizer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      review.organizer.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      review.review.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesRating && matchesSearch
-  })
+interface ReviewReply {
+  id: string
+  content: string
+  createdAt: string
+  user: {
+    id: string
+    firstName: string
+    lastName: string
+    avatar: string | null
+  }
+  isOrganizerReply: boolean
+}
 
-  const handleReply = (reviewId: number) => {
-    if (replyText.trim()) {
-      // Handle reply submission logic
-      console.log("Replying to review:", reviewId, replyText)
-      setReplyText("")
-      setSelectedReview(null)
+export default function VenueFeedbackManagement({ venueId }: { venueId: string }) {
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [filteredReviews, setFilteredReviews] = useState<Review[]>([])
+  const [ratingFilter, setRatingFilter] = useState<string>("all")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [replyFilter, setReplyFilter] = useState<string>("all")
+  const [replyingTo, setReplyingTo] = useState<string | null>(null)
+  const [replyContent, setReplyContent] = useState<string>("")
+  const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set())
+  const [loading, setLoading] = useState(true)
+  const [venue, setVenue] = useState<{ id: string; businessName: string } | null>(null)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    fetchReviews()
+  }, [venueId])
+
+  const fetchReviews = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/venues/${venueId}/reviews?includeReplies=true`)
+      if (!response.ok) throw new Error("Failed to fetch reviews")
+      const data = await response.json()
+      setReviews(data.reviews || [])
+      setFilteredReviews(data.reviews || [])
+      if (data.venue) {
+        setVenue(data.venue)
+      }
+    } catch (error) {
+      console.error("Error fetching reviews:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load reviews",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
-  const renderStars = (rating: number, size: "sm" | "md" | "lg" = "sm") => {
-    const sizeClasses = {
-      sm: "w-4 h-4",
-      md: "w-5 h-5",
-      lg: "w-6 h-6",
+  useEffect(() => {
+    let filtered = [...reviews]
+
+    if (ratingFilter !== "all") {
+      const ratingValue = Number.parseInt(ratingFilter)
+      filtered = filtered.filter((review) => review.rating === ratingValue)
     }
 
+    if (statusFilter !== "all") {
+      if (statusFilter === "approved") {
+        filtered = filtered.filter((review) => review.isApproved)
+      } else if (statusFilter === "pending") {
+        filtered = filtered.filter((review) => !review.isApproved)
+      }
+    }
+
+    if (replyFilter !== "all") {
+      if (replyFilter === "replied") {
+        filtered = filtered.filter((review) => review.replies && review.replies.length > 0)
+      } else if (replyFilter === "not_replied") {
+        filtered = filtered.filter((review) => !review.replies || review.replies.length === 0)
+      }
+    }
+
+    setFilteredReviews(filtered)
+  }, [ratingFilter, statusFilter, replyFilter, reviews])
+
+  const handleApproveReview = async (reviewId: string) => {
+    try {
+      const response = await fetch(`/api/reviews/${reviewId}/approve`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!response.ok) throw new Error("Failed to approve review")
+
+      setReviews((prevReviews) =>
+        prevReviews.map((review) => (review.id === reviewId ? { ...review, isApproved: true } : review)),
+      )
+
+      toast({
+        title: "Success",
+        description: "Review approved successfully",
+      })
+    } catch (error) {
+      console.error("Error approving review:", error)
+      toast({
+        title: "Error",
+        description: "Failed to approve review",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDeleteReview = async (reviewId: string) => {
+    try {
+      const response = await fetch(`/api/reviews/${reviewId}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) throw new Error("Failed to delete review")
+
+      setReviews((prevReviews) => prevReviews.filter((review) => review.id !== reviewId))
+
+      toast({
+        title: "Success",
+        description: "Review deleted successfully",
+      })
+    } catch (error) {
+      console.error("Error deleting review:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete review",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleSendReply = async (reviewId: string) => {
+    if (!replyContent.trim()) {
+      toast({
+        title: "Error",
+        description: "Reply cannot be empty",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/reviews/${reviewId}/replies`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content: replyContent,
+        }),
+      })
+
+      if (!response.ok) throw new Error("Failed to send reply")
+
+      const newReply = await response.json()
+
+      setReviews((prevReviews) =>
+        prevReviews.map((review) =>
+          review.id === reviewId
+            ? {
+                ...review,
+                replies: [...(review.replies || []), newReply],
+              }
+            : review,
+        ),
+      )
+
+      setReplyContent("")
+      setReplyingTo(null)
+
+      toast({
+        title: "Success",
+        description: "Reply sent successfully",
+      })
+    } catch (error) {
+      console.error("Error sending reply:", error)
+      toast({
+        title: "Error",
+        description: "Failed to send reply",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDeleteReply = async (reviewId: string, replyId: string) => {
+    try {
+      const response = await fetch(`/api/reviews/${reviewId}/replies/${replyId}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) throw new Error("Failed to delete reply")
+
+      setReviews((prevReviews) =>
+        prevReviews.map((review) =>
+          review.id === reviewId
+            ? {
+                ...review,
+                replies: review.replies.filter((reply) => reply.id !== replyId),
+              }
+            : review,
+        ),
+      )
+
+      toast({
+        title: "Success",
+        description: "Reply deleted successfully",
+      })
+    } catch (error) {
+      console.error("Error deleting reply:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete reply",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const toggleReplies = (reviewId: string) => {
+    const newExpanded = new Set(expandedReplies)
+    if (newExpanded.has(reviewId)) {
+      newExpanded.delete(reviewId)
+    } else {
+      newExpanded.add(reviewId)
+    }
+    setExpandedReplies(newExpanded)
+  }
+
+  const renderStars = (rating: number) => {
     return (
       <div className="flex items-center">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`${sizeClasses[size]} ${star <= rating ? "text-yellow-400 fill-current" : "text-gray-300"}`}
-          />
+        {[...Array(5)].map((_, i) => (
+          <Star key={i} className={`w-4 h-4 ${i < rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`} />
         ))}
+        <span className="ml-1 text-sm font-medium">{rating}.0</span>
       </div>
     )
   }
 
-  const ReviewCard = ({ review }: { review: any }) => (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-start space-x-4">
-            <Avatar className="w-12 h-12">
-              <AvatarImage src={review.organizer.avatar || "/placeholder.svg"} />
-              <AvatarFallback>
-                {review.organizer.name
-                  .split(" ")
-                  .map((n:any) => n[0])
-                  .join("")}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h4 className="font-semibold">{review.organizer.name}</h4>
-                {review.verified && (
-                  <Badge variant="outline" className="text-green-600 bg-green-50">
-                    Verified
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-gray-600">{review.organizer.company}</p>
-              <p className="text-sm text-blue-600 font-medium">{review.eventName}</p>
-              <div className="flex items-center gap-2 mt-1">
-                {renderStars(review.rating)}
-                <span className="text-sm text-gray-500">{review.date}</span>
-              </div>
-            </div>
-          </div>
-          <Badge variant="outline" className="text-yellow-600 bg-yellow-50">
-            {review.rating}/5
-          </Badge>
-        </div>
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })
+  }
 
-        <div className="mb-4">
-          <h5 className="font-medium mb-2">{review.title}</h5>
-          <p className="text-gray-700 text-sm leading-relaxed">{review.review}</p>
-        </div>
-
-        {/* Category Ratings */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
-          {Object.entries(review.categories).map(([category, rating]) => (
-            <div key={category} className="text-center">
-              <div className="text-xs text-gray-600 capitalize mb-1">{category}</div>
-              <div className="flex items-center justify-center">{renderStars(rating as number, "sm")}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Existing Reply */}
-        {review.reply && (
-          <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Building className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">Venue Response</span>
-              <span className="text-xs text-blue-600">{review.reply.date}</span>
-            </div>
-            <p className="text-sm text-blue-700">{review.reply.message}</p>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600">
-              <ThumbsUp className="w-4 h-4" />
-              Helpful ({review.helpful})
-            </button>
-          </div>
-          <div className="flex items-center gap-2">
-            {!review.reply && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedReview(selectedReview === review.id ? null : review.id)}
-              >
-                <Reply className="w-4 h-4 mr-2" />
-                Reply
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Reply Form */}
-        {selectedReview === review.id && !review.reply && (
-          <div className="mt-4 p-4 border rounded-lg bg-gray-50">
-            <Textarea
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              placeholder="Write your response to this review..."
-              rows={3}
-              className="mb-3"
-            />
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={() => setSelectedReview(null)}>
-                Cancel
-              </Button>
-              <Button size="sm" onClick={() => handleReply(review.id)}>
-                Send Reply
-              </Button>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Ratings & Reviews</h1>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-yellow-600">
-            {overallStats.averageRating}/5 Average
-          </Badge>
-          <Badge variant="outline">{overallStats.totalReviews} Reviews</Badge>
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">
+            {venue ? `Feedback for ${venue.businessName}` : "Venue Feedback"}
+          </h2>
+          <p className="text-muted-foreground">Respond to venue feedback and manage replies</p>
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="reviews">All Reviews</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          {/* Overall Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card>
-              <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-yellow-600 mb-2">{overallStats.averageRating}</div>
-                <div className="flex justify-center mb-2">
-                  {renderStars(Math.round(overallStats.averageRating), "md")}
-                </div>
-                <div className="text-gray-600">Overall Rating</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-blue-600">{overallStats.totalReviews}</div>
-                <div className="text-gray-600">Total Reviews</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-green-600">
-                  {Math.round((overallStats.ratingDistribution[5] / overallStats.totalReviews) * 100)}%
-                </div>
-                <div className="text-gray-600">5-Star Reviews</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-purple-600">
-                  {Math.round(
-                    ((overallStats.ratingDistribution[4] + overallStats.ratingDistribution[5]) /
-                      overallStats.totalReviews) *
-                      100,
-                  )}
-                  %
-                </div>
-                <div className="text-gray-600">Positive Reviews</div>
-              </CardContent>
-            </Card>
+      {/* Filters */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center">
+            <Filter className="w-5 h-5 mr-2" />
+            <CardTitle>Filters</CardTitle>
           </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Rating</label>
+              <Select value={ratingFilter} onValueChange={setRatingFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Ratings" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Ratings</SelectItem>
+                  <SelectItem value="5">5 Stars</SelectItem>
+                  <SelectItem value="4">4 Stars</SelectItem>
+                  <SelectItem value="3">3 Stars</SelectItem>
+                  <SelectItem value="2">2 Stars</SelectItem>
+                  <SelectItem value="1">1 Star</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Rating Distribution */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Rating Distribution</CardTitle>
-              </CardHeader>
-              
-             <CardContent className="space-y-3">
-  {[5, 4, 3, 2, 1].map((rating) => {
-    const key = rating as RatingKey; // ✅ tell TS the exact key type
-    return (
-      <div key={key} className="flex items-center gap-3">
-        <div className="flex items-center gap-1 w-12">
-          <span className="text-sm">{key}</span>
-          <Star className="w-3 h-3 text-yellow-400 fill-current" />
-        </div>
-        <div className="flex-1 bg-gray-200 rounded-full h-2">
-          <div
-            className="bg-yellow-400 h-2 rounded-full"
-            style={{
-              width: `${
-                (overallStats.ratingDistribution[key] / overallStats.totalReviews) * 100
-              }%`,
-            }}
-          />
-        </div>
-        <span className="text-sm text-gray-600 w-8">
-          {overallStats.ratingDistribution[key]}
-        </span>
-      </div>
-    );
-  })}
-</CardContent>
-            </Card>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Status</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Category Averages</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {Object.entries(overallStats.categoryAverages).map(([category, rating]) => (
-                  <div key={category} className="flex items-center justify-between">
-                    <span className="text-sm capitalize font-medium">{category}</span>
-                    <div className="flex items-center gap-2">
-                      {renderStars(Math.round(rating), "sm")}
-                      <span className="text-sm text-gray-600 w-8">{rating}</span>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Reply Status</label>
+              <Select value={replyFilter} onValueChange={setReplyFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Replies" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Reviews</SelectItem>
+                  <SelectItem value="replied">Replied</SelectItem>
+                  <SelectItem value="not_replied">Not Replied</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Recent Reviews */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Reviews</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {reviews.slice(0, 3).map((review) => (
-                <div key={review.id} className="border-b pb-4 last:border-b-0">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h4 className="font-medium">{review.organizer.name}</h4>
-                      <p className="text-sm text-gray-600">{review.eventName}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {renderStars(review.rating)}
-                      <span className="text-sm text-gray-500">{review.date}</span>
-                    </div>
+      {/* Reviews List */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Reviews ({filteredReviews.length})</CardTitle>
+            <Button variant="outline" onClick={fetchReviews}>
+              Refresh
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex space-x-4 p-4 border rounded-lg">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-4 w-[250px]" />
+                    <Skeleton className="h-4 w-[200px]" />
+                    <Skeleton className="h-4 w-[300px]" />
                   </div>
-                  <p className="text-sm text-gray-700">{review.title}</p>
                 </div>
               ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+          ) : filteredReviews.length === 0 ? (
+            <div className="text-center py-12">
+              <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium">No reviews found</h3>
+              <p className="text-muted-foreground">
+                {reviews.length === 0
+                  ? "No reviews have been submitted for your venue yet."
+                  : "No reviews match your current filters."}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredReviews.map((review) => (
+                <div key={review.id} className="p-4 border rounded-lg">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-start space-x-4 flex-1">
+                      <div className="flex-shrink-0">
+                        {review.user.avatar ? (
+                          <img
+                            src={review.user.avatar || "/placeholder.svg"}
+                            alt={`${review.user.firstName} ${review.user.lastName}`}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                            <User className="w-6 h-6 text-gray-500" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <h4 className="font-semibold">
+                              {review.user.firstName} {review.user.lastName}
+                            </h4>
+                            <Badge variant={review.isApproved ? "default" : "secondary"} className="text-xs">
+                              {review.isApproved ? "Approved" : "Pending"}
+                            </Badge>
+                            {review.replies && review.replies.length > 0 && (
+                              <Badge variant="outline" className="text-xs">
+                                {review.replies.length} {review.replies.length === 1 ? "Reply" : "Replies"}
+                              </Badge>
+                            )}
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                •••
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              {!review.isApproved && (
+                                <DropdownMenuItem onClick={() => handleApproveReview(review.id)}>
+                                  Approve Review
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem onClick={() => handleDeleteReview(review.id)} className="text-red-600">
+                                Delete Review
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <div className="mt-1">{renderStars(review.rating)}</div>
+                        {review.title && <p className="font-medium mt-2">{review.title}</p>}
+                        <p className="text-muted-foreground mt-1">{review.comment}</p>
+                        <div className="flex items-center mt-2 text-sm text-muted-foreground">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          <span>{formatDate(review.createdAt)}</span>
+                        </div>
 
-        <TabsContent value="reviews" className="space-y-6">
-          {/* Filters */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                    <Input
-                      placeholder="Search reviews by event, organizer, or content..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
+                        {/* Replies Section */}
+                        {review.replies && review.replies.length > 0 && (
+                          <div className="mt-4">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="flex items-center text-sm px-0"
+                              onClick={() => toggleReplies(review.id)}
+                            >
+                              {expandedReplies.has(review.id) ? (
+                                <ChevronUp className="w-4 h-4 mr-1" />
+                              ) : (
+                                <ChevronDown className="w-4 h-4 mr-1" />
+                              )}
+                              {review.replies.length} {review.replies.length === 1 ? "Reply" : "Replies"}
+                            </Button>
+
+                            {expandedReplies.has(review.id) && (
+                              <div className="mt-2 space-y-3 pl-6 border-l-2 border-gray-200">
+                                {review.replies.map((reply) => (
+                                  <div key={reply.id} className="pt-3">
+                                    <div className="flex items-start space-x-3">
+                                      <div className="flex-shrink-0">
+                                        {reply.user.avatar ? (
+                                          <img
+                                            src={reply.user.avatar || "/placeholder.svg"}
+                                            alt={`${reply.user.firstName} ${reply.user.lastName}`}
+                                            className="w-8 h-8 rounded-full object-cover"
+                                          />
+                                        ) : (
+                                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                            <User className="w-4 h-4 text-gray-500" />
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="flex-1">
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center space-x-2">
+                                            <span className="font-medium text-sm">
+                                              {reply.user.firstName} {reply.user.lastName}
+                                            </span>
+                                            {reply.isOrganizerReply && (
+                                              <Badge variant="outline" className="text-xs">
+                                                Venue Manager
+                                              </Badge>
+                                            )}
+                                          </div>
+                                          <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                              <Button variant="ghost" size="sm">
+                                                •••
+                                              </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent>
+                                              <DropdownMenuItem
+                                                onClick={() => handleDeleteReply(review.id, reply.id)}
+                                                className="text-red-600"
+                                              >
+                                                Delete Reply
+                                              </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                          </DropdownMenu>
+                                        </div>
+                                        <p className="text-sm mt-1">{reply.content}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                          {formatDateTime(reply.createdAt)}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Reply Form */}
+                        {replyingTo === review.id ? (
+                          <div className="mt-4">
+                            <Textarea
+                              placeholder="Type your reply here..."
+                              value={replyContent}
+                              onChange={(e) => setReplyContent(e.target.value)}
+                              className="mb-2"
+                            />
+                            <div className="flex space-x-2">
+                              <Button onClick={() => handleSendReply(review.id)}>
+                                <Send className="w-4 h-4 mr-2" />
+                                Send Reply
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setReplyingTo(null)
+                                  setReplyContent("")
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-4 bg-transparent"
+                            onClick={() => setReplyingTo(review.id)}
+                          >
+                            <Reply className="w-4 h-4 mr-2" />
+                            Reply
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <Select value={filterRating} onValueChange={setFilterRating}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Filter by rating" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Ratings</SelectItem>
-                    <SelectItem value="5">5 Stars</SelectItem>
-                    <SelectItem value="4">4 Stars</SelectItem>
-                    <SelectItem value="3">3 Stars</SelectItem>
-                    <SelectItem value="2">2 Stars</SelectItem>
-                    <SelectItem value="1">1 Star</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Reviews List */}
-          <div className="space-y-4">
-            {filteredReviews.map((review) => (
-              <ReviewCard key={review.id} review={review} />
-            ))}
-          </div>
-
-          {filteredReviews.length === 0 && (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">No reviews found</h3>
-                <p className="text-gray-500">Try adjusting your search or filter criteria</p>
-              </CardContent>
-            </Card>
+              ))}
+            </div>
           )}
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5" />
-                  Review Trends
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">This Month</span>
-                    <Badge variant="outline" className="text-green-600">
-                      +12 reviews
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Average Rating Trend</span>
-                    <Badge variant="outline" className="text-green-600">
-                      ↑ 0.2
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Response Rate</span>
-                    <Badge variant="outline" className="text-blue-600">
-                      85%
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5" />
-                  Areas for Improvement
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Parking</span>
-                    <Badge variant="outline" className="text-yellow-600">
-                      3.2/5
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">WiFi Speed</span>
-                    <Badge variant="outline" className="text-yellow-600">
-                      3.5/5
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Value for Money</span>
-                    <Badge variant="outline" className="text-yellow-600">
-                      3.9/5
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+        </CardContent>
+      </Card>
     </div>
   )
 }
