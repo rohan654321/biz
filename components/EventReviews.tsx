@@ -51,12 +51,14 @@ export default function EventReviews() {
       </div>
 
       {/* Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
         {nearByEvents.map((event, index) => (
-          <div
+<div
   key={event.id || index}
-  className="bg-white shadow-md overflow-hidden hover:shadow-xl transition-all border border-gray-100 text-center"
+  className="bg-white shadow-md overflow-hidden hover:shadow-xl border border-gray-100 text-center max-w-xs mx-auto"
 >
+
+
   {/* Gradient Top Banner */}
   <div className="relative h-40 w-full overflow-hidden">  {/* reduced from h-64 → h-40 */}
     <img

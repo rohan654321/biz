@@ -29,7 +29,7 @@ export default function ImageBannerCarousel({
     <div
       className="relative w-full overflow-hidden shadow max-w-6xl mx-auto"
       style={{
-        height: "250px", // reduced height (slimmer look)
+        height: "130px", // reduced height (slimmer look)
         aspectRatio: "16/5", // slightly flatter aspect ratio for balance
       }}
     >
