@@ -62,46 +62,6 @@ interface ApiResponse {
   events: Event[]
 }
 
-// Mock ad data for the slider
-// const eventAds = [
-//   {
-//     id: "ad-1",
-//     title: "Premium Event Sponsorship",
-//     description: "Reach thousands of professionals with our premium event packages",
-//     image: "/ads/event-sponsorship.jpg",
-//     cta: "Learn More",
-//     link: "/ads/sponsorship",
-//     company: "EventPro Solutions"
-//   },
-//   {
-//     id: "ad-2", 
-//     title: "Boost Your Event Visibility",
-//     description: "Get featured in our weekly newsletter and social media channels",
-//     image: "/ads/visibility-boost.jpg",
-//     cta: "Get Featured",
-//     link: "/ads/featured",
-//     company: "EventBuzz"
-//   },
-//   {
-//     id: "ad-3",
-//     title: "Event Marketing Services",
-//     description: "Professional marketing solutions for your next big event",
-//     image: "/ads/marketing-services.jpg",
-//     cta: "Explore Services",
-//     link: "/ads/marketing",
-//     company: "MarketRight Events"
-//   },
-//   {
-//     id: "ad-4",
-//     title: "Venue Booking Platform",
-//     description: "Find and book the perfect venue for your event",
-//     image: "/ads/venue-booking.jpg",
-//     cta: "Find Venues",
-//     link: "/ads/venues",
-//     company: "VenueMaster"
-//   }
-// ]
-
 export default function EventsPageContent() {
   const [activeTab, setActiveTab] = useState("All Events")
   const [selectedFormat, setSelectedFormat] = useState("All Formats")
@@ -137,13 +97,9 @@ export default function EventsPageContent() {
   const [isHovered, setIsHovered] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
 
-  // Ad slider state
-  const [currentAdSlide, setCurrentAdSlide] = useState(0)
-  const [isAdTransitioning, setIsAdTransitioning] = useState(false)
-
   const router = useRouter()
 
-  const DEFAULT_EVENT_IMAGE = "/herosection-images/weld.jpg?height=160&width=200&text=Event"
+  const DEFAULT_EVENT_IMAGE = "/city/c4.jpg"
 
   const getEventImage = (event: any) => {
     return event.images?.[0]?.url || event.image || DEFAULT_EVENT_IMAGE
@@ -198,20 +154,17 @@ export default function EventsPageContent() {
     if (categoryFromUrl) {
       setSelectedCategory(categoryFromUrl)
     }
-    // Add location parameter handling
     const locationFromUrl = searchParams.get("location")
     if (locationFromUrl) {
       setSelectedLocation(locationFromUrl)
     }
-    // Add country parameter handling
     const countryFromUrl = searchParams.get("country")
     if (countryFromUrl) {
-      setSelectedLocation(countryFromUrl) // Use same location filter for countries
+      setSelectedLocation(countryFromUrl)
     }
-    // Add venue parameter handling
     const venueFromUrl = searchParams.get("venue")
     if (venueFromUrl) {
-      setSelectedLocation(venueFromUrl) // Use same location filter for venues
+      setSelectedLocation(venueFromUrl)
     }
   }, [categoryFromUrl, searchParams])
 
@@ -297,13 +250,15 @@ export default function EventsPageContent() {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
     const monthFromNow = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate())
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000)
 
     switch (tab) {
       case "All Events":
         return true
       case "Upcoming":
-        // Show all future events, not just those with "upcoming" status
         return eventDate >= today
+      case "Past":
+        return eventDate < today
       case "This Week":
         return eventDate >= today && eventDate <= weekFromNow
       case "This Month":
@@ -317,13 +272,8 @@ export default function EventsPageContent() {
   const filteredEvents = useMemo(() => {
     let filtered = events
 
-    console.log("[v0] Starting with events:", events.length)
-    console.log("[v0] Active tab:", activeTab)
-    console.log("[v0] Selected categories:", selectedCategories)
-
     // Tab filter
     filtered = filtered.filter((event) => isEventInTab(event, activeTab))
-    console.log("[v0] After tab filter:", filtered.length)
 
     // Search filter - enhanced
     if (searchQuery) {
@@ -338,7 +288,6 @@ export default function EventsPageContent() {
           event.venue?.venueCountry?.toLowerCase().includes(query) ||
           event.location?.city?.toLowerCase().includes(query),
       )
-      console.log("[v0] After search filter:", filtered.length)
     }
 
     if (selectedCategories.length > 0) {
@@ -347,8 +296,6 @@ export default function EventsPageContent() {
           selectedCategories.some((selectedCat) => cat.toLowerCase().trim() === selectedCat.toLowerCase().trim()),
         ),
       )
-
-      console.log("[v0] After category filter:", filtered.length)
     } else if (selectedCategory) {
       filtered = filtered.filter((event) =>
         event.categories.some((cat) => cat.toLowerCase().trim() === selectedCategory.toLowerCase().trim()),
@@ -410,7 +357,8 @@ export default function EventsPageContent() {
 
     // Sort based on view mode
     if (viewMode === "Trending") {
-      // filtered.sort((a, b) => b.followers - a.followers)
+      // Sort by rating or popularity
+      filtered.sort((a, b) => b.rating.average - a.rating.average)
     } else if (viewMode === "Date") {
       filtered.sort((a, b) => new Date(a.timings.startDate).getTime() - new Date(b.timings.startDate).getTime())
     }
@@ -431,6 +379,35 @@ export default function EventsPageContent() {
     viewMode,
   ])
 
+  // Dynamic banner title based on filters
+  const getBannerTitle = () => {
+    if (selectedCategories.length > 0) {
+      return `${selectedCategories.join(", ")} Events`
+    }
+    if (selectedCategory) {
+      return `${selectedCategory} Events`
+    }
+    if (selectedLocation) {
+      return `Events in ${selectedLocation}`
+    }
+    if (searchQuery) {
+      return `Search Results for "${searchQuery}"`
+    }
+    if (activeTab !== "All Events") {
+      return `${activeTab} Events`
+    }
+    return "All Events" // Default title
+  }
+
+  // Get follower count based on filtered events
+  const getFollowerCount = () => {
+    const baseCount = filteredEvents.length * 150 // Simulate follower count
+    if (baseCount > 1000) {
+      return `${(baseCount / 1000).toFixed(0)}K+ Followers`
+    }
+    return `${baseCount}+ Followers`
+  }
+
   // Pagination
   const totalPages = Math.ceil(filteredEvents.length / itemsPerPage)
   const paginatedEvents = filteredEvents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
@@ -446,22 +423,10 @@ export default function EventsPageContent() {
     const interval = setInterval(() => {
       setIsTransitioning(true)
       setCurrentSlide((prev) => (prev + 1) % totalSlides)
-    }, 3000) // Change slide every 3 seconds
+    }, 3000)
 
     return () => clearInterval(interval)
   }, [featuredEvents.length, isHovered, isTransitioning])
-
-  // Auto-scroll effect for ad slider
-  // useEffect(() => {
-  //   if (eventAds.length === 0) return
-
-  //   const interval = setInterval(() => {
-  //     setIsAdTransitioning(true)
-  //     setCurrentAdSlide((prev) => (prev + 1) % eventAds.length)
-  //   }, 5000) // Change ad slide every 5 seconds
-
-  //   return () => clearInterval(interval)
-  // }, [eventAds.length])
 
   // Handle transition end
   useEffect(() => {
@@ -473,15 +438,6 @@ export default function EventsPageContent() {
     }
   }, [isTransitioning])
 
-  useEffect(() => {
-    if (isAdTransitioning) {
-      const timer = setTimeout(() => {
-        setIsAdTransitioning(false)
-      }, 500)
-      return () => clearTimeout(timer)
-    }
-  }, [isAdTransitioning])
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       weekday: "short",
@@ -491,25 +447,23 @@ export default function EventsPageContent() {
     })
   }
 
-  const tabs = ["All Events", "Upcoming", "This Week", "This Month"]
+  const tabs = ["All Events", "Upcoming", "Past", "This Week", "This Month"]
 
   const handleCategoryToggle = (categoryName: string) => {
-    console.log("[v0] Toggling category:", categoryName)
     setSelectedCategories((prev) => {
       const newCategories = prev.includes(categoryName)
         ? prev.filter((c) => c !== categoryName)
         : [...prev, categoryName]
-      console.log("[v0] New selected categories:", newCategories)
       return newCategories
     })
-    setCurrentPage(1) // Reset to first page when filter changes
+    setCurrentPage(1)
   }
 
   const handleRelatedTopicToggle = (topicName: string) => {
     setSelectedRelatedTopics((prev) =>
       prev.includes(topicName) ? prev.filter((t) => t !== topicName) : [...prev, topicName],
     )
-    setCurrentPage(1) // Reset to first page when filter changes
+    setCurrentPage(1)
   }
 
   const clearAllFilters = () => {
@@ -524,8 +478,6 @@ export default function EventsPageContent() {
     setSelectedDateRange("")
     setActiveTab("All Events")
     setCurrentPage(1)
-
-    // Navigate to clean /event URL
     router.push("/event")
   }
 
@@ -542,23 +494,6 @@ export default function EventsPageContent() {
     setIsTransitioning(true)
     const totalSlides = Math.ceil(featuredEvents.length / 3)
     setCurrentSlide((prev) => (prev + 1) % totalSlides)
-  }
-
-  // Navigation functions for ad slider
-  // const goToPrevAdSlide = () => {
-  //   setIsAdTransitioning(true)
-  //   setCurrentAdSlide((prev) => (prev - 1 + eventAds.length) % eventAds.length)
-  // }
-
-  // const goToNextAdSlide = () => {
-  //   setIsAdTransitioning(true)
-  //   setCurrentAdSlide((prev) => (prev + 1) % eventAds.length)
-  // }
-
-  const goToAdSlide = (index: number) => {
-    if (index === currentAdSlide) return
-    setIsAdTransitioning(true)
-    setCurrentAdSlide(index)
   }
 
   const goToSlide = (index: number) => {
@@ -583,19 +518,6 @@ export default function EventsPageContent() {
     rating,
   ])
 
-  const isEventPostponed = (eventId: string) => {
-    // Replace with actual logic to check if event is postponed
-    return false
-  }
-
-  const getOriginalEventDates = (eventId: string) => {
-    // Replace with actual logic to fetch original event dates
-    return {
-      startDate: null,
-      endDate: null,
-    }
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -618,32 +540,30 @@ export default function EventsPageContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Remove the max-width constraint and use full width */}
       <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
         <div className="w-full px-4 py-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">All Events</h1>
-              <p className="text-gray-600">Discover amazing events happening around you</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="flex -space-x-1">
-                  {[1, 2, 3].map((i) => (
-                    <Avatar key={i} className="w-8 h-8 border-2 border-white">
-                      <AvatarFallback className="bg-purple-500 text-white text-xs">{i}</AvatarFallback>
-                    </Avatar>
-                  ))}
-                </div>
-              </div>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2">Follow</Button>
-              <Button variant="outline" className="px-4 py-2 bg-transparent">
-                <Share2 className="w-4 h-4 mr-2" />
-                Share
-              </Button>
-            </div>
-          </div>
+          {/* Dynamic Banner Section */}
+  <div
+  className="flex items-center justify-between mb-6 p-6 border border-blue-200 bg-cover bg-center bg-no-repeat relative overflow-hidden"
+  style={{
+    backgroundImage: "url('/city/c2.jpg')",
+  }}
+>
+  {/* Softer overlay */}
+  <div className="absolute inset-0 bg-gradient-to-r from-white/40 via-blue-50/30 to-purple-50/40"></div>
 
+  <div className="relative z-10">
+    <h1 className="text-3xl font-bold text-gray-900 mb-2">{getBannerTitle()}</h1>
+    <p className="text-gray-700 text-lg">{getFollowerCount()}</p>
+  </div>
+
+  <div className="relative z-10 flex items-center space-x-4">
+    {/* Buttons / avatars */}
+  </div>
+</div>
+
+
+          {/* Tabs Navigation */}
           <div className="flex space-x-1 mb-6 border-b border-gray-200">
             {tabs.map((tab) => (
               <button
@@ -922,7 +842,7 @@ export default function EventsPageContent() {
                     <Link href={`/event/${event.id}`} key={event.id} className="block">
                       <Card className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all w-full">
                         <CardContent className="p-0 flex">
-                          {/* Left Image Section - Adjusted width */}
+                          {/* Left Image Section */}
                           <div className="relative w-[200px] h-[160px] sm:w-[240px] sm:h-[180px] md:w-[280px] md:h-[200px] lg:w-[320px] lg:h-[220px] flex-shrink-0">
                             <Image
                               src={event.image || "/images/gpex.jpg"}
@@ -932,7 +852,7 @@ export default function EventsPageContent() {
                             />
                           </div>
 
-                          {/* Right Section - Now takes remaining space */}
+                          {/* Right Section */}
                           <div className="flex-1 flex flex-col justify-between px-6 py-4 min-w-0">
                             {/* Top Section */}
                             <div className="min-w-0">
@@ -1057,97 +977,6 @@ export default function EventsPageContent() {
                   ))
                 )}
               </div>
-
-              {/* Event Ads Slider - Small height card with same width as main card */}
-              {/* <section className="py-4">
-                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200 shadow-sm">
-                  <div className="relative overflow-hidden rounded-2xl">
-                   
-                    <div className="flex items-center justify-between px-6 py-3 border-b border-blue-100">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <span className="text-sm font-medium text-blue-700">Sponsored Events</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={goToPrevAdSlide}
-                          className="p-1 h-6 w-6 bg-transparent hover:bg-blue-100"
-                        >
-                          <ChevronLeft className="w-3 h-3 text-blue-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={goToNextAdSlide}
-                          className="p-1 h-6 w-6 bg-transparent hover:bg-blue-100"
-                        >
-                          <ChevronRight className="w-3 h-3 text-blue-600" />
-                        </Button>
-                      </div>
-                    </div>
-
-                  
-                    <div className="relative h-32">
-                      {eventAds.map((ad, index) => (
-                        <div
-                          key={ad.id}
-                          className={`absolute inset-0 transition-opacity duration-500 ${
-                            index === currentAdSlide ? "opacity-100" : "opacity-0 pointer-events-none"
-                          }`}
-                        >
-                          <div className="flex items-center h-full px-6 py-4">
-                            
-                            <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center flex-shrink-0 mr-4">
-                              <div className="text-white text-xs font-bold text-center px-2">
-                                AD
-                              </div>
-                            </div>
-                            
-                           
-                            <div className="flex-1 min-w-0">
-                              <h3 className="text-lg font-semibold text-gray-900 truncate">{ad.title}</h3>
-                              <p className="text-sm text-gray-600 mt-1 line-clamp-2">{ad.description}</p>
-                              <div className="flex items-center justify-between mt-2">
-                                <span className="text-xs text-gray-500">{ad.company}</span>
-                                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 h-7">
-                                  {ad.cta}
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    
-                    <div className="px-6 pb-3">
-                      <div className="w-full bg-blue-200 rounded-full h-1">
-                        <div 
-                          className="bg-blue-600 h-1 rounded-full transition-all duration-500 ease-out"
-                          style={{ 
-                            width: `${((currentAdSlide + 1) / eventAds.length) * 100}%` 
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                  
-                    <div className="flex justify-center space-x-1 pb-3">
-                      {eventAds.map((_, index) => (
-                        <button
-                          key={index}
-                          onClick={() => goToAdSlide(index)}
-                          className={`w-2 h-2 rounded-full transition-colors ${
-                            index === currentAdSlide ? "bg-blue-600" : "bg-blue-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </section> */}
 
               {featuredEvents.length > 0 && (
                 <section className="py-8">
