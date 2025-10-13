@@ -1,150 +1,186 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Calendar } from "@/components/ui/calendar"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useToast } from "@/hooks/use-toast"
 import {
-  Calendar,
-  MapPin,
-  Users,
+  Clock,
+  CalendarIcon,
   CheckCircle,
-  XCircle,
+  X,
   Eye,
-  MessageSquare,
   Phone,
   Mail,
   Building,
-  IndianRupee,
+  User,
+  MapPin,
+  MessageSquare,
 } from "lucide-react"
 
-export default function BookingSystem() {
-  const [activeTab, setActiveTab] = useState("requests")
-  const [selectedBooking, setSelectedBooking] = useState<any>(null)
+interface AppointmentSchedulingProps {
+  venueId: string
+  showStatsCard?: boolean
+  onCountChange?: (count: number) => void
+}
 
-  // Mock booking requests data
-  const bookingRequests = [
-    {
-      id: 1,
-      eventName: "Digital Marketing Summit 2025",
-      organizer: {
-        name: "Marketing Pro Events",
-        contact: "Rahul Gupta",
-        email: "rahul@marketingpro.com",
-        phone: "+91 98765 43210",
-        company: "Marketing Pro Events Pvt Ltd",
-      },
-      requestedDate: "May 15-16, 2025",
-      requestedHalls: ["Grand Ballroom", "Executive Hall A"],
-      expectedAttendees: 1200,
-      eventType: "Conference",
-      duration: "2 days",
-      setupRequirements: "Stage setup, AV equipment, registration desk",
-      cateringRequired: true,
-      estimatedBudget: "₹8,50,000",
-      status: "Pending Review",
-      submittedDate: "2025-01-20",
-      priority: "High",
-      notes: "Premium corporate event with international speakers",
-    },
-    {
-      id: 2,
-      eventName: "Annual Shareholders Meeting",
-      organizer: {
-        name: "Corporate Solutions Ltd",
-        contact: "Priya Sharma",
-        email: "priya@corpsol.com",
-        phone: "+91 87654 32109",
-        company: "Corporate Solutions Ltd",
-      },
-      requestedDate: "April 10, 2025",
-      requestedHalls: ["Executive Hall B"],
-      expectedAttendees: 300,
-      eventType: "Corporate Meeting",
-      duration: "1 day",
-      setupRequirements: "Boardroom style seating, projector, microphones",
-      cateringRequired: true,
-      estimatedBudget: "₹2,50,000",
-      status: "Under Negotiation",
-      submittedDate: "2025-01-18",
-      priority: "Medium",
-      notes: "Annual meeting with board members and key stakeholders",
-    },
-    {
-      id: 3,
-      eventName: "Tech Startup Showcase",
-      organizer: {
-        name: "Startup Hub India",
-        contact: "Amit Patel",
-        email: "amit@startuphub.com",
-        phone: "+91 76543 21098",
-        company: "Startup Hub India",
-      },
-      requestedDate: "June 5-6, 2025",
-      requestedHalls: ["Exhibition Hall", "Meeting Room 1", "Meeting Room 2"],
-      expectedAttendees: 800,
-      eventType: "Exhibition",
-      duration: "2 days",
-      setupRequirements: "Exhibition booths, networking area, demo stations",
-      cateringRequired: true,
-      estimatedBudget: "₹6,00,000",
-      status: "Pending Review",
-      submittedDate: "2025-01-22",
-      priority: "Medium",
-      notes: "Startup exhibition with investor meetings and product demos",
-    },
-  ]
+interface Appointment {
+  id: string
+  visitorName: string
+  visitorEmail: string
+  visitorPhone?: string
+  company?: string
+  designation?: string
+  requestedDate: string
+  requestedTime: string
+  duration: string
+  purpose: string
+  status: string
+  priority: string
+  profileViews: number
+  previousMeetings: number
+  notes?: string
+  meetingLink?: string
+  location?: string
+}
 
-  const confirmedBookings = [
-    {
-      id: 4,
-      eventName: "Global Tech Conference 2025",
-      organizer: {
-        name: "TechEvents India",
-        contact: "Rajesh Kumar",
-        email: "rajesh@techevents.com",
-        phone: "+91 98765 43210",
-      },
-      confirmedDate: "March 15-17, 2025",
-      halls: ["Grand Ballroom"],
-      attendees: 1500,
-      status: "Confirmed",
-      paymentStatus: "Paid",
-      contractSigned: true,
-      totalAmount: "₹12,00,000",
-    },
-    {
-      id: 5,
-      eventName: "Healthcare Innovation Summit",
-      organizer: {
-        name: "MedTech Solutions",
-        contact: "Dr. Priya Sharma",
-        email: "priya@medtech.com",
-        phone: "+91 87654 32109",
-      },
-      confirmedDate: "April 22-24, 2025",
-      halls: ["Executive Hall A", "Executive Hall B"],
-      attendees: 800,
-      status: "Confirmed",
-      paymentStatus: "Advance Paid",
-      contractSigned: true,
-      totalAmount: "₹9,50,000",
-    },
-  ]
+interface VenueAppointmentFromAPI {
+  id: string
+  requester: {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+    avatar?: string
+  }
+  requesterPhone?: string
+  requesterCompany?: string
+  requesterTitle?: string
+  requestedDate: string
+  requestedTime: string
+  duration: number
+  purpose?: string
+  status: string
+  priority: string
+  notes?: string
+  meetingLink?: string
+  location?: string
+  type: string
+}
+
+export default function AppointmentScheduling({ venueId, onCountChange }: AppointmentSchedulingProps) {
+  const { toast } = useToast()
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [filterStatus, setFilterStatus] = useState("ALL")
+
+  useEffect(() => {
+    if (venueId && venueId !== "undefined") {
+      fetchAppointments()
+    }
+  }, [venueId])
+
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const response = await fetch(`/api/venue-appointments?venueId=${venueId}`)
+      if (!response.ok) throw new Error("Failed to fetch appointments")
+
+      const data = await response.json()
+      const fetchedAppointments = (data.data || []).map((apt: VenueAppointmentFromAPI) => ({
+        id: apt.id,
+        visitorName: `${apt.requester.firstName} ${apt.requester.lastName}`,
+        visitorEmail: apt.requester.email,
+        visitorPhone: apt.requesterPhone || "N/A",
+        company: apt.requesterCompany || "N/A",
+        designation: apt.requesterTitle || "N/A",
+        requestedDate: new Date(apt.requestedDate).toLocaleDateString(),
+        requestedTime: apt.requestedTime,
+        duration: `${apt.duration} min`,
+        purpose: apt.purpose || "General inquiry",
+        status: apt.status,
+        priority: apt.priority,
+        profileViews: 0, // Not tracked in VenueAppointment
+        previousMeetings: 0, // Not tracked in VenueAppointment
+        notes: apt.notes,
+        meetingLink: apt.meetingLink,
+        location: apt.location,
+      }))
+
+      setAppointments(fetchedAppointments)
+
+      // Update parent count whenever appointments change
+      if (onCountChange) onCountChange(fetchedAppointments.length)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
+      toast({
+        title: "Error",
+        description: "Failed to load appointments. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const updateAppointment = async (appointmentId: string, updates: Partial<Appointment>) => {
+    try {
+      const response = await fetch(`/api/venue-appointments`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          appointmentId,
+          ...updates,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update appointment")
+      }
+
+      setAppointments(appointments.map((apt) => (apt.id === appointmentId ? { ...apt, ...updates } : apt)))
+
+      toast({
+        title: "Success",
+        description: "Appointment updated successfully!",
+      })
+
+      // Refresh appointments to get latest data
+      fetchAppointments()
+    } catch (err) {
+      console.error("Error updating appointment:", err)
+      toast({
+        title: "Error",
+        description: "Failed to update appointment. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Pending Review":
+      case "PENDING":
         return "bg-yellow-500"
-      case "Under Negotiation":
-        return "bg-blue-500"
-      case "Confirmed":
+      case "CONFIRMED":
         return "bg-green-500"
-      case "Rejected":
+      case "COMPLETED":
+        return "bg-blue-500"
+      case "CANCELLED":
         return "bg-red-500"
       default:
         return "bg-gray-500"
@@ -153,388 +189,343 @@ export default function BookingSystem() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "High":
+      case "HIGH":
         return "text-red-600 bg-red-50"
-      case "Medium":
+      case "MEDIUM":
         return "text-yellow-600 bg-yellow-50"
-      case "Low":
+      case "LOW":
         return "text-green-600 bg-green-50"
       default:
         return "text-gray-600 bg-gray-50"
     }
   }
 
-  const handleApproveBooking = (bookingId: number) => {
-    // Handle booking approval logic
-    console.log("Approving booking:", bookingId)
-  }
+  const filteredAppointments = appointments.filter(
+    (appointment) => filterStatus === "ALL" || appointment.status === filterStatus,
+  )
 
-  const handleRejectBooking = (bookingId: number) => {
-    // Handle booking rejection logic
-    console.log("Rejecting booking:", bookingId)
-  }
-
-  const BookingRequestCard = ({ booking }: { booking: any }) => (
+  const AppointmentCard = ({ appointment }: { appointment: Appointment }) => (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold mb-2">{booking.eventName}</h3>
-            <div className="space-y-2 text-sm text-gray-600">
+            <div className="flex items-center gap-3 mb-2">
+              <h3 className="font-semibold text-lg">{appointment.visitorName}</h3>
+              <Badge className={`${getStatusColor(appointment.status)} text-white`}>{appointment.status}</Badge>
+              <Badge variant="outline" className={getPriorityColor(appointment.priority)}>
+                {appointment.priority}
+              </Badge>
+            </div>
+            <div className="space-y-1 text-sm text-gray-600">
               <div className="flex items-center gap-2">
                 <Building className="w-4 h-4" />
-                {booking.organizer.company}
-              </div>
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Contact: {booking.organizer.contact}
+                {appointment.company} • {appointment.designation}
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
-                {booking.organizer.email}
+                {appointment.visitorEmail}
               </div>
+              {appointment.visitorPhone && (
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  {appointment.visitorPhone}
+                </div>
+              )}
               <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4" />
-                {booking.organizer.phone}
+                <CalendarIcon className="w-4 h-4" />
+                {appointment.requestedDate} at {appointment.requestedTime} ({appointment.duration})
               </div>
+              {appointment.location && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  {appointment.location}
+                </div>
+              )}
             </div>
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <Badge className={getStatusColor(booking.status)}>{booking.status}</Badge>
-            <Badge variant="outline" className={getPriorityColor(booking.priority)}>
-              {booking.priority}
-            </Badge>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
-          <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4 text-blue-500" />
-              <span className="font-medium">Requested Date</span>
-            </div>
-            <p className="text-gray-600">{booking.requestedDate}</p>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <MapPin className="w-4 h-4 text-purple-500" />
-              <span className="font-medium">Halls</span>
-            </div>
-            <p className="text-gray-600">{booking.requestedHalls.join(", ")}</p>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <Users className="w-4 h-4 text-orange-500" />
-              <span className="font-medium">Attendees</span>
-            </div>
-            <p className="text-gray-600">{booking.expectedAttendees} people</p>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <IndianRupee className="w-4 h-4 text-green-500" />
-              <span className="font-medium">Budget</span>
-            </div>
-            <p className="text-gray-600">{booking.estimatedBudget}</p>
-          </div>
-        </div>
-
-        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-          <h4 className="font-medium text-sm mb-2">Setup Requirements:</h4>
-          <p className="text-sm text-gray-700">{booking.setupRequirements}</p>
-          {booking.cateringRequired && <p className="text-sm text-blue-600 mt-1">• Catering services required</p>}
-        </div>
-
-        {booking.notes && (
-          <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-            <h4 className="font-medium text-sm text-blue-800 mb-1">Notes:</h4>
-            <p className="text-sm text-blue-700">{booking.notes}</p>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500">Submitted: {booking.submittedDate}</div>
           <div className="flex items-center gap-2">
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" onClick={() => setSelectedBooking(booking)}>
-                  <Eye className="w-4 h-4 mr-2" />
-                  View Details
+                <Button variant="ghost" size="sm" onClick={() => setSelectedAppointment(appointment)}>
+                  <Eye className="w-4 h-4" />
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Booking Request Details</DialogTitle>
+                  <DialogTitle className="flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    Appointment Details - {appointment.visitorName}
+                  </DialogTitle>
                 </DialogHeader>
-                {selectedBooking && (
+                {selectedAppointment && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium">Event Name</label>
-                        <p className="text-gray-600">{selectedBooking.eventName}</p>
+                        <Label className="text-sm font-medium">Visitor Profile Views</Label>
+                        <p className="text-gray-600">{selectedAppointment.profileViews} views</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium">Event Type</label>
-                        <p className="text-gray-600">{selectedBooking.eventType}</p>
+                        <Label className="text-sm font-medium">Previous Meetings</Label>
+                        <p className="text-gray-600">{selectedAppointment.previousMeetings} meetings</p>
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-medium">Response Message</label>
-                      <Textarea placeholder="Add your response or questions..." className="mt-1" />
+                      <Label className="text-sm font-medium">Meeting Purpose</Label>
+                      <p className="text-gray-600 mt-1">{selectedAppointment.purpose}</p>
+                    </div>
+                    <div>
+                      <Label htmlFor="notes" className="text-sm font-medium">
+                        Meeting Notes
+                      </Label>
+                      <Textarea
+                        id="notes"
+                        placeholder="Add meeting notes or preparation points..."
+                        className="mt-1"
+                        value={selectedAppointment.notes || ""}
+                        onChange={(e) => setSelectedAppointment({ ...selectedAppointment, notes: e.target.value })}
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium">Status</label>
-                        <Select defaultValue={selectedBooking.status}>
-                          <SelectTrigger>
+                        <Label className="text-sm font-medium">Status</Label>
+                        <Select
+                          value={selectedAppointment.status}
+                          onValueChange={(value) => setSelectedAppointment({ ...selectedAppointment, status: value })}
+                        >
+                          <SelectTrigger className="mt-1">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Pending Review">Pending Review</SelectItem>
-                            <SelectItem value="Under Negotiation">Under Negotiation</SelectItem>
-                            <SelectItem value="Approved">Approved</SelectItem>
-                            <SelectItem value="Rejected">Rejected</SelectItem>
+                            <SelectItem value="PENDING">Pending</SelectItem>
+                            <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+                            <SelectItem value="COMPLETED">Completed</SelectItem>
+                            <SelectItem value="CANCELLED">Cancelled</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <label className="text-sm font-medium">Priority</label>
-                        <Select defaultValue={selectedBooking.priority}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          {/* <SelectContent>
-                            <SelectItem value="High">High</SelectItem>
-                            <SelectItem value="Medium">Medium</SelectItem>
-                            <SelectItem value="Low">Low</SelectItem>
-                          </SelectContent> */}
-                        </Select>
+                        <Label className="text-sm font-medium">Reschedule Date</Label>
+                        <Input type="date" className="mt-1" />
                       </div>
                     </div>
+                    {selectedAppointment.meetingLink && (
+                      <div>
+                        <Label className="text-sm font-medium">Meeting Link</Label>
+                        <Input value={selectedAppointment.meetingLink} className="mt-1" readOnly />
+                      </div>
+                    )}
                     <div className="flex justify-end gap-3">
-                      <Button variant="outline">Send Message</Button>
-                      <Button>Update Status</Button>
+                      <Button variant="outline">Cancel</Button>
+                      <Button
+                        onClick={() => {
+                          if (selectedAppointment) {
+                            updateAppointment(selectedAppointment.id, {
+                              status: selectedAppointment.status,
+                              notes: selectedAppointment.notes,
+                            })
+                            setSelectedAppointment(null)
+                          }
+                        }}
+                      >
+                        Save Changes
+                      </Button>
                     </div>
                   </div>
                 )}
               </DialogContent>
             </Dialog>
+          </div>
+        </div>
 
-            <Button variant="outline" size="sm">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Message
-            </Button>
+        <div className="mb-4">
+          <p className="text-sm text-gray-700 font-medium mb-1">Meeting Purpose:</p>
+          <p className="text-sm text-gray-600">{appointment.purpose}</p>
+        </div>
 
-            {booking.status === "Pending Review" && (
+        <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
+          <div className="text-center p-2 bg-blue-50 rounded">
+            <div className="font-semibold text-blue-600">{appointment.profileViews}</div>
+            <div className="text-gray-600">Profile Views</div>
+          </div>
+          <div className="text-center p-2 bg-green-50 rounded">
+            <div className="font-semibold text-green-600">{appointment.previousMeetings}</div>
+            <div className="text-gray-600">Previous Meetings</div>
+          </div>
+          <div className="text-center p-2 bg-purple-50 rounded">
+            <div className="font-semibold text-purple-600">{appointment.duration}</div>
+            <div className="text-gray-600">Duration</div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            Requested: {appointment.requestedDate} at {appointment.requestedTime}
+          </div>
+          <div className="flex items-center gap-2">
+            {appointment.status === "PENDING" && (
               <>
                 <Button
                   size="sm"
-                  className="bg-green-600 hover:bg-green-700"
-                  onClick={() => handleApproveBooking(booking.id)}
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                  onClick={() => updateAppointment(appointment.id, { status: "CONFIRMED" })}
                 >
-                  <CheckCircle className="w-4 h-4 mr-2" />
+                  <CheckCircle className="w-4 h-4" />
                   Approve
                 </Button>
-                <Button size="sm" variant="destructive" onClick={() => handleRejectBooking(booking.id)}>
-                  <XCircle className="w-4 h-4 mr-2" />
-                  Reject
+                <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
+                  <Clock className="w-4 h-4" />
+                  Reschedule
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2 text-red-600 hover:text-red-700 bg-transparent"
+                  onClick={() => updateAppointment(appointment.id, { status: "CANCELLED" })}
+                >
+                  <X className="w-4 h-4" />
+                  Decline
                 </Button>
               </>
             )}
+            {appointment.status === "CONFIRMED" && (
+              <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
+                <Clock className="w-4 h-4" />
+                Reschedule
+              </Button>
+            )}
+            <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
+              <MessageSquare className="w-4 h-4" />
+              Message
+            </Button>
           </div>
         </div>
       </CardContent>
     </Card>
   )
 
-  const ConfirmedBookingCard = ({ booking }: { booking: any }) => (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold mb-2">{booking.eventName}</h3>
-            <div className="space-y-2 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                <Building className="w-4 h-4" />
-                {booking.organizer.name}
-              </div>
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Contact: {booking.organizer.contact}
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                {booking.confirmedDate}
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                {booking.halls.join(", ")}
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <Badge className={getStatusColor(booking.status)}>{booking.status}</Badge>
-            <Badge variant="outline" className="text-green-600 bg-green-50">
-              {booking.paymentStatus}
-            </Badge>
-          </div>
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full" />
+          ))}
         </div>
+        <div className="space-y-4">
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      </div>
+    )
+  }
 
-        {/* <div className="grid grid-cols-3 gap-4 mb-4 text-center">
-          <div className="p-3 bg-blue-50 rounded-lg">
-            <div className="font-semibold text-blue-600">{booking.attendees}</div>
-            <div className="text-sm text-gray-600">Attendees</div>
-          </div>
-          <div className="p-3 bg-green-50 rounded-lg">
-            <div className="font-semibold text-green-600">{booking.totalAmount}</div>
-            <div className="text-sm text-gray-600">Total Amount</div>
-          </div>
-          <div className="p-3 bg-purple-50 rounded-lg">
-            <div className="font-semibold text-purple-600">{booking.contractSigned ? "Signed" : "Pending"}</div>
-            <div className="text-sm text-gray-600">Contract</div>
-          </div>
-        </div> */}
-
-            {/* <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-                <Eye className="w-4 h-4 mr-2" />
-                View Contract
-            </Button>
-            <Button variant="outline" size="sm">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Contact
-            </Button>
-            </div> */}
-      </CardContent>
-    </Card>
-  )
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={fetchAppointments}>Try Again</Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Hall & Space Booking System</h1>
-        <Button className="flex items-center gap-2">
-          <Calendar className="w-4 h-4" />
-          Availability Calendar
-        </Button>
+        <h1 className="text-3xl font-bold text-gray-900">Visitor Appointment Scheduling</h1>
+        <div className="flex items-center gap-3">
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Status</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+              <SelectItem value="COMPLETED">Completed</SelectItem>
+              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button className="flex items-center gap-2">
+            <CalendarIcon className="w-4 h-4" />
+            Calendar View
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-yellow-600">{bookingRequests.length}</div>
-            <div className="text-gray-600">Pending Requests</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-green-600">{confirmedBookings.length}</div>
-            <div className="text-gray-600">Confirmed Bookings</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-blue-600">
-              {bookingRequests.filter((b) => b.priority === "High").length}
-            </div>
-            <div className="text-gray-600">High Priority</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-purple-600">85%</div>
-            <div className="text-gray-600">Occupancy Rate</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="requests">Booking Requests</TabsTrigger>
-          <TabsTrigger value="confirmed">Confirmed Bookings</TabsTrigger>
-          <TabsTrigger value="calendar">Availability Calendar</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="requests" className="space-y-4">
-          {bookingRequests.map((booking) => (
-            <BookingRequestCard key={booking.id} booking={booking} />
-          ))}
-        </TabsContent>
-
-        <TabsContent value="confirmed" className="space-y-4">
-          {confirmedBookings.map((booking) => (
-            <ConfirmedBookingCard key={booking.id} booking={booking} />
-          ))}
-        </TabsContent>
-
-        <TabsContent value="calendar" className="space-y-4">
+      {venueId && venueId !== "undefined" && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Hall Availability Calendar</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="font-semibold mb-4">March 2025</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <div className="font-medium">March 15-17</div>
-                        <div className="text-sm text-gray-600">Grand Ballroom</div>
-                      </div>
-                      <Badge className="bg-red-500">Booked</Badge>
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <div className="font-medium">March 20</div>
-                        <div className="text-sm text-gray-600">Executive Hall A</div>
-                      </div>
-                      <Badge className="bg-green-500">Available</Badge>
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <div className="font-medium">March 25</div>
-                        <div className="text-sm text-gray-600">Meeting Rooms</div>
-                      </div>
-                      <Badge className="bg-green-500">Available</Badge>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold mb-4">April 2025</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <div className="font-medium">April 10</div>
-                        <div className="text-sm text-gray-600">Executive Hall B</div>
-                      </div>
-                      <Badge className="bg-yellow-500">Pending</Badge>
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <div className="font-medium">April 22-24</div>
-                        <div className="text-sm text-gray-600">Executive Hall A + B</div>
-                      </div>
-                      <Badge className="bg-red-500">Booked</Badge>
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <div className="font-medium">April 28</div>
-                        <div className="text-sm text-gray-600">Grand Ballroom</div>
-                      </div>
-                      <Badge className="bg-green-500">Available</Badge>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-blue-600">{appointments.length}</div>
+              <div className="text-gray-600">Total Requests</div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-yellow-600">
+                {appointments.filter((a) => a.status === "PENDING").length}
+              </div>
+              <div className="text-gray-600">Pending</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-green-600">
+                {appointments.filter((a) => a.status === "CONFIRMED").length}
+              </div>
+              <div className="text-gray-600">Confirmed</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-purple-600">
+                {appointments.filter((a) => a.status === "COMPLETED").length}
+              </div>
+              <div className="text-gray-600">Completed</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Calendar View */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarIcon className="w-5 h-5" />
+              Calendar
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} className="rounded-md border" />
+          </CardContent>
+        </Card>
+
+        {/* Appointments List */}
+        <div className="lg:col-span-2 space-y-4">
+          {filteredAppointments.length > 0 ? (
+            filteredAppointments.map((appointment) => (
+              <AppointmentCard key={appointment.id} appointment={appointment} />
+            ))
+          ) : (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <CalendarIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">No appointments</h3>
+                <p className="text-gray-500">
+                  {filterStatus === "ALL"
+                    ? "Appointment requests will appear here"
+                    : `No ${filterStatus.toLowerCase()} appointments found`}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

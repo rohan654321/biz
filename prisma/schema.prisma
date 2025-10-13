@@ -99,6 +99,9 @@ model User {
   replies ReviewReply[]
   connectionsSent    Connection[] @relation("ConnectionSender")
   connectionsReceived Connection[] @relation("ConnectionReceiver")
+  // Add these lines to the User model's relationships section:
+venueAppointments        VenueAppointment[] @relation("VenueAppointments")
+venueAppointmentRequests VenueAppointment[] @relation("VenueAppointmentRequests")
 
   // Relations for organizer-speaker
   organizerId String? @db.ObjectId
@@ -1269,4 +1272,88 @@ enum LegalDocumentStatus {
   EXPIRED
   VALID
   EXPIRING_SOON
+}
+
+
+// Venue Appointment Management Model
+model VenueAppointment {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Venue and Requester
+  venueId         String   @db.ObjectId
+  venue           User     @relation("VenueAppointments", fields: [venueId], references: [id])
+  requesterId     String   @db.ObjectId
+  requester       User     @relation("VenueAppointmentRequests", fields: [requesterId], references: [id])
+  
+  // Optional Event Association
+  eventId         String?  @db.ObjectId
+  
+  // Appointment Details
+  title           String
+  description     String?
+  type            VenueAppointmentType @default(VENUE_TOUR)
+  status          AppointmentStatus @default(PENDING)
+  priority        AppointmentPriority @default(MEDIUM)
+  
+  // Date and Time
+  requestedDate   DateTime
+  requestedTime   String
+  duration        Int      // Duration in minutes
+  confirmedDate   DateTime?
+  confirmedTime   String?
+  
+  // Meeting Details
+  meetingType     MeetingType @default(IN_PERSON)
+  location        String?  // Specific location within venue
+  meetingLink     String?  // For virtual meetings
+  
+  // Additional Information
+  purpose         String?
+  agenda          String[]
+  notes           String?
+  outcome         String?
+  
+  // Requester Information
+  requesterCompany String?
+  requesterTitle   String?
+  requesterPhone   String?
+  requesterEmail   String?
+  
+  // Event Details (if applicable)
+  eventType       String?
+  expectedAttendees Int?
+  eventDate       DateTime?
+  
+  // Meeting Spaces of Interest
+  meetingSpacesInterested String[]
+  
+  // Follow-up
+  reminderSent    Boolean  @default(false)
+  followUpRequired Boolean @default(true)
+  followUpNotes   String?
+  
+  // Cancellation
+  cancellationReason String?
+  cancelledBy        String?
+  cancelledAt        DateTime?
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([venueId])
+  @@index([requesterId])
+  @@index([status])
+  @@index([requestedDate])
+  @@map("venue_appointments")
+}
+
+enum VenueAppointmentType {
+  VENUE_TOUR
+  CONSULTATION
+  SITE_INSPECTION
+  EVENT_PLANNING
+  TECHNICAL_DISCUSSION
+  CONTRACT_DISCUSSION
+  FOLLOW_UP
 }

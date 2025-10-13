@@ -35,7 +35,7 @@ import { promise } from "zod"
 import { MeetingSpace } from "@prisma/client"
 import { ConnectionsSection } from "../dashboard/connections-section"
 import { HelpSupport } from "@/components/HelpSupport"
-import FeedbackReplyManagement from "./feedback"
+import VenueFeedbackManagement from "./ratings-reviews"
 
 type VenueData = {
   id: string
@@ -47,6 +47,18 @@ type VenueData = {
   address: string
   website: string
   description: string
+  city: string
+  state:string
+  country:string
+  zipCode:string
+  venueImages:string[]
+  venueVideos:string[]
+  floorPlans:string[]
+  virtualTour:string
+  latitude:number
+  longitude:number
+  basePrice:number
+  currency:string
   maxCapacity: number
   totalHalls: number
   totalEvents: number
@@ -207,13 +219,13 @@ if (data.data) {
       case "event-management":
         return <EventManagement />
       case "booking-system":
-        return <BookingSystem />
+        return <BookingSystem venueId={venueData.id} />
       case "communication":
         return <CommunicationCenter params={{ id: userId }} />
       case "connection":
         return <ConnectionsSection userId={venueData.id} />
       case "ratings-reviews":
-        return <FeedbackReplyManagement organizerId={venueData.id} />
+        return <VenueFeedbackManagement venueId={venueData.id} />
       case "legal-documentation":
         return <LegalDocumentation venueId={venueData.id} />
       case "help-support":
