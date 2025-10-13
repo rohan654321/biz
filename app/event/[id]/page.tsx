@@ -206,7 +206,7 @@ export default function EventPage({ params }: EventPageProps) {
           reviews: 1257,
           locationNote: "Excellent Location",
           price: 48,
-          priceNote: "28% less than usual",
+          priceNote: "28%",
           dealLabel: "Deal",
           badgeText: "20% OFF",
           image: "/city/c2.jpg",
