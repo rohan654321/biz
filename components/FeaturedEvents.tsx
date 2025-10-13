@@ -1,10 +1,7 @@
-// app/components/FeaturedEvents.tsx
-import Link from "next/link"
-import { Calendar, Share2 } from "lucide-react"
-import { prisma } from "@/lib/prisma"
-// import { events } from "@/lib/data/events"
+import Link from "next/link";
+import { CalendarDays, MapPin } from "lucide-react";
+import { prisma } from "@/lib/prisma";
 
-// Fetch featured events at build time
 export async function getFeaturedEvents() {
   const events = await prisma.event.findMany({
     where: { isFeatured: true },
@@ -14,71 +11,100 @@ export async function getFeaturedEvents() {
       startDate: true,
       bannerImage: true,
       images: true,
-     
-      category:true,
+      category: true,
     },
     orderBy: { startDate: "asc" },
-  })
+  });
 
-  return events
+  return events;
 }
-
 
 interface Event {
-  id: string
-  title: string
-  startDate: string
-  logo?: string
-  categories?: string
-  bannerImage?: string
+  id: string;
+  title: string;
+  startDate: string;
+  bannerImage?: string;
+  category?: string;
 }
 
-
-
 export default async function FeaturedEvents() {
-  const events =await  getFeaturedEvents()
-    return (
+  const events = await getFeaturedEvents();
+
+  return (
     <div className="w-full max-w-6xl mx-auto mb-12 mt-12">
+      {/* Section Header */}
       <div className="px-6 py-6 border-b border-gray-200 text-left">
-        <h2 className="text-3xl font-semibold text-gray-900 mb-1">Featured Events</h2>
+        <h2 className="text-3xl font-semibold text-gray-900 mb-1">
+          Featured Events
+        </h2>
         <p className="text-gray-600">Handpicked Popular Events</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+      {/* Event Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
         {events.map((event) => (
-          <Link key={event.id} href={`/event/${event.id}`} className="group">
-            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 hover:border-blue-400">
+          <Link
+            key={event.id}
+            href={`/event/${event.id}`}
+            className="group block"
+          >
+            <div
+              className="bg-gradient-to-r from-yellow-100 to-yellow-300 rounded-2xl 
+                         p-5 flex flex-col gap-4 shadow-sm hover:shadow-lg hover:-translate-y-1 
+                         transition-all duration-300"
+            >
+              {/* Top Section */}
               <div className="flex items-start gap-4">
-                <div className="flex items-center justify-center w-20 h-20 rounded-full bg-gray-50 border border-gray-200 overflow-hidden">
+                {/* Event Image — Full (No Background Box) */}
+                <div className="w-[120px] h-[100px] flex-shrink-0 rounded-xl overflow-hidden">
                   <img
                     src={event.bannerImage || "/herosection-images/food.jpg"}
                     alt={event.title}
-                    className="w-14 h-14 object-cover rounded-4xl"
+                    className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="flex-1 space-y-2">
-                  <h3 className="font-semibold text-lg text-gray-900 line-clamp-2">
+
+                {/* Event Info */}
+                <div className="flex flex-col text-left">
+                  <h3 className="text-lg font-bold text-gray-900 leading-tight">
                     {event.title}
                   </h3>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Calendar className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
-                    <span>
-                      {new Date(event.startDate).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </span>
+                  <p className="text-sm text-gray-700 mb-1">
+                    International Exhibition
+                  </p>
+
+                  <div className="flex items-center text-sm font-semibold text-gray-800">
+                    <CalendarDays className="w-4 h-4 mr-2 text-gray-700" />
+                    {new Date(event.startDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </div>
+
+                  <div className="flex items-center text-sm text-gray-700 mt-1">
+                    <MapPin className="w-4 h-4 mr-2 text-blue-700" />
+                    Chennai Trade Centre, India
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-between items-center mt-6">
-                <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors">
-                  <Share2 className="w-4 h-4" />
-                </button>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-600">
+              {/* Divider */}
+              <div className="border-t border-gray-300"></div>
+
+              {/* Tags / Categories */}
+              <div className="flex gap-2 flex-wrap">
+                <span
+                  className="px-3 py-1 text-sm rounded-full border border-gray-400 
+                             bg-white/70 text-gray-800"
+                >
                   {event.category || "General"}
+                </span>
+                <span
+                  className="px-3 py-1 text-sm rounded-full border border-gray-400 
+                             bg-white/70 text-gray-800"
+                >
+                  Power & Energy
                 </span>
               </div>
             </div>
@@ -86,5 +112,5 @@ export default async function FeaturedEvents() {
         ))}
       </div>
     </div>
-  )
+  );
 }

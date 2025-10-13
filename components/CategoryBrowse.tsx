@@ -136,7 +136,7 @@ export default function CategoryBrowser() {
 
 
         {/* Categories */}
-        <div className="px-6 py-8">
+        <div className="px-6 py-8 max-w-6xl mx-auto">
           <div className="mt-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {primaryCategories.map((category) => {
               const IconComponent = category.icon

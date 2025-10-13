@@ -51,92 +51,85 @@ export default function EventReviews() {
       </div>
 
       {/* Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {nearByEvents.map((event, index) => (
           <div
-            key={event.id || index}
-            className="bg-white shadow-md  overflow-hidden hover:shadow-xl transition-all border border-gray-100 text-center"
-          >
-            {/* Gradient Top Banner */}
-            <div className="relative h-64 w-full overflow-hidden ">
-              {/* Background Image */}
-              <img
-                src={event.logo || "/herosection-images/food.jpg"}
-                alt="event logo"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
+  key={event.id || index}
+  className="bg-white shadow-md overflow-hidden hover:shadow-xl transition-all border border-gray-100 text-center"
+>
+  {/* Gradient Top Banner */}
+  <div className="relative h-40 w-full overflow-hidden">  {/* reduced from h-64 → h-40 */}
+    <img
+      src={event.logo || "/herosection-images/food.jpg"}
+      alt="event logo"
+      className="absolute inset-0 w-full h-full object-cover"
+    />
 
-              {/* Edition Tag */}
-              <div className="absolute top-2 left-2 flex items-center z-10">
-                <span className="bg-red-600 text-white text-sm font-bold px-1.5 py-0.5 rounded-sm mr-1">
-                  2
-                </span>
-                <span className="bg-white text-[#0A2B61] font-semibold text-sm px-2 py-0.5 rounded-r-md">
-                  Edition
-                </span>
-              </div>
+    {/* Edition Tag */}
+    <div className="absolute top-2 left-2 flex items-center z-10">
+      <span className="bg-red-600 text-white text-sm font-bold px-1.5 py-0.5 rounded-sm mr-1">
+        2
+      </span>
+      <span className="bg-white text-[#0A2B61] font-semibold text-sm px-2 py-0.5 rounded-r-md">
+        Edition
+      </span>
+    </div>
 
-              {/* Categories */}
-              <div className="absolute top-2 right-2 flex gap-2 z-10">
-                {event.categories?.map((cat, idx) => (
-                  <span
-                    key={idx}
-                    className="bg-white text-gray-700 text-xs px-2 py-0.5 rounded-full shadow-sm"
-                  >
-                    {cat}
-                  </span>
-                ))}
-              </div>
-            </div>
+    {/* Categories */}
+    <div className="absolute top-2 right-2 flex gap-2 z-10">
+      {event.categories?.map((cat, idx) => (
+        <span
+          key={idx}
+          className="bg-white text-gray-700 text-xs px-2 py-0.5 rounded-full shadow-sm"
+        >
+          {cat}
+        </span>
+      ))}
+    </div>
+  </div>
 
+  {/* Content */}
+  <div className="p-4"> {/* reduced from p-5 → p-4 */}
+    <div className="flex justify-center items-center gap-4 mb-3"> {/* reduced gap & margin */}
+      <span className="text-gray-700 text-sm flex items-center gap-1">
+        <Users size={18} className="text-gray-500" />
+        {event.followers || 131} Followers
+      </span>
+      <button className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm shadow-sm">
+        <UserPlus className="w-4 h-4 mr-1" />
+        Follow
+      </button>
+    </div>
 
+    <h3 className="font-extrabold text-base text-black"> {/* reduced from text-lg → text-base */}
+      {event.title || "DIEMEX 2025"}
+    </h3>
 
-            {/* Content */}
-            <div className="p-5">
-              {/* Followers + Follow Button */}
-              <div className="flex justify-center items-center gap-18 mb-5">
-                <span className="text-gray-700 text-sm flex items-center gap-1">
-                  <Users size={18} className="text-gray-500" />
-                  {event.followers || 131} Followers
-                </span>
-                <button className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md text-sm shadow-sm">
-                  <UserPlus className="w-4 h-4 mr-1" />
-                  Follow
-                </button>
-              </div>
+    <p className="flex justify-center items-center font-bold text-gray-700 text-xs mt-1 text-center">
+      {event.location?.venue
+         ?`${event.location.venue}, `
+        : ''}
+      {event.location?.city || "Chennai Trade Center"}, {event.location?.country || "INDIA"}
+    </p>
 
-              {/* Event Title */}
-              <h3 className="font-extrabold text-lg text-black">
-                {event.title || "DIEMEX 2025"}
-              </h3>
+    <p className="flex justify-center items-center text-gray-900 font-bold mt-2 text-sm">
+      <Calendar className="w-4 h-4 mr-1 text-gray-600" />
+      {new Date(event.startDate).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })}
+      {event.endDate
+        ? ` - ${new Date(event.endDate).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })}`
+        : ""}
+    </p>
+  </div>
+</div>
 
-              {/* Location */}
-              <p className="flex justify-center items-center font-bold text-gray-700 text-sm mt-1 flex-wrap-none">
-                {event.location?.venue
-                  ? `${event.location.venue}, `
-                  : "International Die & Mould Exhibition, "}
-                {event.location?.city || "Chennai Trade Center"}, {event.location?.country || "INDIA"}
-              </p>
-
-
-              {/* Dates */}
-              <p className="flex justify-center items-center text-gray-900 font-bold mt-3">
-                <Calendar className="w-5 h-5 mr-1 text-gray-600" />
-                {new Date(event.startDate).toLocaleDateString("en-GB", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                })}
-                {event.endDate
-                  ? ` - ${new Date(event.endDate).toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })}`
-                  : ""}
-              </p>
-            </div>
-          </div>
         ))}
       </div>
     </section>

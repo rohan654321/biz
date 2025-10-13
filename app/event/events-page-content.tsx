@@ -5,12 +5,27 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Search, Share2, MapPin, Calendar, Heart, ChevronDown, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import {
+  Search,
+  Share2,
+  MapPin,
+  Calendar,
+  Heart,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Star,
+  Bookmark,
+} from "lucide-react"
 import Image from "next/image"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
+import AdCard from "@/components/add-card"
 
 interface Event {
+  image: string
+  organizer: any
   id: string
   title: string
   description: string
@@ -37,6 +52,7 @@ interface Event {
   featured?: boolean
   status: string
   timings: {
+    [x: string]: string
     startDate: string
     endDate: string
   }
@@ -45,6 +61,46 @@ interface Event {
 interface ApiResponse {
   events: Event[]
 }
+
+// Mock ad data for the slider
+// const eventAds = [
+//   {
+//     id: "ad-1",
+//     title: "Premium Event Sponsorship",
+//     description: "Reach thousands of professionals with our premium event packages",
+//     image: "/ads/event-sponsorship.jpg",
+//     cta: "Learn More",
+//     link: "/ads/sponsorship",
+//     company: "EventPro Solutions"
+//   },
+//   {
+//     id: "ad-2", 
+//     title: "Boost Your Event Visibility",
+//     description: "Get featured in our weekly newsletter and social media channels",
+//     image: "/ads/visibility-boost.jpg",
+//     cta: "Get Featured",
+//     link: "/ads/featured",
+//     company: "EventBuzz"
+//   },
+//   {
+//     id: "ad-3",
+//     title: "Event Marketing Services",
+//     description: "Professional marketing solutions for your next big event",
+//     image: "/ads/marketing-services.jpg",
+//     cta: "Explore Services",
+//     link: "/ads/marketing",
+//     company: "MarketRight Events"
+//   },
+//   {
+//     id: "ad-4",
+//     title: "Venue Booking Platform",
+//     description: "Find and book the perfect venue for your event",
+//     image: "/ads/venue-booking.jpg",
+//     cta: "Find Venues",
+//     link: "/ads/venues",
+//     company: "VenueMaster"
+//   }
+// ]
 
 export default function EventsPageContent() {
   const [activeTab, setActiveTab] = useState("All Events")
@@ -81,6 +137,10 @@ export default function EventsPageContent() {
   const [isHovered, setIsHovered] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
 
+  // Ad slider state
+  const [currentAdSlide, setCurrentAdSlide] = useState(0)
+  const [isAdTransitioning, setIsAdTransitioning] = useState(false)
+
   const router = useRouter()
 
   const DEFAULT_EVENT_IMAGE = "/herosection-images/weld.jpg?height=160&width=200&text=Event"
@@ -116,7 +176,7 @@ export default function EventsPageContent() {
         featured: event.tags?.includes("featured") || false,
         categories: event.categories || [],
         tags: event.tags || [],
-        images: event.images || [{ url: "/placeholder.svg?height=200&width=300" }],
+        images: event.images || [{ url: "/images/gpex.jpg?height=200&width=300" }],
         pricing: event.pricing || { general: 0 },
         rating: event.rating || { average: 4.5 },
       }))
@@ -282,23 +342,18 @@ export default function EventsPageContent() {
     }
 
     if (selectedCategories.length > 0) {
-     filtered = filtered.filter((event) =>
-  event.categories.some((cat) =>
-    selectedCategories.some(
-      (selectedCat) => cat.toLowerCase().trim() === selectedCat.toLowerCase().trim()
-    )
-  )
-)
+      filtered = filtered.filter((event) =>
+        event.categories.some((cat) =>
+          selectedCategories.some((selectedCat) => cat.toLowerCase().trim() === selectedCat.toLowerCase().trim()),
+        ),
+      )
 
       console.log("[v0] After category filter:", filtered.length)
-    }  else if (selectedCategory) {
-  filtered = filtered.filter((event) =>
-    event.categories.some(
-      (cat) => cat.toLowerCase().trim() === selectedCategory.toLowerCase().trim()
-    )
-  )
-}
-
+    } else if (selectedCategory) {
+      filtered = filtered.filter((event) =>
+        event.categories.some((cat) => cat.toLowerCase().trim() === selectedCategory.toLowerCase().trim()),
+      )
+    }
 
     // Related topics filter
     if (selectedRelatedTopics.length > 0) {
@@ -396,15 +451,36 @@ export default function EventsPageContent() {
     return () => clearInterval(interval)
   }, [featuredEvents.length, isHovered, isTransitioning])
 
+  // Auto-scroll effect for ad slider
+  // useEffect(() => {
+  //   if (eventAds.length === 0) return
+
+  //   const interval = setInterval(() => {
+  //     setIsAdTransitioning(true)
+  //     setCurrentAdSlide((prev) => (prev + 1) % eventAds.length)
+  //   }, 5000) // Change ad slide every 5 seconds
+
+  //   return () => clearInterval(interval)
+  // }, [eventAds.length])
+
   // Handle transition end
   useEffect(() => {
     if (isTransitioning) {
       const timer = setTimeout(() => {
         setIsTransitioning(false)
-      }, 500) // Match the CSS transition duration
+      }, 500)
       return () => clearTimeout(timer)
     }
   }, [isTransitioning])
+
+  useEffect(() => {
+    if (isAdTransitioning) {
+      const timer = setTimeout(() => {
+        setIsAdTransitioning(false)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [isAdTransitioning])
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -468,6 +544,23 @@ export default function EventsPageContent() {
     setCurrentSlide((prev) => (prev + 1) % totalSlides)
   }
 
+  // Navigation functions for ad slider
+  // const goToPrevAdSlide = () => {
+  //   setIsAdTransitioning(true)
+  //   setCurrentAdSlide((prev) => (prev - 1 + eventAds.length) % eventAds.length)
+  // }
+
+  // const goToNextAdSlide = () => {
+  //   setIsAdTransitioning(true)
+  //   setCurrentAdSlide((prev) => (prev + 1) % eventAds.length)
+  // }
+
+  const goToAdSlide = (index: number) => {
+    if (index === currentAdSlide) return
+    setIsAdTransitioning(true)
+    setCurrentAdSlide(index)
+  }
+
   const goToSlide = (index: number) => {
     if (isTransitioning || index === currentSlide) return
     setIsTransitioning(true)
@@ -525,501 +618,670 @@ export default function EventsPageContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">All Events</h1>
-            <p className="text-gray-600">Discover amazing events happening around you</p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <div className="flex -space-x-1">
-                {[1, 2, 3].map((i) => (
-                  <Avatar key={i} className="w-8 h-8 border-2 border-white">
-                    <AvatarFallback className="bg-purple-500 text-white text-xs">{i}</AvatarFallback>
-                  </Avatar>
-                ))}
-              </div>
+      {/* Remove the max-width constraint and use full width */}
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
+        <div className="w-full px-4 py-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">All Events</h1>
+              <p className="text-gray-600">Discover amazing events happening around you</p>
             </div>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2">Follow</Button>
-            <Button variant="outline" className="px-4 py-2 bg-transparent">
-              <Share2 className="w-4 h-4 mr-2" />
-              Share
-            </Button>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <div className="flex -space-x-1">
+                  {[1, 2, 3].map((i) => (
+                    <Avatar key={i} className="w-8 h-8 border-2 border-white">
+                      <AvatarFallback className="bg-purple-500 text-white text-xs">{i}</AvatarFallback>
+                    </Avatar>
+                  ))}
+                </div>
+              </div>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2">Follow</Button>
+              <Button variant="outline" className="px-4 py-2 bg-transparent">
+                <Share2 className="w-4 h-4 mr-2" />
+                Share
+              </Button>
+            </div>
           </div>
-        </div>
 
-        <div className="flex space-x-1 mb-6 border-b border-gray-200">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+          <div className="flex space-x-1 mb-6 border-b border-gray-200">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === tab
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
 
-        <div className="flex gap-6">
-          <div className="w-80 sticky top-6 self-start">
-            <Card className="border border-gray-200 shadow-sm bg-white">
-              <CardContent className="p-0">
-                {/* Calendar Section */}
-                <div className="border-b border-gray-100">
-                  <button
-                    onClick={() => setCalendarOpen(!calendarOpen)}
-                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-                  >
-                    <span className="text-gray-900 font-medium">Calendar</span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-400 transition-transform ${calendarOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-                </div>
+          <div className="flex flex-col lg:flex-row items-start gap-6">
+            {/* Left Sidebar - Fixed width */}
+            <div className="w-full lg:w-80 lg:sticky lg:top-6 self-start flex-shrink-0">
+              <Card className="border border-gray-200 shadow-sm bg-white">
+                <CardContent className="p-0">
+                  {/* Calendar Section */}
+                  <div className="border-b border-gray-100">
+                    <button
+                      onClick={() => setCalendarOpen(!calendarOpen)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                    >
+                      <span className="text-gray-900 font-medium">Calendar</span>
+                      <ChevronDown
+                        className={`w-4 h-4 text-gray-400 transition-transform ${calendarOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                  </div>
 
-                {/* Format Section */}
-                <div className="border-b border-gray-100">
-                  <button
-                    onClick={() => setFormatOpen(!formatOpen)}
-                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-                  >
-                    <span className="text-gray-900 font-medium">Format</span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-400 transition-transform ${formatOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-                </div>
+                  {/* Format Section */}
+                  <div className="border-b border-gray-100">
+                    <button
+                      onClick={() => setFormatOpen(!formatOpen)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                    >
+                      <span className="text-gray-900 font-medium">Format</span>
+                      <ChevronDown
+                        className={`w-4 h-4 text-gray-400 transition-transform ${formatOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                  </div>
 
-                {/* Location Section */}
-                <div className="border-b border-gray-100">
-                  <button
-                    onClick={() => setLocationOpen(!locationOpen)}
-                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-                  >
-                    <span className="text-gray-900 font-medium">Location</span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-400 transition-transform ${locationOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-                </div>
+                  {/* Location Section */}
+                  <div className="border-b border-gray-100">
+                    <button
+                      onClick={() => setLocationOpen(!locationOpen)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                    >
+                      <span className="text-gray-900 font-medium">Location</span>
+                      <ChevronDown
+                        className={`w-4 h-4 text-gray-400 transition-transform ${locationOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                  </div>
 
-                {/* Category Section */}
-                <div className="border-b border-gray-100">
-                  <button
-                    onClick={() => setCategoryOpen(!categoryOpen)}
-                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-                  >
-                    <span className="text-gray-900 font-medium">Category</span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-400 transition-transform ${categoryOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-                  {categoryOpen && (
-                    <div className="px-4 pb-4">
-                      <div className="relative mb-3">
-                        <Input
-                          type="text"
-                          placeholder="Search for Topics"
-                          value={categorySearch}
-                          onChange={(e) => setCategorySearch(e.target.value)}
-                          className="text-sm pr-8 border-gray-200"
-                        />
-                        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  {/* Category Section */}
+                  <div className="border-b border-gray-100">
+                    <button
+                      onClick={() => setCategoryOpen(!categoryOpen)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                    >
+                      <span className="text-gray-900 font-medium">Category</span>
+                      <ChevronDown
+                        className={`w-4 h-4 text-gray-400 transition-transform ${categoryOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    {categoryOpen && (
+                      <div className="px-4 pb-4">
+                        <div className="relative mb-3">
+                          <Input
+                            type="text"
+                            placeholder="Search for Topics"
+                            value={categorySearch}
+                            onChange={(e) => setCategorySearch(e.target.value)}
+                            className="text-sm pr-8 border-gray-200"
+                          />
+                          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        </div>
+                        <div className="space-y-3">
+                          {[
+                            "Expo",
+                            "Business Event",
+                            "Food & Beverage",
+                            "Finance",
+                            "Technology",
+                            "Conference",
+                            "Workshop",
+                            "Networking",
+                          ].map((category) => {
+                            const count = events.filter((event) =>
+                              event.categories.some(
+                                (cat) =>
+                                  cat.toLowerCase().includes(category.toLowerCase()) ||
+                                  category.toLowerCase().includes(cat.toLowerCase()),
+                              ),
+                            ).length
+
+                            return (
+                              <div key={category} className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedCategories.includes(category)}
+                                    onChange={() => handleCategoryToggle(category)}
+                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  />
+                                  <span className="text-sm text-gray-700">{category}</span>
+                                </div>
+                                <span className="text-xs text-gray-500">{count > 0 ? `${count}` : "0.0k"}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        <Button variant="ghost" size="sm" className="w-full mt-3 text-sm text-gray-600">
+                          View All
+                        </Button>
                       </div>
-                      <div className="space-y-3">
-                        {[
-                          "Expo",
-                          "Business Event",
-                          "Food & Beverage",
-                          "Finance",
-                          "Technology",
-                          "Conference",
-                          "Workshop",
-                          "Networking",
-                        ].map((category) => {
-                          const count = events.filter((event) =>
-                            event.categories.some(
-                              (cat) =>
-                                cat.toLowerCase().includes(category.toLowerCase()) ||
-                                category.toLowerCase().includes(cat.toLowerCase()),
-                            ),
-                          ).length
+                    )}
+                  </div>
 
-                          return (
-                            <div key={category} className="flex items-center justify-between">
+                  {/* Related Topic Section */}
+                  <div className="border-b border-gray-100">
+                    <button
+                      onClick={() => setRelatedTopicOpen(!relatedTopicOpen)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                    >
+                      <span className="text-gray-900 font-medium">Related Topic</span>
+                      <ChevronDown
+                        className={`w-4 h-4 text-gray-400 transition-transform ${relatedTopicOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    {relatedTopicOpen && (
+                      <div className="px-4 pb-4">
+                        <div className="space-y-3">
+                          {["Expo", "Business Event", "Food & Beverage", "Finance", "Technology"].map((topic) => (
+                            <div key={topic} className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
                                 <input
                                   type="checkbox"
-                                  checked={selectedCategories.includes(category)}
-                                  onChange={() => handleCategoryToggle(category)}
                                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                 />
-                                <span className="text-sm text-gray-700">{category}</span>
+                                <span className="text-sm text-gray-700">{topic}</span>
                               </div>
-                              <span className="text-xs text-gray-500">{count > 0 ? `${count}` : "0.0k"}</span>
+                              <span className="text-xs text-gray-500">0.0k</span>
                             </div>
-                          )
-                        })}
+                          ))}
+                        </div>
+                        <Button variant="ghost" size="sm" className="w-full mt-3 text-sm text-gray-600">
+                          View All
+                        </Button>
                       </div>
-                      <Button variant="ghost" size="sm" className="w-full mt-3 text-sm text-gray-600">
-                        View All
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                {/* Related Topic Section */}
-                <div className="border-b border-gray-100">
-                  <button
-                    onClick={() => setRelatedTopicOpen(!relatedTopicOpen)}
-                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-                  >
-                    <span className="text-gray-900 font-medium">Related Topic</span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-400 transition-transform ${relatedTopicOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-                  {relatedTopicOpen && (
-                    <div className="px-4 pb-4">
-                      <div className="space-y-3">
-                        {["Expo", "Business Event", "Food & Beverage", "Finance", "Technology"].map((topic) => (
-                          <div key={topic} className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <input
-                                type="checkbox"
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                              />
-                              <span className="text-sm text-gray-700">{topic}</span>
-                            </div>
-                            <span className="text-xs text-gray-500">0.0k</span>
-                          </div>
-                        ))}
-                      </div>
-                      <Button variant="ghost" size="sm" className="w-full mt-3 text-sm text-gray-600">
-                        View All
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Entry Fee Section */}
-                <div className="border-b border-gray-100">
-                  <button
-                    onClick={() => setEntryFeeOpen(!entryFeeOpen)}
-                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-                  >
-                    <span className="text-gray-900 font-medium">Entry Fee</span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-400 transition-transform ${entryFeeOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-                </div>
-
-                {/* Navigation Links */}
-                <div className="p-4 border-b border-gray-100">
-                  <h3 className="text-red-500 font-medium mb-1">Top 100 Events</h3>
-                  <p className="text-sm text-gray-500">Discover and track top events</p>
-                </div>
-                <div className="p-4 border-b border-gray-100">
-                  <h3 className="text-red-500 font-medium mb-1">Social Events</h3>
-                  <p className="text-sm text-gray-500">Discover and track top events</p>
-                </div>
-                <div className="p-4 border-b border-gray-100">
-                  <h3 className="text-red-500 font-medium mb-1">Search by Company</h3>
-                  <p className="text-sm text-gray-500">Discover and track top events</p>
-                </div>
-                <div className="p-4 border-b border-gray-100">
-                  <h3 className="text-red-500 font-medium mb-1">Explore Speaker</h3>
-                  <p className="text-sm text-gray-500">Discover and track top events</p>
-                </div>
-                <div className="p-4 border-b border-gray-100">
-                  <h3 className="text-red-500 font-medium mb-1">Filter</h3>
-                  <p className="text-sm text-gray-500">Discover and track top events</p>
-                </div>
-                <div className="p-4">
-                  <h3 className="text-blue-600 font-medium">All Events</h3>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="flex-1 space-y-6">
-            {/* View Toggle and Results Count */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-600">
-                  Showing {paginatedEvents.length} of {filteredEvents.length} events
-                </span>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => setViewMode("Trending")}
-                    className={`px-3 py-1 text-sm rounded-full ${
-                      viewMode === "Trending" ? "bg-orange-100 text-orange-600" : "text-gray-600 hover:text-gray-800"
-                    }`}
-                  >
-                    Trending 🔥
-                  </button>
-                  <button
-                    onClick={() => setViewMode("Date")}
-                    className={`px-3 py-1 text-sm rounded-full ${
-                      viewMode === "Date" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:text-gray-800"
-                    }`}
-                  >
-                    Date
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="text-gray-600"
-                >
-                  Previous
-                </Button>
-                {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
-                  const page = i + 1
-                  return (
+                  {/* Entry Fee Section */}
+                  <div className="border-b border-gray-100">
                     <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`w-8 h-8 rounded text-sm font-medium ${
-                        currentPage === page
-                          ? "bg-blue-600 text-white"
-                          : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                      }`}
+                      onClick={() => setEntryFeeOpen(!entryFeeOpen)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
                     >
-                      {page}
+                      <span className="text-gray-900 font-medium">Entry Fee</span>
+                      <ChevronDown
+                        className={`w-4 h-4 text-gray-400 transition-transform ${entryFeeOpen ? "rotate-180" : ""}`}
+                      />
                     </button>
-                  )
-                })}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="text-gray-600"
-                >
-                  Next
-                </Button>
-              </div>
+                  </div>
+
+                  {/* Navigation Links */}
+                  <div className="p-4 border-b border-gray-100">
+                    <h3 className="text-red-500 font-medium mb-1">Top 100 Events</h3>
+                    <p className="text-sm text-gray-500">Discover and track top events</p>
+                  </div>
+                  <div className="p-4 border-b border-gray-100">
+                    <h3 className="text-red-500 font-medium mb-1">Social Events</h3>
+                    <p className="text-sm text-gray-500">Discover and track top events</p>
+                  </div>
+                  <div className="p-4 border-b border-gray-100">
+                    <h3 className="text-red-500 font-medium mb-1">Search by Company</h3>
+                    <p className="text-sm text-gray-500">Discover and track top events</p>
+                  </div>
+                  <div className="p-4 border-b border-gray-100">
+                    <h3 className="text-red-500 font-medium mb-1">Explore Speaker</h3>
+                    <p className="text-sm text-gray-500">Discover and track top events</p>
+                  </div>
+                  <div className="p-4 border-b border-gray-100">
+                    <h3 className="text-red-500 font-medium mb-1">Filter</h3>
+                    <p className="text-sm text-gray-500">Discover and track top events</p>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="text-blue-600 font-medium">All Events</h3>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            <div className="space-y-4">
-              {paginatedEvents.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-500 text-lg">No events found matching your criteria</p>
-                  <Button variant="outline" className="mt-4 bg-transparent" onClick={clearAllFilters}>
-                    Clear All Filters
+            {/* Main Content - Now takes remaining space */}
+            <div className="flex-1 w-full min-w-0 space-y-6">
+              {/* View Toggle and Results Count */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm text-gray-600">
+                    Showing {paginatedEvents.length} of {filteredEvents.length} events
+                  </span>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setViewMode("Trending")}
+                      className={`px-3 py-1 text-sm rounded-full ${
+                        viewMode === "Trending" ? "bg-orange-100 text-orange-600" : "text-gray-600 hover:text-gray-800"
+                      }`}
+                    >
+                      Trending 🔥
+                    </button>
+                    <button
+                      onClick={() => setViewMode("Date")}
+                      className={`px-3 py-1 text-sm rounded-full ${
+                        viewMode === "Date" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:text-gray-800"
+                      }`}
+                    >
+                      Date
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="text-gray-600"
+                  >
+                    Previous
+                  </Button>
+                  {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                    const page = i + 1
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-8 h-8 rounded text-sm font-medium ${
+                          currentPage === page
+                            ? "bg-blue-600 text-white"
+                            : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    )
+                  })}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="text-gray-600"
+                  >
+                    Next
                   </Button>
                 </div>
-              ) : (
-                paginatedEvents.map((event) => (
-                  <Link key={event.id} href={`/event/${event.id}`} className="block">
-                  <Card key={event.id} className="hover:shadow-md transition-shadow bg-white border border-gray-100">
-                    <CardContent className="p-6">
-                      <div className="flex gap-4">
-                        {/* Event Image */}
-                        <div className="flex-shrink-0">
-                          <Image
-                            src={getEventImage(event) || "/placeholder.svg"}
-                            alt={event.title}
-                            width={200}
-                            height={140}
-                            className="w-48 h-32 object-cover rounded-lg"
-                          />
-                        </div>
+              </div>
 
-                        {/* Event Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">{event.title}</h3>
-                              <div className="flex items-center text-sm text-gray-600 mb-1">
-                                <Calendar className="w-4 h-4 mr-2" />
-                                <span>
-                                  {formatDate(event.timings.startDate)} - {formatDate(event.timings.endDate)}
-                                </span>
+              <div className="space-y-4">
+                {paginatedEvents.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500 text-lg">No events found matching your criteria</p>
+                    <Button variant="outline" className="mt-4 bg-transparent" onClick={clearAllFilters}>
+                      Clear All Filters
+                    </Button>
+                  </div>
+                ) : (
+                  paginatedEvents.map((event) => (
+                    <Link href={`/event/${event.id}`} key={event.id} className="block">
+                      <Card className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all w-full">
+                        <CardContent className="p-0 flex">
+                          {/* Left Image Section - Adjusted width */}
+                          <div className="relative w-[200px] h-[160px] sm:w-[240px] sm:h-[180px] md:w-[280px] md:h-[200px] lg:w-[320px] lg:h-[220px] flex-shrink-0">
+                            <Image
+                              src={event.image || "/images/gpex.jpg"}
+                              alt={event.title}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+
+                          {/* Right Section - Now takes remaining space */}
+                          <div className="flex-1 flex flex-col justify-between px-6 py-4 min-w-0">
+                            {/* Top Section */}
+                            <div className="min-w-0">
+                              {/* Title & Edition */}
+                              <div className="flex items-start justify-between min-w-0">
+                                <div className="min-w-0 flex-1">
+                                  <h3 className="text-2xl font-bold text-gray-900 truncate">{event.title}</h3>
+                                  <div className="flex items-center text-gray-600 mt-1">
+                                    <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+                                    <span className="text-sm font-medium truncate">
+                                      {event.location?.venue || "Unknown Venue"},{" "}
+                                      {event.location?.city || "Unknown City"}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center text-gray-600 mt-1">
+                                    <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
+                                    <span className="text-sm font-medium">
+                                      {event.timings?.formatted || "Mon, 27 - Wed, 29 Oct 2025"}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Verified + Edition */}
+                                <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+                                  <div className="bg-green-500 rounded-lg p-1.5">
+                                    <svg
+                                      className="w-4 h-4 text-white"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  </div>
+                                  <span className="text-gray-600 font-medium text-sm">2nd Edition</span>
+                                </div>
                               </div>
-                              <div className="flex items-center text-sm text-gray-600 mb-3">
-                                <MapPin className="w-4 h-4 mr-2" />
-                                <span>
-                                  {event.location?.city || "Location TBD"}, {event.location?.venue || "Venue TBD"}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-600 mb-4 line-clamp-2">{event.description}</p>
-                              <div className="flex items-center space-x-2">
-                                {event.categories.slice(0, 2).map((category, idx) => (
+
+                              {/* Tags */}
+                              <div className="flex flex-wrap gap-2 mt-3">
+                                {event.categories?.slice(0, 3).map((category: string, idx: number) => (
                                   <Badge
                                     key={idx}
-                                    className="bg-blue-600 text-white hover:bg-blue-700 text-xs px-3 py-1"
+                                    className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium flex-shrink-0"
                                   >
                                     {category}
                                   </Badge>
                                 ))}
+                                <Badge className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium flex-shrink-0">
+                                  Paid entry
+                                </Badge>
                               </div>
                             </div>
 
-                            {/* Actions and Rating */}
-                            <div className="flex flex-col items-end space-y-2 ml-4">
-                              <div className="flex items-center space-x-2">
-                                <Button variant="ghost" size="sm" className="p-2">
-                                  <Heart className="w-4 h-4 text-gray-400" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="p-2">
-                                  <Share2 className="w-4 h-4 text-gray-400" />
+                            {/* Divider */}
+                            <div className="border-t border-gray-200 mt-4 mb-3" />
+
+                            {/* Bottom Section */}
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                              {/* Left Part: Rating + Followers */}
+                              <div className="flex items-center gap-4 flex-wrap">
+                                <div className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-md text-sm font-semibold flex-shrink-0">
+                                  <Star className="w-4 h-4 fill-current" />
+                                  <span>{event.rating?.average || "4.9"}</span>
+                                </div>
+
+                                <div className="flex items-center text-gray-600 text-sm gap-2 flex-shrink-0">
+                                  <span className="flex items-center gap-1">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="w-4 h-4 text-gray-400"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                      strokeWidth={2}
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m4-9a4 4 0 100 8 4 4 0 000-8z"
+                                      />
+                                    </svg>
+                                    {Math.floor(Math.random() * 200) + 100} Followers
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Share + Save + Follow */}
+                              <div className="flex items-center gap-4 flex-shrink-0">
+                                <button className="p-2 rounded-full hover:bg-gray-100 transition">
+                                  <Share2 className="w-5 h-5 text-gray-600" />
+                                </button>
+                                <button className="p-2 rounded-full hover:bg-gray-100 transition">
+                                  <Bookmark className="w-5 h-5 text-gray-600" />
+                                </button>
+                                <Button className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 text-sm rounded-lg">
+                                  + Follow
                                 </Button>
                               </div>
-                              <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-semibold">
-                                {event.rating?.average || "4.5"}
+                            </div>
+
+                            {/* Organizer */}
+                            <div className="flex items-center gap-2 text-sm text-gray-600 mt-3 flex-wrap">
+                              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-700 flex-shrink-0">
+                                {typeof event.organizer === "string"
+                                  ? event.organizer.charAt(0)
+                                  : event.organizer?.name?.charAt(0) || "M"}
                               </div>
+                              <span className="truncate">
+                                {typeof event.organizer === "string"
+                                  ? event.organizer
+                                  : event.organizer?.name || "Maxx Business Media Pvt Ltd"}
+                              </span>
+                              <span className="text-gray-400 flex-shrink-0">•</span>
+                              <span className="flex-shrink-0">{event.organizer?.city || "Bengaluru, India"}</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))
+                )}
+              </div>
+
+              {/* Event Ads Slider - Small height card with same width as main card */}
+              {/* <section className="py-4">
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200 shadow-sm">
+                  <div className="relative overflow-hidden rounded-2xl">
+                   
+                    <div className="flex items-center justify-between px-6 py-3 border-b border-blue-100">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-blue-700">Sponsored Events</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={goToPrevAdSlide}
+                          className="p-1 h-6 w-6 bg-transparent hover:bg-blue-100"
+                        >
+                          <ChevronLeft className="w-3 h-3 text-blue-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={goToNextAdSlide}
+                          className="p-1 h-6 w-6 bg-transparent hover:bg-blue-100"
+                        >
+                          <ChevronRight className="w-3 h-3 text-blue-600" />
+                        </Button>
+                      </div>
+                    </div>
+
+                  
+                    <div className="relative h-32">
+                      {eventAds.map((ad, index) => (
+                        <div
+                          key={ad.id}
+                          className={`absolute inset-0 transition-opacity duration-500 ${
+                            index === currentAdSlide ? "opacity-100" : "opacity-0 pointer-events-none"
+                          }`}
+                        >
+                          <div className="flex items-center h-full px-6 py-4">
+                            
+                            <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center flex-shrink-0 mr-4">
+                              <div className="text-white text-xs font-bold text-center px-2">
+                                AD
+                              </div>
+                            </div>
+                            
+                           
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-lg font-semibold text-gray-900 truncate">{ad.title}</h3>
+                              <p className="text-sm text-gray-600 mt-1 line-clamp-2">{ad.description}</p>
+                              <div className="flex items-center justify-between mt-2">
+                                <span className="text-xs text-gray-500">{ad.company}</span>
+                                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 h-7">
+                                  {ad.cta}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    
+                    <div className="px-6 pb-3">
+                      <div className="w-full bg-blue-200 rounded-full h-1">
+                        <div 
+                          className="bg-blue-600 h-1 rounded-full transition-all duration-500 ease-out"
+                          style={{ 
+                            width: `${((currentAdSlide + 1) / eventAds.length) * 100}%` 
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                  
+                    <div className="flex justify-center space-x-1 pb-3">
+                      {eventAds.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => goToAdSlide(index)}
+                          className={`w-2 h-2 rounded-full transition-colors ${
+                            index === currentAdSlide ? "bg-blue-600" : "bg-blue-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </section> */}
+
+              {featuredEvents.length > 0 && (
+                <section className="py-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900 underline">Featured Events</h2>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToPrevSlide}
+                        className="p-2 bg-transparent"
+                        disabled={isTransitioning}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToNextSlide}
+                        className="p-2 bg-transparent"
+                        disabled={isTransitioning}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {featuredEvents.slice(0, 3).map((event) => (
+                      <Card key={event.id} className="hover:shadow-lg transition-shadow bg-white">
+                        <div className="relative">
+                          <Image
+                            src={getEventImage(event) || "/placeholder.svg"}
+                            alt={event.title}
+                            width={400}
+                            height={200}
+                            className="w-full h-48 object-cover rounded-t-lg"
+                          />
+                          <div className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-md">
+                            <Heart className="w-4 h-4 text-gray-600" />
+                          </div>
+                          <div className="absolute bottom-3 left-3 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                            Featured ✨
+                          </div>
+                        </div>
+                        <CardContent className="p-4">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">{event.title}</h3>
+                          <div className="flex items-center text-sm text-gray-600 mb-1">
+                            <MapPin className="w-4 h-4 mr-2" />
+                            <span>{event.location?.city || "Location TBD"}</span>
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600 mb-3">
+                            <Calendar className="w-4 h-4 mr-2" />
+                            <span>{formatDate(event.timings.startDate)}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Badge className="bg-blue-600 text-white text-xs">{event.categories[0]}</Badge>
+                            <span className="text-sm font-bold text-green-600">{event.rating?.average || "4.6"}</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-center mt-4 space-x-1">
+                    {[0, 1, 2, 3].map((dot) => (
+                      <div key={dot} className={`w-2 h-2 rounded-full ${dot === 1 ? "bg-blue-600" : "bg-gray-300"}`} />
+                    ))}
+                  </div>
+                  <div className="text-center mt-2">
+                    <span className="text-xs text-gray-500">2 of 4</span>
+                  </div>
+                </section>
+              )}
+            </div>
+
+            {/* Right Column - Fixed width */}
+            <div className="w-full lg:w-80 space-y-6 self-start flex-shrink-0">
+              <AdCard />
+
+              {/* Large Featured Event */}
+              {featuredEvents[0] && (
+                <Card className="bg-white shadow-lg">
+                  <div className="relative">
+                    <Image
+                      src={getEventImage(featuredEvents[0]) || "/placeholder.svg"}
+                      alt={featuredEvents[0].title}
+                      width={320}
+                      height={200}
+                      className="w-full h-48 object-cover rounded-t-lg"
+                    />
+                    <div className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-md">
+                      <Heart className="w-4 h-4 text-gray-600" />
+                    </div>
+                    <div className="absolute top-3 left-3 flex space-x-2">
+                      <Badge className="bg-blue-600 text-white text-xs">Expo</Badge>
+                      <Badge className="bg-blue-600 text-white text-xs">Business Event</Badge>
+                    </div>
+                    <div className="absolute bottom-3 right-3 bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-semibold">
+                      4.5
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* Upcoming Events List */}
+              <div className="space-y-4">
+                {events.slice(0, 3).map((event) => (
+                  <Card key={event.id} className="bg-white border border-gray-100">
+                    <CardContent className="p-4">
+                      <div className="flex gap-3">
+                        <Image
+                          src={getEventImage(event) || "/placeholder.svg"}
+                          alt={event.title}
+                          width={60}
+                          height={60}
+                          className="w-15 h-15 rounded-lg object-cover flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm text-gray-900 mb-1 line-clamp-2">{event.title}</h4>
+                          <p className="text-xs text-gray-600 mb-1">{formatDate(event.timings.startDate)}</p>
+                          <p className="text-xs text-gray-600 mb-2">{event.location?.city || "Location TBD"}</p>
+                          <div className="flex items-center justify-between">
+                            <Badge className="bg-blue-600 text-white text-xs">{event.categories[0]}</Badge>
+                            <div className="w-4 h-4 bg-white rounded-full border border-gray-200 flex items-center justify-center">
+                              <div className="w-2 h-2 bg-gray-400 rounded-full" />
                             </div>
                           </div>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                  </Link>
-                ))
-              )}
-            </div>
-
-            {featuredEvents.length > 0 && (
-              <section className="py-8">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900 underline">Featured Events</h2>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={goToPrevSlide}
-                      className="p-2 bg-transparent"
-                      disabled={isTransitioning}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={goToNextSlide}
-                      className="p-2 bg-transparent"
-                      disabled={isTransitioning}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-6">
-                  {featuredEvents.slice(0, 3).map((event) => (
-                    <Card key={event.id} className="hover:shadow-lg transition-shadow bg-white">
-                      <div className="relative">
-                        <Image
-                          src={getEventImage(event) || "/placeholder.svg"}
-                          alt={event.title}
-                          width={300}
-                          height={200}
-                          className="w-full h-48 object-cover rounded-t-lg"
-                        />
-                        <div className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-md">
-                          <Heart className="w-4 h-4 text-gray-600" />
-                        </div>
-                        <div className="absolute bottom-3 left-3 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">
-                          Featured ✨
-                        </div>
-                      </div>
-                      <CardContent className="p-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">{event.title}</h3>
-                        <div className="flex items-center text-sm text-gray-600 mb-1">
-                          <MapPin className="w-4 h-4 mr-2" />
-                          <span>{event.location?.city || "Location TBD"}</span>
-                        </div>
-                        <div className="flex items-center text-sm text-gray-600 mb-3">
-                          <Calendar className="w-4 h-4 mr-2" />
-                          <span>{formatDate(event.timings.startDate)}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <Badge className="bg-blue-600 text-white text-xs">{event.categories[0]}</Badge>
-                          <span className="text-sm font-bold text-green-600">{event.rating?.average || "4.6"}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                <div className="flex justify-center mt-4 space-x-1">
-                  {[0, 1, 2, 3].map((dot) => (
-                    <div key={dot} className={`w-2 h-2 rounded-full ${dot === 1 ? "bg-blue-600" : "bg-gray-300"}`} />
-                  ))}
-                </div>
-                <div className="text-center mt-2">
-                  <span className="text-xs text-gray-500">2 of 4</span>
-                </div>
-              </section>
-            )}
-          </div>
-
-          <div className="w-80 space-y-6">
-            {/* Large Featured Event */}
-            {featuredEvents[0] && (
-              <Card className="bg-white shadow-lg">
-                <div className="relative">
-                  <Image
-                    src={getEventImage(featuredEvents[0]) || "/placeholder.svg"}
-                    alt={featuredEvents[0].title}
-                    width={320}
-                    height={200}
-                    className="w-full h-48 object-cover rounded-t-lg"
-                  />
-                  <div className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-md">
-                    <Heart className="w-4 h-4 text-gray-600" />
-                  </div>
-                  <div className="absolute top-3 left-3 flex space-x-2">
-                    <Badge className="bg-blue-600 text-white text-xs">Expo</Badge>
-                    <Badge className="bg-blue-600 text-white text-xs">Business Event</Badge>
-                  </div>
-                  <div className="absolute bottom-3 right-3 bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-semibold">
-                    4.5
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* Upcoming Events List */}
-            <div className="space-y-4">
-              {events.slice(0, 3).map((event) => (
-                <Card key={event.id} className="bg-white border border-gray-100">
-                  <CardContent className="p-4">
-                    <div className="flex gap-3">
-                      <Image
-                        src={getEventImage(event) || "/placeholder.svg"}
-                        alt={event.title}
-                        width={60}
-                        height={60}
-                        className="w-15 h-15 rounded-lg object-cover flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm text-gray-900 mb-1 line-clamp-2">{event.title}</h4>
-                        <p className="text-xs text-gray-600 mb-1">{formatDate(event.timings.startDate)}</p>
-                        <p className="text-xs text-gray-600 mb-2">{event.location?.city || "Location TBD"}</p>
-                        <div className="flex items-center justify-between">
-                          <Badge className="bg-blue-600 text-white text-xs">{event.categories[0]}</Badge>
-                          <div className="w-4 h-4 bg-white rounded-full border border-gray-200 flex items-center justify-center">
-                            <div className="w-2 h-2 bg-gray-400 rounded-full" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
