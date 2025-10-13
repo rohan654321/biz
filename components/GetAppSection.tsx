@@ -6,7 +6,7 @@ import { FaGooglePlay, FaApple } from "react-icons/fa";
 
 export default function GetAppSection() {
   return (
-    <section className="border rounded-sm p-6 bg-white max-w-7xl mx-auto my-10">
+    <section className="border rounded-sm p-6 bg-white max-w-6xl mx-auto my-10">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
         
         {/* Left: Phones Image */}

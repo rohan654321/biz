@@ -65,7 +65,7 @@ export async function POST(
     const review = await prisma.review.create({
       data: {
         userId: user.id,
-        venueId: venueId, // Storing exhibitor as venueId
+        exhibitorId: venueId, // Storing exhibitor as venueId
         rating: parseInt(rating),
         title: title || '',
         comment,

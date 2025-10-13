@@ -125,7 +125,7 @@ export default function CategoryBrowser() {
        
 {/* Header */}
 <div className="px-6 py-6 border-b border-gray-200 max-w-6xl mx-auto">
-  <h2 className="text-3xl font-semibold text-gray-900 mb-1">
+  <h2 className="text-2xl font-semibold text-gray-900 mb-1">
     Browse by Category
   </h2>
   <p className="text-gray-600">Find events that match your interests</p>
@@ -136,7 +136,7 @@ export default function CategoryBrowser() {
 
 
         {/* Categories */}
-        <div className="px-6 py-8">
+        <div className="px-6 py-8 max-w-6xl mx-auto">
           <div className="mt-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {primaryCategories.map((category) => {
               const IconComponent = category.icon

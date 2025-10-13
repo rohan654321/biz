@@ -264,84 +264,88 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-20 mt-20">
         {displayExhibitors?.map((exhibitor) => (
-          <Card key={exhibitor.id} className="border hover:shadow-lg transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex gap-4 items-start mb-4">
-                <div className="w-16 h-16 flex-shrink-0">
-                  <Image
-                    src={exhibitor.logo || "/placeholder.svg?height=96&width=96&text=Logo"}
-                    alt={`${exhibitor.company} logo`}
-                    width={64}
-                    height={64}
-                    className="object-contain shadow-sm rounded-md border border-gray-200"
-                  />
-                </div>
-                <div className="flex-1">
-                  <button className="px-3 py-1 text-red-600 text-sm border-2 border-red-600 rounded-md hover:bg-red-50 transition">
-                    +Follow
-                  </button>
-                </div>
-              </div>
+  <Card
+    key={exhibitor.id}
+    className="relative border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition p-4 flex flex-col items-center text-center"
+  >
+    {/* Logo Circle */}
+    <div className="relative w-28 h-28 -mt-12 bg-white border-4 border-blue-600 rounded-full flex items-center justify-center">
+      <Image
+        src={exhibitor.logo || "/Organizers/maxx.png?height=96&width=96&text=Logo"}
+        alt={`${exhibitor.company} logo`}
+        width={80}
+        height={80}
+        className="object-contain"
+      />
+    </div>
 
-              <div className="space-y-2">
-                <h3 className="text-lg font-bold text-gray-700">
-                  {exhibitor.company}
-                  {exhibitor.isSample && (
-                    <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Sample</span>
-                  )}
-                </h3>
+    {/* Verified Badge */}
+    <div className="absolute top-4 right-4 bg-green-500 text-white rounded-full p-1.5">
+      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+      </svg>
+    </div>
 
-                {/* Booth Number */}
-                {exhibitor.boothNumber && (
-                  <div className="flex items-center text-sm text-gray-600">
-                    <span className="font-medium">Booth:</span>
-                    <span className="ml-1 bg-gray-100 px-2 py-0.5 rounded">{exhibitor.boothNumber}</span>
-                  </div>
-                )}
+    <CardContent className="mt-4 w-full">
+      {/* Followers Section */}
+      <div className="flex justify-center items-center space-x-1 mb-2">
+        <div className="flex -space-x-2">
+          <div className="w-6 h-6 rounded-full bg-gray-300 border border-white"></div>
+          <div className="w-6 h-6 rounded-full bg-gray-400 border border-white"></div>
+          <div className="w-6 h-6 rounded-full bg-gray-500 border border-white"></div>
+        </div>
+        <span className="text-sm text-gray-500 ml-1">{Math.floor(Math.random() * 200) + 50} Followers</span>
+      </div>
 
-                {/* Contact Person */}
-                {exhibitor.name && <p className="text-sm text-gray-600">{exhibitor.name}</p>}
+      {/* Company Name */}
+      <h3 className="text-lg font-semibold text-gray-800">{exhibitor.company}</h3>
 
-                {/* Status */}
-                {exhibitor.status && (
-                  <div className="flex items-center">
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        exhibitor.status === "BOOKED"
-                          ? "bg-green-100 text-green-800"
-                          : exhibitor.status === "CANCELLED"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {exhibitor.status}
-                    </span>
-                  </div>
-                )}
-              </div>
+      {/* Location & Booth */}
+      <div className="flex flex-col items-center mt-2 space-y-1 text-sm text-gray-600">
+        <div className="flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-1 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3H6a1 1 0 100 2h3v3a1 1 0 102 0v-3h3a1 1 0 100-2h-3V7z" clipRule="evenodd" />
+          </svg>
+          <span>{exhibitor.name || "Bangalore"}</span>
+        </div>
 
-              <button
-                onClick={() => handleScheduleMeeting(exhibitor)}
-                disabled={creating === exhibitor.id}
-                className={`w-full mt-4 border-2 text-sm py-2 rounded-full font-semibold transition flex items-center justify-center ${
-                  exhibitor.isSample
-                    ? "border-gray-300 text-gray-500 bg-gray-100 cursor-not-allowed"
-                    : "border-red-600 text-white bg-red-600 hover:bg-red-700"
-                }`}
-              >
-                {creating === exhibitor.id ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Scheduling...
-                  </>
-                ) : (
-                  <>{exhibitor.isSample ? "Sample Data" : "Schedule Meeting"}</>
-                )}
-              </button>
-            </CardContent>
-          </Card>
-        ))}
+        <div className="flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-1 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 21h8M12 17v4m-6-4h12V5a2 2 0 00-2-2H8a2 2 0 00-2 2v12z" />
+          </svg>
+          <span>Booth {exhibitor.boothNumber || "No."}</span>
+        </div>
+      </div>
+
+      {/* Follow Button */}
+      <button className="mt-3 px-4 py-1.5 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600">
+        + Follow
+      </button>
+
+      {/* Schedule Meeting */}
+      <Button
+        onClick={() => handleScheduleMeeting(exhibitor)}
+        disabled={creating === exhibitor.id || exhibitor.isSample}
+        className={`w-full mt-4 rounded-full font-semibold ${
+          exhibitor.isSample
+            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+            : "bg-blue-600 text-white hover:bg-blue-700"
+        }`}
+      >
+        {creating === exhibitor.id ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Scheduling...
+          </>
+        ) : (
+          "Schedule Meeting"
+        )}
+      </Button>
+    </CardContent>
+  </Card>
+))}
+
       </div>
 
       {exhibitors.length > 6 && (
