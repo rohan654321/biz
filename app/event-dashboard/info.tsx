@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import ExhibitorsTab from "./exhibitors-tab"
 import EventHero from "./EventHero"
+import Image from "next/image"
 
 interface EventPageProps {
   params: { id: string }
@@ -321,10 +322,10 @@ export default function EventPage({ params }: EventPageProps) {
   return (
     <div className="max-w-7xl bg-gray-50 py-0 mx-10">
       <div className="max-w-7xl mx-auto">
-              {/* Hero Section */}
-      <div className="mb-10">
-        <EventHero event={event} />
-      </div>
+        {/* Hero Section */}
+        <div className="mb-10">
+          <EventHero event={event} />
+        </div>
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1">
             <Tabs defaultValue="about" className="w-full">
@@ -622,14 +623,27 @@ export default function EventPage({ params }: EventPageProps) {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center">
-                      <p className="text-gray-600">Floor plan will be displayed here</p>
+                    <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center overflow-hidden">
+                      {event?.layoutPlan ? (
+                        <Image
+                          src={event.layoutPlan.startsWith("http")
+                            ? event.layoutPlan
+                            : `/uploads/${event.layoutPlan}`} // adjust path if stored locally
+                          alt="Event Layout Plan"
+                          width={800}
+                          height={600}
+                          className="object-contain rounded-lg"
+                        />
+                      ) : (
+                        <p className="text-gray-500">Floor plan will be displayed here</p>
+                      )}
                     </div>
                   </CardContent>
+
                 </Card>
               </TabsContent>
 
-              <TabsContent value="brochure">
+                   <TabsContent value="brochure">
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
@@ -641,15 +655,52 @@ export default function EventPage({ params }: EventPageProps) {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center">
-                      <p className="text-gray-600">Brochure will be displayed here</p>
+                    <div className="space-y-4">
+                      {event?.brochure ? (
+                        <>
+                          <div className="bg-gray-100 rounded-lg overflow-hidden border border-gray-300">
+                            <object
+                              data={event.brochure}
+                              type="application/pdf"
+                              className="w-full h-96"
+                              aria-label="Event Brochure PDF"
+                            >
+                              <div className="flex flex-col items-center justify-center h-96 p-6 text-center">
+                                <p className="text-gray-600 mb-4">
+                                  Unable to display PDF in browser. Please download to view.
+                                </p>
+                                <Button asChild>
+                                  <a
+                                    href={event.brochure}
+                                    download
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center"
+                                  >
+                                    Download Brochure
+                                  </a>
+                                </Button>
+                              </div>
+                            </object>
+                          </div>
+                          <div className="flex justify-center">
+                            <Button asChild size="lg" className="w-full sm:w-auto">
+                              <a href={event.brochure} download target="_blank" rel="noopener noreferrer">
+                                Download Brochure
+                              </a>
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center">
+                          <p className="text-gray-600">No brochure available</p>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
-                  <button className="mx-5 mt-4 bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition">
-                    Download Brochure
-                  </button>
                 </Card>
               </TabsContent>
+
 
               <TabsContent value="venue">
                 <Card>

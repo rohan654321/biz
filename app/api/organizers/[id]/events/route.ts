@@ -11,7 +11,7 @@ const prisma = new PrismaClient()
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
-    const { id } = await params // Await the params promise
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -80,11 +80,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         endDate: event.endDate.toISOString(),
         location: event.isVirtual
           ? "Virtual Event"
-          : (event.venue ? `${event.venue.firstName} ${event.venue.lastName ?? ""}`.trim() : null) ||
-          // event.location ||
-          // `${event.city}, ${event.state}` ||
-          // event.address ||
-          "TBD",
+          : (event.venue ? `${event.venue.firstName} ${event.venue.lastName ?? ""}`.trim() : null) || "TBD",
         status: event.status,
         attendees: confirmedRegistrations,
         registrations: confirmedRegistrations,
@@ -107,7 +103,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 }
 
-// ✅ POST Handler - Fixed version
+// ✅ POST Handler
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
@@ -127,6 +123,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     const body = await request.json()
 
+    const images = Array.isArray(body.images) ? body.images : []
+    const videos = Array.isArray(body.videos) ? body.videos : []
+    const documents = Array.isArray(body.documents)
+      ? body.documents.filter(Boolean)
+      : [body.brochure, body.layoutPlan].filter(Boolean)
+
     const newEvent = await prisma.event.create({
       data: {
         id: new ObjectId().toHexString(),
@@ -142,6 +144,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         status: (body.status?.toUpperCase() as EventStatus) || EventStatus.DRAFT,
         category: body.category || null,
         tags: body.tags || [],
+        eventType: body.eventType || [],
         startDate: new Date(body.startDate),
         endDate: new Date(body.endDate),
         registrationStart: new Date(body.registrationStart || body.startDate),
@@ -149,22 +152,24 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         timezone: body.timezone || "UTC",
         isVirtual: body.isVirtual || false,
         virtualLink: body.virtualLink || null,
-       
         venueId: ObjectId.isValid(body.venue) ? body.venue : null,
         maxAttendees: body.maxAttendees || null,
         currency: body.currency || "USD",
-        bannerImage: body.bannerImage || null,
-        thumbnailImage: body.thumbnailImage || null,
+        images: images,
+        videos: videos,
+        documents: documents,
+        brochure: body.brochure ,
+        layoutPlan: body.layoutPlan,
+        bannerImage: body.bannerImage || images[0] || null,
+        thumbnailImage: body.thumbnailImage || images[0] || null,
         isPublic: body.isPublic !== false,
         requiresApproval: body.requiresApproval || false,
         allowWaitlist: body.allowWaitlist || false,
         refundPolicy: body.refundPolicy || null,
         metaTitle: body.metaTitle || null,
         metaDescription: body.metaDescription || null,
-
         isFeatured: body.featured || false,
         isVIP: body.vip || false,
-
         organizerId: id,
 
         ticketTypes: body.ticketTypes
@@ -174,39 +179,36 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
                 description: ticket.description,
                 price: ticket.price,
                 earlyBirdPrice: ticket.earlyBirdPrice || null,
-                earlyBirdEnd: ticket.earlyBirdEnd
-                  ? new Date(ticket.earlyBirdEnd)
-                  : null,
+                earlyBirdEnd: ticket.earlyBirdEnd ? new Date(ticket.earlyBirdEnd) : null,
                 quantity: ticket.quantity,
                 isActive: ticket.isActive !== false,
               })),
             }
           : undefined,
 
-
         exhibitionSpaces: body.exhibitionSpaces
           ? {
-            create: body.exhibitionSpaces.map((space: any) => ({
-              spaceType: space.spaceType || "CUSTOM",
-              name: space.name,
-              description: space.description,
-              basePrice: space.basePrice,
-              pricePerSqm: space.pricePerSqm,
-              minArea: space.minArea,
-              isFixed: space.isFixed ?? false,
-              additionalPowerRate: space.additionalPowerRate,
-              compressedAirRate: space.compressedAirRate,
-              unit: space.unit,
-              area: space.area || 0,
-              isAvailable: space.isAvailable !== false,
-              maxBooths: space.maxBooths || null,
-            })),
-          }
+              create: body.exhibitionSpaces.map((space: any) => ({
+                spaceType: space.spaceType || "CUSTOM",
+                name: space.name,
+                description: space.description,
+                basePrice: space.basePrice,
+                pricePerSqm: space.pricePerSqm,
+                minArea: space.minArea,
+                isFixed: space.isFixed ?? false,
+                additionalPowerRate: space.additionalPowerRate,
+                compressedAirRate: space.compressedAirRate,
+                unit: space.unit,
+                area: space.area || 0,
+                isAvailable: space.isAvailable !== false,
+                maxBooths: space.maxBooths || null,
+              })),
+            }
           : undefined,
       },
       include: {
         exhibitionSpaces: true,
-         ticketTypes: true,
+        ticketTypes: true,
       },
     })
 
@@ -226,7 +228,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     )
   } catch (error) {
     console.error("Error creating event:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
 
@@ -255,7 +263,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Event ID is required" }, { status: 400 })
     }
 
-    // Check if event exists and belongs to the organizer
     const existingEvent = await prisma.event.findFirst({
       where: {
         id: eventId,
@@ -267,12 +274,18 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Event not found or access denied" }, { status: 404 })
     }
 
-    // Prepare update data
+    const images = Array.isArray(updateData.images) ? updateData.images : existingEvent.images
+    const videos = Array.isArray(updateData.videos) ? updateData.videos : existingEvent.videos
+    const documents = Array.isArray(updateData.documents)
+      ? updateData.documents.filter(Boolean)
+      : [updateData.brochure, updateData.layoutPlan].filter(Boolean)
+
     const eventUpdateData: any = {
       title: updateData.title,
       description: updateData.description,
       shortDescription: updateData.shortDescription || null,
-      slug: updateData.slug ?? 
+      slug:
+        updateData.slug ??
         updateData.title
           ?.toLowerCase()
           .replace(/\s+/g, "-")
@@ -280,28 +293,26 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       status: (updateData.status?.toUpperCase() as EventStatus) || existingEvent.status,
       category: updateData.category || null,
       tags: updateData.tags || [],
+      eventType: updateData.eventType || existingEvent.eventType,
       startDate: updateData.startDate ? new Date(updateData.startDate) : existingEvent.startDate,
       endDate: updateData.endDate ? new Date(updateData.endDate) : existingEvent.endDate,
-      registrationStart: updateData.registrationStart 
-        ? new Date(updateData.registrationStart) 
+      registrationStart: updateData.registrationStart
+        ? new Date(updateData.registrationStart)
         : existingEvent.registrationStart,
-      registrationEnd: updateData.registrationEnd 
-        ? new Date(updateData.registrationEnd) 
+      registrationEnd: updateData.registrationEnd
+        ? new Date(updateData.registrationEnd)
         : existingEvent.registrationEnd,
       timezone: updateData.timezone || existingEvent.timezone,
       isVirtual: updateData.isVirtual ?? existingEvent.isVirtual,
       virtualLink: updateData.virtualLink || null,
-      address: updateData.address || null,
-      location: updateData.location || null,
-      city: updateData.city || null,
-      state: updateData.state || null,
-      country: updateData.country || null,
-      zipCode: updateData.zipCode || null,
       venueId: updateData.venue && ObjectId.isValid(updateData.venue) ? updateData.venue : null,
       maxAttendees: updateData.maxAttendees || null,
       currency: updateData.currency || existingEvent.currency,
-      bannerImage: updateData.bannerImage || null,
-      thumbnailImage: updateData.thumbnailImage || null,
+      images: images,
+      videos: videos,
+      documents: documents.length > 0 ? documents : existingEvent.documents,
+      bannerImage: updateData.bannerImage || images[0] || null,
+      thumbnailImage: updateData.thumbnailImage || images[0] || null,
       isPublic: updateData.isPublic !== false,
       requiresApproval: updateData.requiresApproval || false,
       allowWaitlist: updateData.allowWaitlist || false,
@@ -312,13 +323,11 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       isVIP: updateData.vip || false,
     }
 
-    // Handle ticket types update
     if (updateData.ticketTypes) {
-      // Delete existing ticket types and create new ones
       await prisma.ticketType.deleteMany({
         where: { eventId: eventId },
       })
-      
+
       eventUpdateData.ticketTypes = {
         create: updateData.ticketTypes.map((ticket: any) => ({
           name: ticket.name,
@@ -332,13 +341,11 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       }
     }
 
-    // Handle exhibition spaces update
     if (updateData.exhibitionSpaces) {
-      // Delete existing exhibition spaces and create new ones
       await prisma.exhibitionSpace.deleteMany({
         where: { eventId: eventId },
       })
-      
+
       eventUpdateData.exhibitionSpaces = {
         create: updateData.exhibitionSpaces.map((space: any) => ({
           spaceType: space.spaceType || "CUSTOM",
@@ -383,10 +390,16 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         message: "Event updated successfully",
         event: updatedEvent,
       },
-      { status: 200 }
+      { status: 200 },
     )
   } catch (error) {
     console.error("Error updating event:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

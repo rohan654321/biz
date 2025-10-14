@@ -12,140 +12,140 @@ datasource db {
 
 // User Management
 model User {
-  id                String   @id @default(auto()) @map("_id") @db.ObjectId
-  email             String?   @unique
-  password          String   @default("TEMP_PASSWORD")
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  email    String? @unique
+  password String  @default("TEMP_PASSWORD")
 
-  firstName         String
-  lastName          String
-  phone             String?
-  avatar            String?
-  role              UserRole @default(ATTENDEE)
-  isVerified        Boolean  @default(false)
-  isActive          Boolean  @default(true)
-  emailVerified     Boolean  @default(false)
-  phoneVerified     Boolean  @default(false)
-  twoFactorEnabled  Boolean  @default(false)
-  lastLogin         DateTime?
-  loginAttempts     Int      @default(0)
-  lockoutUntil      DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  firstName        String
+  lastName         String
+  phone            String?
+  avatar           String?
+  role             UserRole  @default(ATTENDEE)
+  isVerified       Boolean   @default(false)
+  isActive         Boolean   @default(true)
+  emailVerified    Boolean   @default(false)
+  phoneVerified    Boolean   @default(false)
+  twoFactorEnabled Boolean   @default(false)
+  lastLogin        DateTime?
+  loginAttempts    Int       @default(0)
+  lockoutUntil     DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   // Profile Information
-  bio               String?
-  website           String?
-  linkedin          String?
-  twitter           String?
-  instagram         String?
-  company           String?
-  companyIndustry   String?
-  jobTitle          String?
-  location          String?
-  timezone          String?
-  language          String   @default("en")
-  interests         String[] @default([])
+  bio             String?
+  website         String?
+  linkedin        String?
+  twitter         String?
+  instagram       String?
+  company         String?
+  companyIndustry String?
+  jobTitle        String?
+  location        String?
+  timezone        String?
+  language        String   @default("en")
+  interests       String[] @default([])
 
   // Organizer-specific fields
-  organizationName  String?
-  description       String?
-  headquarters      String?
-  founded           String?
-  teamSize          String?
-  specialties       String[]
-  achievements      String[]
-  certifications    String[]
-  
+  organizationName String?
+  description      String?
+  headquarters     String?
+  founded          String?
+  teamSize         String?
+  specialties      String[]
+  achievements     String[]
+  certifications   String[]
+
   // Business Information
-  businessEmail     String?
-  businessPhone     String?
-  businessAddress   String?
-  taxId             String?
-  
+  businessEmail   String?
+  businessPhone   String?
+  businessAddress String?
+  taxId           String?
+
   // Statistics (computed fields)
-  totalEvents       Int      @default(0)
-  activeEvents      Int      @default(0)
-  totalAttendees    Int      @default(0)
-  totalRevenue      Float    @default(0)
+  totalEvents    Int   @default(0)
+  activeEvents   Int   @default(0)
+  totalAttendees Int   @default(0)
+  totalRevenue   Float @default(0)
 
   // Relationships
-  organizedEvents   Event[]  @relation("EventOrganizer")
-  registrations     EventRegistration[]
-  speakerSessions   SpeakerSession[]
-  speakerMaterials  Material[] @relation("SpeakerMaterials")
-  exhibitorBooths   ExhibitorBooth[]
-  products          Product[]
-  venueBookings     VenueBooking[] 
-  sentMessages      Message[] @relation("MessageSender")
-  receivedMessages  Message[] @relation("MessageReceiver")
-  reviews           Review[]
-  payments          Payment[] 
-  legaldoc          LegalDocument[] @relation("VenueLegalDocuments")
-  notifications     Notification[]
-  analytics         UserAnalytics[]
-  settings          Settings?
-  campaigns         Campaign[]
-  broadcastsSent    Broadcast[] @relation("BroadcastSender")
-  broadcastsReceived   BroadcastRecipient[]
-  venueEvents Event[] @relation("EventVenue")
-  exhibitorReviews Review[] @relation("ExhibitorReviews")
-  venueReviews Review[]   @relation("VenueReviews")
-  venueAnalytics VenueAnalytics[]
-  meetingSpaces MeetingSpace[] 
-  leads           EventLead[]
-  organizerPromotions   Promotion[] @relation("OrganizerPromotions")
-  exhibitorPromotions   Promotion[] @relation("ExhibitorPromotions")
-  savedEvents SavedEvent[]
-  replies ReviewReply[]
-  connectionsSent    Connection[] @relation("ConnectionSender")
-  connectionsReceived Connection[] @relation("ConnectionReceiver")
+  organizedEvents          Event[]              @relation("EventOrganizer")
+  registrations            EventRegistration[]
+  speakerSessions          SpeakerSession[]
+  speakerMaterials         Material[]           @relation("SpeakerMaterials")
+  exhibitorBooths          ExhibitorBooth[]
+  products                 Product[]
+  venueBookings            VenueBooking[]
+  sentMessages             Message[]            @relation("MessageSender")
+  receivedMessages         Message[]            @relation("MessageReceiver")
+  reviews                  Review[]
+  payments                 Payment[]
+  legaldoc                 LegalDocument[]      @relation("VenueLegalDocuments")
+  notifications            Notification[]
+  analytics                UserAnalytics[]
+  settings                 Settings?
+  campaigns                Campaign[]
+  broadcastsSent           Broadcast[]          @relation("BroadcastSender")
+  broadcastsReceived       BroadcastRecipient[]
+  venueEvents              Event[]              @relation("EventVenue")
+  exhibitorReviews         Review[]             @relation("ExhibitorReviews")
+  venueReviews             Review[]             @relation("VenueReviews")
+  venueAnalytics           VenueAnalytics[]
+  meetingSpaces            MeetingSpace[]
+  leads                    EventLead[]
+  organizerPromotions      Promotion[]          @relation("OrganizerPromotions")
+  exhibitorPromotions      Promotion[]          @relation("ExhibitorPromotions")
+  savedEvents              SavedEvent[]
+  replies                  ReviewReply[]
+  connectionsSent          Connection[]         @relation("ConnectionSender")
+  connectionsReceived      Connection[]         @relation("ConnectionReceiver")
   // Add these lines to the User model's relationships section:
-venueAppointments        VenueAppointment[] @relation("VenueAppointments")
-venueAppointmentRequests VenueAppointment[] @relation("VenueAppointmentRequests")
+  venueAppointments        VenueAppointment[]   @relation("VenueAppointments")
+  venueAppointmentRequests VenueAppointment[]   @relation("VenueAppointmentRequests")
 
   // Relations for organizer-speaker
   organizerId String? @db.ObjectId
   organizer   User?   @relation("OrganizerSpeakers", fields: [organizerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   speakers    User[]  @relation("OrganizerSpeakers")
-  
+
   // Exhibitor relation
   organizerIdForExhibitor String? @db.ObjectId
   organizerForExhibitor   User?   @relation("OrganizerExhibitors", fields: [organizerIdForExhibitor], references: [id], onDelete: NoAction, onUpdate: NoAction)
   exhibitors              User[]  @relation("OrganizerExhibitors")
-  
+
   // Venue Manager relation
   organizerIdForVenueManager String? @db.ObjectId
   organizerForVenueManager   User?   @relation("OrganizerVenueManagers", fields: [organizerIdForVenueManager], references: [id], onDelete: NoAction, onUpdate: NoAction)
   venueManagers              User[]  @relation("OrganizerVenueManagers")
 
-  followers       Follow[] @relation("UserFollowing")
-  following       Follow[] @relation("UserFollowers")
+  followers Follow[] @relation("UserFollowing")
+  following Follow[] @relation("UserFollowers")
 
   // Venue fields
-  venueName         String?
-  venueDescription  String?
-  venueAddress      String?
-  venueCity         String?
-  venueState        String?
-  venueCountry      String?
-  venueZipCode      String?
-  venuePhone        String?
-  venueEmail        String?
-  venueWebsite      String?
-  maxCapacity       Int?
-  totalHalls        Int?
-  activeBookings    Int?
-  averageRating     Float    @default(0)
-  totalReviews      Int      @default(0)
-  amenities         String[]
-  venueImages       String[]
-  venueVideos       String[]
-  floorPlans        String[]
-  virtualTour       String?
-  basePrice         Float?
-  venueCurrency     String   @default("USD")
-  latitude          Float?
-  longitude         Float?
+  venueName        String?
+  venueDescription String?
+  venueAddress     String?
+  venueCity        String?
+  venueState       String?
+  venueCountry     String?
+  venueZipCode     String?
+  venuePhone       String?
+  venueEmail       String?
+  venueWebsite     String?
+  maxCapacity      Int?
+  totalHalls       Int?
+  activeBookings   Int?
+  averageRating    Float    @default(0)
+  totalReviews     Int      @default(0)
+  amenities        String[]
+  venueImages      String[]
+  venueVideos      String[]
+  floorPlans       String[]
+  virtualTour      String?
+  basePrice        Float?
+  venueCurrency    String   @default("USD")
+  latitude         Float?
+  longitude        Float?
 
   // Speaker fields
   speakingExperience String?
@@ -157,7 +157,7 @@ venueAppointmentRequests VenueAppointment[] @relation("VenueAppointmentRequests"
   exhibitorManuals ExhibitorManual[] @relation("ExhibitorManualUploads")
 
   @@map("users")
-} 
+}
 
 enum UserRole {
   ADMIN
@@ -170,42 +170,45 @@ enum UserRole {
 
 // Event Management
 model Event {
-  id        String   @id @map("_id") @db.ObjectId
-  title     String
-  description String
+  id               String      @id @map("_id") @db.ObjectId
+  title            String
+  description      String
   shortDescription String?
-  slug      String   @unique
-  status    EventStatus @default(DRAFT)
-  category  String?
-  tags      String[]
-  eventType String[]
+  slug             String      @unique
+  status           EventStatus @default(DRAFT)
+  category         String?
+  edition          String?
+  tags             String[]
+  eventType        String[]
 
   isFeatured Boolean? @default(false)
-  isVIP      Boolean? @default(false)  
-  
+  isVIP      Boolean? @default(false)
+
   // Dates and Times
-  startDate DateTime
-  endDate   DateTime
+  startDate         DateTime
+  endDate           DateTime
   registrationStart DateTime
-  registrationEnd DateTime
-  timezone  String
-  
+  registrationEnd   DateTime
+  timezone          String
+
   // Location
-  venueId   String?  @db.ObjectId
-  venue     User?    @relation("EventVenue", fields: [venueId], references: [id])
-  isVirtual Boolean  @default(false)
+  venueId     String? @db.ObjectId
+  venue       User?   @relation("EventVenue", fields: [venueId], references: [id])
+  isVirtual   Boolean @default(false)
   virtualLink String?
-  
+
   // Capacity and Pricing
   maxAttendees     Int?
-  currentAttendees Int @default(0)
-  currency         String @default("USD")  
-  
+  currentAttendees Int    @default(0)
+  currency         String @default("USD")
+
   // Media
-  images        String[]
-  videos        String[]
-  documents     String[]
-  bannerImage   String?
+  images         String[]
+  videos         String[]
+  brochure   String? 
+  layoutPlan    String?
+  documents      String[]
+  bannerImage    String?
   thumbnailImage String?
 
   // Settings
@@ -215,8 +218,8 @@ model Event {
   refundPolicy     String?
 
   // SEO
-  metaTitle        String?
-  metaDescription  String?
+  metaTitle       String?
+  metaDescription String?
 
   // Organizer
   organizerId String @db.ObjectId
@@ -228,23 +231,23 @@ model Event {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  averageRating   Float    @default(0)
-  totalReviews    Int      @default(0)
+  averageRating Float @default(0)
+  totalReviews  Int   @default(0)
 
   // Relationships
-  registrations   EventRegistration[]
-  speakerSessions SpeakerSession[]
-  exhibitorBooths ExhibitorBooth[]
-  reviews         Review[]
-  analytics       EventAnalytics[]
-  campaigns       Campaign[]
-  leads           EventLead[]
-  promotions Promotion[]
-  savedEvents SavedEvent[]
-  appointments Appointment[]
+  registrations    EventRegistration[]
+  speakerSessions  SpeakerSession[]
+  exhibitorBooths  ExhibitorBooth[]
+  reviews          Review[]
+  analytics        EventAnalytics[]
+  campaigns        Campaign[]
+  leads            EventLead[]
+  promotions       Promotion[]
+  savedEvents      SavedEvent[]
+  appointments     Appointment[]
   ticketTypes      TicketType[]
   exhibitorManuals ExhibitorManual[]
-  conference Conference[]
+  conference       Conference[]
 
   @@map("events")
 }
@@ -257,73 +260,73 @@ enum EventStatus {
 }
 
 model TicketType {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  eventId         String   @db.ObjectId
-  event           Event    @relation(fields: [eventId], references: [id])
-  
-  name            String
-  description     String?
-  price           Float
-  earlyBirdPrice  Float?
-  earlyBirdEnd    DateTime?
-  quantity        Int
-  sold            Int      @default(0)
-  isActive        Boolean  @default(true)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  eventLeads      EventLead[]
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  eventId String @db.ObjectId
+  event   Event  @relation(fields: [eventId], references: [id])
+
+  name           String
+  description    String?
+  price          Float
+  earlyBirdPrice Float?
+  earlyBirdEnd   DateTime?
+  quantity       Int
+  sold           Int       @default(0)
+  isActive       Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  eventLeads EventLead[]
 
   @@map("ticket_types")
 }
 
 // Appointment Management Model
 model Appointment {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  
-  eventId         String   @db.ObjectId
-  event           Event    @relation(fields: [eventId], references: [id])
-  requesterId     String   @db.ObjectId
-  requester       User     @relation("AppointmentRequester", fields: [requesterId], references: [id])
-  exhibitorId     String   @db.ObjectId
-  exhibitor       User     @relation("AppointmentExhibitor", fields: [exhibitorId], references: [id])
-  
-  title           String
-  description     String?
-  type            AppointmentType @default(CONSULTATION)
-  status          AppointmentStatus @default(PENDING)
-  priority        AppointmentPriority @default(MEDIUM)
-  
-  requestedDate   DateTime
-  requestedTime   String
-  duration        Int
-  confirmedDate   DateTime?
-  confirmedTime   String?
-  
-  meetingType     MeetingType @default(IN_PERSON)
-  location        String?
-  meetingLink     String?
-  
-  purpose         String?
-  agenda          String[]
-  notes           String?
-  outcome         String?
-  
-  reminderSent    Boolean  @default(false)
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  eventId     String @db.ObjectId
+  event       Event  @relation(fields: [eventId], references: [id])
+  requesterId String @db.ObjectId
+  requester   User   @relation("AppointmentRequester", fields: [requesterId], references: [id])
+  exhibitorId String @db.ObjectId
+  exhibitor   User   @relation("AppointmentExhibitor", fields: [exhibitorId], references: [id])
+
+  title       String
+  description String?
+  type        AppointmentType     @default(CONSULTATION)
+  status      AppointmentStatus   @default(PENDING)
+  priority    AppointmentPriority @default(MEDIUM)
+
+  requestedDate DateTime
+  requestedTime String
+  duration      Int
+  confirmedDate DateTime?
+  confirmedTime String?
+
+  meetingType MeetingType @default(IN_PERSON)
+  location    String?
+  meetingLink String?
+
+  purpose String?
+  agenda  String[]
+  notes   String?
+  outcome String?
+
+  reminderSent     Boolean @default(false)
   followUpRequired Boolean @default(true)
-  
+
   requesterCompany String?
   requesterTitle   String?
   requesterPhone   String?
   requesterEmail   String?
-  
+
   cancellationReason String?
   cancelledBy        String?
   cancelledAt        DateTime?
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("appointments")
 }
@@ -361,38 +364,38 @@ enum MeetingType {
 }
 
 model ExhibitionSpace {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  eventId         String   @db.ObjectId
-  event           Event    @relation(fields: [eventId], references: [id])
-  
-  spaceType       ExhibitionSpaceType
-  name            String
-  description     String
-  dimensions      String?
-  area            Float
-  location        String?
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  eventId String @db.ObjectId
+  event   Event  @relation(fields: [eventId], references: [id])
 
-  basePrice       Float
-  pricePerSqm     Float?
-  minArea         Float?
-  currency        String   @default("USD")
+  spaceType   ExhibitionSpaceType
+  name        String
+  description String
+  dimensions  String?
+  area        Float
+  location    String?
 
-  powerIncluded       Boolean  @default(false)
+  basePrice   Float
+  pricePerSqm Float?
+  minArea     Float?
+  currency    String @default("USD")
+
+  powerIncluded       Boolean @default(false)
   additionalPowerRate Float?
   compressedAirRate   Float?
-  
-  unit            String?
-  pricePerUnit    Float?
-  
-  isFixed         Boolean  @default(false)
-  isAvailable     Boolean  @default(true)
-  maxBooths       Int?
-  bookedBooths    Int      @default(0)
+
+  unit         String?
+  pricePerUnit Float?
+
+  isFixed      Boolean @default(false)
+  isAvailable  Boolean @default(true)
+  maxBooths    Int?
+  bookedBooths Int     @default(0)
 
   setupRequirements Json?
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   exhibitorBooths ExhibitorBooth[]
 
@@ -412,111 +415,109 @@ enum ExhibitionSpaceType {
 }
 
 model ExhibitorBooth {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  eventId         String   @db.ObjectId
-  event           Event    @relation(fields: [eventId], references: [id])
-  exhibitorId     String   @db.ObjectId
-  exhibitor       User     @relation(fields: [exhibitorId], references: [id])
-  spaceId         String   @db.ObjectId
-  space           ExhibitionSpace @relation(fields: [spaceId], references: [id])
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  eventId        String          @db.ObjectId
+  event          Event           @relation(fields: [eventId], references: [id])
+  exhibitorId    String          @db.ObjectId
+  exhibitor      User            @relation(fields: [exhibitorId], references: [id])
+  spaceId        String          @db.ObjectId
+  space          ExhibitionSpace @relation(fields: [spaceId], references: [id])
   spaceReference String?
-  
-  boothNumber     String
-  companyName     String
-  description     String?
 
-  additionalPower Float    @default(0)
-  compressedAir   Float    @default(0)
+  boothNumber String
+  companyName String
+  description String?
+
+  additionalPower Float @default(0)
+  compressedAir   Float @default(0)
 
   setupRequirements Json?
-  specialRequests String?
+  specialRequests   String?
 
-  totalCost       Float
-  currency        String   @default("USD")
+  totalCost Float
+  currency  String @default("USD")
 
-  status          BoothStatus @default(BOOKED)
+  status BoothStatus @default(BOOKED)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([eventId, exhibitorId])
   @@map("exhibitor_booths")
 }
 
 model Promotion {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  organizerId     String?   @db.ObjectId
-  organizer       User?     @relation("OrganizerPromotions",fields: [organizerId], references: [id])
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  organizerId String? @db.ObjectId
+  organizer   User?   @relation("OrganizerPromotions", fields: [organizerId], references: [id])
 
-  exhibitorId   String? @db.ObjectId
-  exhibitor      User?  @relation("ExhibitorPromotions",fields: [exhibitorId], references: [id])
+  exhibitorId String? @db.ObjectId
+  exhibitor   User?   @relation("ExhibitorPromotions", fields: [exhibitorId], references: [id])
 
+  eventId String? @db.ObjectId
+  event   Event?  @relation(fields: [eventId], references: [id])
 
-
-  eventId   String?  @db.ObjectId
-  event     Event?   @relation(fields: [eventId], references: [id])
-
-  packageType     String
+  packageType      String
   targetCategories String[]
-  status          String   @default("PENDING")
-  amount          Float
-  duration        Int
+  status           String   @default("PENDING")
+  amount           Float
+  duration         Int
 
-  startDate       DateTime
-  endDate         DateTime
+  startDate DateTime
+  endDate   DateTime
 
-  impressions     Int      @default(0)
-  clicks          Int      @default(0)
-  conversions     Int      @default(0)
+  impressions Int @default(0)
+  clicks      Int @default(0)
+  conversions Int @default(0)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("promotions")
 }
 
 model MeetingSpace {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   capacity    Int
   area        Float
   hourlyRate  Float
-  isAvailable Boolean  @default(true)
-  userId      String   @db.ObjectId
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  isAvailable Boolean @default(true)
+  userId      String  @db.ObjectId
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("meeting_spaces")
 }
 
 // Speaker Management
 model SpeakerSession {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  eventId         String   @db.ObjectId
-  event           Event    @relation(fields: [eventId], references: [id])
-  speakerId       String   @db.ObjectId
-  speaker         User     @relation(fields: [speakerId], references: [id])
-  
-  title           String
-  description     String
-  sessionType     SessionType
-  duration        Int
-  startTime       DateTime
-  endTime         DateTime
-  room            String?
-  
-  abstract        String?
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  eventId   String @db.ObjectId
+  event     Event  @relation(fields: [eventId], references: [id])
+  speakerId String @db.ObjectId
+  speaker   User   @relation(fields: [speakerId], references: [id])
+
+  title       String
+  description String
+  sessionType SessionType
+  duration    Int
+  startTime   DateTime
+  endTime     DateTime
+  room        String?
+
+  abstract           String?
   learningObjectives String[]
-  targetAudience  String?
-  materials       Material[]
-  youtube    String[]
-  
-  status          SessionStatus @default(SCHEDULED)
-  
-  averageRating   Float    @default(0)
-  totalRatings    Int      @default(0)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  targetAudience     String?
+  materials          Material[]
+  youtube            String[]
+
+  status SessionStatus @default(SCHEDULED)
+
+  averageRating Float @default(0)
+  totalRatings  Int   @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("speaker_sessions")
 }
@@ -547,34 +548,34 @@ enum BoothStatus {
 
 // Material Management
 model Material {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  
-  sessionId       String   @db.ObjectId
-  session         SpeakerSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  speakerId       String   @db.ObjectId
-  speaker         User     @relation("SpeakerMaterials", fields: [speakerId], references: [id], onDelete: Cascade)
-  
-  fileName        String
-  fileUrl         String
-  publicId        String
-  fileSize        Int
-  fileType        MaterialType?
-  mimeType        String
-  
-  status          MaterialStatus? @default(DRAFT)
-  allowDownload   Boolean  @default(true)
-  description     String?
-  version         String?  @default("1.0")
-  
-  uploadedAt      DateTime @default(now())
-  lastModified    DateTime @updatedAt
-  deadline        DateTime?
-  
-  downloadCount   Int      @default(0)
-  viewCount       Int      @default(0)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  sessionId String         @db.ObjectId
+  session   SpeakerSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  speakerId String         @db.ObjectId
+  speaker   User           @relation("SpeakerMaterials", fields: [speakerId], references: [id], onDelete: Cascade)
+
+  fileName String
+  fileUrl  String
+  publicId String
+  fileSize Int
+  fileType MaterialType?
+  mimeType String
+
+  status        MaterialStatus? @default(DRAFT)
+  allowDownload Boolean         @default(true)
+  description   String?
+  version       String?         @default("1.0")
+
+  uploadedAt   DateTime  @default(now())
+  lastModified DateTime  @updatedAt
+  deadline     DateTime?
+
+  downloadCount Int @default(0)
+  viewCount     Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([sessionId])
   @@index([speakerId])
@@ -597,27 +598,27 @@ enum MaterialStatus {
 
 // Registration Management
 model EventRegistration {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  eventId         String   @db.ObjectId
-  event           Event    @relation(fields: [eventId], references: [id])
-  userId          String   @db.ObjectId
-  user            User     @relation(fields: [userId], references: [id])
-  
-  ticketTypeId    String
-  quantity        Int      @default(1)
-  totalAmount     Float
-  currency        String   @default("USD")
-  
-  status          RegistrationStatus @default(PENDING)
-  
-  specialRequests String?
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  eventId String @db.ObjectId
+  event   Event  @relation(fields: [eventId], references: [id])
+  userId  String @db.ObjectId
+  user    User   @relation(fields: [userId], references: [id])
+
+  ticketTypeId String
+  quantity     Int    @default(1)
+  totalAmount  Float
+  currency     String @default("USD")
+
+  status RegistrationStatus @default(PENDING)
+
+  specialRequests     String?
   dietaryRestrictions String?
-  
-  paymentId       String?  @db.ObjectId
-  payment         Payment? @relation(fields: [paymentId], references: [id])
-  
-  registeredAt    DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+
+  paymentId String?  @db.ObjectId
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+
+  registeredAt DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@map("event_registrations")
 }
@@ -631,27 +632,27 @@ enum RegistrationStatus {
 }
 
 model VenueBooking {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  venueId         String   @db.ObjectId
-  venue           User     @relation(fields: [venueId], references: [id])
-  
-  startDate       DateTime
-  endDate         DateTime
-  totalAmount     Float
-  currency        String   @default("USD")
-  
-  meetingSpaces   String[]
-  
-  status          BookingStatus @default(PENDING)
-  
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  venueId String @db.ObjectId
+  venue   User   @relation(fields: [venueId], references: [id])
+
+  startDate   DateTime
+  endDate     DateTime
+  totalAmount Float
+  currency    String   @default("USD")
+
+  meetingSpaces String[]
+
+  status BookingStatus @default(PENDING)
+
   purpose         String?
   specialRequests String?
-  
-  paymentId       String?  @db.ObjectId
-  payment         Payment? @relation(fields: [paymentId], references: [id])
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+
+  paymentId String?  @db.ObjectId
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("venue_bookings")
 }
@@ -666,29 +667,29 @@ enum BookingStatus {
 }
 
 model Payment {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String   @db.ObjectId
-  user            User     @relation(fields: [userId], references: [id])
-  
-  amount          Float
-  currency        String   @default("USD")
-  status          PaymentStatus
-  
-  gateway         String
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  amount   Float
+  currency String        @default("USD")
+  status   PaymentStatus
+
+  gateway              String
   gatewayTransactionId String?
-  
-  description     String?
-  metadata        Json?
-  
-  refundAmount    Float?
-  refundReason    String?
-  refundedAt      DateTime?
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+
+  description String?
+  metadata    Json?
+
+  refundAmount Float?
+  refundReason String?
+  refundedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   eventRegistrations EventRegistration[]
-  venueBookings   VenueBooking[]
+  venueBookings      VenueBooking[]
 
   @@map("payments")
 }
@@ -703,48 +704,48 @@ enum PaymentStatus {
 }
 
 model Message {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  senderId        String   @db.ObjectId
-  sender          User?     @relation("MessageSender", fields: [senderId], references: [id])
-  receiverId      String   @db.ObjectId
-  receiver        User?     @relation("MessageReceiver", fields: [receiverId], references: [id])
-  
-  subject         String?
-  content         String
-  attachments     String[]
-  
-  threadId        String?
-  replyToId       String?  @db.ObjectId
-  
-  isRead          Boolean  @default(false)
-  readAt          DateTime?
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String @db.ObjectId
+  sender     User?  @relation("MessageSender", fields: [senderId], references: [id])
+  receiverId String @db.ObjectId
+  receiver   User?  @relation("MessageReceiver", fields: [receiverId], references: [id])
+
+  subject     String?
+  content     String
+  attachments String[]
+
+  threadId  String?
+  replyToId String? @db.ObjectId
+
+  isRead Boolean   @default(false)
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("messages")
 }
 
 model Notification {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String   @db.ObjectId
-  user            User     @relation(fields: [userId], references: [id])
-  
-  type            NotificationType
-  title           String
-  message         String
-  
-  channels        NotificationChannel[]
-  
-  isRead          Boolean  @default(false)
-  readAt          DateTime?
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
 
-  priority  String   @default("NORMAL")
-  
-  metadata        Json?
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  type    NotificationType
+  title   String
+  message String
+
+  channels NotificationChannel[]
+
+  isRead Boolean   @default(false)
+  readAt DateTime?
+
+  priority String @default("NORMAL")
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("notifications")
 }
@@ -772,33 +773,33 @@ enum NotificationChannel {
 }
 
 model Campaign {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  name            String
-  description     String?
-  type            CampaignType
-  
-  targetAudience  Json
-  
-  subject         String?
-  content         String
-  template        String?
-  
-  scheduledAt     DateTime?
-  sentAt          DateTime?
-  
-  status          CampaignStatus @default(DRAFT)
-  
-  totalSent       Int      @default(0)
-  totalOpened     Int      @default(0)
-  totalClicked    Int      @default(0)
-  
-  createdById     String   @db.ObjectId
-  createdBy       User     @relation(fields: [createdById], references: [id])
-  eventId         String?  @db.ObjectId
-  event           Event?   @relation(fields: [eventId], references: [id])
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  type        CampaignType
+
+  targetAudience Json
+
+  subject  String?
+  content  String
+  template String?
+
+  scheduledAt DateTime?
+  sentAt      DateTime?
+
+  status CampaignStatus @default(DRAFT)
+
+  totalSent    Int @default(0)
+  totalOpened  Int @default(0)
+  totalClicked Int @default(0)
+
+  createdById String  @db.ObjectId
+  createdBy   User    @relation(fields: [createdById], references: [id])
+  eventId     String? @db.ObjectId
+  event       Event?  @relation(fields: [eventId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("campaigns")
 }
@@ -817,199 +818,199 @@ enum CampaignStatus {
 }
 
 model Review {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String   @db.ObjectId
-  user            User     @relation(fields: [userId], references: [id])
-  
-  eventId         String?  @db.ObjectId
-  event           Event?   @relation(fields: [eventId], references: [id])
-  exhibitorId         String?  @db.ObjectId
-  exhibitor           User?    @relation("ExhibitorReviews", fields: [exhibitorId], references: [id])
-  venueId             String? @db.ObjectId 
-  venue               User?    @relation("VenueReviews", fields: [venueId], references: [id])
-  replies ReviewReply[]
-  
-  rating          Int
-  title           String?
-  comment         String?
-  
-  isApproved      Boolean  @default(false)
-  isPublic        Boolean  @default(true)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  eventId     String?       @db.ObjectId
+  event       Event?        @relation(fields: [eventId], references: [id])
+  exhibitorId String?       @db.ObjectId
+  exhibitor   User?         @relation("ExhibitorReviews", fields: [exhibitorId], references: [id])
+  venueId     String?       @db.ObjectId
+  venue       User?         @relation("VenueReviews", fields: [venueId], references: [id])
+  replies     ReviewReply[]
+
+  rating  Int
+  title   String?
+  comment String?
+
+  isApproved Boolean @default(false)
+  isPublic   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("reviews")
 }
 
 model Analytics {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  
-  entityType      String
-  entityId        String   @db.ObjectId
-  
-  views           Int      @default(0)
-  clicks          Int      @default(0)
-  conversions     Int      @default(0)
-  revenue         Float    @default(0)
-  
-  date            DateTime
-  source          String?
-  medium          String?
-  campaign        String?
-  country         String?
-  city            String?
-  device          String?
-  browser         String?
-  
-  createdAt       DateTime @default(now())
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  entityType String
+  entityId   String @db.ObjectId
+
+  views       Int   @default(0)
+  clicks      Int   @default(0)
+  conversions Int   @default(0)
+  revenue     Float @default(0)
+
+  date     DateTime
+  source   String?
+  medium   String?
+  campaign String?
+  country  String?
+  city     String?
+  device   String?
+  browser  String?
+
+  createdAt DateTime @default(now())
 
   @@map("analytics")
 }
 
 model EventAnalytics {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  eventId         String   @db.ObjectId
-  event           Event    @relation(fields: [eventId], references: [id])
-  
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  eventId String @db.ObjectId
+  event   Event  @relation(fields: [eventId], references: [id])
+
   totalRegistrations Int   @default(0)
-  totalRevenue    Float    @default(0)
-  conversionRate  Float    @default(0)
-  
-  pageViews       Int      @default(0)
-  uniqueVisitors  Int      @default(0)
-  averageTimeOnPage Float  @default(0)
-  
-  topCountries    Json?
-  topCities       Json?
-  
-  trafficSources  Json?
-  
-  date            DateTime
-  createdAt       DateTime @default(now())
+  totalRevenue       Float @default(0)
+  conversionRate     Float @default(0)
+
+  pageViews         Int   @default(0)
+  uniqueVisitors    Int   @default(0)
+  averageTimeOnPage Float @default(0)
+
+  topCountries Json?
+  topCities    Json?
+
+  trafficSources Json?
+
+  date      DateTime
+  createdAt DateTime @default(now())
 
   @@map("event_analytics")
 }
 
 model UserAnalytics {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String   @db.ObjectId
-  user            User     @relation(fields: [userId], references: [id])
-  
-  loginCount      Int      @default(0)
-  eventsAttended  Int      @default(0)
-  eventsOrganized Int      @default(0)
-  totalSpent      Float    @default(0)
-  
-  lastActiveAt    DateTime?
-  averageSessionDuration Float @default(0)
-  
-  date            DateTime
-  createdAt       DateTime @default(now())
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  loginCount      Int   @default(0)
+  eventsAttended  Int   @default(0)
+  eventsOrganized Int   @default(0)
+  totalSpent      Float @default(0)
+
+  lastActiveAt           DateTime?
+  averageSessionDuration Float     @default(0)
+
+  date      DateTime
+  createdAt DateTime @default(now())
 
   @@map("user_analytics")
 }
 
 model VenueAnalytics {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  venueId         String   @db.ObjectId
-  venue           User     @relation(fields: [venueId], references: [id])
-  
-  totalBookings   Int      @default(0)
-  totalRevenue    Float    @default(0)
-  occupancyRate   Float    @default(0)
-  
-  averageRating   Float    @default(0)
-  totalReviews    Int      @default(0)
-  
-  date            DateTime
-  createdAt       DateTime @default(now())
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  venueId String @db.ObjectId
+  venue   User   @relation(fields: [venueId], references: [id])
+
+  totalBookings Int   @default(0)
+  totalRevenue  Float @default(0)
+  occupancyRate Float @default(0)
+
+  averageRating Float @default(0)
+  totalReviews  Int   @default(0)
+
+  date      DateTime
+  createdAt DateTime @default(now())
 
   @@map("venue_analytics")
 }
 
 model Settings {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String   @unique @db.ObjectId
-  user            User     @relation(fields: [userId], references: [id])
-  
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @unique @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
   emailNotifications Boolean @default(true)
-  pushNotifications Boolean  @default(true)
-  smsNotifications Boolean   @default(false)
-  
+  pushNotifications  Boolean @default(true)
+  smsNotifications   Boolean @default(false)
+
   profileVisibility String  @default("public")
   showEmail         Boolean @default(false)
   showPhone         Boolean @default(false)
-  
-  marketingEmails   Boolean @default(true)
-  eventUpdates      Boolean @default(true)
-  
-  theme             String  @default("light")
-  language          String  @default("en")
-  timezone          String  @default("UTC")
-  
-  createdAt         DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+
+  marketingEmails Boolean @default(true)
+  eventUpdates    Boolean @default(true)
+
+  theme    String @default("light")
+  language String @default("en")
+  timezone String @default("UTC")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("settings")
 }
 
 model Broadcast {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   content     String
   type        String
-  status      String   @default("DRAFT")
+  status      String    @default("DRAFT")
   scheduledAt DateTime?
   sentAt      DateTime?
-  
-  senderId    String   @db.ObjectId
-  sender      User     @relation("BroadcastSender", fields: [senderId], references: [id])
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  recipients  BroadcastRecipient[]
-  
+
+  senderId String @db.ObjectId
+  sender   User   @relation("BroadcastSender", fields: [senderId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipients BroadcastRecipient[]
+
   @@map("broadcasts")
 }
 
 model BroadcastRecipient {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  broadcastId String   @db.ObjectId
-  userId      String   @db.ObjectId
-  status      String   @default("PENDING")
-  sentAt      DateTime?
-  deliveredAt DateTime?
-  readAt      DateTime?
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  broadcastId  String    @db.ObjectId
+  userId       String    @db.ObjectId
+  status       String    @default("PENDING")
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  readAt       DateTime?
   errorMessage String?
-  
-  broadcast   Broadcast @relation(fields: [broadcastId], references: [id])
-  user        User      @relation(fields: [userId], references: [id])
-  
+
+  broadcast Broadcast @relation(fields: [broadcastId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+
   @@unique([broadcastId, userId])
   @@map("broadcast_recipients")
 }
 
 model EventLead {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  eventId         String   @db.ObjectId
-  event           Event    @relation(fields: [eventId], references: [id])
-  userId          String   @db.ObjectId
-  user            User     @relation(fields: [userId], references: [id])
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  eventId String @db.ObjectId
+  event   Event  @relation(fields: [eventId], references: [id])
+  userId  String @db.ObjectId
+  user    User   @relation(fields: [userId], references: [id])
 
-  ticketTypeId    String?  @db.ObjectId
-  ticketType      TicketType? @relation(fields: [ticketTypeId], references: [id])
-  
-  type            LeadType
-  status          LeadStatus @default(NEW)
-  notes           String?
-  
-  contactedAt     DateTime?
-  followUpDate    DateTime?
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  ticketTypeId String?     @db.ObjectId
+  ticketType   TicketType? @relation(fields: [ticketTypeId], references: [id])
+
+  type   LeadType
+  status LeadStatus @default(NEW)
+  notes  String?
+
+  contactedAt  DateTime?
+  followUpDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([eventId, userId, type])
   @@map("event_leads")
@@ -1033,17 +1034,17 @@ enum LeadStatus {
 }
 
 model Connection {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  senderId    String   @db.ObjectId
-  receiverId  String   @db.ObjectId
-  message     String?
-  status      ConnectionStatus @default(PENDING)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  acceptedAt  DateTime?
+  id         String           @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String           @db.ObjectId
+  receiverId String           @db.ObjectId
+  message    String?
+  status     ConnectionStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  acceptedAt DateTime?
 
-  sender      User     @relation("ConnectionSender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver    User     @relation("ConnectionReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender   User @relation("ConnectionSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ConnectionReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
 
   @@unique([senderId, receiverId])
   @@index([senderId])
@@ -1061,26 +1062,26 @@ enum ConnectionStatus {
 
 // Add new model for saved events
 model SavedEvent {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  eventId   String   @db.ObjectId
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  savedAt   DateTime @default(now())
-  
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String   @db.ObjectId
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId String   @db.ObjectId
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  savedAt DateTime @default(now())
+
   @@unique([userId, eventId])
   @@map("saved_events")
 }
 
 model ReviewReply {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  reviewId  String   @db.ObjectId
-  review    Review   @relation(fields: [reviewId], references: [id])
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  reviewId String @db.ObjectId
+  review   Review @relation(fields: [reviewId], references: [id])
 
-  userId    String   @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id])
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
 
-  content   String
+  content          String
   isOrganizerReply Boolean @default(false)
 
   createdAt DateTime @default(now())
@@ -1090,33 +1091,31 @@ model ReviewReply {
 }
 
 model ExhibitorManual {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  eventId         String   @db.ObjectId
-  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  eventId String @db.ObjectId
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
   // File Information
-  fileName        String
-  fileUrl         String   // Blob storage URL
-  fileSize        Int      // Size in bytes
-  mimeType        String   @default("application/pdf")
-  
+  fileName String
+  fileUrl  String // Blob storage URL
+  fileSize Int // Size in bytes
+  mimeType String @default("application/pdf")
+
   // Metadata
-  uploadedById    String   @db.ObjectId
-  uploadedBy      User     @relation("ExhibitorManualUploads", fields: [uploadedById], references: [id])
-  description     String?
-  version         String?  @default("1.0")
-  
+  uploadedById String  @db.ObjectId
+  uploadedBy   User    @relation("ExhibitorManualUploads", fields: [uploadedById], references: [id])
+  description  String?
+  version      String? @default("1.0")
+
   // Status
-  isActive        Boolean  @default(true)
-  
+  isActive Boolean @default(true)
+
   // Timestamps
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("exhibitor_manuals")
 }
-
-
 
 model Follow {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -1124,8 +1123,8 @@ model Follow {
   followingId String   @db.ObjectId
   createdAt   DateTime @default(now())
 
-  follower    User     @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
-  following   User     @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+  follower  User @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
   @@index([followerId])
@@ -1134,40 +1133,40 @@ model Follow {
 }
 
 model Conference {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  eventId     String   @db.ObjectId
-  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  
-  date        String
-  day         String
-  theme       String
-  
-  isPublished Boolean  @default(false)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  sessions    ConferenceSession[]
-  
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  eventId String @db.ObjectId
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  date  String
+  day   String
+  theme String
+
+  isPublished Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions ConferenceSession[]
+
   @@map("conferences")
 }
 
 model ConferenceSession {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  conferenceId  String   @db.ObjectId
-  conference    Conference @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
-  
-  time          String
-  title         String
-  description   String?
-  speaker       String?
-  type          ConferenceSessionType @default(SESSION)
-  
-  order         Int      @default(0)
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  conferenceId String     @db.ObjectId
+  conference   Conference @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
+
+  time        String
+  title       String
+  description String?
+  speaker     String?
+  type        ConferenceSessionType @default(SESSION)
+
+  order Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("conference_sessions")
 }
 
@@ -1179,61 +1178,60 @@ enum ConferenceSessionType {
   NETWORKING
 }
 
-
-model Product{
-  id   String   @id @default(auto()) @map("_id") @db.ObjectId
-  name String
-  category String?
+model Product {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  category    String?
   description String?
-  price Float?
-  currency String?
-  images String[]
-  brochure String[]
-  youtube String[]
-  exhibitorId     String   @db.ObjectId
-  exhibitor       User     @relation(fields: [exhibitorId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  price       Float?
+  currency    String?
+  images      String[]
+  brochure    String[]
+  youtube     String[]
+  exhibitorId String   @db.ObjectId
+  exhibitor   User     @relation(fields: [exhibitorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model LegalDocument {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  
-  name            String
-  description     String?
-  type            LegalDocumentType
-  category        LegalDocumentCategory
-  
-  fileName        String?
-  fileUrl         String?
-  fileSize        Int?
-  mimeType        String?
-  
-  version         String   @default("1.0")
-  
-  status          LegalDocumentStatus @default(ACTIVE)
-  
-  venueId         String   @db.ObjectId
-  venue           User?     @relation("VenueLegalDocuments", fields: [venueId], references: [id], onDelete: Cascade)
-  
-  eventId         String?  @db.ObjectId
-  organizerName   String?
-  organizerId     String?  @db.ObjectId
-  contractValue   Float?
-  currency        String?  @default("INR")
-  eventDate       DateTime?
-  signedDate      DateTime?
-  
-  issuingAuthority String?
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name        String
+  description String?
+  type        LegalDocumentType
+  category    LegalDocumentCategory
+
+  fileName String?
+  fileUrl  String?
+  fileSize Int?
+  mimeType String?
+
+  version String @default("1.0")
+
+  status LegalDocumentStatus @default(ACTIVE)
+
+  venueId String @db.ObjectId
+  venue   User?  @relation("VenueLegalDocuments", fields: [venueId], references: [id], onDelete: Cascade)
+
+  eventId       String?   @db.ObjectId
+  organizerName String?
+  organizerId   String?   @db.ObjectId
+  contractValue Float?
+  currency      String?   @default("INR")
+  eventDate     DateTime?
+  signedDate    DateTime?
+
+  issuingAuthority  String?
   certificateNumber String?
-  issueDate        DateTime?
-  expiryDate       DateTime?
-  
-  downloadCount   Int      @default(0)
+  issueDate         DateTime?
+  expiryDate        DateTime?
+
+  downloadCount    Int       @default(0)
   lastDownloadedAt DateTime?
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([venueId])
   @@index([type])
@@ -1274,72 +1272,71 @@ enum LegalDocumentStatus {
   EXPIRING_SOON
 }
 
-
 // Venue Appointment Management Model
 model VenueAppointment {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
   // Venue and Requester
-  venueId         String   @db.ObjectId
-  venue           User     @relation("VenueAppointments", fields: [venueId], references: [id])
-  requesterId     String   @db.ObjectId
-  requester       User     @relation("VenueAppointmentRequests", fields: [requesterId], references: [id])
-  
+  venueId     String @db.ObjectId
+  venue       User   @relation("VenueAppointments", fields: [venueId], references: [id])
+  requesterId String @db.ObjectId
+  requester   User   @relation("VenueAppointmentRequests", fields: [requesterId], references: [id])
+
   // Optional Event Association
-  eventId         String?  @db.ObjectId
-  
+  eventId String? @db.ObjectId
+
   // Appointment Details
-  title           String
-  description     String?
-  type            VenueAppointmentType @default(VENUE_TOUR)
-  status          AppointmentStatus @default(PENDING)
-  priority        AppointmentPriority @default(MEDIUM)
-  
+  title       String
+  description String?
+  type        VenueAppointmentType @default(VENUE_TOUR)
+  status      AppointmentStatus    @default(PENDING)
+  priority    AppointmentPriority  @default(MEDIUM)
+
   // Date and Time
-  requestedDate   DateTime
-  requestedTime   String
-  duration        Int      // Duration in minutes
-  confirmedDate   DateTime?
-  confirmedTime   String?
-  
+  requestedDate DateTime
+  requestedTime String
+  duration      Int // Duration in minutes
+  confirmedDate DateTime?
+  confirmedTime String?
+
   // Meeting Details
-  meetingType     MeetingType @default(IN_PERSON)
-  location        String?  // Specific location within venue
-  meetingLink     String?  // For virtual meetings
-  
+  meetingType MeetingType @default(IN_PERSON)
+  location    String? // Specific location within venue
+  meetingLink String? // For virtual meetings
+
   // Additional Information
-  purpose         String?
-  agenda          String[]
-  notes           String?
-  outcome         String?
-  
+  purpose String?
+  agenda  String[]
+  notes   String?
+  outcome String?
+
   // Requester Information
   requesterCompany String?
   requesterTitle   String?
   requesterPhone   String?
   requesterEmail   String?
-  
+
   // Event Details (if applicable)
-  eventType       String?
+  eventType         String?
   expectedAttendees Int?
-  eventDate       DateTime?
-  
+  eventDate         DateTime?
+
   // Meeting Spaces of Interest
   meetingSpacesInterested String[]
-  
+
   // Follow-up
-  reminderSent    Boolean  @default(false)
+  reminderSent     Boolean @default(false)
   followUpRequired Boolean @default(true)
-  followUpNotes   String?
-  
+  followUpNotes    String?
+
   // Cancellation
   cancellationReason String?
   cancelledBy        String?
   cancelledAt        DateTime?
-  
+
   // Timestamps
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([venueId])
   @@index([requesterId])

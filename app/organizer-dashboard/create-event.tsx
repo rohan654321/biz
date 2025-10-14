@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Progress } from "@/components/ui/progress"
-import { Calendar, MapPin, Clock, IndianRupee, Upload, X, Plus, Eye, Save, Send } from "lucide-react"
+import { Calendar, MapPin, Clock, IndianRupee, Upload, X, Plus, Eye, Save, Send, Loader2 } from "lucide-react"
 import Image from "next/image"
 import { useToast } from "@/hooks/use-toast"
 import AddVenue from "./add-venue"
@@ -40,6 +40,7 @@ interface EventFormData {
   description: string
   eventType: string
   categories: string[]
+  edition: string
   startDate: string
   endDate: string
   dailyStart: string
@@ -132,11 +133,16 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
   const [completionPercentage, setCompletionPercentage] = useState(0)
   const { toast } = useToast()
   const [showValidationErrors, setShowValidationErrors] = useState(false)
+  const [isUploadingImages, setIsUploadingImages] = useState(false)
+  const [isUploadingBrochure, setIsUploadingBrochure] = useState(false)
+  const [isUploadingLayoutPlan, setIsUploadingLayoutPlan] = useState(false)
+
   const [formData, setFormData] = useState<EventFormData>({
     title: "",
     description: "",
     eventType: "",
     categories: [],
+    edition: "",
     startDate: "",
     endDate: "",
     dailyStart: "09:00",
@@ -461,6 +467,16 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
   }
 
   const handlePublishEvent = async () => {
+    // Check if uploads are still in progress
+    if (isUploadingBrochure || isUploadingLayoutPlan || isUploadingImages) {
+      toast({
+        title: "Please Wait",
+        description: "File uploads are still in progress. Please wait for them to complete.",
+        variant: "destructive",
+      })
+      return
+    }
+
     const newValidationErrors: ValidationErrors = {}
 
     // Basic Info - all fields required
@@ -539,6 +555,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         description: formData.description,
         shortDescription: formData.description.substring(0, 200),
         category: formData.eventType,
+        edition: formData.edition || null,
         tags: formData.tags,
         startDate: formData.startDate,
         endDate: formData.endDate,
@@ -553,6 +570,10 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         country: "India",
         venue: formData.venueId,
         currency: formData.currency,
+        images: formData.images,
+        documents: [formData.brochure, formData.layoutPlan].filter(Boolean),
+        brochure: formData.brochure || null,
+        layoutPlan: formData.layoutPlan || null,
         bannerImage: formData.images[0] || null,
         thumbnailImage: formData.images[0] || null,
         isPublic: true,
@@ -621,6 +642,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         description: "",
         eventType: "",
         categories: [],
+        edition: "", // Reset edition
         startDate: "",
         endDate: "",
         dailyStart: "09:00",
@@ -734,34 +756,182 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     }
   }
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
-    if (files) {
-      Array.from(files).forEach((file) => {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          const result = e.target?.result as string
-          setFormData((prev) => ({
-            ...prev,
-            images: [...prev.images, result],
-          }))
+    if (!files || files.length === 0) return
+
+    setIsUploadingImages(true)
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const formData = new FormData()
+        formData.append("file", file)
+        formData.append("folder", "events")
+
+        const response = await fetch("/api/upload/cloudinary", {
+          method: "POST",
+          body: formData,
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || "Failed to upload image")
         }
-        reader.readAsDataURL(file)
+
+        const data = await response.json()
+        return data.url
       })
+
+      const uploadedUrls = await Promise.all(uploadPromises)
+
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...uploadedUrls],
+      }))
+
+      toast({
+        title: "Success",
+        description: `${uploadedUrls.length} image(s) uploaded successfully`,
+      })
+    } catch (error) {
+      console.error("Error uploading images:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to upload images. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUploadingImages(false)
+      if (event.target) {
+        event.target.value = ""
+      }
     }
   }
 
-  const handleBrochureUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBrochureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (file) {
-      setFormData((prev) => ({ ...prev, brochure: file.name }))
+    if (!file) return
+
+    const validTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ]
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload a PDF or Word document",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload a file smaller than 10MB",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsUploadingBrochure(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("folder", "event-documents")
+
+      const response = await fetch("/api/upload/cloudinary", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to upload brochure")
+      }
+
+      const data = await response.json()
+
+      setFormData((prev) => ({ ...prev, brochure: data.url }))
+
+      toast({
+        title: "Success",
+        description: "Brochure uploaded successfully",
+      })
+    } catch (error) {
+      console.error("Error uploading brochure:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to upload brochure. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUploadingBrochure(false)
+      if (event.target) {
+        event.target.value = ""
+      }
     }
   }
 
-  const handleLayoutPlanUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLayoutPlanUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (file) {
-      setFormData((prev) => ({ ...prev, layoutPlan: file.name }))
+    if (!file) return
+
+    const validTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"]
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload a PDF, JPG, or PNG file",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload a file smaller than 10MB",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsUploadingLayoutPlan(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("folder", "event-documents")
+
+      const response = await fetch("/api/upload/cloudinary", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to upload layout plan")
+      }
+
+      const data = await response.json()
+
+      setFormData((prev) => ({ ...prev, layoutPlan: data.url }))
+
+      toast({
+        title: "Success",
+        description: "Layout plan uploaded successfully",
+      })
+    } catch (error) {
+      console.error("Error uploading layout plan:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to upload layout plan. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUploadingLayoutPlan(false)
+      if (event.target) {
+        event.target.value = ""
+      }
     }
   }
 
@@ -883,6 +1053,17 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
                   {showValidationErrors && (!formData.title || formData.title.trim() === "") && (
                     <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
                   )}
+                </div>
+
+                <div>
+                  <Label htmlFor="edition">Edition</Label>
+                  <Input
+                    id="edition"
+                    value={formData.edition}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, edition: e.target.value }))}
+                    placeholder="e.g., 2025, 5th Annual, Spring Edition"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Optional: Specify the edition or year</p>
                 </div>
 
                 <div>
@@ -1433,6 +1614,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
             accept="image/*"
             multiple
             className="hidden"
+            disabled={isUploadingImages}
           />
           <input
             type="file"
@@ -1440,6 +1622,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
             onChange={handleBrochureUpload}
             accept=".pdf,.doc,.docx"
             className="hidden"
+            disabled={isUploadingBrochure}
           />
           <input
             type="file"
@@ -1447,6 +1630,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
             onChange={handleLayoutPlanUpload}
             accept=".pdf,.jpg,.jpeg,.png"
             className="hidden"
+            disabled={isUploadingLayoutPlan}
           />
 
           <Card>
@@ -1458,14 +1642,31 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
-                onClick={() => fileInputRef.current?.click()}
+                className={`border-2 border-dashed border-gray-300 rounded-lg p-8 text-center ${
+                  isUploadingImages ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-gray-400"
+                } transition-colors`}
+                onClick={() => !isUploadingImages && fileInputRef.current?.click()}
               >
-                <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-600 mb-2">Drag and drop images here, or click to browse</p>
-                <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                  Choose Images
-                </Button>
+                {isUploadingImages ? (
+                  <>
+                    <Loader2 className="w-12 h-12 mx-auto text-gray-400 mb-4 animate-spin" />
+                    <p className="text-gray-600 mb-2">Uploading images...</p>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600 mb-2">Drag and drop images here, or click to browse</p>
+                    <Button
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        fileInputRef.current?.click()
+                      }}
+                    >
+                      Choose Images
+                    </Button>
+                  </>
+                )}
               </div>
 
               {formData.images.length > 0 && (
@@ -1508,30 +1709,48 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
                 <Label>Event Brochure</Label>
                 <div className="flex gap-2 mt-1">
                   <Input
-                    value={formData.brochure || ""}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, brochure: e.target.value }))}
-                    placeholder="Upload brochure"
+                    value={formData.brochure ? formData.brochure.split("/").pop() || "Uploaded" : ""}
+                    placeholder={isUploadingBrochure ? "Uploading..." : "No file selected"}
                     readOnly
                   />
-                  <Button variant="outline" onClick={() => brochureInputRef.current?.click()}>
-                    <Upload className="w-4 h-4" />
+                  <Button
+                    variant="outline"
+                    onClick={() => brochureInputRef.current?.click()}
+                    disabled={isUploadingBrochure}
+                  >
+                    {isUploadingBrochure ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4" />
+                    )}
                   </Button>
                 </div>
+                {formData.brochure && <p className="text-xs text-green-600 mt-1">✓ Brochure uploaded successfully</p>}
               </div>
 
               <div>
                 <Label>Layout Plan</Label>
                 <div className="flex gap-2 mt-1">
                   <Input
-                    value={formData.layoutPlan || ""}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, layoutPlan: e.target.value }))}
-                    placeholder="Upload layout plan"
+                    value={formData.layoutPlan ? formData.layoutPlan.split("/").pop() || "Uploaded" : ""}
+                    placeholder={isUploadingLayoutPlan ? "Uploading..." : "No file selected"}
                     readOnly
                   />
-                  <Button variant="outline" onClick={() => layoutPlanInputRef.current?.click()}>
-                    <Upload className="w-4 h-4" />
+                  <Button
+                    variant="outline"
+                    onClick={() => layoutPlanInputRef.current?.click()}
+                    disabled={isUploadingLayoutPlan}
+                  >
+                    {isUploadingLayoutPlan ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4" />
+                    )}
                   </Button>
                 </div>
+                {formData.layoutPlan && (
+                  <p className="text-xs text-green-600 mt-1">✓ Layout plan uploaded successfully</p>
+                )}
               </div>
             </CardContent>
           </Card>
