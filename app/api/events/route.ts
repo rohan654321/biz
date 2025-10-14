@@ -141,16 +141,20 @@ export async function GET(request: NextRequest) {
             avatar: true,
           },
         },
-        venue: {
-          select: {
-            id: true,
-            firstName: true,
-            location: true,
-            venueCity: true,
-            venueState: true,
-            venueCountry: true,
-          },
-        },
+      // In your GET function, update the venue selection:
+venue: {
+  select: {
+    id: true,
+    venueName: true,
+    venueAddress: true,
+    venueCity: true,
+    venueState: true,
+    venueCountry: true,
+    venueZipCode: true,
+    maxCapacity: true,
+    totalHalls: true,
+  },
+},
         _count: {
           select: {
             registrations: true,
