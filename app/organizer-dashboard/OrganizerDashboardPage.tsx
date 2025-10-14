@@ -136,7 +136,7 @@ useEffect(() => {
 }, [organizerId, toast])
 
 
-  useEffect(() => {
+ useEffect(() => {
     const fetchEvents = async () => {
       try {
         const response = await fetch(`/api/organizers/${organizerId}/events`)
@@ -152,6 +152,7 @@ useEffect(() => {
       fetchEvents()
     }
   }, [organizerId])
+
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups((prev) => (prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]))
@@ -286,25 +287,26 @@ useEffect(() => {
     switch (activeSection) {
       case "dashboard":
         return (
-          <DashboardOverview
-            organizerName={organizerData.name}
-            dashboardStats={dashboardStats}
-            recentEvents={events}
-            organizerId={organizerId}
-            onCreateEventClick={() => setActiveSection("create-event")}
-            onManageAttendeesClick={() => {
-              window.location.href = `/event-dashboard/${organizerId}?section=attendees`
-            }}
-            onViewAnalyticsClick={() => {
-              window.location.href = `/event-dashboard/${organizerId}?section=analytics`
-            }}
-            onSendMessageClick={() => {
-              window.location.href = `/event-dashboard/${organizerId}?section=messages`
-            }}
-          />
-        )
-      case "info":
-        return <OrganizerInfo organizerData={organizerData} />
+       <DashboardOverview
+        organizerName={organizerData.name}
+        dashboardStats={dashboardStats}
+        recentEvents={events}
+        organizerId={organizerId}
+        onCreateEventClick={() => setActiveSection("create-event")}
+        onManageAttendeesClick={() => {
+          window.location.href = `/event-dashboard/${organizerId}?section=attendees`
+        }}
+        onViewAnalyticsClick={() => {
+          window.location.href = `/event-dashboard/${organizerId}?section=analytics`
+        }}
+        onSendMessageClick={() => {
+          window.location.href = `/event-dashboard/${organizerId}?section=messages`
+        }}
+      />
+    )
+
+  case "info":
+    return <OrganizerInfo organizerData={organizerData} />
         case "venue-booking":
         return <MyAppointments userId={organizerId} />
       case "events":

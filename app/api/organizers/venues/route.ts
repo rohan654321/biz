@@ -8,75 +8,71 @@ export async function GET(request: NextRequest) {
     const country = searchParams.get("country")
     const search = searchParams.get("search")
 
-    const venues = await prisma.user.findMany({
-      where: {
-        AND: [
-          { role: "VENUE_MANAGER" },
-          { isActive: true },
-          city ? { location: { contains: city, mode: "insensitive" } } : {},
-          search
-            ? {
-                OR: [
-                  { company: { contains: search, mode: "insensitive" } },
-                  { location: { contains: search, mode: "insensitive" } },
-                  { bio: { contains: search, mode: "insensitive" } },
-                ],
-              }
-            : {},
-        ],
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        company: true, // This is the venue name
-        bio: true, // This is the description
-        location: true, // This is the address
-        phone: true,
-        email: true,
-        maxCapacity: true,
-        totalHalls: true,
-        averageRating: true,
-        totalReviews: true,
-        avatar: true, // This is the logo
-        amenities: true,
-        createdAt: true,
-        isVerified: true,
-        venueCurrency: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    })
+const venues = await prisma.user.findMany({
+  where: {
+    AND: [
+      { role: "VENUE_MANAGER" },
+      { isActive: true },
+      city ? { location: { contains: city, mode: "insensitive" } } : {},
+      search
+        ? {
+            OR: [
+              { company: { contains: search, mode: "insensitive" } },
+              { location: { contains: search, mode: "insensitive" } },
+              { bio: { contains: search, mode: "insensitive" } },
+            ],
+          }
+        : {},
+    ],
+  },
+  select: {
+    id: true,
+    firstName: true,
+    lastName: true,
+    phone: true,
+    email: true,
+    isVerified: true,
+    avatar: true,
+    venueName: true,
+    venueDescription: true,
+    venueAddress: true,
+    maxCapacity: true,
+    totalHalls: true,
+    averageRating: true,
+    totalReviews: true,
+    amenities: true,
+    venueCurrency: true,
+    createdAt: true,
+  },
+  orderBy: { createdAt: "desc" },
+})
 
-    const venuesWithRating = venues.map((venue) => ({
-      id: venue.id,
-      name: venue.company || "Unnamed Venue", // Using company as venue name
-      description: venue.bio || "",
-      location: {
-        address: venue.location || "",
-        city: "", // Extract from location if needed
-        state: "",
-        country: "",
-      },
-      capacity: venue.maxCapacity || 0,
-      basePrice: 0, // Default since not in current schema
-      currency: venue.venueCurrency || "USD",
-      rating: {
-        average: venue.averageRating || 0,
-        count: venue.totalReviews || 0,
-      },
-      images: venue.avatar ? [venue.avatar] : [], // Using avatar as main image
-      amenities: venue.amenities || [],
-      isVerified: venue.isVerified || false,
-      manager: {
-        name: `${venue.firstName} ${venue.lastName}`.trim(),
-        phone: venue.phone || "",
-        email: venue.email,
-      },
-      totalHalls: venue.totalHalls || 0,
-      createdAt: venue.createdAt,
-    }))
+const venuesWithRating = venues.map((venue) => ({
+  id: venue.id,
+  name: venue.venueName || "Unnamed Venue",
+  description: venue.venueDescription || "",
+  location: {
+    address: venue.venueAddress || "Address not available",
+    city: "",
+    state: "",
+    country: "",
+  },
+  capacity: venue.maxCapacity ?? 0,
+  totalHalls: venue.totalHalls ?? 0,
+  rating: venue.averageRating ?? 0,
+  reviewCount: venue.totalReviews ?? 0,
+  images: venue.avatar ? [venue.avatar] : [],
+  amenities: venue.amenities || [],
+  currency: venue.venueCurrency || "USD",
+  isVerified: venue.isVerified || false,
+  manager: {
+    name: `${venue.firstName} ${venue.lastName}`.trim(),
+    phone: venue.phone || "",
+    email: venue.email,
+  },
+  createdAt: venue.createdAt,
+}))
+
 
     console.log("[v0] Found venues:", venuesWithRating.length)
     return NextResponse.json(venuesWithRating)
