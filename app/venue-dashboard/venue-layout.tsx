@@ -239,184 +239,168 @@ if (data.data) {
     }
   }
 
-  return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <Sidebar className="border-r">
-          {/* <SidebarHeader className="border-b p-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={venueData?.logo || "/placeholder.svg"} />
-                <AvatarFallback>GCC</AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="font-semibold">{venueData?.venueName}</div>
-                <div className="text-sm text-gray-600">Venue Manager</div>
-              </div>
-            </div>
-          </SidebarHeader> */}
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Venue Dashboard</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {/* Venue Management Dropdown */}
-                  <SidebarMenuItem>
-                    <div className="w-full">
-                      <button 
-                        className="flex items-center justify-between w-full py-2 font-medium text-sm" 
-                        onClick={() => toggleMenu("venue-management")}
-                      >
-                        <span className="flex items-center gap-2">
-                          <Building2 size={16} />
-                          Venue Management
-                        </span>
-                        {openMenus.includes("venue-management") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                      </button>
-                      {openMenus.includes("venue-management") && (
-                        <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
-                          <li
-                            onClick={() => setActiveSection("venue-profile")}
-                            className={menuItemClass("venue-profile")}
-                          >
-                            Venue Profile
-                          </li>
-                          <li
-                            onClick={() => setActiveSection("event-management")}
-                            className={menuItemClass("event-management")}
-                          >
-                            Event Management
-                          </li>
-                          <li
-                            onClick={() => setActiveSection("booking-system")}
-                            className={menuItemClass("booking-system")}
-                          >
-                            Booking System
-                          </li>
-                        </ul>
-                      )}
-                    </div>
-                  </SidebarMenuItem>
+return (
+  <div className="flex min-h-screen w-full">
+    {/* Sidebar */}
+    <aside className="w-64 border-r bg-gray-50 flex flex-col">
+      <div className="flex-1 p-4 overflow-y-auto">
+        {/* Venue Management Dropdown */}
+        <div className="mb-4">
+          <button
+            className="flex items-center justify-between w-full py-2 font-medium text-sm"
+            onClick={() => toggleMenu("venue-management")}
+          >
+            <span className="flex items-center gap-2">
+              <Building2 size={16} />
+              Venue Management
+            </span>
+            {openMenus.includes("venue-management") ? (
+              <ChevronDown size={16} />
+            ) : (
+              <ChevronRight size={16} />
+            )}
+          </button>
+          {openMenus.includes("venue-management") && (
+            <ul className="ml-4 mt-2 space-y-2 border-l border-gray-200 pl-2">
+              <li
+                onClick={() => setActiveSection("venue-profile")}
+                className={menuItemClass("venue-profile")}
+              >
+                Venue Profile
+              </li>
+              <li
+                onClick={() => setActiveSection("event-management")}
+                className={menuItemClass("event-management")}
+              >
+                Event Management
+              </li>
+              <li
+                onClick={() => setActiveSection("booking-system")}
+                className={menuItemClass("booking-system")}
+              >
+                Booking System
+              </li>
+            </ul>
+          )}
+        </div>
 
-                  {/* Communication Dropdown */}
-                  <SidebarMenuItem>
-                    <div className="w-full">
-                      <button 
-                        className="flex items-center justify-between w-full py-2 font-medium text-sm" 
-                        onClick={() => toggleMenu("communication")}
-                      >
-                        <span className="flex items-center gap-2">
-                          <MessageSquare size={16} />
-                          Communication
-                        </span>
-                        {openMenus.includes("communication") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                      </button>
-                      {openMenus.includes("communication") && (
-                        <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
-                          <li
-                            onClick={() => setActiveSection("communication")}
-                            className={menuItemClass("communication")}
-                          >
-                            Messages
-                          </li>
-                          <li
-                            onClick={() => setActiveSection("connection")}
-                            className={menuItemClass("connection")}
-                          >
-                            Connections
-                          </li>
-                        </ul>
-                      )}
-                    </div>
-                  </SidebarMenuItem>
+        {/* Communication Dropdown */}
+        <div className="mb-4">
+          <button
+            className="flex items-center justify-between w-full py-2 font-medium text-sm"
+            onClick={() => toggleMenu("communication")}
+          >
+            <span className="flex items-center gap-2">
+              <MessageSquare size={16} />
+              Communication
+            </span>
+            {openMenus.includes("communication") ? (
+              <ChevronDown size={16} />
+            ) : (
+              <ChevronRight size={16} />
+            )}
+          </button>
+          {openMenus.includes("communication") && (
+            <ul className="ml-4 mt-2 space-y-2 border-l border-gray-200 pl-2">
+              <li
+                onClick={() => setActiveSection("communication")}
+                className={menuItemClass("communication")}
+              >
+                Messages
+              </li>
+              <li
+                onClick={() => setActiveSection("connection")}
+                className={menuItemClass("connection")}
+              >
+                Connections
+              </li>
+            </ul>
+          )}
+        </div>
 
-                  {/* Reviews & Legal Dropdown */}
-                  <SidebarMenuItem>
-                    <div className="w-full">
-                      <button 
-                        className="flex items-center justify-between w-full py-2 font-medium text-sm" 
-                        onClick={() => toggleMenu("reviews-legal")}
-                      >
-                        <span className="flex items-center gap-2">
-                          <Star size={16} />
-                          Reviews & Legal
-                        </span>
-                        {openMenus.includes("reviews-legal") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                      </button>
-                      {openMenus.includes("reviews-legal") && (
-                        <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
-                          <li
-                            onClick={() => setActiveSection("ratings-reviews")}
-                            className={menuItemClass("ratings-reviews")}
-                          >
-                            Ratings & Reviews
-                          </li>
-                          <li
-                            onClick={() => setActiveSection("legal-documentation")}
-                            className={menuItemClass("legal-documentation")}
-                          >
-                            Legal & Documentation
-                          </li>
-                        </ul>
-                      )}
-                    </div>
-                  </SidebarMenuItem>
+        {/* Reviews & Legal Dropdown */}
+        <div className="mb-4">
+          <button
+            className="flex items-center justify-between w-full py-2 font-medium text-sm"
+            onClick={() => toggleMenu("reviews-legal")}
+          >
+            <span className="flex items-center gap-2">
+              <Star size={16} />
+              Reviews & Legal
+            </span>
+            {openMenus.includes("reviews-legal") ? (
+              <ChevronDown size={16} />
+            ) : (
+              <ChevronRight size={16} />
+            )}
+          </button>
+          {openMenus.includes("reviews-legal") && (
+            <ul className="ml-4 mt-2 space-y-2 border-l border-gray-200 pl-2">
+              <li
+                onClick={() => setActiveSection("ratings-reviews")}
+                className={menuItemClass("ratings-reviews")}
+              >
+                Ratings & Reviews
+              </li>
+              <li
+                onClick={() => setActiveSection("legal-documentation")}
+                className={menuItemClass("legal-documentation")}
+              >
+                Legal & Documentation
+              </li>
+            </ul>
+          )}
+        </div>
 
-                  {/* Help & Support (No Dropdown) */}
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("help-support")}
-                      isActive={activeSection === "help-support"}
-                      className="w-full justify-start"
-                    >
-                      <HelpCircle className="w-4 h-4" />
-                      <span>Help & Support</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+        {/* Help & Support */}
+        <button
+          onClick={() => setActiveSection("help-support")}
+          className={`flex items-center w-full py-2 gap-2 font-medium text-sm ${
+            activeSection === "help-support" ? "bg-gray-200" : ""
+          }`}
+        >
+          <HelpCircle size={16} />
+          Help & Support
+        </button>
 
-                  {/* Settings (No Dropdown) */}
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("settings")}
-                      isActive={activeSection === "settings"}
-                      className="w-full justify-start"
-                    >
-                      <Settings className="w-4 h-4" />
-                      <span>Settings</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+        {/* Settings */}
+        <button
+          onClick={() => setActiveSection("settings")}
+          className={`flex items-center w-full py-2 gap-2 font-medium text-sm mt-2 ${
+            activeSection === "settings" ? "bg-gray-200" : ""
+          }`}
+        >
+          <Settings size={16} />
+          Settings
+        </button>
 
-                  {/* Logout Button */}
-                  <SidebarMenuItem>
-                    <Button
-                      onClick={() => signOut({ callbackUrl: "/login" })}
-                      className="w-full bg-red-500 hover:bg-red-600 text-white mt-10"
-                    >
-                      Logout
-                    </Button>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
-
-        <SidebarInset className="flex-1">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="flex items-center gap-2 ml-auto">
-              <Button variant="ghost" size="sm">
-                <Bell className="w-4 h-4" />
-              </Button>
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={venueData?.logo || "/placeholder.svg"} />
-                <AvatarFallback>GCC</AvatarFallback>
-              </Avatar>
-            </div>
-          </header>
-          <div className="flex-1 p-6">{renderContent()}</div>
-        </SidebarInset>
+        {/* Logout */}
+        <Button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="w-full bg-red-500 hover:bg-red-600 text-white mt-10"
+        >
+          Logout
+        </Button>
       </div>
-    </SidebarProvider>
-  )
+    </aside>
+
+    {/* Main Content */}
+    <div className="flex-1 flex flex-col">
+      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+        <div className="-ml-1" />
+        <div className="flex items-center gap-2 ml-auto">
+          <Button variant="ghost" size="sm">
+            <Bell className="w-4 h-4" />
+          </Button>
+          <Avatar className="w-8 h-8">
+            <AvatarImage src={venueData?.logo || "/placeholder.svg"} />
+            <AvatarFallback>GCC</AvatarFallback>
+          </Avatar>
+        </div>
+      </header>
+      <div className="flex-1 p-6">{renderContent()}</div>
+    </div>
+  </div>
+);
+
 } 

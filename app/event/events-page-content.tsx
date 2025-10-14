@@ -17,6 +17,7 @@ import {
   Loader2,
   Star,
   Bookmark,
+  CalendarDays,
 } from "lucide-react"
 import Image from "next/image"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -543,24 +544,24 @@ export default function EventsPageContent() {
       <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
         <div className="w-full px-4 py-6">
           {/* Dynamic Banner Section */}
-  <div
-  className="flex items-center justify-between mb-6 p-6 border border-blue-200 bg-cover bg-center bg-no-repeat relative overflow-hidden"
-  style={{
-    backgroundImage: "url('/city/c2.jpg')",
-  }}
->
-  {/* Softer overlay */}
-  <div className="absolute inset-0 bg-gradient-to-r from-white/40 via-blue-50/30 to-purple-50/40"></div>
+          <div
+            className="flex items-center justify-between mb-6 p-6 border border-blue-200 bg-cover bg-center bg-no-repeat relative overflow-hidden"
+            style={{
+              backgroundImage: "url('/city/c2.jpg')",
+            }}
+          >
+            {/* Softer overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-white/40 via-blue-50/30 to-purple-50/40"></div>
 
-  <div className="relative z-10">
-    <h1 className="text-3xl font-bold text-gray-900 mb-2">{getBannerTitle()}</h1>
-    <p className="text-gray-700 text-lg">{getFollowerCount()}</p>
-  </div>
+            <div className="relative z-10">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{getBannerTitle()}</h1>
+              <p className="text-gray-700 text-lg">{getFollowerCount()}</p>
+            </div>
 
-  <div className="relative z-10 flex items-center space-x-4">
-    {/* Buttons / avatars */}
-  </div>
-</div>
+            <div className="relative z-10 flex items-center space-x-4">
+              {/* Buttons / avatars */}
+            </div>
+          </div>
 
 
           {/* Tabs Navigation */}
@@ -569,11 +570,10 @@ export default function EventsPageContent() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700"
-                }`}
+                  }`}
               >
                 {tab}
               </button>
@@ -775,17 +775,15 @@ export default function EventsPageContent() {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => setViewMode("Trending")}
-                      className={`px-3 py-1 text-sm rounded-full ${
-                        viewMode === "Trending" ? "bg-orange-100 text-orange-600" : "text-gray-600 hover:text-gray-800"
-                      }`}
+                      className={`px-3 py-1 text-sm rounded-full ${viewMode === "Trending" ? "bg-orange-100 text-orange-600" : "text-gray-600 hover:text-gray-800"
+                        }`}
                     >
                       Trending 🔥
                     </button>
                     <button
                       onClick={() => setViewMode("Date")}
-                      className={`px-3 py-1 text-sm rounded-full ${
-                        viewMode === "Date" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:text-gray-800"
-                      }`}
+                      className={`px-3 py-1 text-sm rounded-full ${viewMode === "Date" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:text-gray-800"
+                        }`}
                     >
                       Date
                     </button>
@@ -807,11 +805,10 @@ export default function EventsPageContent() {
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 rounded text-sm font-medium ${
-                          currentPage === page
+                        className={`w-8 h-8 rounded text-sm font-medium ${currentPage === page
                             ? "bg-blue-600 text-white"
                             : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                        }`}
+                          }`}
                       >
                         {page}
                       </button>
@@ -877,19 +874,18 @@ export default function EventsPageContent() {
 
                                 {/* Verified + Edition */}
                                 <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-                                  <div className="bg-green-500 rounded-lg p-1.5">
-                                    <svg
-                                      className="w-4 h-4 text-white"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
+                                  {/* Verified Image */}
+                                  <div className="w-6 h-6">
+                                    <img
+                                      src="/images/VerifiedBadge.png" // replace with your verified image path
+                                      alt="Verified"
+                                      className="w-full h-full object-contain"
+                                    />
                                   </div>
+
                                   <span className="text-gray-600 font-medium text-sm">2nd Edition</span>
                                 </div>
+
                               </div>
 
                               {/* Tags */}
@@ -1055,6 +1051,7 @@ export default function EventsPageContent() {
 
             {/* Right Column - Fixed width */}
             <div className="w-full lg:w-80 space-y-6 self-start flex-shrink-0">
+              {/* Advertisement */}
               <AdCard />
 
               {/* Large Featured Event */}
@@ -1082,37 +1079,78 @@ export default function EventsPageContent() {
                 </Card>
               )}
 
-              {/* Upcoming Events List */}
-              <div className="space-y-4">
+              {/* Upcoming Events (Styled Like FeaturedEvents) */}
+              <div className="space-y-5">
                 {events.slice(0, 3).map((event) => (
-                  <Card key={event.id} className="bg-white border border-gray-100">
-                    <CardContent className="p-4">
-                      <div className="flex gap-3">
-                        <Image
-                          src={getEventImage(event) || "/placeholder.svg"}
-                          alt={event.title}
-                          width={60}
-                          height={60}
-                          className="w-15 h-15 rounded-lg object-cover flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-sm text-gray-900 mb-1 line-clamp-2">{event.title}</h4>
-                          <p className="text-xs text-gray-600 mb-1">{formatDate(event.timings.startDate)}</p>
-                          <p className="text-xs text-gray-600 mb-2">{event.location?.city || "Location TBD"}</p>
-                          <div className="flex items-center justify-between">
-                            <Badge className="bg-blue-600 text-white text-xs">{event.categories[0]}</Badge>
-                            <div className="w-4 h-4 bg-white rounded-full border border-gray-200 flex items-center justify-center">
-                              <div className="w-2 h-2 bg-gray-400 rounded-full" />
-                            </div>
+                  <Link key={event.id} href={`/event/${event.id}`} className="group block">
+                    <div
+                      className="bg-gradient-to-r from-yellow-100 to-yellow-300 rounded-2xl 
+                     p-4 flex flex-col gap-4 shadow-sm hover:shadow-lg hover:-translate-y-1 
+                     transition-all duration-300"
+                    >
+                      {/* Top Section */}
+                      <div className="flex items-start gap-3">
+                        {/* Image */}
+                        <div className="w-[90px] h-[80px] flex-shrink-0 rounded-xl overflow-hidden">
+                          <Image
+                            src={getEventImage(event) || "/placeholder.svg"}
+                            alt={event.title}
+                            width={90}
+                            height={80}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex flex-col text-left">
+                          <h3 className="text-sm font-bold text-gray-900 leading-tight line-clamp-2">
+                            {event.title}
+                          </h3>
+                          <p className="text-xs text-gray-700 mb-1">
+                            International Exhibition
+                          </p>
+
+                          <div className="flex items-center text-xs font-semibold text-gray-800">
+                            <CalendarDays className="w-3 h-3 mr-1 text-gray-700" />
+                            {new Date(event.timings.startDate).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </div>
+
+                          <div className="flex items-center text-xs text-gray-700 mt-1">
+                            <MapPin className="w-3 h-3 mr-1 text-blue-700" />
+                            {event.location?.city || "Chennai, India"}
                           </div>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+
+                      {/* Divider */}
+                      <div className="border-t border-gray-300"></div>
+
+                      {/* Categories */}
+                      <div className="flex gap-2 flex-wrap">
+                        <span
+                          className="px-2 py-1 text-xs rounded-full border border-gray-400 
+                         bg-white/70 text-gray-800"
+                        >
+                          {event.categories[0] || "General"}
+                        </span>
+                        <span
+                          className="px-2 py-1 text-xs rounded-full border border-gray-400 
+                         bg-white/70 text-gray-800"
+                        >
+                          Power & Energy
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
                 ))}
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
