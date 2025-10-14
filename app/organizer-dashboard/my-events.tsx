@@ -1,5 +1,5 @@
 "use client"
-
+import CreateEvent from "./create-event"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -70,6 +70,8 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
   const [typeFilter, setTypeFilter] = useState("all")
   const [loading, setLoading] = useState(true)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  const [showCreateEvent, setShowCreateEvent] = useState(false)
+
 
   const defaultImage = "/herosection-images/test.jpeg"
 
@@ -114,25 +116,23 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
     if (organizerId) fetchEvents()
   }, [organizerId])
 
-  useEffect(() => {
-    let filtered = events
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (event) =>
-          event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.venue.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.city.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
-    }
-    if (timelineStatusFilter !== "all")
-      filtered = filtered.filter((event) => event.timelineStatus === timelineStatusFilter)
-    if (publicationStatusFilter !== "all")
-      filtered = filtered.filter((event) => event.status === publicationStatusFilter)
-    if (typeFilter !== "all")
-      filtered = filtered.filter((event) => event.eventType.toLowerCase() === typeFilter.toLowerCase())
-    setFilteredEvents(filtered)
-  }, [events, searchTerm, timelineStatusFilter, publicationStatusFilter, typeFilter])
+useEffect(() => {
+  const filtered = events.filter(event => {
+    const matchesSearch = !searchTerm ||
+      [event.title, event.description, event.venue, event.city]
+        .some(field => field?.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesTimeline = timelineStatusFilter === "all" || event.timelineStatus === timelineStatusFilter;
+    const matchesPublication = publicationStatusFilter === "all" || event.status === publicationStatusFilter;
+    const matchesType = typeFilter === "all" || event.eventType.toLowerCase() === typeFilter.toLowerCase();
+
+    return matchesSearch && matchesTimeline && matchesPublication && matchesType;
+  });
+
+  setFilteredEvents(filtered);
+}, [events, searchTerm, timelineStatusFilter, publicationStatusFilter, typeFilter]);
+
+
 
   const getTimelineStatusColor = (status: string) => {
     switch (status) {
@@ -226,24 +226,44 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
     )
   }
 
+  // 🧩 Add this right before your existing return
+// 🧩 Add this right before your existing return
+if (showCreateEvent) {
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">My Events</h2>
-          <p className="text-gray-600">Manage and track your events</p>
-        </div>
-
-        <div className="flex gap-2">
-          <Link href={`/organizer-dashboard/${organizerId}/create-event`}>
-            <Button className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Create New Event
-            </Button>
-          </Link>
-        </div>
+        <h2 className="text-2xl font-bold text-gray-900">Create New Event</h2>
+        <Button variant="outline" onClick={() => setShowCreateEvent(false)}>
+          ← Back to My Events
+        </Button>
       </div>
+
+      {/* 👇 Render CreateEvent component here */}
+      <CreateEvent organizerId={organizerId} />
+    </div>
+  )
+}
+
+// 👇 Main event list view starts here
+return (
+  <div className="space-y-6">
+    {/* Header */}
+    <div className="flex items-center justify-between">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">My Events</h2>
+        <p className="text-gray-600">Manage and track your events</p>
+      </div>
+
+      <div className="flex gap-2">
+        <Button className="flex items-center gap-2 cursor-pointer" onClick={() => setShowCreateEvent(true)}>
+          <Plus className="w-4 h-4 cursor-pointer" />
+          Create New Event
+        </Button>
+      </div>
+    </div>
+
+    {/* ✅ The rest of your filters and events list go here */}
+
 
       {/* Filters and Search */}
       <Card>
@@ -384,10 +404,11 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                 : "Get started by creating your first event"}
             </p>
             <Link href={`/organizer-dashboard/${organizerId}/create-event`}>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Create New Event
-              </Button>
+             <Button className="flex items-center gap-2 cursor-pointer" onClick={() => setShowCreateEvent(true)}>
+  <Plus className="w-4 h-4 cursor-pointer" />
+  Create New Event
+</Button>
+
             </Link>
           </CardContent>
         </Card>
