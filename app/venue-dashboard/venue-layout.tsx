@@ -386,7 +386,7 @@ return (
 
     {/* Main Content */}
     <div className="flex-1 flex flex-col">
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+      {/* <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
         <div className="-ml-1" />
         <div className="flex items-center gap-2 ml-auto">
           <Button variant="ghost" size="sm">
@@ -397,7 +397,7 @@ return (
             <AvatarFallback>GCC</AvatarFallback>
           </Avatar>
         </div>
-      </header>
+      </header> */}
       <div className="flex-1 p-6">{renderContent()}</div>
     </div>
   </div>
