@@ -8,8 +8,6 @@ import { Badge } from "@/components/ui/badge"
 import {
   MapPin,
   Star,
-  Heart,
-  Share2,
   Wifi,
   Car,
   Coffee,
@@ -25,7 +23,6 @@ import {
 
 interface Venue {
   id: string
-  venueName: string
   logo: string
   contactPerson: string
   email: string
@@ -33,15 +30,18 @@ interface Venue {
   address: string
   website: string
   description: string
-  maxCapacity: number
-  totalHalls: number
   totalEvents: number
   activeBookings: number
-  averageRating: number
-  totalReviews: number
   amenities: string[]
   meetingSpaces: any[]
   isVerified: boolean
+  venueName: string
+  venueDescription?: string
+  venueAddress?: string
+  maxCapacity: number | null
+  totalHalls: number | null
+  averageRating: number
+  totalReviews: number
 }
 
 export default function VenuesPage() {
@@ -158,16 +158,20 @@ export default function VenuesPage() {
 
   const filteredVenues = Array.isArray(venues)
     ? venues.filter((venue) => {
+        const name = venue.venueName && venue.venueName.trim() ? venue.venueName : "Unnamed Venue"
+        const addr =
+          (venue.venueAddress && venue.venueAddress.trim()) ||
+          (venue.address && venue.address.trim()) ||
+          "Address not provided"
         const matchesSearch =
-          venue.venueName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          venue.address.toLowerCase().includes(searchQuery.toLowerCase())
+          name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          addr.toLowerCase().includes(searchQuery.toLowerCase())
 
         const matchesCity =
-          selectedCities.length === 0 ||
-          selectedCities.some((city) => venue.address.toLowerCase().includes(city.toLowerCase()))
+          selectedCities.length === 0 || selectedCities.some((city) => addr.toLowerCase().includes(city.toLowerCase()))
         const matchesCountry =
           selectedCountries.length === 0 ||
-          selectedCountries.some((country) => venue.address.toLowerCase().includes(country.toLowerCase()))
+          selectedCountries.some((country) => addr.toLowerCase().includes(country.toLowerCase()))
 
         return matchesSearch && matchesCity && matchesCountry
       })
@@ -176,6 +180,22 @@ export default function VenuesPage() {
   const handleVenueClick = (venueId: string) => {
     router.push(`/venue/${venueId}`)
   }
+
+  const displayName = (v: Venue) => (v.venueName && v.venueName.trim() ? v.venueName : "Unnamed Venue")
+
+  const displayDesc = (v: Venue) => {
+    const d = (v.venueDescription && v.venueDescription.trim()) || (v.description && v.description.trim())
+    return d || "No description available"
+  }
+
+  const displayAddress = (v: Venue) => {
+    const a = (v.venueAddress && v.venueAddress.trim()) || (v.address && v.address.trim())
+    return a || "Address not provided"
+  }
+
+  const displayCapacity = (v: Venue) => (v.maxCapacity && v.maxCapacity > 0 ? v.maxCapacity : "N/A")
+
+  const displayHalls = (v: Venue) => (v.totalHalls && v.totalHalls > 0 ? v.totalHalls : "N/A")
 
   if (loading) {
     return (
@@ -325,48 +345,57 @@ export default function VenuesPage() {
 
             {/* Venues Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredVenues.map((venue) => (
+              {filteredVenues.map((venue, index) => (
                 <div
-                  key={venue.id}
-                  className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group rounded-sm border-1 cursor-pointer"
+                  key={index}
+                  className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group rounded-sm border cursor-pointer"
                   onClick={() => handleVenueClick(venue.id)}
                 >
+                  {/* Image */}
                   <div className="relative">
                     <img
-                      src={venue.logo || "/city/c2.jpg"} // your default image path
-                      alt={venue.venueName}
+                      src={venue.logo && venue.logo.trim() !== "" ? venue.logo : "/city/c2.jpg"}
+                      alt={venue.venueName || "Venue"}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        e.currentTarget.src = "/city/c2.jpg" // fallback image
-                      }}
+                      onError={(e) => (e.currentTarget.src = "/city/c2.jpg")}
                     />
 
-                    <div className="absolute top-3 left-3">
-                      {venue.isVerified && <Badge className="bg-orange-500 text-white">Featured</Badge>}
-                    </div>
-                    <div className="absolute top-3 right-3 flex space-x-2">
-                      <Button size="sm" variant="ghost" className="bg-white/80 hover:bg-white p-2">
-                        <Heart className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="bg-white/80 hover:bg-white p-2">
-                        <Share2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    {venue.isVerified && (
+                      <div className="absolute top-3 left-3">
+                        <Badge className="bg-orange-500 text-white">Featured</Badge>
+                      </div>
+                    )}
                   </div>
 
+                  {/* Card Content */}
                   <CardContent className="p-5">
+                    {/* Venue Name & Rating */}
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{venue.venueName}</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{displayName(venue)}</h3>
+
                       <div className="flex items-center space-x-1">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm font-medium">{venue.averageRating.toFixed(1)}</span>
-                        <span className="text-sm text-gray-500">({venue.totalReviews})</span>
+                        <span className="text-sm font-medium">{venue.averageRating?.toFixed(1) || "0.0"}</span>
+                        <span className="text-sm text-gray-500">({venue.totalReviews || 0})</span>
                       </div>
                     </div>
 
+                    {/* Description */}
+                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">{displayDesc(venue)}</p>
+
+                    {/* Address */}
                     <div className="flex items-center text-gray-600 mb-2">
                       <MapPin className="w-4 h-4 mr-1" />
-                      <span className="text-sm">{venue.address}</span>
+                      {/* <span className="text-sm">{displayAddress(venue)}</span> */}
+                        <span className="text-sm">{venue.venueAddress}</span>
+                         <span className="text-sm">{venue.address}</span>
+
+                    </div>
+
+                    {/* Capacity & Halls */}
+                    <div className="text-sm text-gray-500 space-y-1">
+                      <p>Capacity: {displayCapacity(venue)}</p>
+                      <p>Total Halls: {displayHalls(venue)}</p>
                     </div>
                   </CardContent>
                 </div>
