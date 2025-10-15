@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -19,7 +18,9 @@ import {
   Menu,
   X,
   HelpCircle,
-   Network, MessageSquare, Users
+  Network,
+  MessageSquare,
+  Users
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import DashboardOverview from "./dashboard-overview"
@@ -31,6 +32,7 @@ import { HelpSupport } from "@/components/HelpSupport"
 import MessagesCenter from "./messages-center"
 import { ConnectionsSection } from "../dashboard/connections-section"
 import { MyAppointments } from "./my-appointments"
+import { useDashboard } from "@/contexts/dashboard-context"
 
 interface OrganizerDashboardPageProps {
   organizerId: string
@@ -93,50 +95,49 @@ interface SidebarItem {
 export default function OrganizerDashboardSimplified({ organizerId }: OrganizerDashboardPageProps) {
   const params = useParams()
   const { toast } = useToast()
-  const [activeSection, setActiveSection] = useState("dashboard")
-  const [expandedGroups, setExpandedGroups] = useState<string[]>(["main", "event-management"])
+  const { activeSection, setActiveSection } = useDashboard()
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(["main", "event-management", "network"])
   const [organizerData, setOrganizerData] = useState<OrganizerData | null>(null)
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-useEffect(() => {
-  const fetchOrganizerData = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch(`/api/organizers/${organizerId}`)
-      if (!response.ok) throw new Error("Failed to fetch organizer data")
-      const data = await response.json()
+  useEffect(() => {
+    const fetchOrganizerData = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/organizers/${organizerId}`)
+        if (!response.ok) throw new Error("Failed to fetch organizer data")
+        const data = await response.json()
 
-      setOrganizerData(data.organizer)
+        setOrganizerData(data.organizer)
 
-      // 👇 If the organizer has no events, default to Create Event
-      if (data.organizer?.totalEvents === 0) {
-        setActiveSection("create-event")
-      } else {
-        setActiveSection("dashboard")
+        // 👇 If the organizer has no events, default to Create Event
+        if (data.organizer?.totalEvents === 0) {
+          setActiveSection("create-event")
+        } else {
+          setActiveSection("dashboard")
+        }
+      } catch (error) {
+        console.error("Error fetching organizer data:", error)
+        setError("Failed to load organizer data")
+        toast({
+          title: "Error",
+          description: "Failed to load organizer data",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error("Error fetching organizer data:", error)
-      setError("Failed to load organizer data")
-      toast({
-        title: "Error",
-        description: "Failed to load organizer data",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
     }
-  }
 
-  if (organizerId) {
-    fetchOrganizerData()
-  }
-}, [organizerId, toast])
+    if (organizerId) {
+      fetchOrganizerData()
+    }
+  }, [organizerId, toast, setActiveSection])
 
-
- useEffect(() => {
+  useEffect(() => {
     const fetchEvents = async () => {
       try {
         const response = await fetch(`/api/organizers/${organizerId}/events`)
@@ -152,7 +153,6 @@ useEffect(() => {
       fetchEvents()
     }
   }, [organizerId])
-
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups((prev) => (prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]))
@@ -189,32 +189,29 @@ useEffect(() => {
           icon: Plus,
           id: "create-event",
         },
-
-        
       ],
     },
-
-{
-  id: "network",
-  label: "Network",
-  items: [
     {
-      title: "Connect",
-      icon: Users,          // 👥 Better than HelpCircle
-      id: "connect",
-    },
-    {
-      title: "Messages",
-      icon: MessageSquare,  // 💬 Better than Settings
-      id: "messages",
-    },
-    {
-      title: "Venue Booking",
-      icon: MessageSquare,  // 💬 Better than Settings
-      id: "venue-booking",
-    },
-  ],
-}
+      id: "network",
+      label: "Network",
+      items: [
+        {
+          title: "Connect",
+          icon: Users,
+          id: "connect",
+        },
+        {
+          title: "Messages",
+          icon: MessageSquare,
+          id: "messages",
+        },
+        {
+          title: "Venue Booking",
+          icon: Calendar,
+          id: "venue-booking",
+        },
+      ],
+    }
   ]
 
   const individualSidebarItems: SidebarItem[] = [
@@ -287,27 +284,26 @@ useEffect(() => {
     switch (activeSection) {
       case "dashboard":
         return (
-       <DashboardOverview
-        organizerName={organizerData.name}
-        dashboardStats={dashboardStats}
-        recentEvents={events}
-        organizerId={organizerId}
-        onCreateEventClick={() => setActiveSection("create-event")}
-        onManageAttendeesClick={() => {
-          window.location.href = `/event-dashboard/${organizerId}?section=attendees`
-        }}
-        onViewAnalyticsClick={() => {
-          window.location.href = `/event-dashboard/${organizerId}?section=analytics`
-        }}
-        onSendMessageClick={() => {
-          window.location.href = `/event-dashboard/${organizerId}?section=messages`
-        }}
-      />
-    )
-
-  case "info":
-    return <OrganizerInfo organizerData={organizerData} />
-        case "venue-booking":
+          <DashboardOverview
+            organizerName={organizerData.name}
+            dashboardStats={dashboardStats}
+            recentEvents={events}
+            organizerId={organizerId}
+            onCreateEventClick={() => setActiveSection("create-event")}
+            onManageAttendeesClick={() => {
+              window.location.href = `/event-dashboard/${organizerId}?section=attendees`
+            }}
+            onViewAnalyticsClick={() => {
+              window.location.href = `/event-dashboard/${organizerId}?section=analytics`
+            }}
+            onSendMessageClick={() => {
+              window.location.href = `/event-dashboard/${organizerId}?section=messages`
+            }}
+          />
+        )
+      case "info":
+        return <OrganizerInfo organizerData={organizerData} />
+      case "venue-booking":
         return <MyAppointments userId={organizerId} />
       case "events":
         return <MyEvents organizerId={organizerId} />
@@ -316,13 +312,13 @@ useEffect(() => {
       case "settings":
         return <SettingsPanel organizerData={organizerData} onUpdate={function (data: Partial<OrganizerData>): void {
           throw new Error("Function not implemented.")
-        } } />
+        }} />
       case "help-support":
         return <HelpSupport />
       case "connect":
-        return <ConnectionsSection userId={organizerData.id}/>
+        return <ConnectionsSection userId={organizerData.id} />
       case "messages":
-        return <MessagesCenter organizerId={organizerId}/>
+        return <MessagesCenter organizerId={organizerId} />
       default:
         return <div>Select a section from the sidebar</div>
     }
@@ -341,25 +337,34 @@ useEffect(() => {
 
   return (
     <div className="flex min-h-screen w-full bg-gray-50">
+      {/* Mobile Overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
+      {/* Sidebar */}
       <div
         className={`
-        fixed md:relative
-        w-64 min-h-screen bg-white border-r border-gray-200 z-50
-        transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        md:translate-x-0
-        flex flex-col
-      `}
+          fixed md:relative
+          w-64 min-h-screen bg-white border-r border-gray-200 z-50
+          transform transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          md:translate-x-0
+          flex flex-col
+        `}
       >
-       
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold">Menu</h2>
+          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
         <div className="flex-1 overflow-y-auto p-4">
+          {/* Sidebar Groups */}
           {sidebarGroups.map((group) => (
-            <div key={group.id} className="mb-4">
+            <div key={group.id} className="mb-6">
               <div
                 className="flex items-center justify-between cursor-pointer hover:bg-gray-100 px-2 py-2 rounded text-sm font-medium text-gray-700"
                 onClick={() => toggleGroup(group.id)}
@@ -398,7 +403,7 @@ useEffect(() => {
             </div>
           ))}
 
-        
+          {/* Individual Sidebar Items */}
           <div className="mt-8 space-y-1">
             {individualSidebarItems.map((item) => (
               <button
@@ -423,6 +428,7 @@ useEffect(() => {
           </div>
         </div>
 
+        {/* Footer with Logout */}
         <div className="border-t border-gray-200 p-4 flex-shrink-0">
           <Button
             onClick={() => signOut({ callbackUrl: "/login" })}
@@ -434,10 +440,38 @@ useEffect(() => {
         </div>
       </div>
 
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-h-screen">
-      
+        {/* Mobile Top Bar */}
+        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
+          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
+            <Menu className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-semibold text-gray-900 truncate flex-1 text-center px-4">
+            {getCurrentSectionTitle()}
+          </h1>
+          <div className="w-9" />
+        </div>
 
-        <main className="flex-1 p-6 overflow-auto">{renderContent()}</main>
+        {/* Main Content */}
+        <main className="flex-1 p-6 overflow-auto">
+          <div className="max-w-7xl mx-auto">
+            {/* Content Header */}
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-900">
+                {getCurrentSectionTitle()}
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Manage your organizer account and events
+              </p>
+            </div>
+
+            {/* Dynamic Content */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[600px]">
+              {renderContent()}
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   )

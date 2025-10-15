@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { SpeakerDashboard } from "../speaker-dashboard"
 import { NameBanner } from "@/app/dashboard/NameBanner"
 import Navbar from "../navbar"
+import { DashboardProvider } from "@/contexts/dashboard-context"
 
 export default async function DashboardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -19,17 +20,19 @@ export default async function DashboardPage({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <div>
-      <Navbar/>
-      <NameBanner
-        name={session.user.name || "User"}
-        designation={
-          session.user.role === "ATTENDEE"
-            ? "Visitor"
-            : session.user.role || ""
-        }
-      />
-      <SpeakerDashboard userId={id} />
-    </div>
+    <DashboardProvider>
+      <div>
+        <Navbar/>
+        <NameBanner
+          name={session.user.name || "User"}
+          designation={
+            session.user.role === "ATTENDEE"
+              ? "Visitor"
+              : session.user.role || ""
+          }
+        />
+        <SpeakerDashboard userId={id} />
+      </div>
+    </DashboardProvider>
   )
 }
