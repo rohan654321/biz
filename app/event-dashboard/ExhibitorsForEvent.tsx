@@ -9,21 +9,22 @@ import { useToast } from "@/hooks/use-toast"
 interface ExhibitorBooth {
   id: string
   boothNumber: string
-  companyName: string
-  status: string
-  exhibitor: {
-    firstName: string
-    lastName: string
-    company: string
-    email: string
-  }
+  company: string
+  name: string
+  email: string
+  phone?: string
+  description?: string
+  totalCost?: number
+  status?: string
   event: {
     id: string
     title: string
     startDate: string
     endDate: string
+    organizerId: string
   }
 }
+
 
 interface ExhibitorsForEventProps {
   eventId: string
@@ -86,34 +87,37 @@ export default function ExhibitorsForEvent({ eventId }: ExhibitorsForEventProps)
             <TableHeader>
               <TableRow>
                 <TableHead>Exhibitor</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Company</TableHead>
                 <TableHead>Event</TableHead>
+                <TableHead>Company</TableHead>
                 <TableHead>Booth</TableHead>
+                
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {booths?.map((booth) => (
-                <TableRow key={booth.id}>
-                  <TableCell className="font-medium flex items-center gap-2">
-                    <Building className="w-4 h-4 text-gray-500" />
-                    {booth.exhibitor?.firstName} {booth.exhibitor?.lastName}
-                  </TableCell>
-                  <TableCell className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-gray-500" />
-                    {booth.exhibitor?.email}
-                  </TableCell>
-                  <TableCell>{booth?.companyName || booth.exhibitor?.company}</TableCell>
-                  <TableCell className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-gray-500" />
-                    {booth.event?.title}
-                  </TableCell>
-                  <TableCell>{booth?.boothNumber}</TableCell>
-                  <TableCell>{booth?.status}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
+<TableBody>
+  {booths?.map((booth) => (
+    <TableRow key={booth.id}>
+      <TableCell className="font-medium flex items-center gap-2">
+        <Building className="w-4 h-4 text-gray-500" />
+        {booth.name}  {/* exhibitor name */}
+      </TableCell>
+      <TableCell className="flex items-center gap-2">
+        <Mail className="w-4 h-4 text-gray-500" />
+        {booth.email} {/* exhibitor email */}
+      </TableCell>
+      <TableCell>{booth.company}</TableCell> {/* company */}
+      <TableCell className="flex items-center gap-2">
+        <Calendar className="w-4 h-4 text-gray-500" />
+        {booth.event?.title}
+      </TableCell>
+      <TableCell>{booth.boothNumber}</TableCell>
+      <TableCell>{booth.status || "N/A"}</TableCell>
+    </TableRow>
+  ))}
+</TableBody>
+
+
+
           </Table>
         )}
       </CardContent>

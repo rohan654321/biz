@@ -26,9 +26,12 @@ import {
   HelpCircle,
   ChevronDown,
   ChevronRight,
+  Menu,
+  X
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { useDashboard } from "@/contexts/dashboard-context"
 
 import CompanyInfo from "./company-info"
 import EventParticipation from "./event-participation"
@@ -75,9 +78,10 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
   const [exhibitor, setExhibitor] = useState<ExhibitorData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState("overview")
+  const { activeSection, setActiveSection } = useDashboard()
   const [appointmentCount, setAppointmentCount] = useState<number>(0)
-  const [openMenus, setOpenMenus] = useState<string[]>(["main"])
+  const [openMenus, setOpenMenus] = useState<string[]>(["main", "leadManagement", "marketingCampaigns", "analytics", "network"])
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -144,8 +148,30 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     setOpenMenus((prev) => (prev.includes(menu) ? prev.filter((m) => m !== menu) : [...prev, menu]))
   }
 
-  const handleTabClick = (tabId: string) => {
-    setActiveTab(tabId)
+  const handleUpdate = async (updates: Partial<any>) => {
+    try {
+      const res = await fetch(`/api/exhibitors/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      })
+      const data = await res.json()
+
+      if (data.success) {
+        setExhibitor((prev: any) => ({ ...prev, ...updates }))
+      }
+    } catch (error) {
+      console.error("Error updating exhibitor:", error)
+    }
+  }
+
+  // Helper function for menu item styling
+  const menuItemClass = (sectionId: string) => {
+    return `cursor-pointer pl-3 py-2 text-sm rounded-md transition-colors w-full text-left ${
+      activeSection === sectionId 
+        ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700 font-medium" 
+        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 border-l-4 border-transparent"
+    }`
   }
 
   if (loading) {
@@ -189,389 +215,495 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     )
   }
 
-  const handleUpdate = async (updates: Partial<any>) => {
-    try {
-      const res = await fetch(`/api/exhibitors/${userId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-      })
-      const data = await res.json()
+  const renderContent = () => {
+    switch (activeSection) {
+      case "overview":
+        return (
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Exhibitor Dashboard</h1>
+              <p className="text-gray-600">Welcome back, {exhibitor.firstName}!</p>
+            </div>
 
-      if (data.success) {
-        setExhibitor((prev: any) => ({ ...prev, ...updates }))
-      }
-    } catch (error) {
-      console.error("Error updating exhibitor:", error)
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Events</CardTitle>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <ActiveEventsCard exhibitorId={exhibitor.id} />
+                  <p className="text-xs text-muted-foreground">Active Events</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Products</CardTitle>
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{exhibitor.totalProducts || 25}</div>
+                  <p className="text-xs text-muted-foreground">{exhibitor.profileViews || 30} total views</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Leads</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <FollowersCountCard exhibitorId={exhibitor.id} />
+                  <p className="text-xs text-muted-foreground">Total Leads</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Appointments</CardTitle>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <AppointmentsCountCard exhibitorId={exhibitor.id} />
+                  <p className="text-xs text-muted-foreground">Total Appointments</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Profile Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-start space-x-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={exhibitor.avatar || "/placeholder.svg"} />
+                    <AvatarFallback className="text-lg">
+                      {exhibitor.firstName[0]}
+                      {exhibitor.lastName[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold">
+                      {exhibitor.firstName} {exhibitor.lastName}
+                    </h3>
+                    {exhibitor.jobTitle && (
+                      <p className="text-gray-600 flex items-center mt-1">
+                        <Briefcase className="h-4 w-4 mr-2" />
+                        {exhibitor.jobTitle}
+                      </p>
+                    )}
+                    {exhibitor.location && (
+                      <p className="text-gray-600 flex items-center mt-1">
+                        <MapPin className="h-4 w-4 mr-2" />
+                        {exhibitor.location}
+                      </p>
+                    )}
+                    <div className="flex items-center space-x-4 mt-2">
+                      {exhibitor.email && (
+                        <a
+                          href={`mailto:${exhibitor.email}`}
+                          className="text-blue-600 hover:underline flex items-center"
+                        >
+                          <Mail className="h-4 w-4 mr-1" />
+                          Email
+                        </a>
+                      )}
+                      {exhibitor.phone && (
+                        <a
+                          href={`tel:${exhibitor.phone}`}
+                          className="text-blue-600 hover:underline flex items-center"
+                        >
+                          <Phone className="h-4 w-4 mr-1" />
+                          Call
+                        </a>
+                      )}
+                      {exhibitor.website && (
+                        <a
+                          href={exhibitor.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline flex items-center"
+                        >
+                          <Globe className="h-4 w-4 mr-1" />
+                          Website
+                        </a>
+                      )}
+                      {exhibitor.twitter && (
+                        <a
+                          href={`https://twitter.com/${exhibitor.twitter}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline flex items-center"
+                        >
+                          <Twitter className="h-4 w-4 mr-1" />
+                          Twitter
+                        </a>
+                      )}
+                    </div>
+                    {exhibitor.bio && <p className="text-gray-700 mt-3">{exhibitor.bio}</p>}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
+      case "company":
+        return <CompanyInfo exhibitorId={exhibitor.id} onUpdate={handleUpdate} exhibitorData={exhibitor} />
+      case "events":
+        return <EventParticipation exhibitorId={exhibitor.id} />
+      case "products":
+        return <ProductListing exhibitorId={exhibitor.id} />
+      case "messages":
+        return <MessagesCenter organizerId={exhibitor.id} />
+      case "connection":
+        return <ConnectionsSection userId={exhibitor.id} />
+      case "follow":
+        return <FollowManagement userId={exhibitor.id} />
+      case "appointments":
+        return (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {/* Add any appointment stats cards here if needed */}
+            </div>
+            <AppointmentScheduling
+              exhibitorId={exhibitor.id}
+              onCountChange={setAppointmentCount}
+            />
+          </div>
+        )
+      case "analytics":
+        return <AnalyticsReports exhibitorId={exhibitor.id} />
+      case "promotions":
+        return <PromotionsMarketing exhibitorId={exhibitor.id} />
+      case "active-promotions":
+        return <ActivePromotions exhibitorId={exhibitor.id} />
+      case "help":
+        return <HelpSupport />
+      case "settings":
+        return <ExhibitorSettings exhibitorId={exhibitor.id} />
+      default:
+        return (
+          <div className="p-6">
+            <div className="text-center py-12">
+              <Building2 className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Welcome to Exhibitor Dashboard</h3>
+              <p className="mt-2 text-gray-500">Select a section from the sidebar to get started.</p>
+            </div>
+          </div>
+        )
     }
   }
 
-  // Helper function for menu item styling
-  const menuItemClass = (tabId: string) => {
-    return `cursor-pointer pl-3 py-1 border-l-4 ${
-      activeTab === tabId 
-        ? "border-blue-500 text-blue-600 font-medium" 
-        : "border-transparent hover:text-blue-600"
-    }`
+  const getCurrentSectionTitle = () => {
+    const sections = {
+      "overview": "Overview",
+      "company": "Company Info",
+      "events": "Event Participation",
+      "products": "Product Listing",
+      "messages": "Messages",
+      "connection": "Connections",
+      "follow": "Follow Management",
+      "appointments": "Appointments",
+      "analytics": "Analytics & Reports",
+      "promotions": "Promotions",
+      "active-promotions": "Active Promotions",
+      "help": "Help & Support",
+      "settings": "Settings"
+    }
+    return sections[activeSection as keyof typeof sections] || "Exhibitor Dashboard"
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex min-h-screen w-full bg-gray-50">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <div className="w-64 bg-white shadow-sm border-r">
-        <nav className="p-4 text-sm space-y-2">
+      <aside className={`
+        fixed md:relative
+        w-64 min-h-screen bg-white border-r border-gray-200 z-50
+        transform transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        md:translate-x-0
+        flex flex-col shadow-sm
+      `}>
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Exhibitor Menu</h2>
+          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Exhibitor Info Header */}
+        {/* <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <Avatar className="w-10 h-10">
+              <AvatarImage src={exhibitor.avatar || "/placeholder.svg"} />
+              <AvatarFallback className="text-sm">
+                {exhibitor.firstName[0]}{exhibitor.lastName[0]}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-semibold text-sm text-gray-900">
+                {exhibitor.firstName} {exhibitor.lastName}
+              </h3>
+              <p className="text-xs text-gray-600">Exhibitor</p>
+            </div>
+          </div>
+        </div> */}
+
+        <div className="flex-1 p-4 overflow-y-auto">
           {/* Main Dropdown */}
-          <div>
-            <button 
-              className="flex items-center justify-between w-full py-2 font-medium" 
+          <div className="mb-4">
+            <button
+              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
               onClick={() => toggleMenu("main")}
             >
               <span className="flex items-center gap-2">
                 <BarChart3 size={16} />
                 Main
               </span>
-              {openMenus.includes("main") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              {openMenus.includes("main") ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
             </button>
             {openMenus.includes("main") && (
-              <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
-                <li
-                  onClick={() => handleTabClick("overview")}
+              <div className="ml-2 mt-2 space-y-1">
+                <button
+                  onClick={() => setActiveSection("overview")}
                   className={menuItemClass("overview")}
                 >
                   Overview
-                </li>
-                <li
-                  onClick={() => handleTabClick("company")}
+                </button>
+                <button
+                  onClick={() => setActiveSection("company")}
                   className={menuItemClass("company")}
                 >
                   Company
-                </li>
-              </ul>
+                </button>
+              </div>
             )}
           </div>
 
           {/* Lead Management Dropdown */}
-          <div>
-            <button 
-              className="flex items-center justify-between w-full py-2 font-medium" 
+          <div className="mb-4">
+            <button
+              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
               onClick={() => toggleMenu("leadManagement")}
             >
               <span className="flex items-center gap-2">
                 <Users size={16} />
                 Event & Products
               </span>
-              {openMenus.includes("leadManagement") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              {openMenus.includes("leadManagement") ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
             </button>
             {openMenus.includes("leadManagement") && (
-              <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
-                <li
-                  onClick={() => handleTabClick("events")}
+              <div className="ml-2 mt-2 space-y-1">
+                <button
+                  onClick={() => setActiveSection("events")}
                   className={menuItemClass("events")}
                 >
                   Events
-                </li>
-                <li
-                  onClick={() => handleTabClick("products")}
+                </button>
+                <button
+                  onClick={() => setActiveSection("products")}
                   className={menuItemClass("products")}
                 >
                   Products
-                </li>
-              </ul>
+                </button>
+              </div>
             )}
           </div>
 
           {/* Marketing Campaigns Dropdown */}
-          <div>
-            <button 
-              className="flex items-center justify-between w-full py-2 font-medium" 
+          <div className="mb-4">
+            <button
+              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
               onClick={() => toggleMenu("marketingCampaigns")}
             >
               <span className="flex items-center gap-2">
                 <Star size={16} />
                 Marketing Campaigns
               </span>
-              {openMenus.includes("marketingCampaigns") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              {openMenus.includes("marketingCampaigns") ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
             </button>
             {openMenus.includes("marketingCampaigns") && (
-              <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
-                <li
-                  onClick={() => handleTabClick("promotions")}
+              <div className="ml-2 mt-2 space-y-1">
+                <button
+                  onClick={() => setActiveSection("promotions")}
                   className={menuItemClass("promotions")}
                 >
                   Promotion
-                </li>
-                <li
-                  onClick={() => handleTabClick("active-promotions")}
+                </button>
+                <button
+                  onClick={() => setActiveSection("active-promotions")}
                   className={menuItemClass("active-promotions")}
                 >
                   Active Promotion
-                </li>
-              </ul>
+                </button>
+              </div>
             )}
           </div>
 
           {/* Analytics Dropdown */}
-          <div>
-            <button 
-              className="flex items-center justify-between w-full py-2 font-medium" 
+          <div className="mb-4">
+            <button
+              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
               onClick={() => toggleMenu("analytics")}
             >
               <span className="flex items-center gap-2">
                 <TrendingUp size={16} />
                 Analytics
               </span>
-              {openMenus.includes("analytics") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              {openMenus.includes("analytics") ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
             </button>
             {openMenus.includes("analytics") && (
-              <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
-                <li
-                  onClick={() => handleTabClick("analytics")}
+              <div className="ml-2 mt-2 space-y-1">
+                <button
+                  onClick={() => setActiveSection("analytics")}
                   className={menuItemClass("analytics")}
                 >
                   Analytics
-                </li>
-              </ul>
+                </button>
+              </div>
             )}
           </div>
 
           {/* Network Dropdown */}
-          <div>
-            <button 
-              className="flex items-center justify-between w-full py-2 font-medium" 
+          <div className="mb-4">
+            <button
+              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
               onClick={() => toggleMenu("network")}
             >
               <span className="flex items-center gap-2">
                 <Users size={16} />
                 Network
               </span>
-              {openMenus.includes("network") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              {openMenus.includes("network") ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
             </button>
             {openMenus.includes("network") && (
-              <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
-                <li
-                  onClick={() => handleTabClick("follow")}
+              <div className="ml-2 mt-2 space-y-1">
+                <button
+                  onClick={() => setActiveSection("follow")}
                   className={menuItemClass("follow")}
                 >
                   Follow
-                </li>
-                <li
-                  onClick={() => handleTabClick("messages")}
+                </button>
+                <button
+                  onClick={() => setActiveSection("messages")}
                   className={menuItemClass("messages")}
                 >
                   Messages
-                </li>
-                <li
-                  onClick={() => handleTabClick("connection")}
+                </button>
+                <button
+                  onClick={() => setActiveSection("connection")}
                   className={menuItemClass("connection")}
                 >
                   Connection
-                </li>
-                <li
-                  onClick={() => handleTabClick("appointments")}
+                </button>
+                <button
+                  onClick={() => setActiveSection("appointments")}
                   className={menuItemClass("appointments")}
                 >
                   Appointments
-                </li>
-              </ul>
+                </button>
+              </div>
             )}
           </div>
 
-          {/* Help & Support (No Dropdown) */}
-          <div>
-            <button
-              onClick={() => handleTabClick("help")}
-              className={`flex items-center gap-2 w-full py-2 font-medium ${
-                activeTab === "help" ? "text-blue-600 font-medium" : "hover:text-blue-600"
-              }`}
-            >
-              <HelpCircle size={16} />
-              Help & Support
-            </button>
-          </div>
+          {/* Help & Support */}
+          <button
+            onClick={() => setActiveSection("help")}
+            className={`flex items-center w-full py-2 gap-2 font-medium text-sm rounded-md transition-colors ${
+              activeSection === "help" 
+                ? "bg-blue-50 text-blue-700" 
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            }`}
+          >
+            <HelpCircle size={16} />
+            Help & Support
+          </button>
 
-          {/* Settings (No Dropdown) */}
-          <div>
-            <button
-              onClick={() => handleTabClick("settings")}
-              className={`flex items-center gap-2 w-full py-2 font-medium ${
-                activeTab === "settings" ? "text-blue-600 font-medium" : "hover:text-blue-600"
-              }`}
-            >
-              <Settings size={16} />
-              Settings
-            </button>
-          </div>
+          {/* Settings */}
+          <button
+            onClick={() => setActiveSection("settings")}
+            className={`flex items-center w-full py-2 gap-2 font-medium text-sm rounded-md transition-colors mt-1 ${
+              activeSection === "settings" 
+                ? "bg-blue-50 text-blue-700" 
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            }`}
+          >
+            <Settings size={16} />
+            Settings
+          </button>
 
-          {/* Logout Button */}
+          {/* Logout */}
           <Button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="w-full bg-red-500 hover:bg-red-600 text-white mt-10"
+            className="w-full bg-red-500 hover:bg-red-600 text-white mt-8"
           >
             Logout
           </Button>
-        </nav>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="p-8">
-          {activeTab === "overview" && (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Exhibitor Dashboard</h1>
-                <p className="text-gray-600">Welcome back, {exhibitor.firstName}!</p>
-              </div>
-
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Active Events</CardTitle>
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <ActiveEventsCard exhibitorId={exhibitor.id} />
-                    <p className="text-xs text-muted-foreground">Active Events</p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Products</CardTitle>
-                    <Package className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{exhibitor.totalProducts || 25}</div>
-                    <p className="text-xs text-muted-foreground">{exhibitor.profileViews || 30} total views</p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Leads</CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <FollowersCountCard exhibitorId={exhibitor.id} />
-                    <p className="text-xs text-muted-foreground">Total Leads</p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Appointments</CardTitle>
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <AppointmentsCountCard exhibitorId={exhibitor.id} />
-                    <p className="text-xs text-muted-foreground">Total Appointments</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Profile Summary */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Profile Summary</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-start space-x-4">
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage src={exhibitor.avatar || "/placeholder.svg"} />
-                      <AvatarFallback className="text-lg">
-                        {exhibitor.firstName[0]}
-                        {exhibitor.lastName[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold">
-                        {exhibitor.firstName} {exhibitor.lastName}
-                      </h3>
-                      {exhibitor.jobTitle && (
-                        <p className="text-gray-600 flex items-center mt-1">
-                          <Briefcase className="h-4 w-4 mr-2" />
-                          {exhibitor.jobTitle}
-                        </p>
-                      )}
-                      {exhibitor.location && (
-                        <p className="text-gray-600 flex items-center mt-1">
-                          <MapPin className="h-4 w-4 mr-2" />
-                          {exhibitor.location}
-                        </p>
-                      )}
-                      <div className="flex items-center space-x-4 mt-2">
-                        {exhibitor.email && (
-                          <a
-                            href={`mailto:${exhibitor.email}`}
-                            className="text-blue-600 hover:underline flex items-center"
-                          >
-                            <Mail className="h-4 w-4 mr-1" />
-                            Email
-                          </a>
-                        )}
-                        {exhibitor.phone && (
-                          <a
-                            href={`tel:${exhibitor.phone}`}
-                            className="text-blue-600 hover:underline flex items-center"
-                          >
-                            <Phone className="h-4 w-4 mr-1" />
-                            Call
-                          </a>
-                        )}
-                        {exhibitor.website && (
-                          <a
-                            href={exhibitor.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline flex items-center"
-                          >
-                            <Globe className="h-4 w-4 mr-1" />
-                            Website
-                          </a>
-                        )}
-                        {exhibitor.twitter && (
-                          <a
-                            href={`https://twitter.com/${exhibitor.twitter}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline flex items-center"
-                          >
-                            <Twitter className="h-4 w-4 mr-1" />
-                            Twitter
-                          </a>
-                        )}
-                      </div>
-                      {exhibitor.bio && <p className="text-gray-700 mt-3">{exhibitor.bio}</p>}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {activeTab === "company" && <CompanyInfo exhibitorId={exhibitor.id} onUpdate={handleUpdate} exhibitorData={exhibitor} />}
-          {activeTab === "events" && <EventParticipation exhibitorId={exhibitor.id} />}
-          {activeTab === "products" && <ProductListing exhibitorId={exhibitor.id} />}
-          {activeTab === "messages" && <MessagesCenter organizerId={exhibitor.id} />}
-          {activeTab === "connection" && <ConnectionsSection userId={exhibitor.id} />}
-          {activeTab === "follow" && <FollowManagement userId={exhibitor.id} />}
-          {activeTab === "appointments" && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {/* Add any appointment stats cards here if needed */}
-              </div>
-              <AppointmentScheduling
-                exhibitorId={exhibitor.id}
-                onCountChange={setAppointmentCount}
-              />
-            </div>
-          )}
-          {activeTab === "analytics" && <AnalyticsReports exhibitorId={exhibitor.id} />}
-          {activeTab === "promotions" && <PromotionsMarketing exhibitorId={exhibitor.id} />}
-          {activeTab === "active-promotions" && <ActivePromotions exhibitorId={exhibitor.id} />}
-          {activeTab === "help" && <HelpSupport />}
-          {activeTab === "settings" && <ExhibitorSettings exhibitorId={exhibitor.id} />}
         </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-h-screen">
+        {/* Mobile Top Bar */}
+        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
+          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
+            <Menu className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-semibold text-gray-900 truncate flex-1 text-center px-4">
+            {getCurrentSectionTitle()}
+          </h1>
+          <div className="w-9" />
+        </div>
+
+        {/* Main Content */}
+        <main className="flex-1 p-6 overflow-auto">
+          <div className="max-w-7xl mx-auto">
+            {/* Content Header */}
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-900">
+                {getCurrentSectionTitle()}
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Manage your exhibitor profile and activities
+              </p>
+            </div>
+
+            {/* Dynamic Content */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[600px]">
+              {renderContent()}
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   )

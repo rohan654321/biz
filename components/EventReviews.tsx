@@ -3,6 +3,15 @@
 import { useState, useEffect } from "react"
 import { Calendar, MapPin, UserPlus, Users } from "lucide-react"
 
+export interface Venue {
+  id: string
+  venueName: string
+  venueCity: string
+  venueCountry: string
+  venueState?: string
+  venueAddress?: string
+}
+
 export interface Event {
   id: string
   title: string
@@ -13,10 +22,13 @@ export interface Event {
   followers?: number
   startDate: string
   endDate?: string
+  venueId?: string
+  venue?: Venue // Add this
   location?: {
     city: string
     venue?: string
     country?: string
+    address?: string
   }
 }
 
@@ -28,7 +40,19 @@ export default function EventReviews() {
       try {
         const response = await fetch("/api/events?featured=true")
         const data = await response.json()
-        const shuffled = data.events.sort(() => 0.5 - Math.random())
+
+        // Process events with venue data
+        const eventsWithLocation = data.events.map((event: Event) => ({
+          ...event,
+          location: event.venue ? {
+            venue: event.venue.venueName,
+            city: event.venue.venueCity,
+            country: event.venue.venueCountry,
+            address: event.venue.venueAddress // Add address here
+          } : undefined
+        }))
+
+        const shuffled = eventsWithLocation.sort(() => 0.5 - Math.random())
         setNearByEvents(shuffled.slice(0, 3))
       } catch (error) {
         console.error("Error fetching featured events:", error)
@@ -51,87 +75,90 @@ export default function EventReviews() {
       </div>
 
       {/* Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[15px] max-w-6xl mx-auto">
         {nearByEvents.map((event, index) => (
-<div
-  key={event.id || index}
-  className="bg-white shadow-md overflow-hidden hover:shadow-xl border border-gray-100 text-center max-w-xs mx-auto"
->
+          <div
+            key={event.id || index}
+            className="bg-white shadow-md overflow-hidden hover:shadow-xl border border-gray-100 text-center"
+          >
+            {/* Gradient Top Banner */}
+            <div className="relative h-40 w-full overflow-hidden">
+              <img
+                src={event.logo || "/herosection-images/food.jpg"}
+                alt="event logo"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
 
+              {/* Edition Tag */}
+              <div className="absolute top-2 left-2 flex items-center z-10">
+                <span className="bg-red-600 text-white text-sm font-bold px-1.5 py-0.5 rounded-sm mr-1">
+                  2
+                </span>
+                <span className="bg-white text-[#0A2B61] font-semibold text-sm px-2 py-0.5 rounded-r-md">
+                  Edition
+                </span>
+              </div>
 
-  {/* Gradient Top Banner */}
-  <div className="relative h-40 w-full overflow-hidden">  {/* reduced from h-64 → h-40 */}
-    <img
-      src={event.logo || "/herosection-images/food.jpg"}
-      alt="event logo"
-      className="absolute inset-0 w-full h-full object-cover"
-    />
+              {/* Categories */}
+              <div className="absolute top-2 right-2 flex gap-2 z-10">
+                {event.categories?.map((cat, idx) => (
+                  <span
+                    key={idx}
+                    className="bg-white text-gray-700 text-xs px-2 py-0.5 rounded-full shadow-sm"
+                  >
+                    {cat}
+                  </span>
+                ))}
+              </div>
+            </div>
 
-    {/* Edition Tag */}
-    <div className="absolute top-2 left-2 flex items-center z-10">
-      <span className="bg-red-600 text-white text-sm font-bold px-1.5 py-0.5 rounded-sm mr-1">
-        2
-      </span>
-      <span className="bg-white text-[#0A2B61] font-semibold text-sm px-2 py-0.5 rounded-r-md">
-        Edition
-      </span>
-    </div>
+            {/* Content */}
+            <div className="p-4">
+              <div className="flex justify-center items-center gap-4 mb-3">
+                <span className="text-gray-700 text-sm flex items-center gap-1">
+                  <Users size={18} className="text-gray-500" />
+                  {event.followers || 131} Followers
+                </span>
+                <button className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm shadow-sm">
+                  <UserPlus className="w-4 h-4 mr-1" />
+                  Follow
+                </button>
+              </div>
 
-    {/* Categories */}
-    <div className="absolute top-2 right-2 flex gap-2 z-10">
-      {event.categories?.map((cat, idx) => (
-        <span
-          key={idx}
-          className="bg-white text-gray-700 text-xs px-2 py-0.5 rounded-full shadow-sm"
-        >
-          {cat}
-        </span>
-      ))}
-    </div>
-  </div>
+              <h3 className="font-extrabold text-base text-black">
+                {event.title || "DIEMEX 2025"}
+              </h3>
 
-  {/* Content */}
-  <div className="p-4"> {/* reduced from p-5 → p-4 */}
-    <div className="flex justify-center items-center gap-4 mb-3"> {/* reduced gap & margin */}
-      <span className="text-gray-700 text-sm flex items-center gap-1">
-        <Users size={18} className="text-gray-500" />
-        {event.followers || 131} Followers
-      </span>
-      <button className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm shadow-sm">
-        <UserPlus className="w-4 h-4 mr-1" />
-        Follow
-      </button>
-    </div>
+              {/* Updated location display with address */}
+              <p className="flex justify-center items-center font-bold text-gray-700 text-xs mt-1 text-center">
+                {event.location?.venue ? `${event.location.venue}, ` : ''}
+                {event.location?.city || "Chennai Trade Center"}, {event.location?.country || "INDIA"}
+              </p>
+              
+              {/* Display address if available */}
+              {event.location?.address && (
+                <p className="text-gray-600 text-xs mt-1">
+                  {event.location.address}
+                </p>
+              )}
 
-    <h3 className="font-extrabold text-base text-black"> {/* reduced from text-lg → text-base */}
-      {event.title || "DIEMEX 2025"}
-    </h3>
-
-    <p className="flex justify-center items-center font-bold text-gray-700 text-xs mt-1 text-center">
-      {event.location?.venue
-         ?`${event.location.venue}, `
-        : ''}
-      {event.location?.city || "Chennai Trade Center"}, {event.location?.country || "INDIA"}
-    </p>
-
-    <p className="flex justify-center items-center text-gray-900 font-bold mt-2 text-sm">
-      <Calendar className="w-4 h-4 mr-1 text-gray-600" />
-      {new Date(event.startDate).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })}
-      {event.endDate
-        ? ` - ${new Date(event.endDate).toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })}`
-        : ""}
-    </p>
-  </div>
-</div>
-
+              <p className="flex justify-center items-center text-gray-900 font-bold mt-2 text-sm">
+                <Calendar className="w-4 h-4 mr-1 text-gray-600" />
+                {new Date(event.startDate).toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })}
+                {event.endDate
+                  ? ` - ${new Date(event.endDate).toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}`
+                  : ""}
+              </p>
+            </div>
+          </div>
         ))}
       </div>
     </section>

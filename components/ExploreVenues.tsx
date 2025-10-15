@@ -53,77 +53,56 @@ export default function ExploreVenues() {
                   className="group rounded-md p-3 bg-white transition-all duration-200 
                              hover:scale-105 shadow hover:shadow-lg text-left"
                 >
-                  <div className="space-y-2">
-                    {/* Image */}
-                    <div className="h-[160px] rounded-md overflow-hidden">
-                      <img
-                        src={
-                          venue.image?.length && venue.image[0] !== "/placeholder.svg"
-                            ? venue.image[0]
-                            : "city/c1.jpg"
-                        }
-                        alt={venue.name}
-                        className="w-full h-full object-cover opacity-90 
-                                   group-hover:opacity-100 transition-opacity duration-200"
-                      />
-                    </div>
+            <div className="space-y-2">
+  {/* Image */}
+  <div className="h-[160px] rounded-md overflow-hidden">
+    <img
+      src={
+        venue.images?.length && venue.images[0] !== "/placeholder.svg"
+          ? venue.images[0]
+          : "/city/c1.jpg"
+      }
+      alt={venue.name}
+      className="w-full h-full object-cover opacity-90 
+                 group-hover:opacity-100 transition-opacity duration-200"
+    />
+  </div>
 
-                    {/* Venue Info */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-bold text-sm text-black line-clamp-1">
-                          {venue.name}
-                        </h3>
-                        <div className="flex items-center">
-                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-1" />
-                          <span className="text-xs text-black font-medium">
-                            {venue?.rating?.average ?? "—"}
-                          </span>
-                          {/* <span className="text-xs text-black font-medium ml-2">
-                            {venue?.rating?.count ? `(${venue.rating.count})` : ""}
-                          </span> */}
-                        </div>
-                      </div>
+  {/* Venue Info */}
+  <div>
+    <div className="flex items-center justify-between mb-1">
+      <h3 className="font-bold text-sm text-black line-clamp-1">
+        {venue.name}
+      </h3>
+      <div className="flex items-center">
+        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-1" />
+        <span className="text-xs text-black font-medium">
+          {venue.rating ?? "—"}
+        </span>
+        <span className="text-xs text-gray-600 ml-1">
+          ({venue.reviewCount ?? 0})
+        </span>
+      </div>
+    </div>
 
-                      <div className="flex items-center">
-                        <MapPin className="w-3 h-3 mr-1 text-black" />
-                        <span className="text-xs text-black line-clamp-1">
-                          {venue?.location?.address ??
-                            venue?.location?.city ??
-                            "Location not available"}
-                        </span>
-                      </div>
+    <p className="text-xs text-gray-700 mb-1 line-clamp-1">
+      {venue.description || "No description available"}
+    </p>
 
-                      {/* Keep these commented sections for later */}
-                      {/* <div className="flex justify-between items-center w-full">
-                        <div className="flex items-center">
-                          <MapPin className="w-3 h-3 mr-1 text-black" />
-                          <span className="text-xs text-black line-clamp-1">
-                            {venue?.location?.address ??
-                              venue?.location?.city ??
-                              "Location not available"}
-                          </span>
-                        </div>
+    <div className="flex items-center mb-1">
+      <MapPin className="w-3 h-3 mr-1 text-black" />
+      <span className="text-xs text-black line-clamp-1">
+        {venue.location?.address || "No address"}
+      </span>
+    </div>
 
-                        <div className="text-black text-xs">
-                          {venue?.capacity?.total ? (
-                            <p>{venue.capacity.total} capacity</p>
-                          ) : (
-                            <p className="line-clamp-1">
-                              {venue?.description
-                                ? `${venue.description.slice(0, 30)}…`
-                                : ""}
-                            </p>
-                          )}
-                        </div>
-                      </div> */}
+    <div className="text-xs text-gray-800 flex justify-between">
+      <span>Halls: {venue.totalHalls ?? 0}</span>
+      <span>Capacity: {venue.capacity ?? 0}</span>
+    </div>
+  </div>
+</div>
 
-                      {/* Clamp description to keep height small */}
-                      {/* <p className="text-xs text-gray-700 mt-1 line-clamp-1">
-                        {venue.description ?? ""}
-                      </p> */}
-                    </div>
-                  </div>
                 </button>
               ))}
           </div>

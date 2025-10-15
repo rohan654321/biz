@@ -56,9 +56,9 @@ export default function DashboardOverview({
         
         <Button
           onClick={onCreateEventClick}   // <-- call parent to switch section
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 cursor-pointer"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4 cursor-pointer" />
           Create New Event
         </Button>
       </div>

@@ -32,8 +32,8 @@ export default function Navbar() {
     }
 
     const role = session.user?.role;
-    if (role === "organizer") {
-      router.push("/organizer-dashboard");
+    if (role === "venue_manager") {
+      router.push("/venue-dashboard");
     } else {
       const confirmed = window.confirm(
         `You are logged in as '${role}'.\n\nPlease login as an organizer to access this page.\n\nClick OK to logout and login as an organizer, or Cancel to stay logged in.`
@@ -47,7 +47,7 @@ export default function Navbar() {
 
   // Navigation functions using dashboard context
   const navigateToProfile = () => {
-    setActiveSection("info");
+    setActiveSection("venue-profile");
   };
 
   const navigateToSettings = () => {

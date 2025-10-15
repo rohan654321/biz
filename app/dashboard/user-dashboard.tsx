@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   Loader2,
@@ -12,14 +11,13 @@ import {
   LayoutDashboard,
   Calendar,
   Network,
-  MessageSquare,
   Settings,
   LogOut,
-  List,
   SidebarIcon,
-  User,
-  Bell,
   Store,
+  HelpCircle,
+  MessageSquare,
+  List,
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
@@ -35,23 +33,13 @@ import { PastEvents } from "./PastEvents"
 import { SavedEvents } from "./SavedEvents"
 import { UpcomingEvents } from "./UpcomingEvents"
 import { MyAppointments } from "./my-appointments"
-import { ExhibitorSchedule } from "./ExhibitorSchedule" // ADD THIS IMPORT
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { ExhibitorSchedule } from "./ExhibitorSchedule"
 import { Favourites } from "./Favourites"
 import { Recommendations } from "./Recommendations"
 import RecommendedEvents from "./recommended-events"
 import Schedule from "./Schedule"
-import { HelpCircle, Phone, MessageCircle } from "lucide-react"
-import { FAQs } from "../../components/help/FAQs"
-import { ContactSupport } from "../../components/help/ContactSupport"
-import { ChatSupport } from "../../components/help/ChatSupport"
 import { HelpSupport } from "@/components/HelpSupport"
+import { useDashboard } from "@/contexts/dashboard-context"
 
 interface UserDashboardProps {
   userId: string
@@ -61,8 +49,8 @@ export function UserDashboard({ userId }: UserDashboardProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { toast } = useToast()
+  const { activeSection, setActiveSection } = useDashboard()
 
-  const [activeSection, setActiveSection] = useState("profile")
   const [openMenus, setOpenMenus] = useState<string[]>(["dashboard"])
   const [userData, setUserData] = useState<UserData | null>(null)
   const [userInterests, setUserInterests] = useState<string[]>([])
@@ -79,7 +67,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
     }
     fetchUserData()
     fetchInterestedEvents()
-  }, [status])
+  }, [status, userId])
 
   const fetchUserData = async () => {
     try {
@@ -148,7 +136,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         return <UpcomingEvents events={interestedEvents} userId={userId} />
       case "my-appointments":
         return <MyAppointments userId={userId} />
-      case "exhibitor-schedule": // ADD THIS CASE
+      case "exhibitor-schedule":
         return <ExhibitorSchedule userId={userId} />
       case "schedule":
         return <Schedule userId={userId} />
@@ -168,15 +156,8 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         return <TravelAccommodation />
       case "Help & Support":
         return <HelpSupport />
-
-      // case "faqs":
-      //   return <FAQs />
-      // case "contact-support":
-      //   return <ContactSupport />
-      // case "chat-support":
-      //   return <ChatSupport />  
       default:
-        return <p>Select a section</p>
+        return <ProfileSection userData={userData!} onUpdate={handleProfileUpdate} organizerId={""} />
     }
   }
 
@@ -193,26 +174,6 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       {/* Sidebar */}
       <aside className={`${isSidebarCollapsed ? "w-16" : "w-64"} bg-white border-r flex flex-col justify-between transition-all duration-300`}>
         <div>
-          {/* Profile Header */}
-          {/* <div className="flex items-center gap-3 p-3 border-b">
-            <Avatar className="w-10 h-10">
-              <AvatarImage src={userData?.avatar || "/placeholder.svg"} />
-              <AvatarFallback>
-                {userData?.firstName?.[0] || "U"}
-                {userData?.lastName?.[0] || ""}
-              </AvatarFallback>
-            </Avatar>
-            {!isSidebarCollapsed && (
-              <div>
-                <p className="font-semibold">
-                  {userData?.firstName} {userData?.lastName}
-                </p>
-                <p className="text-xs text-gray-500">{userData?.jobTitle || (userData?.role == "ATTENDEE" ? "VISITOR" : userData?.role)}</p>
-              </div>
-            )}
-          </div> */}
-
-          {/* Menu */}
           <nav className="p-4 text-sm space-y-2">
             {/* Dashboard */}
             <div>
@@ -288,7 +249,6 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               </button>
               {openMenus.includes("exhibitor") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
-                  {/* <li onClick={() => setActiveSection("exhibitor-schedule")} className={menuItemClass(activeSection, "exhibitor-schedule")}>Exhibitor Schedule</li> */}
                   <li onClick={() => setActiveSection("my-appointments")} className={menuItemClass(activeSection, "my-appointments")}>Exhibitor Appointments</li>
                   <li onClick={() => setActiveSection("Suggested")} className={menuItemClass(activeSection, "Suggested")}>Suggested</li>
                 </ul>
@@ -296,7 +256,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
             </div>
 
             {/* Event Planning Tools */}
-            {/* <div>
+            <div>
               <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("tools")}>
                 <span className="flex items-center gap-2">
                   <List size={16} />
@@ -311,63 +271,19 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                   <li onClick={() => setActiveSection("schedule")} className={menuItemClass(activeSection, "schedule")}>Schedule</li>
                 </ul>
               )}
-            </div> */}
+            </div>
 
             {/* Help & Support */}
-            {/* <div>
-              <button
-                className="flex items-center justify-between w-full py-2 font-medium"
-                onClick={() => toggleMenu("help-support")}
-              >
-                <span className="flex items-center gap-2">
-                  <HelpCircle size={16} />
-                  {!isSidebarCollapsed && "Help & Support"}
-                </span>
-                {!isSidebarCollapsed &&
-                  (openMenus.includes("help-support") ? (
-                    <ChevronDown size={16} />
-                  ) : (
-                    <ChevronRight size={16} />
-                  ))}
-              </button> */}
-            {/* {openMenus.includes("help-support") && !isSidebarCollapsed && (
-                <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li
-                    onClick={() => setActiveSection("faqs")}
-                    className={menuItemClass(activeSection, "faqs")}
-                  >
-                    FAQs
-                  </li>
-                  <li
-                    onClick={() => setActiveSection("contact-support")}
-                    className={menuItemClass(activeSection, "contact-support")}
-                  >
-                    Contact
-                  </li>
-                  <li
-                    onClick={() => setActiveSection("chat-support")}
-                    className={menuItemClass(activeSection, "chat-support")}
-                  >
-                    Chat Support
-                  </li>
-                </ul>
-              )}
-            </div> */}
-            {/* </div> */}
             <div>
               <button
                 onClick={() => setActiveSection("Help & Support")}
                 className={`flex items-center gap-2 w-full py-2 font-medium ${activeSection === "Help & Support" ? "text-blue-600 font-medium" : "hover:text-blue-600"
                   }`}
               >
-                <HelpCircle size={16} /> {/* <-- icon added */}
+                <HelpCircle size={16} />
                 {!isSidebarCollapsed && "Help & Support"}
               </button>
-
             </div>
-            {/* <li onClick={() => setActiveSection("help-support")} className={menuItemClass(activeSection, "help-support")}>
-  Help & Support
-</li> */}
 
             {/* Settings */}
             <div>
@@ -396,59 +312,15 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         </div>
       </aside>
 
-      {/* Main content with top bar */}
+      {/* Main content */}
       <div className="flex-1 flex flex-col">
-        {/* Top Navigation */}
-        {/* <header className="flex h-16 items-center gap-2 border-b px-4 bg-white">
-          <Button variant="ghost" size="sm" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="md:hidden">
-            <SidebarIcon className="w-4 h-4" />
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-xl font-semibold capitalize">{activeSection.replace("-", " ")}</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm">
-              <Bell className="w-4 " />
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src={userData?.avatar || "/placeholder.svg"} />
-                    <AvatarFallback>
-                      {userData?.firstName?.[0] || "U"}
-                      {userData?.lastName?.[0] || ""}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuItem onClick={() => setActiveSection("profile")}>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>My Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActiveSection("settings")}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header> */}
-
-        {/* Main Content */}
         <main className="flex-1 p-6 overflow-auto">{renderContent()}</main>
       </div>
     </div>
   )
 }
 
-// helper for menu items
+// Helper for menu items
 function menuItemClass(activeSection: string, id: string) {
   return `cursor-pointer pl-3 py-1 border-l-4 ${activeSection === id ? "border-blue-500 text-blue-600 font-medium" : "border-transparent hover:text-blue-600"
     }`

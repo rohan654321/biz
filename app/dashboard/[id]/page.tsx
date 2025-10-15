@@ -4,13 +4,14 @@ import { redirect } from "next/navigation"
 import { UserDashboard } from "../user-dashboard"
 import { NameBanner } from "../NameBanner"
 import Navbar from "../navbar"
+import { DashboardProvider } from "@/contexts/dashboard-context"
 
 interface DashboardPageProps {
   params: Promise<{ id: string }>
 }
 
 export default async function DashboardPage({ params }: DashboardPageProps) {
-  const { id } = await params // ✅ Must await in Next.js App Router
+  const { id } = await params
   const session = await getServerSession(authOptions)
 
   if (!session) {
@@ -23,7 +24,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   }
 
   return (
-    <div>
+    <DashboardProvider>
       <Navbar />
       <NameBanner
         name={session.user.name || "User"}
@@ -34,6 +35,6 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
         }
       />
       <UserDashboard userId={id} />
-    </div>
+    </DashboardProvider>
   )
 }

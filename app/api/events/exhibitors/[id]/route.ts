@@ -8,10 +8,10 @@ interface Params {
 // GET /api/events/exhibitors/[id]
 export async function GET(
   req: NextRequest,
-  context: { params: Promise<Params> } // 👈 make params a Promise
+  context: { params: Promise<Params> } // params is a Promise
 ) {
   try {
-    const { id: exhibitorId } = await context.params // 👈 await here
+    const { id: exhibitorId } = await context.params
 
     if (!exhibitorId) {
       return NextResponse.json(
@@ -23,19 +23,23 @@ export async function GET(
     const booths = await prisma.exhibitorBooth.findMany({
       where: { exhibitorId },
       include: {
+        exhibitor: true, // make sure exhibitor is included
         event: {
           include: {
             organizer: true,
             venue: true,
+            
           },
         },
       },
     })
 
+    // Return booths directly so frontend can access email, booth, status, etc.
     return NextResponse.json(
       {
         success: true,
-        data: { events: booths.map((booth) => ({ booth, event: booth.event })) },
+        booths, 
+        status:true,
       },
       { status: 200 }
     )
