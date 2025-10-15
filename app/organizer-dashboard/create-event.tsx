@@ -807,28 +807,31 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     }
   }
 
-  const handleBrochureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+   const handleBrochureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
-    const validTypes = [
+    // Validate file type
+    const allowedTypes = [
       "application/pdf",
       "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ]
-    if (!validTypes.includes(file.type)) {
+
+    if (!allowedTypes.includes(file.type)) {
       toast({
         title: "Invalid File Type",
-        description: "Please upload a PDF or Word document",
+        description: "Please upload a PDF, DOC, or DOCX file",
         variant: "destructive",
       })
       return
     }
 
+    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "File Too Large",
-        description: "Please upload a file smaller than 10MB",
+        description: "File size must be less than 10MB",
         variant: "destructive",
       })
       return
@@ -838,9 +841,15 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     try {
       const formData = new FormData()
       formData.append("file", file)
-      formData.append("folder", "event-documents")
+      formData.append("organizerId", organizerId)
 
-      const response = await fetch("/api/upload/cloudinary", {
+      // Add eventId if available (for existing events)
+      const eventId = "someEventId" // Replace with actual eventId logic
+      if (eventId) {
+        formData.append("eventId", eventId)
+      }
+
+      const response = await fetch("/api/brochure/upload", {
         method: "POST",
         body: formData,
       })
@@ -852,7 +861,10 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
 
       const data = await response.json()
 
-      setFormData((prev) => ({ ...prev, brochure: data.url }))
+      setFormData((prev) => ({
+        ...prev,
+        brochure: data.url,
+      }))
 
       toast({
         title: "Success",
@@ -872,6 +884,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       }
     }
   }
+
 
   const handleLayoutPlanUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]

@@ -1,10 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
 
@@ -26,7 +23,8 @@ export async function GET(
             description: true,
           },
         },
-        venue: true ,
+        venue: true,
+        leads: true,
         ticketTypes: {
           where: { isActive: true },
           orderBy: { price: "asc" },
@@ -58,9 +56,8 @@ export async function GET(
 
     const availableTickets =
       event.ticketTypes?.reduce(
-        (total: number, ticket: { quantity: number; sold: number }) =>
-          total + (ticket.quantity - ticket.sold),
-        0
+        (total: number, ticket: { quantity: number; sold: number }) => total + (ticket.quantity - ticket.sold),
+        0,
       ) ?? 0
 
     const eventData = {
@@ -80,63 +77,61 @@ export async function GET(
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } =await params;
+    const { id } = await params
 
     if (!id || id.length !== 24) {
-      return NextResponse.json({ error: "Invalid event ID" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid event ID" }, { status: 400 })
     }
 
-    const body = await request.json();
+    const body = await request.json()
 
     // Only allow certain fields to be updated
-    const allowedFields = ["title", "address", "startDate", "endDate", "description"];
-    const dataToUpdate: any = {};
+    const allowedFields = ["title", "address", "startDate", "endDate", "description"]
+    const dataToUpdate: any = {}
     allowedFields.forEach((key) => {
       if (body[key] !== undefined) {
-        dataToUpdate[key] = key.includes("Date") ? new Date(body[key]) : body[key];
+        dataToUpdate[key] = key.includes("Date") ? new Date(body[key]) : body[key]
       }
-    });
+    })
 
     if (Object.keys(dataToUpdate).length === 0) {
-      return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+      return NextResponse.json({ error: "No valid fields to update" }, { status: 400 })
     }
 
     const updatedEvent = await prisma.event.update({
       where: { id },
       data: dataToUpdate,
-    });
+    })
 
-    return NextResponse.json({ success: true, event: updatedEvent });
+    return NextResponse.json({ success: true, event: updatedEvent })
   } catch (error) {
-    console.error("Error updating event:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("Error updating event:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
-
-export async function PUT(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> } // note: params is a Promise
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params; // ✅ await params before using
-    const body = await req.json();
-    const { description, tags } = body;
+    const { id } = await params
+    const body = await request.json()
+    const { description, tags, images } = body
+
+    console.log("[v0] Updating event:", id, "with images:", images?.length || 0)
 
     const updatedEvent = await prisma.event.update({
       where: { id },
       data: {
         ...(description && { description }),
         ...(tags && { tags }),
+        ...(images && { images }),
       },
-    });
+    })
 
-    return new Response(JSON.stringify(updatedEvent), { status: 200 });
-  } catch (err) {
-    console.error(err);
-    return new Response(
-      JSON.stringify({ error: "Failed to update event" }),
-      { status: 500 }
-    );
+    console.log("[v0] Event updated successfully with", updatedEvent.images?.length || 0, "images")
+
+    return NextResponse.json(updatedEvent)
+  } catch (error) {
+    console.error("[v0] Error updating event:", error)
+    return NextResponse.json({ error: "Failed to update event" }, { status: 500 })
   }
 }

@@ -153,11 +153,11 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
                     className="object-contain shadow-sm rounded-md border border-gray-200"
                   />
                 </div>
-                <div className="flex-1">
+                {/* <div className="flex-1">
                   <button className="px-3 py-1 text-red-600 text-sm border-2 border-red-600 rounded-md hover:bg-red-50 transition">
                     +Follow
                   </button>
-                </div>
+                </div> */}
               </div>
 
               <div className="space-y-2">

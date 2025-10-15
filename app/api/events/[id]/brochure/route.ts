@@ -1,48 +1,68 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
-import fs from "fs";
-import path from "path";
 
 const prisma = new PrismaClient()
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
-  const event = await prisma.event.findUnique({ 
-    where: { id },
-    select: { brochure: true }
-  });
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params
+    const { searchParams } = new URL(request.url)
+    const action = searchParams.get("action")
 
-  if (!event?.brochure) {
-    return NextResponse.json({ error: "Brochure not found" }, { status: 404 });
+    const event = await prisma.event.findUnique({
+      where: { id },
+      select: { brochure: true },
+    })
+
+    if (!event?.brochure) {
+      return NextResponse.json({ error: "Brochure not found" }, { status: 404 })
+    }
+
+    console.log("[v0] Fetching PDF from:", event.brochure)
+
+    const response = await fetch(event.brochure)
+
+    if (!response.ok) {
+      console.error("[v0] Cloudinary response status:", response.status, response.statusText)
+      return NextResponse.json({ error: `Failed to fetch PDF: ${response.status}` }, { status: response.status })
+    }
+
+    const buffer = await response.arrayBuffer()
+
+    return new NextResponse(buffer, {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": action === "download" ? 'attachment; filename="brochure.pdf"' : "inline",
+        "Cache-Control": "public, max-age=31536000",
+      },
+    })
+  } catch (error) {
+    console.error("[v0] Error fetching brochure:", error)
+    return NextResponse.json({ error: "Failed to fetch PDF" }, { status: 500 })
   }
-
-  // Redirect to Cloudinary URL
-  return NextResponse.redirect(event.brochure);
 }
 
-// DELETE - Remove brochure
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
+
     const event = await prisma.event.findUnique({
-      where: { id: (await params).id },
-      select: { documents: true },
+      where: { id },
+      select: { brochure: true },
     })
 
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
 
-    // Filter out brochure documents
-    const updatedDocuments = event.documents.filter((doc) => !doc.includes("brochure"))
-
     await prisma.event.update({
-     where: { id: (await params).id },
-      data: { documents: updatedDocuments },
+      where: { id },
+      data: { brochure: null },
     })
 
     return NextResponse.json({ message: "Brochure removed successfully" })
   } catch (error) {
-    console.error("Error deleting brochure:", error)
+    console.error("[v0] Error deleting brochure:", error)
     return NextResponse.json({ error: "Failed to delete brochure" }, { status: 500 })
   }
 }

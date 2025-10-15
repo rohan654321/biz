@@ -643,7 +643,7 @@ export default function EventPage({ params }: EventPageProps) {
                 </Card>
               </TabsContent>
 
-                   <TabsContent value="brochure">
+              <TabsContent value="brochure">
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
@@ -659,34 +659,21 @@ export default function EventPage({ params }: EventPageProps) {
                       {event?.brochure ? (
                         <>
                           <div className="bg-gray-100 rounded-lg overflow-hidden border border-gray-300">
-                            <object
-                              data={event.brochure}
-                              type="application/pdf"
-                              className="w-full h-96"
-                              aria-label="Event Brochure PDF"
-                            >
-                              <div className="flex flex-col items-center justify-center h-96 p-6 text-center">
-                                <p className="text-gray-600 mb-4">
-                                  Unable to display PDF in browser. Please download to view.
-                                </p>
-                                <Button asChild>
-                                  <a
-                                    href={event.brochure}
-                                    download
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center"
-                                  >
-                                    Download Brochure
-                                  </a>
-                                </Button>
-                              </div>
-                            </object>
+                            <iframe
+                              src={`/api/events/${event.id}/brochure?action=view`}
+                              className="w-full h-[600px]"
+                              title="Event Brochure PDF"
+                            />
                           </div>
-                          <div className="flex justify-center">
+                          <div className="flex justify-center gap-4">
                             <Button asChild size="lg" className="w-full sm:w-auto">
-                              <a href={event.brochure} download target="_blank" rel="noopener noreferrer">
+                              <a href={`/api/events/${event.id}/brochure?action=download`} download>
                                 Download Brochure
+                              </a>
+                            </Button>
+                            <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
+                              <a href={event.brochure} target="_blank" rel="noopener noreferrer">
+                                Open Original in New Tab
                               </a>
                             </Button>
                           </div>
