@@ -850,7 +850,7 @@ export default function EventsPageContent() {
                           </div>
 
                           {/* Right Section */}
-                          <div className="flex-1 flex flex-col justify-between px-4 py-3 min-w-0">
+                          <div className="flex-1 flex flex-col px-10 py-1 min-w-0">
                             {/* Top Section */}
                             <div className="min-w-0">
                               {/* Title & Edition */}
