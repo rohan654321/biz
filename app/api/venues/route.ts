@@ -28,44 +28,31 @@ const createVenueSchema = z.object({
  */
 export async function GET(request: NextRequest) {
   try {
+    // Validate session (optional: you can remove this if public route)
     const session = await getServerSession(authOptions)
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    // Parse query params for pagination & search
     const { searchParams } = new URL(request.url)
-    const search = searchParams.get("search")
-    const venueCity = searchParams.get("venueCity")
-    const minCapacity = searchParams.get("minCapacity")
-    const amenities = searchParams.get("amenities")?.split(",").filter(Boolean)
+    const search = searchParams.get("search") || ""
     const page = Number.parseInt(searchParams.get("page") || "1")
     const limit = Number.parseInt(searchParams.get("limit") || "10")
     const skip = (page - 1) * limit
 
+    // Get all VENUE_MANAGERs (no organizer filter)
     const where: any = { role: "VENUE_MANAGER" }
 
     if (search) {
       where.OR = [
-        { firstName: { contains: search, mode: "insensitive" } },
-        { lastName: { contains: search, mode: "insensitive" } },
         { venueName: { contains: search, mode: "insensitive" } },
+        { venueDescription: { contains: search, mode: "insensitive" } },
         { venueAddress: { contains: search, mode: "insensitive" } },
-        { venueCity: { contains: search, mode: "insensitive" } },
       ]
     }
 
-    if (venueCity) {
-      where.venueCity = { contains: venueCity, mode: "insensitive" }
-    }
-
-    if (minCapacity) {
-      where.maxCapacity = { gte: Number.parseInt(minCapacity) }
-    }
-
-    if (amenities && amenities.length > 0) {
-      where.amenities = { hasEvery: amenities }
-    }
-
+    // Fetch from Prisma
     const [venues, total] = await Promise.all([
       prisma.user.findMany({
         where,
@@ -75,35 +62,18 @@ export async function GET(request: NextRequest) {
           lastName: true,
           email: true,
           phone: true,
-          avatar: true,
+          organizerIdForVenueManager: true,
           venueName: true,
           venueDescription: true,
           venueAddress: true,
-          venueCity: true,
-          venueState: true,
-          venueCountry: true,
-          venueZipCode: true,
-          venuePhone: true,
-          venueEmail: true,
-          venueWebsite: true,
           maxCapacity: true,
           totalHalls: true,
-          amenities: true,
-          venueImages: true,
           averageRating: true,
           totalReviews: true,
-          meetingSpaces: {
-            select: {
-              id: true,
-              name: true,
-              capacity: true,
-              area: true,
-              hourlyRate: true,
-              isAvailable: true,
-              // ⚠️ remove description if not in Prisma schema
-            //   description: true,
-            },
-          },
+          amenities: true,
+          venueCurrency: true,
+          createdAt: true,
+          updatedAt: true,
         },
         skip,
         take: limit,
@@ -112,21 +82,25 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where }),
     ])
 
+    // Response
     return NextResponse.json({
-      venues,
+      success: true,
+      data: venues,
       pagination: {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / limit),
       },
     })
   } catch (error) {
     console.error("Error fetching venues:", error)
-    return NextResponse.json({ error: "Failed to fetch venues" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch venues" },
+      { status: 500 }
+    )
   }
 }
-
 /**
  * POST /api/venues
  */

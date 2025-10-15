@@ -3,17 +3,11 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(req: NextRequest) {
   try {
-    // Query all venue managers
     const venueManagers = await prisma.user.findMany({
-      where: {
-        role: "VENUE_MANAGER",
-      },
-      include: {
-        meetingSpaces: true,
-      },
-    })
+      where: { role: "VENUE_MANAGER" },
+      include: { meetingSpaces: true },
+    });
 
-    // Transform the data to match frontend expectations
     const venues = venueManagers.map((manager) => ({
       id: manager.id,
       venueName: manager.company || "",
@@ -21,7 +15,7 @@ export async function GET(req: NextRequest) {
       contactPerson: `${manager.firstName} ${manager.lastName}`.trim(),
       email: manager.email,
       mobile: manager.phone || "",
-      address: manager.location || "",
+      address: manager.location || manager.venueAddress || "",
       website: manager.website || "",
       description: manager.bio || "",
       maxCapacity: manager.maxCapacity || 0,
@@ -32,15 +26,13 @@ export async function GET(req: NextRequest) {
       totalReviews: manager.totalReviews || 0,
       amenities: manager.amenities || [],
       meetingSpaces: manager.meetingSpaces || [],
-      isVerified: true, // Assuming venue managers are verified
-    }))
+      isVerified: true,
+    }));
 
-    return NextResponse.json({
-      success: true,
-      venues,
-    })
+    return NextResponse.json({ success: true, venues });
   } catch (error) {
-    console.error("Error fetching venue managers:", error)
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
+    console.error("Error fetching venue managers:", error);
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }
+
