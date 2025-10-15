@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CalendarDays, MapPin, Star, Share2, Bookmark, Layers } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { BookmarkButton } from "./bookmark-button";
 
 // 🧩 Fetch data including venue details
 export async function getFeaturedEvents() {
@@ -111,7 +112,10 @@ export default async function FeaturedEvents() {
                         <span className="text-xs font-medium text-green-700">4.9</span>
                       </div>
                       <Share2 className="w-4 h-4 text-gray-700 cursor-pointer" />
-                      <Bookmark className="w-4 h-4 text-gray-700 cursor-pointer" />
+                      <BookmarkButton 
+  eventId={event.id}
+  className="p-1 rounded-full hover:bg-gray-100 transition"
+/>
                     </div>
                   </div>
 

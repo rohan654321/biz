@@ -9,10 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 import { ConnectionsSection } from "@/app/dashboard/connections-section"
 import {
-  Building2,
-  Package,
-  FileText,
-  UserPlus,
   MessageSquare,
   HelpCircle,
   Settings,
@@ -65,6 +61,13 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
   const router = useRouter()
   const { toast } = useToast()
 
+  // ✅ Set MyProfile as default section when dashboard loads
+  useEffect(() => {
+    if (!activeSection) {
+      setActiveSection("myprofile")
+    }
+  }, [activeSection, setActiveSection])
+
   useEffect(() => {
     if (status === "loading") return
 
@@ -73,7 +76,6 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
       return
     }
 
-    // ✅ Check if user has permission to access this dashboard
     if (session?.user.id !== userId && session?.user.role !== "SPEAKER") {
       toast({
         title: "Access Denied",
@@ -94,9 +96,7 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
 
       const response = await fetch(`/api/users/${userId}`, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       })
 
       if (!response.ok) {
@@ -128,7 +128,7 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
     setOpenMenus((prev) => (prev.includes(menu) ? prev.filter((m) => m !== menu) : [...prev, menu]))
   }
 
-  // Helper function for menu item styling
+  // Helper function for menu styling
   const menuItemClass = (sectionId: string) => {
     return `cursor-pointer pl-3 py-2 text-sm rounded-md transition-colors w-full text-left ${
       activeSection === sectionId 
@@ -137,6 +137,7 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
     }`
   }
 
+  // ✅ Loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -145,6 +146,7 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
     )
   }
 
+  // ✅ Error state
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -163,6 +165,7 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
     )
   }
 
+  // ✅ No speaker data
   if (!speaker) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -178,6 +181,7 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
     )
   }
 
+  // ✅ Dynamic content switch
   const renderContent = () => {
     switch (activeSection) {
       case "myprofile":
@@ -195,29 +199,8 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
       case "settings":
         return <SpeakerSettings speakerId={speaker.id} />
       default:
-        return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <User className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium text-gray-900">Welcome to Speaker Dashboard</h3>
-              <p className="mt-2 text-gray-500">Select a section from the sidebar to get started.</p>
-            </div>
-          </div>
-        )
+        return <MyProfile speakerId={speaker.id} /> // 👈 Default fallback
     }
-  }
-
-  const getCurrentSectionTitle = () => {
-    const sections = {
-      "myprofile": "My Profile",
-      "mysessions": "My Sessions",
-      "materials": "Presentation Materials",
-      "message": "Messages",
-      "connection": "Connections",
-      "help": "Help & Support",
-      "settings": "Settings"
-    }
-    return sections[activeSection as keyof typeof sections] || "Speaker Dashboard"
   }
 
   return (
@@ -228,14 +211,12 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
       )}
 
       {/* Sidebar */}
-      <aside className={`
-        fixed md:relative
-        w-64 min-h-screen bg-white border-r border-gray-200 z-50
+      <aside
+        className={`fixed md:relative w-64 min-h-screen bg-white border-r border-gray-200 z-50
         transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        md:translate-x-0
-        flex flex-col shadow-sm
-      `}>
+        md:translate-x-0 flex flex-col shadow-sm`}
+      >
         {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">Speaker Menu</h2>
@@ -244,26 +225,8 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
           </Button>
         </div>
 
-        {/* Speaker Info Header */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <Avatar className="w-10 h-10">
-              <AvatarImage src={speaker.avatar || "/placeholder.svg"} />
-              <AvatarFallback>
-                {speaker.firstName?.[0]}{speaker.lastName?.[0]}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-semibold text-sm text-gray-900">
-                {speaker.firstName} {speaker.lastName}
-              </h3>
-              <p className="text-xs text-gray-600">{speaker.jobTitle || "Speaker"}</p>
-            </div>
-          </div>
-        </div>
-
         <div className="flex-1 p-4 overflow-y-auto">
-          {/* Speaker Management Dropdown */}
+          {/* Speaker Management */}
           <div className="mb-4">
             <button
               className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
@@ -273,37 +236,25 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
                 <User size={16} />
                 Speaker Management
               </span>
-              {openMenus.includes("speaker-management") ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
+              {openMenus.includes("speaker-management") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
+
             {openMenus.includes("speaker-management") && (
               <div className="ml-2 mt-2 space-y-1">
-                <button
-                  onClick={() => setActiveSection("myprofile")}
-                  className={menuItemClass("myprofile")}
-                >
+                <button onClick={() => setActiveSection("myprofile")} className={menuItemClass("myprofile")}>
                   My Profile
                 </button>
-                <button
-                  onClick={() => setActiveSection("mysessions")}
-                  className={menuItemClass("mysessions")}
-                >
+                <button onClick={() => setActiveSection("mysessions")} className={menuItemClass("mysessions")}>
                   My Sessions
                 </button>
-                <button
-                  onClick={() => setActiveSection("materials")}
-                  className={menuItemClass("materials")}
-                >
+                <button onClick={() => setActiveSection("materials")} className={menuItemClass("materials")}>
                   Presentation Materials
                 </button>
               </div>
             )}
           </div>
 
-          {/* Communication Dropdown */}
+          {/* Communication */}
           <div className="mb-4">
             <button
               className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
@@ -313,24 +264,15 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
                 <MessageSquare size={16} />
                 Communication
               </span>
-              {openMenus.includes("communication") ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
+              {openMenus.includes("communication") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
+
             {openMenus.includes("communication") && (
               <div className="ml-2 mt-2 space-y-1">
-                <button
-                  onClick={() => setActiveSection("message")}
-                  className={menuItemClass("message")}
-                >
+                <button onClick={() => setActiveSection("message")} className={menuItemClass("message")}>
                   Messages
                 </button>
-                <button
-                  onClick={() => setActiveSection("connection")}
-                  className={menuItemClass("connection")}
-                >
+                <button onClick={() => setActiveSection("connection")} className={menuItemClass("connection")}>
                   Connections
                 </button>
               </div>
@@ -341,8 +283,8 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
           <button
             onClick={() => setActiveSection("help")}
             className={`flex items-center w-full py-2 gap-2 font-medium text-sm rounded-md transition-colors ${
-              activeSection === "help" 
-                ? "bg-blue-50 text-blue-700" 
+              activeSection === "help"
+                ? "bg-blue-50 text-blue-700"
                 : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
             }`}
           >
@@ -354,8 +296,8 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
           <button
             onClick={() => setActiveSection("settings")}
             className={`flex items-center w-full py-2 gap-2 font-medium text-sm rounded-md transition-colors mt-1 ${
-              activeSection === "settings" 
-                ? "bg-blue-50 text-blue-700" 
+              activeSection === "settings"
+                ? "bg-blue-50 text-blue-700"
                 : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
             }`}
           >
@@ -373,33 +315,10 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
-        {/* Mobile Top Bar */}
-        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
-            <Menu className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-semibold text-gray-900 truncate flex-1 text-center px-4">
-            {getCurrentSectionTitle()}
-          </h1>
-          <div className="w-9" />
-        </div>
-
-        {/* Main Content */}
         <main className="flex-1 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto">
-            {/* Content Header */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {getCurrentSectionTitle()}
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Manage your speaker profile and sessions
-              </p>
-            </div>
-
-            {/* Dynamic Content */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[600px]">
               {renderContent()}
             </div>

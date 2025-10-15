@@ -23,6 +23,7 @@ import Image from "next/image"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import AdCard from "@/components/add-card"
+import { BookmarkButton } from "@/components/bookmark-button"
 
 interface Event {
   image: string
@@ -959,9 +960,10 @@ export default function EventsPageContent() {
                                 <button className="p-1 rounded-full hover:bg-gray-100 transition">
                                   <Share2 className="w-4 h-4 text-gray-600" />
                                 </button>
-                                <button className="p-1 rounded-full hover:bg-gray-100 transition">
-                                  <Bookmark className="w-4 h-4 text-gray-600" />
-                                </button>
+                                                      <BookmarkButton 
+                                  eventId={event.id}
+                                  className="p-1 rounded-full hover:bg-gray-100 transition"
+                                />
                                 <Button className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-xs rounded-lg">
                                   + Follow
                                 </Button>

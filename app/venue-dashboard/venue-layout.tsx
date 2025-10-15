@@ -7,28 +7,23 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   Building2, 
-  Calendar, 
-  MapPin, 
   MessageSquare, 
   Star, 
-  FileText, 
-  Bell, 
-  Settings, 
   HelpCircle, 
   ChevronDown, 
   ChevronRight,
-  Menu,
+  Settings,
   X
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+
 // Import all section components
 import VenueProfile from "./venue-profile"
 import EventManagement from "./event-management"
 import BookingSystem from "./booking-system"
 import CommunicationCenter from "./communication-center"
-import RatingsReviews from "./ratings-reviews"
 import LegalDocumentation from "./legal-documentation"
 import VenueSettings from "./venue-settings"
 import { MeetingSpace } from "@prisma/client"
@@ -84,6 +79,13 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
   const router = useRouter()
   const { toast } = useToast()
 
+  // 👇 Set Venue Profile as default tab when dashboard loads
+  useEffect(() => {
+    if (!activeSection) {
+      setActiveSection("venue-profile")
+    }
+  }, [activeSection, setActiveSection])
+
   useEffect(() => {
     if (status === "loading") return
 
@@ -113,34 +115,22 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
 
       const response = await fetch(`/api/venue-manager/${userId}`, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       })
 
       if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("User not found")
-        }
-        if (response.status === 403) {
-          throw new Error("Access denied")
-        }
+        if (response.status === 404) throw new Error("User not found")
+        if (response.status === 403) throw new Error("Access denied")
         throw new Error("Failed to fetch user data")
       }
 
       const data = await response.json()
-      // Handle all possible backend response shapes
-      if (data.data) {
-        setVenueData(data.data)
-      } else if (data.user?.venue) {
-        setVenueData(data.user.venue)
-      } else if (data.venue) {
-        setVenueData(data.venue)
-      } else if (data.user) {
-        setVenueData(data.user)
-      } else {
-        throw new Error("Invalid data structure in response")
-      }
+
+      if (data.data) setVenueData(data.data)
+      else if (data.user?.venue) setVenueData(data.user.venue)
+      else if (data.venue) setVenueData(data.venue)
+      else if (data.user) setVenueData(data.user)
+      else throw new Error("Invalid data structure in response")
 
     } catch (err) {
       console.error("Error fetching user data:", err)
@@ -163,14 +153,12 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
     setOpenMenus((prev) => (prev.includes(menu) ? prev.filter((m) => m !== menu) : [...prev, menu]))
   }
 
-  // Helper function for menu item styling
-  const menuItemClass = (sectionId: string) => {
-    return `cursor-pointer pl-3 py-2 text-sm rounded-md transition-colors w-full text-left ${
-      activeSection === sectionId 
-        ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700 font-medium" 
+  const menuItemClass = (sectionId: string) =>
+    `cursor-pointer pl-3 py-2 text-sm rounded-md transition-colors w-full text-left ${
+      activeSection === sectionId
+        ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700 font-medium"
         : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 border-l-4 border-transparent"
     }`
-  }
 
   if (loading) {
     return (
@@ -230,56 +218,34 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
       case "legal-documentation":
         return <LegalDocumentation venueId={venueData.id} />
       case "help-support":
-        return <HelpSupport /> 
+        return <HelpSupport />
       case "settings":
-        return <VenueSettings venueData={venueData} onUpdate={function (data: Partial<VenueData>): void {
-          throw new Error("Function not implemented.")
-        } } />
-      default:
         return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <Building2 className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium text-gray-900">Welcome to Venue Dashboard</h3>
-              <p className="mt-2 text-gray-500">Select a section from the sidebar to get started.</p>
-            </div>
-          </div>
+          <VenueSettings
+            venueData={venueData}
+            onUpdate={function (data: Partial<VenueData>): void {
+              throw new Error("Function not implemented.")
+            }}
+          />
         )
+      default:
+        // 👇 Fallback if something breaks
+        return <VenueProfile venueData={venueData} />
     }
-  }
-
-  const getCurrentSectionTitle = () => {
-    const sections = {
-      "venue-profile": "Venue Profile",
-      "event-management": "Event Management",
-      "booking-system": "Booking System",
-      "communication": "Messages",
-      "connection": "Connections",
-      "ratings-reviews": "Ratings & Reviews",
-      "legal-documentation": "Legal Documentation",
-      "help-support": "Help & Support",
-      "settings": "Settings"
-    }
-    return sections[activeSection as keyof typeof sections] || "Venue Dashboard"
   }
 
   return (
     <div className="flex min-h-screen w-full bg-gray-50">
-      {/* Mobile Overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Sidebar */}
-      <aside className={`
-        fixed md:relative
-        w-64 min-h-screen bg-white border-r border-gray-200 z-50
-        transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        md:translate-x-0
-        flex flex-col shadow-sm
-      `}>
-        {/* Mobile Header */}
+      <aside
+        className={`fixed md:relative w-64 min-h-screen bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0 flex flex-col shadow-sm`}
+      >
         <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">Venue Menu</h2>
           <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
@@ -288,22 +254,6 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
         </div>
 
         <div className="flex-1 p-4 overflow-y-auto">
-          {/* Venue Info Header */}
-          {/* <div className="mb-6 p-3 bg-blue-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={venueData?.logo || "/placeholder.svg"} />
-                <AvatarFallback>{venueData?.venueName?.charAt(0) || "V"}</AvatarFallback>
-              </Avatar>
-              <div>
-                <h3 className="font-semibold text-sm text-gray-900 truncate">
-                  {venueData?.venueName || "Venue"}
-                </h3>
-                <p className="text-xs text-gray-600">Venue Manager</p>
-              </div>
-            </div>
-          </div> */}
-
           {/* Venue Management Dropdown */}
           <div className="mb-4">
             <button
@@ -314,30 +264,18 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
                 <Building2 size={16} />
                 Venue Management
               </span>
-              {openMenus.includes("venue-management") ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
+              {openMenus.includes("venue-management") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
+
             {openMenus.includes("venue-management") && (
               <div className="ml-2 mt-2 space-y-1">
-                <button
-                  onClick={() => setActiveSection("venue-profile")}
-                  className={menuItemClass("venue-profile")}
-                >
+                <button onClick={() => setActiveSection("venue-profile")} className={menuItemClass("venue-profile")}>
                   Venue Profile
                 </button>
-                <button
-                  onClick={() => setActiveSection("event-management")}
-                  className={menuItemClass("event-management")}
-                >
+                <button onClick={() => setActiveSection("event-management")} className={menuItemClass("event-management")}>
                   Event Management
                 </button>
-                <button
-                  onClick={() => setActiveSection("booking-system")}
-                  className={menuItemClass("booking-system")}
-                >
+                <button onClick={() => setActiveSection("booking-system")} className={menuItemClass("booking-system")}>
                   Booking System
                 </button>
               </div>
@@ -354,24 +292,14 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
                 <MessageSquare size={16} />
                 Communication
               </span>
-              {openMenus.includes("communication") ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
+              {openMenus.includes("communication") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
             {openMenus.includes("communication") && (
               <div className="ml-2 mt-2 space-y-1">
-                <button
-                  onClick={() => setActiveSection("communication")}
-                  className={menuItemClass("communication")}
-                >
+                <button onClick={() => setActiveSection("communication")} className={menuItemClass("communication")}>
                   Messages
                 </button>
-                <button
-                  onClick={() => setActiveSection("connection")}
-                  className={menuItemClass("connection")}
-                >
+                <button onClick={() => setActiveSection("connection")} className={menuItemClass("connection")}>
                   Connections
                 </button>
               </div>
@@ -388,18 +316,11 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
                 <Star size={16} />
                 Reviews & Legal
               </span>
-              {openMenus.includes("reviews-legal") ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
+              {openMenus.includes("reviews-legal") ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
             {openMenus.includes("reviews-legal") && (
               <div className="ml-2 mt-2 space-y-1">
-                <button
-                  onClick={() => setActiveSection("ratings-reviews")}
-                  className={menuItemClass("ratings-reviews")}
-                >
+                <button onClick={() => setActiveSection("ratings-reviews")} className={menuItemClass("ratings-reviews")}>
                   Ratings & Reviews
                 </button>
                 <button
@@ -416,8 +337,8 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
           <button
             onClick={() => setActiveSection("help-support")}
             className={`flex items-center w-full py-2 gap-2 font-medium text-sm rounded-md transition-colors ${
-              activeSection === "help-support" 
-                ? "bg-blue-50 text-blue-700" 
+              activeSection === "help-support"
+                ? "bg-blue-50 text-blue-700"
                 : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
             }`}
           >
@@ -429,8 +350,8 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
           <button
             onClick={() => setActiveSection("settings")}
             className={`flex items-center w-full py-2 gap-2 font-medium text-sm rounded-md transition-colors mt-1 ${
-              activeSection === "settings" 
-                ? "bg-blue-50 text-blue-700" 
+              activeSection === "settings"
+                ? "bg-blue-50 text-blue-700"
                 : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
             }`}
           >
@@ -439,42 +360,16 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
           </button>
 
           {/* Logout */}
-          <Button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="w-full bg-red-500 hover:bg-red-600 text-white mt-8"
-          >
+          <Button onClick={() => signOut({ callbackUrl: "/login" })} className="w-full bg-red-500 hover:bg-red-600 text-white mt-8">
             Logout
           </Button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
-        {/* Mobile Top Bar */}
-        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
-            <Menu className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-semibold text-gray-900 truncate flex-1 text-center px-4">
-            {getCurrentSectionTitle()}
-          </h1>
-          <div className="w-9" />
-        </div>
-
-        {/* Main Content */}
         <main className="flex-1 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto">
-            {/* Content Header */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {getCurrentSectionTitle()}
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Manage your venue and bookings
-              </p>
-            </div>
-
-            {/* Dynamic Content */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[600px]">
               {renderContent()}
             </div>

@@ -324,16 +324,16 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
     }
   }
 
-  const getCurrentSectionTitle = () => {
-    for (const group of sidebarGroups) {
-      const item = group.items.find((item) => item.id === activeSection)
-      if (item) return item.title
-    }
-    const individualItem = individualSidebarItems.find((item) => item.id === activeSection)
-    if (individualItem) return individualItem.title
+  // const getCurrentSectionTitle = () => {
+  //   for (const group of sidebarGroups) {
+  //     const item = group.items.find((item) => item.id === activeSection)
+  //     if (item) return item.title
+  //   }
+  //   const individualItem = individualSidebarItems.find((item) => item.id === activeSection)
+  //   if (individualItem) return individualItem.title
 
-    return "Dashboard"
-  }
+  //   return "Dashboard"
+  // }
 
   return (
     <div className="flex min-h-screen w-full bg-gray-50">
@@ -443,7 +443,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Mobile Top Bar */}
-        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
+        {/* <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
           <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
@@ -451,20 +451,20 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
             {getCurrentSectionTitle()}
           </h1>
           <div className="w-9" />
-        </div>
+        </div> */}
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto">
             {/* Content Header */}
-            <div className="mb-6">
+            {/* <div className="mb-6">
               <h1 className="text-2xl font-bold text-gray-900">
                 {getCurrentSectionTitle()}
               </h1>
               <p className="text-gray-600 mt-1">
                 Manage your organizer account and events
               </p>
-            </div>
+            </div> */}
 
             {/* Dynamic Content */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[600px]">
