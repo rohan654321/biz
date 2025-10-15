@@ -1,9 +1,10 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { redirect } from "next/navigation"
-import VenueDashboardPage  from "../venue-layout"
+import VenueDashboardPage from "../venue-layout"
 import { NameBanner } from "../NavBanner"
 import Navbar from "../navbar"
+import { DashboardProvider } from "@/contexts/dashboard-context"
 
 export default async function DashboardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -18,19 +19,16 @@ export default async function DashboardPage({ params }: { params: Promise<{ id: 
     redirect("/login")
   }
 
-  return(
-    <div>
-    <div>
-      <Navbar/>
-       <NameBanner name={session.user.name || "Venue_Manager"}
-        designation={
-          session.user.role || ""
-        }/>
-    </div>
-    <div>
-      <VenueDashboardPage userId={id} />
-    </div>
-    </div>
+  return (
+    <DashboardProvider>
+      <div>
+        <Navbar/>
+        <NameBanner 
+          name={session.user.name || "Venue_Manager"}
+          designation={session.user.role || ""}
+        />
+        <VenueDashboardPage userId={id} />
+      </div>
+    </DashboardProvider>
   )
-   
 }

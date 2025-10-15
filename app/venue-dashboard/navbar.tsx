@@ -14,12 +14,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-
+import { useDashboard } from "@/contexts/dashboard-context";
 
 export default function Navbar() {
   const [exploreOpen, setExploreOpen] = useState(false);
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { setActiveSection } = useDashboard();
 
   const toggleExplore = () => setExploreOpen((prev) => !prev);
 
@@ -42,6 +43,15 @@ export default function Navbar() {
         router.push("/login");
       }
     }
+  };
+
+  // Navigation functions using dashboard context
+  const navigateToProfile = () => {
+    setActiveSection("venue-profile");
+  };
+
+  const navigateToSettings = () => {
+    setActiveSection("settings");
   };
 
   if (status === "loading") {
@@ -124,22 +134,25 @@ export default function Navbar() {
               Add Event
             </p>
 
+            {/* Notifications */}
+            <Button variant="ghost" size="sm">
+              <Bell className="w-4" />
+            </Button>
+
             {/* Profile Menu */}
             <DropdownMenu>
-                <Button variant="ghost" size="sm">
-              <Bell className="w-4 " />
-            </Button>
               <DropdownMenuTrigger asChild>
-                <button className="p-2 rounded-full bg-[#002C71] text-white hover:bg-gray-100 focus:outline-none">
+                <button className="flex items-center gap-2 p-2 rounded-full bg-[#002C71] text-white hover:bg-blue-800 focus:outline-none transition-colors">
                   <User className="w-4 h-4" />
+                  <ChevronDown className="w-3 h-3" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={navigateToProfile}>
                   <User className="mr-2 h-4 w-4" />
                   <span>My Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={navigateToSettings}>
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </DropdownMenuItem>
