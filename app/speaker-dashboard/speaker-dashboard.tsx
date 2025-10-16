@@ -319,7 +319,7 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
       <div className="flex-1 flex flex-col min-h-screen">
         <main className="flex-1 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[600px]">
+            <div className="">
               {renderContent()}
             </div>
           </div>

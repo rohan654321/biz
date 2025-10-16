@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -324,16 +324,16 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
     }
   }
 
-  // const getCurrentSectionTitle = () => {
-  //   for (const group of sidebarGroups) {
-  //     const item = group.items.find((item) => item.id === activeSection)
-  //     if (item) return item.title
-  //   }
-  //   const individualItem = individualSidebarItems.find((item) => item.id === activeSection)
-  //   if (individualItem) return individualItem.title
+  const getCurrentSectionTitle = () => {
+    for (const group of sidebarGroups) {
+      const item = group.items.find((item) => item.id === activeSection)
+      if (item) return item.title
+    }
+    const individualItem = individualSidebarItems.find((item) => item.id === activeSection)
+    if (individualItem) return individualItem.title
 
-  //   return "Dashboard"
-  // }
+    return "Dashboard"
+  }
 
   return (
     <div className="flex min-h-screen w-full bg-gray-50">
@@ -467,7 +467,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
             </div> */}
 
             {/* Dynamic Content */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[600px]">
+            <div className="">
               {renderContent()}
             </div>
           </div>

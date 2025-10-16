@@ -648,7 +648,7 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
         <main className="flex-1 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto">
             {/* Dynamic Content */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[600px]">
+            <div className="">
               {renderContent()}
             </div>
           </div>

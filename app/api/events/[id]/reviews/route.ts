@@ -1,31 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth-options'
-import { prisma } from '@/lib/prisma'
+import { type NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth-options"
+import { prisma } from "@/lib/prisma"
 
-
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+// ✅ Correct: params is not a Promise
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id: eventId } = await params
+    const eventId = params.id
     const { searchParams } = new URL(request.url)
     const includeReplies = searchParams.get("includeReplies") === "true"
 
     console.log("[v0] Fetching reviews for event ID:", eventId)
 
-    // Fetch event details
     const event = await prisma.event.findUnique({
       where: { id: eventId },
-      select: {
-        id: true,
-        title: true,
-      },
+      select: { id: true, title: true, averageRating: true, totalReviews: true },
     })
 
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
 
-    // Fetch reviews for this event
     const reviews = await prisma.review.findMany({
       where: { eventId },
       include: {
@@ -35,12 +30,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             firstName: true,
             lastName: true,
             avatar: true,
-          },
-        },
-        event: {
-          select: {
-            id: true,
-            title: true,
           },
         },
         ...(includeReplies && {
@@ -63,7 +52,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     return NextResponse.json({
-      event,
+      event: {
+        ...event,
+        averageRating: event?.averageRating ?? 0,
+        totalReviews: event?.totalReviews ?? 0,
+      },
       reviews,
     })
   } catch (error) {
@@ -72,81 +65,66 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+// ✅ Correct: params is a plain object
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const params = await context.params
     const session = await getServerSession(authOptions)
 
     if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { rating, title, comment } = await request.json()
     const userId = session.user.id
+    const eventId = params.id
 
-    // Validate rating
+    console.log("📩 Received review for event:", eventId)
+
     if (!rating || rating < 1 || rating > 5) {
-      return NextResponse.json(
-        { error: 'Rating must be between 1 and 5' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "Rating must be between 1 and 5" }, { status: 400 })
     }
 
-    // Check if user already reviewed this event
     const existingReview = await prisma.review.findFirst({
-      where: {
-        eventId: params.id,
-        userId: userId
-      }
+      where: { eventId, userId },
     })
 
     if (existingReview) {
-      return NextResponse.json(
-        { error: 'You have already reviewed this event' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "You have already reviewed this event" }, { status: 400 })
     }
 
-    // Create the review
     const review = await prisma.review.create({
       data: {
-        rating: parseInt(rating),
-        title: title || '',
-        comment: comment || '',
-        eventId: params.id,
-        userId: userId,
-        isPublic: true
-      }
+        rating: Number.parseInt(rating),
+        title: title || "",
+        comment: comment || "",
+        eventId,
+        userId,
+        isPublic: true,
+      },
     })
 
-    // Update event's average rating and total reviews
+    // ✅ Recalculate event rating
     const eventReviews = await prisma.review.findMany({
-      where: { eventId: params.id }
+      where: { eventId },
+      select: { rating: true },
     })
 
-    const totalRating = eventReviews.reduce((sum, review) => sum + review.rating, 0)
+    const totalRating = eventReviews.reduce((sum, r) => sum + r.rating, 0)
     const averageRating = totalRating / eventReviews.length
 
+    console.log("⭐ Updating event rating:", averageRating, "Reviews:", eventReviews.length)
+
     await prisma.event.update({
-      where: { id: params.id },
+      where: { id: eventId },
       data: {
-        // You might want to add these fields to your Event model
-        // averageRating: averageRating,
-        // totalReviews: eventReviews.length
-      }
+        averageRating,
+        totalReviews: eventReviews.length,
+      },
     })
 
     return NextResponse.json(review, { status: 201 })
   } catch (error) {
-    console.error('Error creating review:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.error("Error creating review:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
-
