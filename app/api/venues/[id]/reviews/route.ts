@@ -25,7 +25,7 @@ export async function POST(
     const venueId = params.id;
 
     if (!venueId) {
-      return NextResponse.json({ error: 'Invalid exhibitor ID' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid venue ID' }, { status: 400 });
     }
 
     const body = await request.json();
@@ -53,41 +53,50 @@ export async function POST(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const exhibitor = await prisma.user.findFirst({
+    const venueManager = await prisma.user.findFirst({
       where: { id: venueId, role: 'VENUE_MANAGER' }
     });
 
-    if (!exhibitor) {
-      return NextResponse.json({ error: 'Exhibitor not found' }, { status: 404 });
+    if (!venueManager) {
+      return NextResponse.json({ error: 'Venue manager not found' }, { status: 404 });
     }
 
-    // ✅ Allow multiple reviews per user
+    // Create the review
     const review = await prisma.review.create({
       data: {
         userId: user.id,
-        exhibitorId: venueId, // Storing exhibitor as venueId
+        exhibitorId: venueId, // Using exhibitorId field for venue manager
         rating: parseInt(rating),
         title: title || '',
         comment,
         isApproved: true,
         isPublic: true,
-        replies: { create: [] }
       },
       include: {
-        user: { select: { id: true, firstName: true, lastName: true, avatar: true } }
+        user: { 
+          select: { 
+            id: true, 
+            firstName: true, 
+            lastName: true, 
+            avatar: true 
+          } 
+        }
       }
     });
 
-    // Update exhibitor's average rating and total reviews
+    // Update venue manager's average rating and total reviews
     const allReviews = await prisma.review.findMany({
-      where: { exhibitorId: venueId, isApproved: true, isPublic: true }
+      where: { 
+        exhibitorId: venueId, 
+        isApproved: true, 
+        isPublic: true 
+      }
     });
 
     const totalReviews = allReviews.length;
-    const averageRating =
-      totalReviews > 0
-        ? allReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
-        : 0;
+    const averageRating = totalReviews > 0
+      ? allReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
+      : 0;
 
     await prisma.user.update({
       where: { id: venueId },
@@ -109,35 +118,28 @@ export async function POST(
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating exhibitor review:', error);
+    console.error('Error creating venue review:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+// GET: Fetch reviews for a venue
+export async function GET(
+  request: NextRequest, 
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const { id: venueId } = await params
-    const { searchParams } = new URL(request.url)
-    const includeReplies = searchParams.get("includeReplies") === "true"
+    const { id: venueId } = await params;
+    
+    console.log("[API] Fetching reviews for venue ID:", venueId);
 
-    console.log("[v0] Fetching reviews for event ID:", venueId)
-
-    // Fetch event details
-    const event = await prisma.user.findUnique({
-      where: { id: venueId },
-      select: {
-        id: true,
-        // title: true,
-      },
-    })
-
-    if (!event) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 })
-    }
-
-    // Fetch reviews for this event
+    // Fetch reviews for this venue manager (using exhibitorId field)
     const reviews = await prisma.review.findMany({
-      where: { venueId },
+      where: { 
+        exhibitorId: venueId,
+        isApproved: true,
+        isPublic: true
+      },
       include: {
         user: {
           select: {
@@ -147,39 +149,29 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             avatar: true,
           },
         },
-        event: {
-          select: {
-            id: true,
-            title: true,
-          },
-        },
-        ...(includeReplies && {
-          replies: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  avatar: true,
-                },
-              },
-            },
-            orderBy: { createdAt: "asc" },
-          },
-        }),
       },
       orderBy: { createdAt: "desc" },
-    })
+    });
+
+    console.log("[API] Found reviews:", reviews.length);
+
+    // Transform the data to match the frontend interface
+    const transformedReviews = reviews.map(review => ({
+      id: review.id,
+      rating: review.rating,
+      title: review.title,
+      comment: review.comment,
+      createdAt: review.createdAt.toISOString(),
+      user: review.user
+    }));
 
     return NextResponse.json({
-      event,
-      reviews,
-    })
+      reviews: transformedReviews,
+    });
   } catch (error) {
-    console.error("[v0] Error fetching reviews:", error)
-    return NextResponse.json({ error: "Failed to fetch reviews" }, { status: 500 })
+    console.error("[API] Error fetching venue reviews:", error);
+    return NextResponse.json({ 
+      error: "Failed to fetch reviews" 
+    }, { status: 500 });
   }
 }
-
-

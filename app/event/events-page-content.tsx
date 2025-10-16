@@ -4,10 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   Search,
-  Share2,
   MapPin,
   Calendar,
   Heart,
@@ -16,13 +14,17 @@ import {
   ChevronRight,
   Loader2,
   Star,
-  Bookmark,
   CalendarDays,
+  UserPlus,
 } from "lucide-react"
 import Image from "next/image"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import AdCard from "@/components/add-card"
+import { BookmarkButton } from "@/components/bookmark-button"
+import { useToast } from "@/hooks/use-toast"
+import { ShareButton } from "@/components/share-button"
+import { useSession } from "next-auth/react"
 
 interface Event {
   image: string
@@ -57,6 +59,8 @@ interface Event {
     startDate: string
     endDate: string
   }
+  averageRating?: number
+  totalReviews?: number
 }
 
 interface ApiResponse {
@@ -98,7 +102,34 @@ export default function EventsPageContent() {
   const [isHovered, setIsHovered] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
 
+  const [visitorCounts, setVisitorCounts] = useState<Record<string, number>>({})
+  useEffect(() => {
+    try {
+      const raw = typeof window !== "undefined" ? localStorage.getItem("visitorCounts") : null
+      if (raw) setVisitorCounts(JSON.parse(raw))
+    } catch (e) {
+      console.log("[v0] Failed to load visitorCounts:", e)
+    }
+  }, [])
+
+  const persistVisitorCounts = (next: Record<string, number>) => {
+    setVisitorCounts(next)
+    try {
+      localStorage.setItem("visitorCounts", JSON.stringify(next))
+    } catch (e) {
+      console.log("[v0] Failed to persist visitorCounts:", e)
+    }
+  }
+
+  const incrementVisitorCount = (eventId: string) => {
+    if (!eventId) return
+    const next = { ...visitorCounts, [eventId]: (visitorCounts[eventId] || 0) + 1 }
+    persistVisitorCounts(next)
+  }
+
+  const { toast } = useToast()
   const router = useRouter()
+  const { data: session } = useSession()
 
   const DEFAULT_EVENT_IMAGE = "/city/c4.jpg"
 
@@ -119,29 +150,54 @@ export default function EventsPageContent() {
 
       const data: ApiResponse = await response.json()
 
-      const transformedEvents = data.events.map((event) => ({
-        ...event,
-        timings: {
-          startDate: event.startDate,
-          endDate: event.endDate,
-        },
-        location: {
-          city: event.venue?.venueCity || event.location?.city || "Unknown City",
-          venue: event.location?.venue || "Unknown Venue",
-          country: event.venue?.venueCountry || event.location?.country,
-        },
-        featured: event.tags?.includes("featured") || false,
-        categories: event.categories || [],
-        tags: event.tags || [],
-        images: event.images || [{ url: "/images/gpex.jpg?height=200&width=300" }],
-        pricing: event.pricing || { general: 0 },
-        rating: event.rating || { average: 4.5 },
-      }))
+      const transformedEvents = data.events.map((event: any) => {
+        // Safely resolve an id for downstream actions
+        const resolvedId =
+          event.id ||
+          event._id ||
+          (typeof event._id === "object" && event._id.$oid) ||
+          (typeof event._id === "string" ? event._id : undefined)
+
+        const avg =
+          typeof event?.averageRating === "number" && event.averageRating > 0
+            ? event.averageRating
+            : typeof event?.rating?.average === "number"
+              ? event.rating.average
+              : 4.5
+
+        return {
+          ...event,
+          // ensure we always have a usable string id
+          id: String(resolvedId || ""),
+          timings: {
+            startDate: event.startDate,
+            endDate: event.endDate,
+          },
+          location: {
+            city: event.venue?.venueCity || event.location?.city || "Unknown City",
+            venue: event.location?.venue || "Unknown Venue",
+            country: event.venue?.venueCountry || event.location?.country,
+          },
+          featured: event.tags?.includes("featured") || false,
+          categories: event.categories || [],
+          tags: event.tags || [],
+          images: event.images || [{ url: "/images/gpex.jpg?height=200&width=300" }],
+          pricing: event.pricing || { general: 0 },
+          rating: { average: avg },
+          // keep totals if backend returns them
+          totalReviews: typeof event?.totalReviews === "number" ? event.totalReviews : undefined,
+        }
+      })
 
       setEvents(transformedEvents)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
-      console.error("Error fetching events:", err)
+      console.error("[v0] Error fetching events:", err)
+      toast({
+        title: "Error",
+        description: "Failed to load events",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
@@ -168,6 +224,81 @@ export default function EventsPageContent() {
       setSelectedLocation(venueFromUrl)
     }
   }, [categoryFromUrl, searchParams])
+
+  const handleVisitClick = async (eventId: string, eventTitle: string) => {
+    console.log("[v0] handleVisitClick called with:", { eventId, eventTitle, hasSession: !!session, session })
+    if (!eventId) {
+      toast({
+        title: "Invalid event",
+        description: "We could not identify this event. Please refresh and try again.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Increment immediately on click to reflect in UI, even if backend call happens next
+    incrementVisitorCount(eventId)
+
+    if (!session) {
+      try {
+        alert(`Authentication Required\nPlease log in to visit "${eventTitle}".`)
+      } catch {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to continue.",
+          variant: "destructive",
+        })
+      }
+      router.push("/login")
+      return
+    }
+
+    const userId = (session as any)?.user?.id
+    if (!userId) {
+      toast({
+        title: "Session issue",
+        description: "Your session is missing an ID. Please log out and log back in.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/events/${eventId}/leads`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "attendee", userId, eventId }),
+      })
+
+      if (response.ok) {
+        // Success alert for authenticated users
+        try {
+          alert(`Thanks for visiting "${eventTitle}"!`)
+        } catch {
+          // fallback toast if alert suppressed
+          toast({
+            title: "Visit recorded",
+            description: `Thanks for visiting "${eventTitle}".`,
+          })
+        }
+      } else {
+        const problemText = await response.text().catch(() => "")
+        console.error("[v0] Visit lead failed:", response.status, problemText)
+        toast({
+          title: "Error",
+          description: "Failed to record your interest. Your local visit counter was still updated.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("[v0] Visit lead error:", error)
+      toast({
+        title: "Error",
+        description: "Failed to record your interest. Your local visit counter was still updated.",
+        variant: "destructive",
+      })
+    }
+  }
 
   const itemsPerPage = 6
 
@@ -400,13 +531,11 @@ export default function EventsPageContent() {
     return "All Events" // Default title
   }
 
-  // Get follower count based on filtered events
   const getFollowerCount = () => {
-    const baseCount = filteredEvents.length * 150 // Simulate follower count
-    if (baseCount > 1000) {
-      return `${(baseCount / 1000).toFixed(0)}K+ Followers`
-    }
-    return `${baseCount}+ Followers`
+    // Sum visitor counts across filtered events
+    const total = filteredEvents.reduce((sum, ev) => sum + (visitorCounts[ev.id] || 0), 0)
+    if (total >= 1000) return `${Math.round(total / 1000)}K+ Followers`
+    return `${total} Followers`
   }
 
   // Pagination
@@ -558,11 +687,8 @@ export default function EventsPageContent() {
               <p className="text-gray-700 text-lg">{getFollowerCount()}</p>
             </div>
 
-            <div className="relative z-10 flex items-center space-x-4">
-              {/* Buttons / avatars */}
-            </div>
+            <div className="relative z-10 flex items-center space-x-4">{/* Buttons / avatars */}</div>
           </div>
-
 
           {/* Tabs Navigation */}
           <div className="flex space-x-1 mb-6 border-b border-gray-200">
@@ -754,10 +880,6 @@ export default function EventsPageContent() {
                     <p className="text-sm text-gray-500">Discover and track top events</p>
                   </div>
                   <div className="p-4 border-b border-gray-100">
-                    <h3 className="text-red-500 font-medium mb-1">Filter</h3>
-                    <p className="text-sm text-gray-500">Discover and track top events</p>
-                  </div>
-                  <div className="p-4">
                     <h3 className="text-blue-600 font-medium">All Events</h3>
                   </div>
                 </CardContent>
@@ -837,7 +959,7 @@ export default function EventsPageContent() {
                 ) : (
                   paginatedEvents.map((event) => (
                     <Link href={`/event/${event.id}`} key={event.id} className="block">
-                      <Card className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all w-full">
+                      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all w-full">
                         <CardContent className="p-0 flex">
                           {/* Left Image Section - Significantly reduced size */}
                           <div className="relative w-[80px] h-[100px] sm:w-[100px] sm:h-[120px] md:w-[120px] md:h-[140px] lg:w-[140px] lg:h-[160px] flex-shrink-0">
@@ -845,7 +967,7 @@ export default function EventsPageContent() {
                               src={event.image || "/images/gpex.jpg"}
                               alt={event.title}
                               fill
-                              className="object-cover"
+                              className="object-cover m-2 rounded-sm"
                             />
                           </div>
 
@@ -870,31 +992,77 @@ export default function EventsPageContent() {
                                       {event.timings?.formatted || "Mon, 27 - Wed, 29 Oct 2025"}
                                     </span>
                                   </div>
-                                </div>
-
-                                {/* Right Column: Edition + Rating + Followers + Paid Entry + Follow Button */}
-                                <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-3">
-                                  {/* Verified + Edition */}
-                                  <div className="flex items-center gap-1">
-                                    {/* Verified Image */}
-                                    <div className="w-5 h-5">
-                                      <img
-                                        src="/images/VerifiedBadge.png"
-                                        alt="Verified"
-                                        className="w-full h-full object-contain"
-                                      />
+                                  <div className="flex items-center flex-wrap gap-3 p-2">
+                                    <div className="">
+                                      <Badge className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                                        Paid entry
+                                      </Badge>
                                     </div>
-                                    <span className="text-gray-600 font-medium text-xs">2nd Edition</span>
+
+                                    <div className="flex gap-3">
+                                      <div className="flex items-center gap-1 bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-xs font-semibold">
+
+                                        <Star className="w-3 h-3 fill-current" />
+                                        {/* small guard for rating display to avoid runtime errors */}
+                                        <span>
+                                          {Number.isFinite(event.rating?.average) ? event.rating.average.toFixed(1) : "4.5"}
+                                        </span>
+                                        {event.totalReviews && event.totalReviews > 0 && (
+                                          <span className="text-xs text-gray-500 ml-1">({event.totalReviews})</span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center text-gray-600 text-xs gap-1">
+                                        <svg
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          className="w-3 h-3 text-gray-400"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                          strokeWidth={2}
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m4-9a4 4 0 100 8 4 4 0 000-8z"
+                                          />
+                                        </svg>
+                                        {visitorCounts[event.id] || 0} Followers
+                                      </div>
+
+                                    </div>
+                                  </div>
                                   </div>
 
-                                  {/* Rating */}
-                                  <div className="flex items-center gap-1 bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-xs font-semibold">
+                                   {/* Right Column: Edition + Rating + Followers + Paid Entry + Visit Button */}
+                                   <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-3">
+                                    {/* Verified + Edition */}
+                                    <div className="flex items-center gap-1">
+                                      {/* Verified Image */}
+                                      <div className="w-5 h-5">
+                                        <img
+                                          src="/images/VerifiedBadge.png"
+                                          alt="Verified"
+                                          className="w-full h-full object-contain"
+                                        />
+                                      </div>
+                                      <span className="text-gray-600 font-medium text-xs">2nd Edition</span>
+                                    </div>
+
+                                    {/* Rating */}
+                                    {/* <div className="flex items-center gap-1 bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-xs font-semibold">
                                     <Star className="w-3 h-3 fill-current" />
-                                    <span>{event.rating?.average || "4.9"}</span>
-                                  </div>
+                                    
+                                    <span>
+                                      {Number.isFinite(event.rating?.average) ? event.rating.average.toFixed(1) : "4.5"}
+                                    </span>
+                                    {event.totalReviews && event.totalReviews > 0 && (
+                                      <span className="text-xs text-gray-500 ml-1">({event.totalReviews})</span>
+                                    )}
+                                   </div> */}
 
-                                  {/* Followers */}
-                                  <div className="flex items-center text-gray-600 text-xs gap-1">
+                                    {/* replace per-card random followers with real count */}
+                                    {/* Followers */}
+                                    {/* <div className="flex items-center text-gray-600 text-xs gap-1">
                                     <svg
                                       xmlns="http://www.w3.org/2000/svg"
                                       className="w-3 h-3 text-gray-400"
@@ -909,39 +1077,38 @@ export default function EventsPageContent() {
                                         d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m4-9a4 4 0 100 8 4 4 0 000-8z"
                                       />
                                     </svg>
-                                    {Math.floor(Math.random() * 200) + 100} Followers
-                                  </div>
+                                    {visitorCounts[event.id] || 0} Followers
+                                     </div> */}
 
-                                  {/* Paid Entry */}
-                                  <Badge className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                                    {/* Paid Entry */}
+                                    {/* <Badge className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
                                     Paid entry
-                                  </Badge>
+                                    </Badge> */}
+                                  </div>
+                                </div>
 
-                                  {/* Follow Button */}
-
+                                {/* Tags */}
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {event.categories?.slice(0, 2).map((category: string, idx: number) => (
+                                    <Badge
+                                      key={idx}
+                                      className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
+                                    >
+                                      {category}
+                                    </Badge>
+                                  ))}
                                 </div>
                               </div>
 
-                              {/* Tags */}
-                              <div className="flex flex-wrap gap-1 mt-2">
-                                {event.categories?.slice(0, 2).map((category: string, idx: number) => (
-                                  <Badge
-                                    key={idx}
-                                    className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
-                                  >
-                                    {category}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
+                              {/* Divider */}
+                              <div className="border-t border-gray-200 mt-3" />
 
-                            {/* Divider */}
-                            <div className="border-t border-gray-200 mt-3 mb-2" />
+                              {/* Bottom Section */}
+                              <div className="flex items-center justify-between flex-wrap gap-2">
+                                {/* Organizer */}
 
-                            {/* Bottom Section */}
-                            <div className="flex items-center justify-between flex-wrap gap-2">
-                              {/* Organizer */}
-                              <div className="flex items-center gap-2 text-xs text-gray-600 flex-wrap">
+
+<div className="flex items-center gap-2 text-xs text-gray-600 flex-wrap">
                                 <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-700 flex-shrink-0 text-xs">
                                   {typeof event.organizer === "string"
                                     ? event.organizer.charAt(0)
@@ -954,22 +1121,30 @@ export default function EventsPageContent() {
                                 </span>
                               </div>
 
-                              {/* Share + Save Buttons */}
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                <button className="p-1 rounded-full hover:bg-gray-100 transition">
-                                  <Share2 className="w-4 h-4 text-gray-600" />
-                                </button>
-                                <button className="p-1 rounded-full hover:bg-gray-100 transition">
-                                  <Bookmark className="w-4 h-4 text-gray-600" />
-                                </button>
-                                <Button className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-xs rounded-lg">
-                                  + Follow
-                                </Button>
+                                {/* Share + Save + Visit Buttons */}
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <ShareButton eventId={event.id} eventTitle={event.title} />
+                                  <BookmarkButton
+                                    eventId={event.id}
+                                    className="p-1 rounded-full hover:bg-gray-100 transition"
+                                  />
+                                  <Button
+                                    className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 mt-1 rounded-md text-sm shadow-sm"
+                                    onClick={(e) => {
+                                      e.preventDefault()
+                                      e.stopPropagation()
+                                      handleVisitClick(event.id, event.title)
+                                    }}
+                                  >
+                                    <UserPlus className="w-2 h-2 mr-1" />
+                                    Visit
+                                  </Button>
+                                </div>
                               </div>
+                              
                             </div>
-                          </div>
                         </CardContent>
-                      </Card>
+                      </div>
                     </Link>
                   ))
                 )}
@@ -1031,8 +1206,21 @@ export default function EventsPageContent() {
                           </div>
                           <div className="flex items-center justify-between">
                             <Badge className="bg-blue-600 text-white text-xs">{event.categories[0]}</Badge>
-                            <span className="text-sm font-bold text-green-600">{event.rating?.average || "4.6"}</span>
+                            {/* small guard for rating display to avoid runtime errors */}
+                            <span className="text-sm font-bold text-green-600">
+                              {Number.isFinite(event.rating?.average) ? event.rating.average.toFixed(1) : "4.5"}
+                            </span>
                           </div>
+                          <button
+                            className="w-full  bg-blue-600 hover:bg-blue-700 text-white"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleVisitClick(event.id, event.title)
+                            }}
+                          >
+                            Visit
+                          </button>
                         </CardContent>
                       </Card>
                     ))}
@@ -1074,9 +1262,26 @@ export default function EventsPageContent() {
                       <Badge className="bg-blue-600 text-white text-xs">Business Event</Badge>
                     </div>
                     <div className="absolute bottom-3 right-3 bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-semibold">
-                      4.5
+                      {/* small guard for rating display to avoid runtime errors */}
+                      {Number.isFinite(featuredEvents[0].rating?.average)
+                        ? featuredEvents[0].rating.average.toFixed(1)
+                        : "4.5"}
                     </div>
                   </div>
+                  <CardContent className="">
+                    {/* ensure every Visit button prevents navigation before calling handler */}
+                    <button
+                      className="flex items-center bg-red-600 hover:bg-red-700 text-white rounded-md text-sm shadow-sm"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleVisitClick(featuredEvents[0].id, featuredEvents[0].title)
+                      }}
+                    >
+                      <UserPlus className="w-4 h-4 mr-1" />
+                      Visit
+                    </button>
+                  </CardContent>
                 </Card>
               )}
 
@@ -1104,12 +1309,8 @@ export default function EventsPageContent() {
 
                         {/* Info */}
                         <div className="flex flex-col text-left">
-                          <h3 className="text-sm font-bold text-gray-900 leading-tight line-clamp-2">
-                            {event.title}
-                          </h3>
-                          <p className="text-xs text-gray-700 mb-1">
-                            International Exhibition
-                          </p>
+                          <h3 className="text-sm font-bold text-gray-900 leading-tight line-clamp-2">{event.title}</h3>
+                          <p className="text-xs text-gray-700 mb-1">International Exhibition</p>
 
                           <div className="flex items-center text-xs font-semibold text-gray-800">
                             <CalendarDays className="w-3 h-3 mr-1 text-gray-700" />
@@ -1145,13 +1346,24 @@ export default function EventsPageContent() {
                           Power & Energy
                         </span>
                       </div>
+
+                      {/* Visit Button */}
+                      {/* <Button
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs py-1"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleVisitClick(event.id, event.title)
+                        }}
+                      >
+                        Visit
+                      </Button> */}
                     </div>
                   </Link>
                 ))}
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>

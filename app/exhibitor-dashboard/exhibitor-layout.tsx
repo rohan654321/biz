@@ -108,6 +108,13 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     fetchExhibitorData()
   }, [userId, status, session, router, toast])
 
+  useEffect(() => {
+    // Set company info as default active section when component mounts
+    if (!activeSection) {
+      setActiveSection("company")
+    }
+  }, [activeSection, setActiveSection])
+
   const fetchExhibitorData = async () => {
     try {
       setLoading(true)
@@ -386,35 +393,8 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
       case "settings":
         return <ExhibitorSettings exhibitorId={exhibitor.id} />
       default:
-        return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <Building2 className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium text-gray-900">Welcome to Exhibitor Dashboard</h3>
-              <p className="mt-2 text-gray-500">Select a section from the sidebar to get started.</p>
-            </div>
-          </div>
-        )
+        return <CompanyInfo exhibitorId={exhibitor.id} onUpdate={handleUpdate} exhibitorData={exhibitor} />
     }
-  }
-
-  const getCurrentSectionTitle = () => {
-    const sections = {
-      "overview": "Overview",
-      "company": "Company Info",
-      "events": "Event Participation",
-      "products": "Product Listing",
-      "messages": "Messages",
-      "connection": "Connections",
-      "follow": "Follow Management",
-      "appointments": "Appointments",
-      "analytics": "Analytics & Reports",
-      "promotions": "Promotions",
-      "active-promotions": "Active Promotions",
-      "help": "Help & Support",
-      "settings": "Settings"
-    }
-    return sections[activeSection as keyof typeof sections] || "Exhibitor Dashboard"
   }
 
   return (
@@ -440,24 +420,6 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
             <X className="h-4 w-4" />
           </Button>
         </div>
-
-        {/* Exhibitor Info Header */}
-        {/* <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <Avatar className="w-10 h-10">
-              <AvatarImage src={exhibitor.avatar || "/placeholder.svg"} />
-              <AvatarFallback className="text-sm">
-                {exhibitor.firstName[0]}{exhibitor.lastName[0]}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-semibold text-sm text-gray-900">
-                {exhibitor.firstName} {exhibitor.lastName}
-              </h3>
-              <p className="text-xs text-gray-600">Exhibitor</p>
-            </div>
-          </div>
-        </div> */}
 
         <div className="flex-1 p-4 overflow-y-auto">
           {/* Main Dropdown */}
@@ -679,27 +641,14 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
           <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold text-gray-900 truncate flex-1 text-center px-4">
-            {getCurrentSectionTitle()}
-          </h1>
           <div className="w-9" />
         </div>
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto">
-            {/* Content Header */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {getCurrentSectionTitle()}
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Manage your exhibitor profile and activities
-              </p>
-            </div>
-
             {/* Dynamic Content */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[600px]">
+            <div className="">
               {renderContent()}
             </div>
           </div>
