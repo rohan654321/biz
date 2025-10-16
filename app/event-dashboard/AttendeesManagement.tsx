@@ -8,9 +8,11 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Search, Download, Mail, Phone, MoreHorizontal, Users, AlertCircle } from "lucide-react"
+import { Search, Download, Mail, Phone, MoreHorizontal, Users, AlertCircle, BadgeCheck } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { BadgeGeneratorDialog } from "./badge-generator-dialog"
+import { BulkBadgeSenderDialog } from "./bulk-badge-sender-dialog"
 
 interface Attendee {
   id: string
@@ -25,6 +27,7 @@ interface Attendee {
     id: string
     title: string
     startDate: string
+    images?: string[]
   }
   registration: {
     id: string
@@ -37,7 +40,6 @@ interface Attendee {
 }
 
 interface AttendeesManagementProps {
-
   eventId: string
 }
 
@@ -47,6 +49,10 @@ export default function AttendeesManagement({ eventId }: AttendeesManagementProp
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
+  const [badgeDialogOpen, setBadgeDialogOpen] = useState(false)
+  const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null)
+  const [organizerData, setOrganizerData] = useState<any>(null)
+  const [bulkBadgeDialogOpen, setBulkBadgeDialogOpen] = useState(false)
   const { toast } = useToast()
 
   const fetchAttendees = async () => {
@@ -74,6 +80,7 @@ export default function AttendeesManagement({ eventId }: AttendeesManagementProp
             id: lead.event.id,
             title: lead.event.title,
             startDate: lead.event.startDate,
+            images: lead.event.images,
           },
           registration: {
             id: lead.id,
@@ -87,6 +94,10 @@ export default function AttendeesManagement({ eventId }: AttendeesManagementProp
 
         console.log("[v0] Transformed attendees:", transformedAttendees.length, "records")
         setAttendees(transformedAttendees)
+
+        if (transformedAttendees.length > 0 && transformedAttendees[0].event) {
+          fetchOrganizerData(transformedAttendees[0].event.id)
+        }
       } else {
         throw new Error(data.error || "No attendees found")
       }
@@ -99,6 +110,20 @@ export default function AttendeesManagement({ eventId }: AttendeesManagementProp
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchOrganizerData = async (eventId: string) => {
+    try {
+      const response = await fetch(`/api/events/${eventId}`)
+      if (!response.ok) return
+
+      const data = await response.json()
+      if (data.success && data.event?.organizer) {
+        setOrganizerData(data.event.organizer)
+      }
+    } catch (error) {
+      console.error("Error fetching organizer data:", error)
     }
   }
 
@@ -189,6 +214,23 @@ export default function AttendeesManagement({ eventId }: AttendeesManagementProp
     })
   }
 
+  const handleSendBadge = (attendee: Attendee) => {
+    setSelectedAttendee(attendee)
+    setBadgeDialogOpen(true)
+  }
+
+  const handleSendBadgeToAll = () => {
+    if (filteredAttendees.length === 0) {
+      toast({
+        title: "No Attendees",
+        description: "There are no attendees to send badges to.",
+        variant: "destructive",
+      })
+      return
+    }
+    setBulkBadgeDialogOpen(true)
+  }
+
   useEffect(() => {
     if (eventId) {
       fetchAttendees()
@@ -232,10 +274,16 @@ export default function AttendeesManagement({ eventId }: AttendeesManagementProp
           <h1 className="text-2xl font-bold">Attendees Management</h1>
           <p className="text-gray-600">Manage and track your event attendees</p>
         </div>
-        <Button onClick={exportAttendees} className="flex items-center gap-2">
-          <Download className="w-4 h-4" />
-          Export CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleSendBadgeToAll} variant="outline" className="flex items-center gap-2 bg-transparent">
+            <BadgeCheck className="w-4 h-4" />
+            Send Badge to All
+          </Button>
+          <Button onClick={exportAttendees} className="flex items-center gap-2">
+            <Download className="w-4 h-4" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -366,6 +414,10 @@ export default function AttendeesManagement({ eventId }: AttendeesManagementProp
                           <Mail className="w-4 h-4 mr-2" />
                           Send Email
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSendBadge(attendee)}>
+                          <BadgeCheck className="w-4 h-4 mr-2" />
+                          Send Badge
+                        </DropdownMenuItem>
                         {attendee.phone && (
                           <DropdownMenuItem>
                             <Phone className="w-4 h-4 mr-2" />
@@ -391,6 +443,24 @@ export default function AttendeesManagement({ eventId }: AttendeesManagementProp
           )}
         </CardContent>
       </Card>
+
+      {selectedAttendee && (
+        <BadgeGeneratorDialog
+          open={badgeDialogOpen}
+          onOpenChange={setBadgeDialogOpen}
+          attendee={selectedAttendee}
+          event={selectedAttendee.event}
+          organizer={organizerData || {}}
+        />
+      )}
+
+      <BulkBadgeSenderDialog
+        open={bulkBadgeDialogOpen}
+        onOpenChange={setBulkBadgeDialogOpen}
+        attendees={filteredAttendees}
+        eventId={eventId}
+        organizer={organizerData || {}}
+      />
     </div>
   )
 }

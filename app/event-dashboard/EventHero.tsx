@@ -253,7 +253,7 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
                       src={img || "/placeholder.svg"}
                       alt={`${event.title} Image ${index + 1}`}
                       fill
-                      className="object-cover"
+                      className="p-4"
                     />
                   </div>
                 ))}
