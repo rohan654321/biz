@@ -37,6 +37,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [totalReviews, setTotalReviews] = useState(0)
   const [featuredHotels, setFeaturedHotels] = useState<any[]>([])
   const [hotelsLoading, setHotelsLoading] = useState(true)
+  const [userRole, setUserRole] = useState<string | null>(null)
 
   const { data: session } = useSession()
   const router = useRouter()
@@ -79,10 +80,11 @@ export default function EventPage({ params }: EventPageProps) {
     fetchEvent()
   }, [params])
 
-  // Check if event is saved on load
+  // Check if event is saved on load and get user role
   useEffect(() => {
     if (event?.id && session?.user?.id) {
       checkIfSaved()
+      checkUserRole()
     }
   }, [event?.id, session?.user?.id])
 
@@ -95,6 +97,14 @@ export default function EventPage({ params }: EventPageProps) {
       }
     } catch (error) {
       console.error("Error checking saved status:", error)
+    }
+  }
+
+  const checkUserRole = () => {
+    // Get user role from session
+    if (session?.user) {
+      const userWithRole = session.user as any
+      setUserRole(userWithRole.role || null)
     }
   }
 
@@ -278,6 +288,9 @@ export default function EventPage({ params }: EventPageProps) {
     })
   }
 
+  // Determine if Exhibit button should be shown - ONLY for EXHIBITOR role
+  const showExhibitButton = userRole === 'EXHIBITOR'
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <EventHero event={event} />
@@ -357,13 +370,17 @@ export default function EventPage({ params }: EventPageProps) {
                 <Button variant="outline" className="flex-1 border-gray-300 bg-transparent" onClick={handleVisitClick}>
                   Visit
                 </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 border-blue-300 bg-transparent text-blue-600 hover:text-blue-700"
-                  onClick={handleExhibitClick}
-                >
-                  Exhibit
-                </Button>
+                
+                {/* Only show Exhibit button for users with EXHIBITOR role */}
+                {showExhibitButton && (
+                  <Button
+                    variant="outline"
+                    className="flex-1 border-blue-300 bg-transparent text-blue-600 hover:text-blue-700"
+                    onClick={handleExhibitClick}
+                  >
+                    Exhibit
+                  </Button>
+                )}
               </div>
             </div>
           </div>

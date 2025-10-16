@@ -11,9 +11,51 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const events = await prisma.event.findMany({
       where: { venueId: id },
+      include: {
+        organizer: {
+          select: {
+            firstName: true,
+            lastName: true,
+            company: true,
+            avatar: true,
+          },
+        },
+      },
+      orderBy: { startDate: 'asc' },
     })
 
-    return NextResponse.json({ success: true, data: events })
+    // Transform the data for frontend
+    const transformedEvents = events.map(event => ({
+      id: event.id,
+      title: event.title,
+      description: event.description,
+      shortDescription: event.shortDescription,
+      startDate: event.startDate.toISOString(),
+      endDate: event.endDate.toISOString(),
+      status: event.status,
+      category: event.category,
+      images: event.images,
+      bannerImage: event.bannerImage,
+      venueId: event.venueId,
+      organizerId: event.organizerId,
+      maxAttendees: event.maxAttendees,
+      currentAttendees: event.currentAttendees,
+      currency: event.currency,
+      isVirtual: event.isVirtual,
+      virtualLink: event.virtualLink,
+      averageRating: event.averageRating,
+      totalReviews: event.totalReviews,
+      organizer: event.organizer ? {
+        name: `${event.organizer.firstName} ${event.organizer.lastName}`,
+        organization: event.organizer.company || 'Unknown Organization',
+        avatar: event.organizer.avatar,
+      } : undefined,
+    }))
+
+    return NextResponse.json({ 
+      success: true, 
+      events: transformedEvents 
+    })
   } catch (error) {
     console.error("Error fetching events by venue ID:", error)
     return NextResponse.json({ success: false, error: "Server Error" }, { status: 500 })

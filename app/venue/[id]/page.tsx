@@ -25,6 +25,8 @@ import {
   CheckCircle,
   ArrowLeft,
   Loader2,
+  Clock,
+  User,
 } from "lucide-react"
 import { VenueReviewCard } from "./VenueReviewCard"
 import { AddVenueReview } from "./AddVenueReview"
@@ -150,6 +152,38 @@ interface Review {
   }
 }
 
+interface Event {
+  id: string
+  title: string
+  description: string
+  shortDescription?: string
+  startDate: string
+  endDate: string
+  status: string
+  category: string
+  images: string[]
+  bannerImage?: string
+  venueId: string
+  organizerId: string
+  maxAttendees?: number
+  currentAttendees: number
+  currency: string
+  isVirtual: boolean
+  virtualLink?: string
+  averageRating: number
+  totalReviews: number
+  organizer?: {
+    name: string
+    organization: string
+    avatar?: string
+  }
+}
+
+interface EventsResponse {
+  success: boolean
+  events: Event[]
+}
+
 export default function VenueDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -157,18 +191,25 @@ export default function VenueDetailPage() {
 
   const [venue, setVenue] = useState<Venue | null>(null)
   const [reviews, setReviews] = useState<Review[]>([])
+  const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [reviewsLoading, setReviewsLoading] = useState(false)
+  const [eventsLoading, setEventsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [schedulingMeeting, setSchedulingMeeting] = useState(false)
   const { toast } = useToast()
   const { data: session } = useSession()
 
+  // Get user role from session
+  const userRole = (session?.user as any)?.role || null
+  const showScheduleMeeting = userRole === 'ORGANIZER' || userRole === 'VENUE_MANAGER'
+
   useEffect(() => {
     if (venueId) {
       fetchVenue()
       fetchReviews()
+      fetchEvents()
     }
   }, [venueId])
 
@@ -205,35 +246,79 @@ export default function VenueDetailPage() {
       const res = await fetch(`/api/venues/${venueId}/reviews`)
       if (res.ok) {
         const data = await res.json()
-        setReviews(data.reviews || [])
+        // Ensure we have a valid array and each review has required properties
+        const safeReviews = Array.isArray(data.reviews) 
+          ? data.reviews.filter((review: any) => 
+              review && 
+              typeof review.rating === 'number' && 
+              review.user
+            )
+          : []
+        setReviews(safeReviews)
       } else {
         console.error("Failed to fetch reviews")
+        setReviews([]) // Set empty array on error
       }
     } catch (error) {
       console.error("Error fetching reviews:", error)
+      setReviews([]) // Set empty array on error
     } finally {
       setReviewsLoading(false)
     }
   }
 
+  const fetchEvents = async () => {
+    if (!venueId) return
+
+    setEventsLoading(true)
+    try {
+      const res = await fetch(`/api/venues/${venueId}/events`)
+      if (res.ok) {
+        const data: EventsResponse = await res.json()
+        if (data.success) {
+          setEvents(data.events || [])
+        } else {
+          setEvents([])
+        }
+      } else {
+        console.error("Failed to fetch events")
+        setEvents([])
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error)
+      setEvents([])
+    } finally {
+      setEventsLoading(false)
+    }
+  }
+
   const handleReviewAdded = (newReview: Review) => {
+    if (!newReview || typeof newReview.rating !== 'number') {
+      console.error('Invalid review data:', newReview)
+      return
+    }
+
     setReviews((prevReviews) => [newReview, ...prevReviews])
-    // Update venue stats if needed
+    
+    // Safely update venue stats
     if (venue) {
-      setVenue((prev) =>
-        prev
-          ? {
-              ...prev,
-              stats: {
-                ...prev.stats,
-                totalReviews: prev.stats.totalReviews + 1,
-                averageRating:
-                  (prev.stats.averageRating * prev.stats.totalReviews + newReview.rating) /
-                  (prev.stats.totalReviews + 1),
-              },
-            }
-          : null,
-      )
+      setVenue((prev) => {
+        if (!prev) return null
+        
+        const currentTotalReviews = prev.stats.totalReviews || 0
+        const currentAverageRating = prev.stats.averageRating || 0
+        
+        return {
+          ...prev,
+          stats: {
+            ...prev.stats,
+            totalReviews: currentTotalReviews + 1,
+            averageRating:
+              (currentAverageRating * currentTotalReviews + newReview.rating) /
+              (currentTotalReviews + 1),
+          },
+        }
+      })
     }
   }
 
@@ -254,7 +339,7 @@ export default function VenueDetailPage() {
       }
 
       const body = {
-        venueId: venue.manager.id, // The venue manager's ID
+        venueId: venue.manager.id,
         title: `Meeting at ${venue.name}`,
         description: `Meeting request with ${venue.manager.name} at ${venue.name}`,
         type: "VENUE_TOUR",
@@ -296,13 +381,13 @@ export default function VenueDetailPage() {
   }
 
   const nextImage = () => {
-    if (venue && venue.images.length > 1) {
+    if (venue && venue.images && venue.images.length > 1) {
       setCurrentImageIndex((prev) => (prev + 1) % venue.images.length)
     }
   }
 
   const prevImage = () => {
-    if (venue && venue.images.length > 1) {
+    if (venue && venue.images && venue.images.length > 1) {
       setCurrentImageIndex((prev) => (prev - 1 + venue.images.length) % venue.images.length)
     }
   }
@@ -316,6 +401,16 @@ export default function VenueDetailPage() {
     })
   }
 
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
   const getCurrentImage = () => {
     if (!venue || !venue.images || venue.images.length === 0) {
       return "/placeholder.svg?height=400&width=800&text=No+Image+Available"
@@ -324,15 +419,23 @@ export default function VenueDetailPage() {
     return currentImage || "/placeholder.svg?height=400&width=800&text=No+Image+Available"
   }
 
-  // Calculate review statistics
+  const getEventImage = (event: Event) => {
+    return event.images?.[0] || event.bannerImage || "/placeholder.svg?height=200&width=300&text=Event"
+  }
+
+  // Safely calculate review statistics
   const reviewStats = {
-    averageRating: reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0,
+    averageRating: reviews.length > 0 
+      ? reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviews.length 
+      : 0,
     totalReviews: reviews.length,
     ratingDistribution: [1, 2, 3, 4, 5].map((stars) => ({
       stars,
-      count: reviews.filter((review) => review.rating === stars).length,
+      count: reviews.filter((review) => (review.rating || 0) === stars).length,
       percentage:
-        reviews.length > 0 ? (reviews.filter((review) => review.rating === stars).length / reviews.length) * 100 : 0,
+        reviews.length > 0 
+          ? (reviews.filter((review) => (review.rating || 0) === stars).length / reviews.length) * 100 
+          : 0,
     })),
   }
 
@@ -362,14 +465,14 @@ export default function VenueDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Back Button */}
-      {/* <div className="bg-white border-b">
+      <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Button variant="ghost" onClick={() => router.push("/venues")} className="flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" />
             Back to Venues
           </Button>
         </div>
-      </div> */}
+      </div>
 
       {/* Hero Section */}
       <div className="relative h-96 overflow-hidden">
@@ -436,24 +539,27 @@ export default function VenueDetailPage() {
                   <Share2 className="w-4 h-4 mr-2" />
                   Share
                 </Button>
-                <Button
-                  onClick={handleScheduleMeeting}
-                  disabled={schedulingMeeting}
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                >
-                  {schedulingMeeting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Scheduling...
-                    </>
-                  ) : (
-                    <>
-                      <Calendar className="w-4 h-4 mr-2" />
-                      Schedule Meeting
-                    </>
-                  )}
-                </Button>
-                {/* <Button className="bg-blue-600 hover:bg-blue-700 text-white">Book Now</Button> */}
+                
+                {/* Only show Schedule Meeting button for ORGANIZER and VENUE_MANAGER roles */}
+                {showScheduleMeeting && (
+                  <Button
+                    onClick={handleScheduleMeeting}
+                    disabled={schedulingMeeting}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    {schedulingMeeting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Scheduling...
+                      </>
+                    ) : (
+                      <>
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Schedule Meeting
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -481,7 +587,7 @@ export default function VenueDetailPage() {
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="spaces">Meeting Spaces</TabsTrigger>
-            <TabsTrigger value="events">Events</TabsTrigger>
+            <TabsTrigger value="events">Events ({events.length})</TabsTrigger>
             <TabsTrigger value="reviews">Reviews ({reviews.length})</TabsTrigger>
           </TabsList>
 
@@ -529,51 +635,6 @@ export default function VenueDetailPage() {
 
               {/* Sidebar */}
               <div className="space-y-6">
-                {/* Manager Info */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Venue Manager</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-12 h-12">
-                        <AvatarImage src={venue.manager.avatar || "/placeholder.svg"} />
-                        <AvatarFallback>
-                          {venue.manager.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">{venue.manager.name}</h3>
-                          {venue.manager.isVerified && <CheckCircle className="w-4 h-4 text-green-500" />}
-                        </div>
-                        <p className="text-sm text-gray-600">Venue Manager</p>
-                      </div>
-                    </div>
-                    {venue.manager.bio && <p className="text-sm text-gray-600">{venue.manager.bio}</p>}
-                    <Button
-                      onClick={handleScheduleMeeting}
-                      disabled={schedulingMeeting}
-                      className="w-full bg-red-600 hover:bg-red-700 text-white"
-                    >
-                      {schedulingMeeting ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Scheduling...
-                        </>
-                      ) : (
-                        <>
-                          <Calendar className="w-4 h-4 mr-2" />
-                          Schedule Meeting
-                        </>
-                      )}
-                    </Button>
-                  </CardContent>
-                </Card>
-
                 {/* Contact Info */}
                 <Card>
                   <CardHeader>
@@ -650,9 +711,13 @@ export default function VenueDetailPage() {
                           {space.hourlyRate.toLocaleString()}
                         </span>
                       </div>
-                      <Button className="w-full" disabled={!space.isAvailable}>
-                        {space.isAvailable ? "Book Space" : "Not Available"}
-                      </Button>
+                      
+                      {/* Only show Book Space button for ORGANIZER and VENUE_MANAGER roles */}
+                      {showScheduleMeeting && (
+                        <Button className="w-full" disabled={!space.isAvailable}>
+                          {space.isAvailable ? "Book Space" : "Not Available"}
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
@@ -668,11 +733,106 @@ export default function VenueDetailPage() {
 
           {/* Events Tab */}
           <TabsContent value="events" className="space-y-6">
-            <div className="text-center py-12">
-              <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No events scheduled</h3>
-              <p className="text-gray-600">This venue doesn't have any upcoming events.</p>
-            </div>
+            {eventsLoading ? (
+              <div className="text-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+                <p className="text-gray-600">Loading events...</p>
+              </div>
+            ) : events.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {events.map((event) => (
+                  <Card key={event.id} className="hover:shadow-lg transition-shadow duration-300 cursor-pointer" onClick={() => router.push(`/events/${event.id}`)}>
+                    <div className="relative h-48 overflow-hidden rounded-t-lg">
+                      <Image
+                        src={getEventImage(event)}
+                        alt={event.title}
+                        fill
+                        className="object-cover hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-3 left-3">
+                        <Badge 
+                          variant={
+                            event.status === 'PUBLISHED' ? 'default' : 
+                            event.status === 'DRAFT' ? 'secondary' : 'destructive'
+                          }
+                          className="bg-black/70 text-white"
+                        >
+                          {event.status}
+                        </Badge>
+                      </div>
+                      <div className="absolute top-3 right-3">
+                        <Badge variant="outline" className="bg-white/90">
+                          {event.category}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg line-clamp-2">{event.title}</CardTitle>
+                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        <span>{formatDateTime(event.startDate)}</span>
+                      </div>
+                    </CardHeader>
+                    
+                    <CardContent className="space-y-3">
+                      <p className="text-sm text-gray-600 line-clamp-2">
+                        {event.shortDescription || event.description}
+                      </p>
+                      
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-1">
+                          <User className="w-4 h-4 text-gray-500" />
+                          <span>
+                            {event.currentAttendees}
+                            {event.maxAttendees ? ` / ${event.maxAttendees}` : ''} attendees
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 text-yellow-400" />
+                          <span>{event.averageRating > 0 ? event.averageRating.toFixed(1) : 'No ratings'}</span>
+                          {event.totalReviews > 0 && (
+                            <span className="text-gray-500">({event.totalReviews})</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between pt-2">
+                        <Badge variant={event.isVirtual ? "secondary" : "default"}>
+                          {event.isVirtual ? 'Virtual' : 'In-Person'}
+                        </Badge>
+                        
+                        <Button 
+                          size="sm" 
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            router.push(`/events/${event.id}`)
+                          }}
+                        >
+                          View Details
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No events scheduled</h3>
+                <p className="text-gray-600 mb-6">This venue doesn't have any upcoming events.</p>
+                {showScheduleMeeting && (
+                  <Button 
+                    onClick={handleScheduleMeeting}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Schedule Event at this Venue
+                  </Button>
+                )}
+              </div>
+            )}
           </TabsContent>
 
           {/* Reviews Tab */}
