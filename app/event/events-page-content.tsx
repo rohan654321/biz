@@ -38,11 +38,13 @@ interface Event {
   tags: string[]
   images: { url: string }[]
   location: {
+    address: string
     city: string
     venue: string
     country?: string
   }
   venue?: {
+    venueAddress?: string
     venueCity?: string
     venueCountry?: string
   }
@@ -174,9 +176,10 @@ export default function EventsPageContent() {
             endDate: event.endDate,
           },
           location: {
-            city: event.venue?.venueCity || event.location?.city || "Unknown City",
-            venue: event.location?.venue || "Unknown Venue",
-            country: event.venue?.venueCountry || event.location?.country,
+            address:event.venue?.venueAddress || "Not Added"
+            // city: event.venue?.venueCity || event.location?.city || "Unknown City",
+            // venue: event.location?.venue || "Unknown Venue",
+            // country: event.venue?.venueCountry || event.location?.country,
           },
           featured: event.tags?.includes("featured") || false,
           categories: event.categories || [],
@@ -982,8 +985,9 @@ export default function EventsPageContent() {
                                   <div className="flex items-center text-gray-600 mt-1">
                                     <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
                                     <span className="text-xs font-medium truncate">
-                                      {event.location?.venue || "Unknown Venue"},{" "}
-                                      {event.location?.city || "Unknown City"}
+                                      {event.location?.address || "Address not comming"}
+                                      {/* {event.location?.venue || "Unknown Venue"},{" "} */}
+                                      {/* {event.location?.city || "Unknown City"} */}
                                     </span>
                                   </div>
                                   <div className="flex items-center text-gray-600 mt-1">
