@@ -161,7 +161,7 @@ export default function EventReviews() {
               {/* Updated location display with address */}
               <p className="flex justify-center items-center font-bold text-gray-700 text-xs mt-1 text-center line-clamp-2 min-h-[2rem]">
                 {event.location?.venue ? `${event.location.venue}, ` : ""}
-                {event.location?.city || "Chennai Trade Center"}, {event.location?.country || "INDIA"}
+                {event.location?.city || "No Location"}, {event.location?.country || "Added"}
               </p>
 
               {/* Display address if available */}

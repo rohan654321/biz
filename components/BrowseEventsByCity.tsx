@@ -5,6 +5,27 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 
 const cities = [
+    {
+    id: 7,
+    name: "London",
+    icon: "/icon/London.jpg",
+    events: "44",
+    color: "text-red-600"
+  },
+    {
+    id: 3,
+    name: "Dubai",
+    icon: "/icon/Dubai.png",
+    events: "44",
+    color: "text-yellow-600"
+  },
+    {
+    id: 2,
+    name: "Berlin",
+    icon: "/icon/berlin.png",
+    events: "44",
+    color: "text-red-600"
+  },
   {
     id: 1,
     name: "Amsterdam",
@@ -13,53 +34,19 @@ const cities = [
     color: "text-blue-600"
   },
   {
-    id: 2,
-    name: "Berlin",
-    icon: "/icon/berlin.png",
-    events: "44",
-    color: "text-red-600"
-  },
-  {
-    id: 3,
-    name: "Dubai",
-    icon: "/icon/Dubai.png",
-    events: "44",
-    color: "text-yellow-600"
-  },
-  {
-    id: 4,
-    name: "Egypt",
-    icon: "/icon/egypt-01.png",
-    events: "44",
-    color: "text-purple-600"
-  },
-  {
-    id: 5,
-    name: "Italy",
-    icon: "/icon/italy-01.png",
+    id: 10,
+    name: "Paris",
+    icon: "/icon/paris-01.png",
     events: "44",
     color: "text-green-600"
   },
+
   {
-    id: 6,
-    name: "Japan",
-    icon: "/icon/Japan-01.png",
+    id: 4,
+    name: "Washington DC",
+    icon: "/icon/Washington DC.png",
     events: "44",
-    color: "text-blue-600"
-  },
-  {
-    id: 7,
-    name: "London",
-    icon: "/icon/London-01.png",
-    events: "44",
-    color: "text-red-600"
-  },
-  {
-    id: 8,
-    name: "Kolkata",
-    icon: "/icon/city.png",
-    events: "44",
-    color: "text-yellow-600"
+    color: "text-purple-600"
   },
   {
     id: 9,
@@ -69,23 +56,37 @@ const cities = [
     color: "text-purple-600"
   },
   {
-    id: 10,
-    name: "Paris",
-    icon: "/icon/paris-01.png",
+    id: 5,
+    name: "Barcelona",
+    icon: "/icon/Barcelona.png",
     events: "44",
     color: "text-green-600"
   },
   {
+    id: 6,
+    name: "Kuala Lumpur",
+    icon: "/icon/Kuala Lumpur.png",
+    events: "44",
+    color: "text-blue-600"
+  },
+  {
+    id: 8,
+    name: "Orlando",
+    icon: "/icon/Orlando.png",
+    events: "44",
+    color: "text-yellow-600"
+  },  
+  {
     id: 11,
-    name: "Rome",
-    icon: "/icon/Rome-01.png",
+    name: "Chicago",
+    icon: "/icon/chicago.png",
     events: "44",
     color: "text-purple-600"
   },
     {
     id: 12,
-    name: "Russia",
-    icon: "/icon/Russia-01.png",
+    name: "Munich",
+    icon: "/icon/munich.png",
     events: "44",
     color: "text-purple-600"
   },
