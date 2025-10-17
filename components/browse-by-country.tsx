@@ -7,15 +7,19 @@ const countries = [
   { id: 1, name: "USA", flag: "/flags/USA.png", events: "263.6k", code: "US" },
   { id: 2, name: "Germany", flag: "/flags/Germany.png", events: "37.0k", code: "DE" },
   { id: 3, name: "UK", flag: "/flags/UK.png", events: "60.0k", code: "GB" },
-  { id: 4, name: "UAE", flag: "/flags/UAE.png", events: "10.3k", code: "AE" },
-  { id: 5, name: "Canada", flag: "/flags/Canada.png", events: "25.3k", code: "CA" },
+  { id: 4, name: "Canada", flag: "/flags/Canada.png", events: "25.3k", code: "CA" },
+  { id: 5, name: "UAE", flag: "/flags/UAE.png", events: "10.3k", code: "AE" },
+  
   { id: 6, name: "India", flag: "/flags/India.png", events: "31.1k", code: "IN" },
-  { id: 7, name: "Spain", flag: "/flags/Spain.jpg", events: "12.4k", code: "ES" },
-  { id: 8, name: "France", flag: "/flags/France.png", events: "14.6k", code: "FR" },
-  { id: 9, name: "Australia", flag: "/flags/Australiya.png", events: "24.3k", code: "AU" },
-  { id: 10, name: "Italy", flag: "/flags/Itily.jpg", events: "13.7k", code: "IT" },
-  { id: 11, name: "Netherlands", flag: "/flags/Natherland.jpg", events: "11.9k", code: "NL" },
-  { id: 12, name: "China", flag: "/flags/China.jpg", events: "17.8k", code: "CN" },
+    { id: 7, name: "Australia", flag: "/flags/Australiya.png", events: "24.3k", code: "AU" },
+      { id: 8, name: "China", flag: "/flags/China.jpg", events: "17.8k", code: "CN" },
+  { id: 9, name: "Spain", flag: "/flags/Spain.jpg", events: "12.4k", code: "ES" },
+    { id: 10, name: "Italy", flag: "/flags/Itily.jpg", events: "13.7k", code: "IT" },
+  { id: 11, name: "France", flag: "/flags/France.png", events: "14.6k", code: "FR" },
+
+
+  { id: 12, name: "Japan", flag: "/flags/Japan Flag.png", events: "11.9k", code: "NL" },
+
   // {
   //   id: 9,
   //   name: "Spain",
