@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import "./hide-scrollbar.css" // 👈 optional external file (see below)
 
 export default function FeaturedOrganizers() {
   const scrollRef = useRef<HTMLDivElement | null>(null)
@@ -32,11 +33,33 @@ export default function FeaturedOrganizers() {
     scrollRef.current?.scrollBy({ left: amount, behavior: "smooth" })
   }
 
+  // 🌀 Auto-scroll
+  useEffect(() => {
+    if (!scrollRef.current) return
+    const scrollContainer = scrollRef.current
+    const scrollStep = 300
+    const intervalTime = 3000
+
+    const interval = setInterval(() => {
+      if (!isHovering && scrollContainer) {
+        if (
+          scrollContainer.scrollLeft + scrollContainer.clientWidth >=
+          scrollContainer.scrollWidth - 10
+        ) {
+          scrollContainer.scrollTo({ left: 0, behavior: "smooth" })
+        } else {
+          scrollContainer.scrollBy({ left: scrollStep, behavior: "smooth" })
+        }
+      }
+    }, intervalTime)
+
+    return () => clearInterval(interval)
+  }, [isHovering, organizers])
+
   if (loading) return <p className="text-center py-10">Loading organizers...</p>
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
-      {/* Header */}
       <div className="py-6 border-b border-gray-200 text-left">
         <h2 className="text-2xl font-semibold text-gray-900 mb-1">
           Featured Organizers
@@ -44,7 +67,6 @@ export default function FeaturedOrganizers() {
         <p className="text-gray-600">Worldwide Organizers</p>
       </div>
 
-      {/* Organizer Logo Carousel */}
       <div
         className="relative group"
         onMouseEnter={() => setIsHovering(true)}
@@ -87,7 +109,6 @@ export default function FeaturedOrganizers() {
             </div>
           ))}
 
-          {/* View All Button */}
           <Link href="/organizers">
             <button
               className="w-[200px] h-[120px] flex items-center justify-center 
