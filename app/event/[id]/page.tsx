@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Star, Mail, MapPin, Clock, IndianRupee, Wifi, Utensils, Car, Tag } from "lucide-react"
+import { Star, Mail, MapPin, Clock, IndianRupee, Wifi, Utensils, Car, Tag, Trash2 } from "lucide-react"
 import EventHero from "@/components/event-hero"
 import EventImageGallery from "@/components/event-image-gallery"
 import { Plus } from "lucide-react"
@@ -19,6 +19,7 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import AddReviewCard from "@/components/AddReviewCard"
+import Link from "next/link"
 
 interface EventPageProps {
   params: Promise<{
@@ -299,10 +300,10 @@ export default function EventPage({ params }: EventPageProps) {
         <div className="bg-white rounded-sm p-6 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-blue-900 mb-2">Tag Name will be updated by backend</h1>
+              <h1 className="text-3xl font-bold text-blue-900 mb-2">{event.slug || "Tag Name will be updated by backend"}</h1>
               <div className="flex items-center gap-2 text-gray-600 mb-3">
                 <MapPin className="w-4 h-4" />
-                <span>{event.address || event.location || "Location TBA"}</span>
+                <span>{event.venue.venueAddress || "Location TBA"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center justify-center gap-4">
@@ -311,7 +312,7 @@ export default function EventPage({ params }: EventPageProps) {
                     size="sm"
                     className="flex items-center gap-2"
                     onClick={() => {
-                      const query = encodeURIComponent(event.address || event.location || "Location")
+                      const query = encodeURIComponent(event.venueAddress || "Location")
                       window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank")
                     }}
                   >
@@ -370,17 +371,17 @@ export default function EventPage({ params }: EventPageProps) {
                 <Button variant="outline" className="flex-1 border-gray-300 bg-transparent" onClick={handleVisitClick}>
                   Visit
                 </Button>
-                
+
                 {/* Only show Exhibit button for users with EXHIBITOR role */}
-                {showExhibitButton && (
-                  <Button
-                    variant="outline"
-                    className="flex-1 border-blue-300 bg-transparent text-blue-600 hover:text-blue-700"
-                    onClick={handleExhibitClick}
-                  >
-                    Exhibit
-                  </Button>
-                )}
+
+                <Button
+                  variant="outline"
+                  className="flex-1 border-blue-300 bg-transparent text-blue-600 hover:text-blue-700"
+                  onClick={handleExhibitClick}
+                >
+                  Exhibit
+                </Button>
+
               </div>
             </div>
           </div>
@@ -452,211 +453,285 @@ export default function EventPage({ params }: EventPageProps) {
               </div>
 
               <TabsContent value="about" className="space-y-6">
-                <EventImageGallery images={event.images || [event.bannerImage].filter(Boolean)} />
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      About the Event
-                      <Badge variant="secondary" className="text-xs">
-                        {event.category || "General"}
-                      </Badge>
+                <Card className="shadow-md border border-gray-200 rounded-lg overflow-hidden">
+                  <CardHeader className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                    <CardTitle className="text-lg font-semibold text-gray-800">
+                      {event.title || "Event Title"}
                     </CardTitle>
+                    <p className="text-gray-600 mt-1 text-sm leading-relaxed">
+                      {event.description || "Event description not available."}
+                    </p>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-700 mb-4 leading-relaxed">{event.description}</p>
-                    {event.shortDescription && (
-                      <p className="text-gray-600 mb-4 font-medium">{event.shortDescription}</p>
-                    )}
-                  </CardContent>
-                </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-blue-700">Listed In</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {event.tags?.map((tag: string) => (
-                        <button
-                          key={tag}
-                          className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full hover:bg-blue-100 hover:border-blue-300 transition-colors duration-200"
-                        >
-                          #{tag}
-                        </button>
-                      )) || <p className="text-gray-500">No tags available</p>}
+                  <CardContent className="px-6 py-4">
+                    <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-4 mb-4">
+                      <h3 className="font-semibold text-gray-800 mb-2">Highlights</h3>
+                      <ul className="list-disc list-inside text-gray-700 space-y-1 text-sm">
+                        {event.highlights?.map((item: string, i: number) => (
+                          <li key={i}>{item}</li>
+                        )) || (
+                            <>
+                              <li>Showcase and sample your favorite products.</li>
+                              <li>Be visible to thousands of music lovers.</li>
+                              <li>Enjoy trying high-end gadgets and accessories.</li>
+                            </>
+                          )}
+                      </ul>
+                    </div>
+
+                    {/* Category Tags Section */}
+                    {/* <div className="flex flex-wrap gap-2 mb-4">
+                        {event.categories?.map((cat: string) => (
+                          <span
+                            key={cat}
+                            className="bg-blue-50 text-blue-700 border border-blue-200 rounded-md px-2 py-1 text-xs font-medium"
+                          >
+                            {cat}
+                          </span>
+                        )) || (
+                            <>
+                              <span className="bg-blue-50 text-blue-700 border border-blue-200 rounded-md px-2 py-1 text-xs font-medium">
+                                Top 100 in Entertainment & Media
+                              </span>
+                              <span className="bg-blue-50 text-blue-700 border border-blue-200 rounded-md px-2 py-1 text-xs font-medium">
+                                Display & Presentation
+                              </span>
+                              <span className="bg-blue-50 text-blue-700 border border-blue-200 rounded-md px-2 py-1 text-xs font-medium">
+                                Variety of Products
+                              </span>
+                            </>
+                          )}
+                      </div> */}
+
+                    {/* Listed In Section */}
+                    <div>
+                      <h3 className="font-semibold text-blue-700 mb-2">Listed In</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {event.tags?.map((tag: string) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full hover:bg-blue-100 transition-colors duration-200"
+                          >
+                            #{tag}
+                          </span>
+                        )) || (
+                            <>
+                              <span className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full">
+                                #Entertainment & Media
+                              </span>
+                              <span className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full">
+                                #Headphone
+                              </span>
+                              <span className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full">
+                                #Loudspeaker
+                              </span>
+                            </>
+                          )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="hover:shadow-md transition-shadow border-2 rounded-lg">
-                    <CardHeader className="bg-blue-100 rounded-t-lg p-4">
-                      <CardTitle className="flex items-center gap-2">
-                        <Clock className="w-5 h-5 text-blue-600" />
-                        Event Schedule
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3 pt-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Start Date:</span>
-                        <span className="font-semibold text-blue-600">{formatDate(event.startDate)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">End Date:</span>
-                        <span className="font-semibold text-blue-600">{formatDate(event.endDate)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Timezone:</span>
-                        <span className="font-semibold text-blue-600">{event.timezone}</span>
-                      </div>
-                    </CardContent>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow">
+                  {/* Timings / Schedule Section */}
+                  <div >
+                    <h3 className="font-semibold text-gray-800 mb-3">Timings</h3>
+                    <ul className="space-y-2 text-gray-700">
+                      <li>
+                        <span className="font-medium">{formatDate(event.startDate)}</span>
+                        {/* <span className="text-gray-500">(General)</span> */}
+                      </li>
+                      <li>
+                        <span className="font-medium">{formatDate(event.endDate)}</span>
+                        {/* <span className="text-gray-500">(General)</span> */}
+                      </li>
+                    </ul>
+                    <p className="text-blue-600 text-xs font-medium mt-2 inline-block ">
+                      {event.timezone}
+                    </p>
+
+                    <div className="mt-4">
+                      <h3 className="font-semibold text-gray-800 mb-1">Estimated Turnout</h3>
+                      <p className="text-gray-700">{event.maxAttendees || "5000"} Visitors</p>
+                      <p className="text-gray-700">130 Exhibitors</p>
+                    </div>
+
+                    <div className="mt-4">
+                      <h3 className="font-semibold text-gray-800 mb-1">Editions</h3>
+                      <p className="text-gray-700">{event.edition || "2nd"}<span className="text-blue-600">  Editions</span></p>
+                      {/* <a href="#" className="text-blue-600 text-xs font-medium hover:underline">
+                        +7 more editions
+                      </a> */}
+                    </div>
+
+                    {/* <div className="mt-4">
+                      <h3 className="font-semibold text-gray-800 mb-1">Frequency</h3>
+                      <p className="text-gray-700">Annual</p>
+                    </div> */}
                   </div>
 
-                  <div className="hover:shadow-md transition-shadow border-2 rounded-lg">
-                    <CardHeader className="bg-blue-100 rounded-t-lg p-4">
-                      <CardTitle className="flex items-center gap-2">
-                        <IndianRupee className="w-5 h-5 text-blue-600" />
-                        Registration Info
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3 pt-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Registration Start:</span>
-                        <span className="font-semibold text-blue-600">{formatDate(event.registrationStart)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Registration End:</span>
-                        <span className="font-semibold text-blue-600">{formatDate(event.registrationEnd)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Status:</span>
-                        <Badge variant={event.isRegistrationOpen ? "default" : "secondary"}>
-                          {event.isRegistrationOpen ? "Open" : "Closed"}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </div>
+                  {/* Event Type / Official Links Section */}
+                  <div>
+                    <div className="mb-4">
+                      <h3 className="font-semibold text-gray-800 mb-1">Entry Fees</h3>
+                      <p className="text-gray-700">{event.ticketTypes?.map((ticket: any) => `${ticket.name}: ₹${ticket.price}`).join(" | ")}</p>
+                      {/* <a href="#" className="text-blue-600 text-xs font-medium hover:underline">
+                        View Details
+                      </a> */}
+                    </div>
 
-                  <div className="hover:shadow-md transition-shadow border-2 rounded-lg">
-                    <CardHeader className="bg-blue-100 rounded-t-lg p-4">
-                      <CardTitle className="flex items-center gap-2">
-                        <Clock className="w-5 h-5 text-blue-600" />
-                        Event Type
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3 pt-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Event Type:</span>
-                        <span className="font-semibold text-blue-600">
-                          {event.isVirtual ? "Virtual Event" : "Physical Event"}
-                        </span>
+                    <div className="mb-4">
+                      <h3 className="font-semibold text-gray-800 mb-1">Event Type</h3>
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <span className="text-green-600 font-semibold">✓</span> {event.category}
                       </div>
-                      {event.isVirtual && event.virtualLink && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Virtual Link:</span>
-                          <a
-                            href={event.virtualLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-semibold text-blue-600 hover:underline"
-                          >
-                            Join Virtual Event
-                          </a>
-                        </div>
-                      )}
-                    </CardContent>
-                  </div>
+                    </div>
 
-                  <div className="hover:shadow-md transition-shadow border-2 rounded-lg pb-4">
-                    <CardHeader>
-                      <CardTitle>Capacity</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                      <div className="space-y-2">
-                        {event.maxAttendees ? (
-                          <>
-                            <p className="text-gray-700">Max Attendees: {event.maxAttendees}</p>
-                            {event.spotsRemaining !== null && (
-                              <p className="text-gray-700">Spots Remaining: {event.spotsRemaining}</p>
-                            )}
-                          </>
-                        ) : (
-                          <p className="text-gray-700">Unlimited capacity</p>
-                        )}
+                    <div className="mb-4">
+                      <h3 className="font-semibold text-gray-800 mb-1">Official Links</h3>
+                      <div className="flex gap-2">
+                        <a
+                          href={event.website}
+                          className="px-3 py-1 border border-blue-200 bg-blue-50 text-blue-700 rounded-md text-xs font-medium hover:bg-blue-100"
+                        >
+                          Website
+                        </a>
+                        <a
+                          href="#"
+                          className="px-3 py-1 border border-pink-200 bg-pink-50 text-pink-700 rounded-md text-xs font-medium hover:bg-pink-100"
+                        >
+                          Contact
+                        </a>
                       </div>
-                    </CardContent>
+                    </div>
+
+                    {/* <p className="text-xs text-gray-500 mt-4 hover:underline cursor-pointer">
+                      Report Error
+                    </p> */}
                   </div>
                 </div>
 
-                <Card className="border border-blue-200">
-                  <CardHeader>
-                    <CardTitle className="text-blue-900 text-base">Organizer</CardTitle>
+
+                <Card className="border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                  <CardHeader className="border-b border-gray-100 pb-2">
+                    <CardTitle className="text-gray-800 text-base font-semibold">Organizer</CardTitle>
                   </CardHeader>
-                  <CardContent>
+
+                  <CardContent className="flex flex-col md:flex-row justify-between items-center gap-4 py-4">
+                    {/* Left Section: Organizer Info */}
                     <div className="flex items-center gap-4">
-                      <div className="w-24 h-24 flex items-center justify-center">
+                      <div className="w-16 h-16 flex items-center justify-center border border-gray-100 rounded overflow-hidden bg-white">
                         <Image
-                          src={event.organizer?.avatar || "/placeholder.svg?height=96&width=96&text=Organizer"}
+                          src={event.organizer?.avatar || "/public/image/Ellipse_72.png"}
                           alt="Organizer"
-                          width={96}
-                          height={96}
-                          className="object-contain rounded shadow-sm"
+                          width={64}
+                          height={64}
+                          className="object-contain"
                         />
                       </div>
+
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-blue-900 text-sm">
-                            {event.organizer?.firstName || "Event Organizer"}
+                          <h3 className="font-semibold text-gray-900 text-sm">
+                            {event.organizer?.firstName || "Organizer Name"}
                           </h3>
-                          <span className="bg-red-500 text-white text-xs font-medium px-2 py-0.5 rounded">
-                            Verified
+                          <span className="bg-blue-100 text-blue-700 text-[11px] font-medium px-2 py-[2px] rounded">
+                            Top Rated
                           </span>
                         </div>
-                        <p className="text-sm text-gray-700">Professional Event Organizer</p>
-                        <p className="text-sm text-blue-900 mt-1">Contact for more details</p>
+
+                        <p className="text-sm text-gray-600">
+                          {event.organizer?.country || "USA"}
+                        </p>
+
+                        <p className="text-xs text-gray-500 mt-1">
+                          {event.organizer?.upcomingEvents
+                            ? `${event.organizer.upcomingEvents} Upcoming Events`
+                            : "1 Upcoming Event"}{" "}
+                          ·{" "}
+                          {event.organizer?.followers
+                            ? `${event.organizer.followers} Followers`
+                            : "302 Followers"}
+                        </p>
                       </div>
+                    </div>
+
+                    {/* Right Section: Button */}
+                    <div className="flex flex-col items-center text-center">
+                      <button className="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-md shadow" onClick={handleVisitClick}>
+                        Send Stall Book Request
+                      </button>
+                      {/* <p className="text-xs text-gray-500 mt-2">
+                        Queries about the event?{" "}
+                        <a href="#" className="text-blue-600 hover:underline font-medium">
+                          Ask Organizer
+                        </a>
+                      </p> */}
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Venue Information</CardTitle>
+
+                <Card className="border border-gray-200 rounded-lg shadow-sm">
+                  <CardHeader className="border-b border-gray-100 py-4">
+                    <CardTitle className="text-gray-800 text-lg font-semibold">Venue Map & Directions</CardTitle>
                   </CardHeader>
-                  <CardContent className="p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="text-xl font-bold text-gray-800">{event.venue?.company}</h4>
-                        {event.venue?.bio && <p className="text-gray-600 text-sm">{event.venue.bio}</p>}
-                        <p className="text-gray-500">{event.venue?.location}</p>
-                        {event.venue?.website && (
-                          <a
-                            href={event.venue.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
-                          >
-                            {event.venue.website}
-                          </a>
+
+                  <CardContent className="p-4">
+                    <div className="flex flex-col md:flex-row gap-4">
+
+                      {/* Map Image Section (left side) */}
+                      <div className="w-full h-80 bg-gray-200 rounded-md mb-4 overflow-hidden">
+                        {event?.venue?.location?.coordinates?.lat && event?.venue?.location?.coordinates?.lng ? (
+                          <iframe
+                            src={`https://www.google.com/maps?q=${event.venue.location.coordinates.lat},${event.venue.location.coordinates.lng}&z=15&output=embed`}
+                            width="100%"
+                            height="100%"
+                            className="border-0"
+                            loading="lazy"
+                          ></iframe>
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+                            Map not available
+                          </div>
                         )}
                       </div>
 
-                      {event.venue?.amenities?.length > 0 && (
+                      {/* Venue Details and Buttons (right side) */}
+                      <div className="w-full md:w-1/3 flex flex-col justify-between space-y-4">
+
+                        {/* Venue Info */}
                         <div>
-                          <h5 className="font-semibold text-gray-700 mb-2">Amenities</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {event.venue.amenities.map((amenity: any, idx: any) => (
-                              <span key={idx} className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded-full">
-                                {amenity}
-                              </span>
-                            ))}
-                          </div>
+                          <h3 className="font-semibold text-blue-700 text-base">{event?.venue?.venueName || "Venue Name Unavailable"}</h3>
+                          <p className="text-gray-600 text-sm mt-1">{event?.venue?.venueAddress || "Address not provided"}</p>
+                          <p className="text-gray-600 text-sm">{event?.venue?.venueZipCode || "Zip code not provided"}</p>
+                          <p className="text-gray-600 text-sm">{event?.venue?.venueCountry || "Country not provided"}</p>
                         </div>
-                      )}
+
+                        {/* Buttons */}
+                        <div className="space-y-2">
+                          <Button
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-md transition-colors"
+                            onClick={() => {
+                              const query = encodeURIComponent(
+                                event?.venue?.venueAddress ||
+                                event?.venue?.venueName ||
+                                "Location not available"
+                              )
+                              window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank")
+                            }}
+                          >
+                            Get Directions
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
+
                 </Card>
+
                 <AddReviewCard eventId={event.id} />
               </TabsContent>
 
@@ -664,110 +739,129 @@ export default function EventPage({ params }: EventPageProps) {
                 <ExhibitorsTab eventId={event.id} />
               </TabsContent>
 
-              <TabsContent value="space-cost">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Exhibition Space Pricing</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {event.exhibitionSpaces?.length > 0 ? (
-                      event.exhibitionSpaces.map((space: any, index: any) => (
-                        <div
-                          key={index}
-                          className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border"
-                        >
-                          <div>
-                            <span className="font-medium">{space.name}</span>
-                            <p className="text-sm text-gray-600">{space.description}</p>
-                            <p className="text-xs text-gray-500">
-                              Minimum area: {space.minArea} {space.unit}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <span className="font-bold text-lg text-blue-600">
-                              {event.currency} {space.basePrice.toLocaleString()}
-                            </span>
-                            {space.pricePerSqm > 0 && (
-                              <p className="text-sm text-gray-600">
-                                + {event.currency} {space.pricePerSqm}/{space.unit}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-600">No exhibition space information available.</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
               <TabsContent value="layout">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Layout Plan</CardTitle>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Layout Plan</span>
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center">
-                      <p className="text-gray-600">Floor plan will be displayed here</p>
+                    <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center overflow-hidden">
+                      {event?.layoutPlan ? (
+                        <Image
+                          src={event.layoutPlan.startsWith("http")
+                            ? event.layoutPlan
+                            : `/uploads/${event.layoutPlan}`} // adjust path if stored locally
+                          alt="Event Layout Plan"
+                          width={800}
+                          height={600}
+                          className="object-contain rounded-lg"
+                        />
+                      ) : (
+                        <p className="text-gray-500">Floor plan will be displayed here</p>
+                      )}
                     </div>
                   </CardContent>
+
                 </Card>
               </TabsContent>
 
-              <TabsContent value="brochure">
+              
+             <TabsContent value="brochure">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Brochure</CardTitle>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Brochure</span>
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center">
-                      <p className="text-gray-600">Brochure will be displayed here</p>
-                    </div>
-                  </CardContent>
-                  <button className="mx-5 mt-4 bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition">
-                    Download Brochure
-                  </button>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="venue">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Venue Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
                     <div className="space-y-4">
-                      <div>
-                        <h4 className="text-xl font-bold text-gray-800">{event.venue?.company}</h4>
-                        {event.venue?.bio && <p className="text-gray-600 text-sm">{event.venue.bio}</p>}
-                        <p className="text-gray-500">{event.venue?.location}</p>
-                        {event.venue?.website && (
-                          <a
-                            href={event.venue.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
-                          >
-                            {event.venue.website}
-                          </a>
-                        )}
-                      </div>
-
-                      {event.venue?.amenities?.length > 0 && (
-                        <div>
-                          <h5 className="font-semibold text-gray-700 mb-2">Amenities</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {event.venue.amenities.map((amenity: any, idx: any) => (
-                              <span key={idx} className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded-full">
-                                {amenity}
-                              </span>
-                            ))}
+                      {event?.brochure ? (
+                        <>
+                          <div className="bg-gray-100 rounded-lg overflow-hidden border border-gray-300">
+                            <iframe
+                              src={`/api/events/${event.id}/brochure?action=view`}
+                              className="w-full h-[600px]"
+                              title="Event Brochure PDF"
+                            />
                           </div>
+                          <div className="flex justify-center gap-4">
+                            <Button asChild size="lg" className="w-full sm:w-auto">
+                              <a href={`/api/events/${event.id}/brochure?action=download`} download>
+                                Download Brochure
+                              </a>
+                            </Button>
+                            
+                          </div>
+                        </>
+                      ) : (
+                        <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center">
+                          <p className="text-gray-600">No brochure available</p>
                         </div>
                       )}
                     </div>
                   </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="venue">
+                <Card className="border border-gray-200 rounded-lg shadow-sm">
+                  <CardHeader className="border-b border-gray-100 py-4">
+                    <CardTitle className="text-gray-800 text-lg font-semibold">Venue Map & Directions</CardTitle>
+                  </CardHeader>
+
+                  <CardContent className="p-4">
+                    <div className="flex flex-col md:flex-row gap-4">
+
+                      {/* Map Image Section (left side) */}
+                      <div className="w-full h-80 bg-gray-200 rounded-md mb-4 overflow-hidden">
+                        {event?.venue?.location?.coordinates?.lat && event?.venue?.location?.coordinates?.lng ? (
+                          <iframe
+                            src={`https://www.google.com/maps?q=${event.venue.location.coordinates.lat},${event.venue.location.coordinates.lng}&z=15&output=embed`}
+                            width="100%"
+                            height="100%"
+                            className="border-0"
+                            loading="lazy"
+                          ></iframe>
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+                            Map not available
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Venue Details and Buttons (right side) */}
+                      <div className="w-full md:w-1/3 flex flex-col justify-between space-y-4">
+
+                        {/* Venue Info */}
+                        <div>
+                          <h3 className="font-semibold text-blue-700 text-base">{event?.venue?.venueName || "Venue Name Unavailable"}</h3>
+                          <p className="text-gray-600 text-sm mt-1">{event?.venue?.venueAddress || "Address not provided"}</p>
+                          <p className="text-gray-600 text-sm">{event?.venue?.venueZipCode || "Zip code not provided"}</p>
+                          <p className="text-gray-600 text-sm">{event?.venue?.venueCountry || "Country not provided"}</p>
+                        </div>
+
+                        {/* Buttons */}
+                        <div className="space-y-2">
+                          <Button
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-md transition-colors"
+                            onClick={() => {
+                              const query = encodeURIComponent(
+                                event?.venue?.venueAddress ||
+                                event?.venue?.venueName ||
+                                "Location not available"
+                              )
+                              window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank")
+                            }}
+                          >
+                            Get Directions
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+
                 </Card>
               </TabsContent>
 
@@ -780,6 +874,7 @@ export default function EventPage({ params }: EventPageProps) {
                   <CardHeader>
                     <CardTitle>Event Organizer</CardTitle>
                   </CardHeader>
+                  <Link href={`/organizer/${event.organizer.id}`}>
                   <CardContent>
                     <div className="flex items-start gap-4">
                       <Avatar className="w-16 h-16">
@@ -800,6 +895,7 @@ export default function EventPage({ params }: EventPageProps) {
                       </div>
                     </div>
                   </CardContent>
+                  </Link>
                 </Card>
               </TabsContent>
 
@@ -818,6 +914,14 @@ export default function EventPage({ params }: EventPageProps) {
 
           {/* Sidebar - Right Side */}
           <div className="w-full lg:w-80 xl:w-96 space-y-6 flex-shrink-0">
+            <Card className="hover:shadow-md transition-shadow border border-gray-200 rounded-lg h-60">
+              <CardHeader className="pb-3">
+
+              </CardHeader>
+              <CardContent className="space-y-4">
+
+              </CardContent>
+            </Card>
             {/* Featured Hotels Card */}
             <Card className="hover:shadow-md transition-shadow border border-gray-200 rounded-lg">
               <CardHeader className="pb-3">
@@ -864,7 +968,7 @@ export default function EventPage({ params }: EventPageProps) {
                                 <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-1">
                                   {h.name}
                                 </h3>
-                                
+
                                 {/* Rating and Location */}
                                 <div className="flex items-center gap-1 text-xs text-gray-600 mb-2">
                                   <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
@@ -913,8 +1017,8 @@ export default function EventPage({ params }: EventPageProps) {
                                   </span>
                                 </div>
                               </div>
-                              
-                              <Button 
+
+                              <Button
                                 className="rounded-full bg-blue-600 px-3 py-1 text-white hover:bg-blue-700 text-xs font-medium whitespace-nowrap flex-shrink-0"
                                 size="sm"
                               >

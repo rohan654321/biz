@@ -867,14 +867,8 @@ export default function EventsPageContent() {
                     <h3 className="text-red-500 font-medium mb-1">Top 100 Events</h3>
                     <p className="text-sm text-gray-500">Discover and track top events</p>
                   </div>
-                  <div className="p-4 border-b border-gray-100">
-                    <h3 className="text-red-500 font-medium mb-1">Social Events</h3>
-                    <p className="text-sm text-gray-500">Discover and track top events</p>
-                  </div>
-                  <div className="p-4 border-b border-gray-100">
-                    <h3 className="text-red-500 font-medium mb-1">Search by Company</h3>
-                    <p className="text-sm text-gray-500">Discover and track top events</p>
-                  </div>
+                  
+                  
                   <div className="p-4 border-b border-gray-100">
                     <h3 className="text-red-500 font-medium mb-1">Explore Speaker</h3>
                     <p className="text-sm text-gray-500">Discover and track top events</p>
@@ -1031,25 +1025,25 @@ export default function EventsPageContent() {
 
                                     </div>
                                   </div>
+                                </div>
+
+                                {/* Right Column: Edition + Rating + Followers + Paid Entry + Visit Button */}
+                                <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-3">
+                                  {/* Verified + Edition */}
+                                  <div className="flex items-center gap-1">
+                                    {/* Verified Image */}
+                                    <div className="w-5 h-5">
+                                      <img
+                                        src="/images/VerifiedBadge.png"
+                                        alt="Verified"
+                                        className="w-full h-full object-contain"
+                                      />
+                                    </div>
+                                    <span className="text-gray-600 font-medium text-xs">2nd Edition</span>
                                   </div>
 
-                                   {/* Right Column: Edition + Rating + Followers + Paid Entry + Visit Button */}
-                                   <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-3">
-                                    {/* Verified + Edition */}
-                                    <div className="flex items-center gap-1">
-                                      {/* Verified Image */}
-                                      <div className="w-5 h-5">
-                                        <img
-                                          src="/images/VerifiedBadge.png"
-                                          alt="Verified"
-                                          className="w-full h-full object-contain"
-                                        />
-                                      </div>
-                                      <span className="text-gray-600 font-medium text-xs">2nd Edition</span>
-                                    </div>
-
-                                    {/* Rating */}
-                                    {/* <div className="flex items-center gap-1 bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-xs font-semibold">
+                                  {/* Rating */}
+                                  {/* <div className="flex items-center gap-1 bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-xs font-semibold">
                                     <Star className="w-3 h-3 fill-current" />
                                     
                                     <span>
@@ -1060,9 +1054,9 @@ export default function EventsPageContent() {
                                     )}
                                    </div> */}
 
-                                    {/* replace per-card random followers with real count */}
-                                    {/* Followers */}
-                                    {/* <div className="flex items-center text-gray-600 text-xs gap-1">
+                                  {/* replace per-card random followers with real count */}
+                                  {/* Followers */}
+                                  {/* <div className="flex items-center text-gray-600 text-xs gap-1">
                                     <svg
                                       xmlns="http://www.w3.org/2000/svg"
                                       className="w-3 h-3 text-gray-400"
@@ -1080,35 +1074,35 @@ export default function EventsPageContent() {
                                     {visitorCounts[event.id] || 0} Followers
                                      </div> */}
 
-                                    {/* Paid Entry */}
-                                    {/* <Badge className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                                  {/* Paid Entry */}
+                                  {/* <Badge className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
                                     Paid entry
                                     </Badge> */}
-                                  </div>
-                                </div>
-
-                                {/* Tags */}
-                                <div className="flex flex-wrap gap-1 mt-2">
-                                  {event.categories?.slice(0, 2).map((category: string, idx: number) => (
-                                    <Badge
-                                      key={idx}
-                                      className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
-                                    >
-                                      {category}
-                                    </Badge>
-                                  ))}
                                 </div>
                               </div>
 
-                              {/* Divider */}
-                              <div className="border-t border-gray-200 mt-3" />
+                              {/* Tags */}
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {event.categories?.slice(0, 2).map((category: string, idx: number) => (
+                                  <Badge
+                                    key={idx}
+                                    className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
+                                  >
+                                    {category}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
 
-                              {/* Bottom Section */}
-                              <div className="flex items-center justify-between flex-wrap gap-2">
-                                {/* Organizer */}
+                            {/* Divider */}
+                            <div className="border-t border-gray-200 mt-3" />
+
+                            {/* Bottom Section */}
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                              {/* Organizer */}
 
 
-<div className="flex items-center gap-2 text-xs text-gray-600 flex-wrap">
+                              <div className="flex items-center gap-2 text-xs text-gray-600 flex-wrap">
                                 <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-700 flex-shrink-0 text-xs">
                                   {typeof event.organizer === "string"
                                     ? event.organizer.charAt(0)
@@ -1121,28 +1115,28 @@ export default function EventsPageContent() {
                                 </span>
                               </div>
 
-                                {/* Share + Save + Visit Buttons */}
-                                <div className="flex items-center gap-2 flex-shrink-0">
-                                  <ShareButton eventId={event.id} eventTitle={event.title} />
-                                  <BookmarkButton
-                                    eventId={event.id}
-                                    className="p-1 rounded-full hover:bg-gray-100 transition"
-                                  />
-                                  <Button
-                                    className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 mt-1 rounded-md text-sm shadow-sm"
-                                    onClick={(e) => {
-                                      e.preventDefault()
-                                      e.stopPropagation()
-                                      handleVisitClick(event.id, event.title)
-                                    }}
-                                  >
-                                    <UserPlus className="w-2 h-2 mr-1" />
-                                    Visit
-                                  </Button>
-                                </div>
+                              {/* Share + Save + Visit Buttons */}
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <ShareButton eventId={event.id} eventTitle={event.title} />
+                                <BookmarkButton
+                                  eventId={event.id}
+                                  className="p-1 rounded-full hover:bg-gray-100 transition"
+                                />
+                                <Button
+                                  className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 mt-1 rounded-md text-sm shadow-sm"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    handleVisitClick(event.id, event.title)
+                                  }}
+                                >
+                                  <UserPlus className="w-2 h-2 mr-1" />
+                                  Visit
+                                </Button>
                               </div>
-                              
                             </div>
+
+                          </div>
                         </CardContent>
                       </div>
                     </Link>

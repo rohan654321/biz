@@ -88,7 +88,7 @@ export default function ScheduleMeetingButton({
     <button
       onClick={handleScheduleMeeting}
       disabled={creating || exhibitor.isSample}
-      className={`w-full mt-4 border-2 text-sm py-2 rounded-full font-semibold transition flex items-center justify-center ${
+      className={`w-full mt-4 px-2 border-2 text-sm py-2 rounded-full font-semibold transition flex items-center justify-center ${
         exhibitor.isSample
           ? "border-gray-300 text-gray-500 bg-gray-100 cursor-not-allowed"
           : "border-red-600 text-white bg-red-600 hover:bg-red-700"
