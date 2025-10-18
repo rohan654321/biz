@@ -16,6 +16,7 @@ import {
   Star,
   CalendarDays,
   UserPlus,
+  X,
 } from "lucide-react"
 import Image from "next/image"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -34,6 +35,7 @@ interface Event {
   description: string
   startDate: string
   endDate: string
+  eventType: string
   categories: string[]
   tags: string[]
   images: { url: string }[]
@@ -88,7 +90,7 @@ export default function EventsPageContent() {
   const [priceRange, setPriceRange] = useState("")
   const [rating, setRating] = useState("")
 
-  // New sidebar state
+  // Enhanced sidebar state
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [formatOpen, setFormatOpen] = useState(false)
   const [locationOpen, setLocationOpen] = useState(false)
@@ -98,6 +100,10 @@ export default function EventsPageContent() {
   const [categorySearch, setCategorySearch] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedRelatedTopics, setSelectedRelatedTopics] = useState<string[]>([])
+
+  // Calendar state
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [currentMonth, setCurrentMonth] = useState(new Date())
 
   // Auto-scroll state for featured events
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -153,7 +159,6 @@ export default function EventsPageContent() {
       const data: ApiResponse = await response.json()
 
       const transformedEvents = data.events.map((event: any) => {
-        // Safely resolve an id for downstream actions
         const resolvedId =
           event.id ||
           event._id ||
@@ -169,17 +174,14 @@ export default function EventsPageContent() {
 
         return {
           ...event,
-          // ensure we always have a usable string id
           id: String(resolvedId || ""),
+          eventType: event.eventType || event.categories?.[0] || "Other",
           timings: {
             startDate: event.startDate,
             endDate: event.endDate,
           },
           location: {
-            address: event.venue?.venueAddress || "Not Added"
-            // city: event.venue?.venueCity || event.location?.city || "Unknown City",
-            // venue: event.location?.venue || "Unknown Venue",
-            // country: event.venue?.venueCountry || event.location?.country,
+            address: event.venue?.venueAddress || "Not Added",
           },
           featured: event.tags?.includes("featured") || false,
           categories: event.categories || [],
@@ -187,7 +189,6 @@ export default function EventsPageContent() {
           images: event.images || [{ url: "/images/gpex.jpg?height=200&width=300" }],
           pricing: event.pricing || { general: 0 },
           rating: { average: avg },
-          // keep totals if backend returns them
           totalReviews: typeof event?.totalReviews === "number" ? event.totalReviews : undefined,
         }
       })
@@ -239,7 +240,6 @@ export default function EventsPageContent() {
       return
     }
 
-    // Increment immediately on click to reflect in UI, even if backend call happens next
     incrementVisitorCount(eventId)
 
     if (!session) {
@@ -274,11 +274,9 @@ export default function EventsPageContent() {
       })
 
       if (response.ok) {
-        // Success alert for authenticated users
         try {
           alert(`Thanks for visiting "${eventTitle}"!`)
         } catch {
-          // fallback toast if alert suppressed
           toast({
             title: "Visit recorded",
             description: `Thanks for visiting "${eventTitle}".`,
@@ -320,6 +318,36 @@ export default function EventsPageContent() {
     return Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count }))
   }, [events])
 
+  // Get unique formats from eventType
+  const formats = useMemo(() => {
+    return [
+      {
+        name: "Trade Show",
+        count: events.filter((e) =>
+          String(e.eventType || "")
+            .toLowerCase()
+            .includes("trade show"),
+        ).length,
+      },
+      {
+        name: "Conference",
+        count: events.filter((e) =>
+          String(e.eventType || "")
+            .toLowerCase()
+            .includes("conference"),
+        ).length,
+      },
+      {
+        name: "Workshops",
+        count: events.filter((e) =>
+          String(e.eventType || "")
+            .toLowerCase()
+            .includes("workshop"),
+        ).length,
+      },
+    ]
+  }, [events])
+
   const locations = useMemo(() => {
     if (!events || events.length === 0) return []
 
@@ -337,8 +365,14 @@ export default function EventsPageContent() {
         const city = event.location.city
         locationMap.set(city, (locationMap.get(city) || 0) + 1)
       }
+      if (event.location?.address) {
+        const address = event.location.address
+        locationMap.set(address, (locationMap.get(address) || 0) + 1)
+      }
     })
-    return Array.from(locationMap.entries()).map(([name, count]) => ({ name, count }))
+    return Array.from(locationMap.entries())
+      .map(([name, count]) => ({ name, count }))
+      .filter((loc) => loc.name && loc.name !== "Not Added")
   }, [events])
 
   // Enhanced categories with search functionality
@@ -350,6 +384,63 @@ export default function EventsPageContent() {
   const relatedTopics = useMemo(() => {
     return categories.map((cat) => ({ ...cat, name: `${cat.name} Related` }))
   }, [categories])
+
+  // Calendar functions
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+  }
+
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay()
+  }
+
+  const isEventOnDate = (event: Event, date: Date) => {
+    const eventStartDate = new Date(event.timings.startDate)
+    const eventEndDate = new Date(event.timings.endDate)
+
+    return (
+      date >= new Date(eventStartDate.getFullYear(), eventStartDate.getMonth(), eventStartDate.getDate()) &&
+      date <= new Date(eventEndDate.getFullYear(), eventEndDate.getMonth(), eventEndDate.getDate())
+    )
+  }
+
+  const getEventsOnDate = (date: Date) => {
+    return events.filter((event) => isEventOnDate(event, date))
+  }
+
+  const isSameDay = (date1: Date, date2: Date) => {
+    return (
+      date1.getDate() === date2.getDate() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getFullYear() === date2.getFullYear()
+    )
+  }
+
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date)
+    setCalendarOpen(false)
+  }
+
+  const handlePrevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))
+  }
+
+  const handleNextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))
+  }
+
+  const clearDateFilter = () => {
+    setSelectedDate(null)
+    setSelectedDateRange("")
+  }
+
+  const clearLocationFilter = () => {
+    setSelectedLocation("")
+  }
+
+  const clearFormatFilter = () => {
+    setSelectedFormat("All Formats")
+  }
 
   // Helper function to check if event is in date range
   const isEventInDateRange = (event: any, dateRange: string) => {
@@ -410,7 +501,17 @@ export default function EventsPageContent() {
     // Tab filter
     filtered = filtered.filter((event) => isEventInTab(event, activeTab))
 
-    // Search filter - enhanced
+    // Date filter (specific date selection)
+    if (selectedDate) {
+      filtered = filtered.filter((event) => isEventOnDate(event, selectedDate))
+    }
+
+    // Date range filter
+    if (selectedDateRange && !selectedDate) {
+      filtered = filtered.filter((event) => isEventInDateRange(event, selectedDateRange))
+    }
+
+    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
@@ -443,26 +544,26 @@ export default function EventsPageContent() {
       filtered = filtered.filter((event) => event.categories.some((cat) => relatedCats.includes(cat)))
     }
 
-    // Location filter (works for cities, countries, and venues)
+    // Location filter
     if (selectedLocation) {
       filtered = filtered.filter(
         (event) =>
           event.venue?.venueCity?.toLowerCase().includes(selectedLocation.toLowerCase()) ||
           event.venue?.venueCountry?.toLowerCase().includes(selectedLocation.toLowerCase()) ||
-          event.location?.city?.toLowerCase().includes(selectedLocation.toLowerCase()),
+          event.location?.city?.toLowerCase().includes(selectedLocation.toLowerCase()) ||
+          event.location?.address?.toLowerCase().includes(selectedLocation.toLowerCase()),
       )
     }
 
-    // Format filter
     if (selectedFormat && selectedFormat !== "All Formats") {
-      filtered = filtered.filter((event) =>
-        event.categories.some((cat) => cat.toLowerCase().includes(selectedFormat.toLowerCase())),
-      )
-    }
-
-    // Date range filter
-    if (selectedDateRange) {
-      filtered = filtered.filter((event) => isEventInDateRange(event, selectedDateRange))
+      filtered = filtered.filter((event) => {
+        // Ensure we get a string value
+        const eventType = event.eventType || event.categories?.[0] || ""
+        // Convert to string explicitly and check type
+        const eventTypeStr = String(eventType).toLowerCase().trim()
+        const selectedFormatStr = String(selectedFormat).toLowerCase().trim()
+        return eventTypeStr === selectedFormatStr
+      })
     }
 
     // Price range filter
@@ -492,7 +593,6 @@ export default function EventsPageContent() {
 
     // Sort based on view mode
     if (viewMode === "Trending") {
-      // Sort by rating or popularity
       filtered.sort((a, b) => b.rating.average - a.rating.average)
     } else if (viewMode === "Date") {
       filtered.sort((a, b) => new Date(a.timings.startDate).getTime() - new Date(b.timings.startDate).getTime())
@@ -502,13 +602,14 @@ export default function EventsPageContent() {
   }, [
     events,
     activeTab,
+    selectedDate,
+    selectedDateRange,
     searchQuery,
     selectedCategory,
     selectedCategories,
     selectedRelatedTopics,
     selectedLocation,
     selectedFormat,
-    selectedDateRange,
     priceRange,
     rating,
     viewMode,
@@ -516,6 +617,9 @@ export default function EventsPageContent() {
 
   // Dynamic banner title based on filters
   const getBannerTitle = () => {
+    if (selectedDate) {
+      return `Events on ${selectedDate.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`
+    }
     if (selectedCategories.length > 0) {
       return `${selectedCategories.join(", ")} Events`
     }
@@ -531,11 +635,10 @@ export default function EventsPageContent() {
     if (activeTab !== "All Events") {
       return `${activeTab} Events`
     }
-    return "All Events" // Default title
+    return "All Events"
   }
 
   const getFollowerCount = () => {
-    // Sum visitor counts across filtered events
     const total = filteredEvents.reduce((sum, ev) => sum + (visitorCounts[ev.id] || 0), 0)
     if (total >= 1000) return `${Math.round(total / 1000)}K+ Followers`
     return `${total} Followers`
@@ -545,7 +648,7 @@ export default function EventsPageContent() {
   const totalPages = Math.ceil(filteredEvents.length / itemsPerPage)
   const paginatedEvents = filteredEvents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
-  // Featured events (events with featured flag)
+  // Featured events
   const featuredEvents = events.filter((event) => event.featured)
 
   // Auto-scroll effect for featured events
@@ -605,34 +708,62 @@ export default function EventsPageContent() {
     setSelectedCategories([])
     setSelectedRelatedTopics([])
     setSelectedLocation("")
+    setSelectedDate(null)
+    setSelectedDateRange("")
+    setSelectedFormat("All Formats")
     setPriceRange("")
     setRating("")
-    setSelectedFormat("All Formats")
-    setSelectedDateRange("")
     setActiveTab("All Events")
     setCurrentPage(1)
     router.push("/event")
   }
 
-  // Navigation functions for featured events
-  const goToPrevSlide = () => {
-    if (isTransitioning) return
-    setIsTransitioning(true)
-    const totalSlides = Math.ceil(featuredEvents.length / 3)
-    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides)
-  }
+  // Calendar rendering
+  const renderCalendar = () => {
+    const daysInMonth = getDaysInMonth(currentMonth)
+    const firstDayOfMonth = getFirstDayOfMonth(currentMonth)
+    const days = []
 
-  const goToNextSlide = () => {
-    if (isTransitioning) return
-    setIsTransitioning(true)
-    const totalSlides = Math.ceil(featuredEvents.length / 3)
-    setCurrentSlide((prev) => (prev + 1) % totalSlides)
-  }
+    // Previous month days
+    const prevMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)
+    const daysInPrevMonth = getDaysInMonth(prevMonth)
 
-  const goToSlide = (index: number) => {
-    if (isTransitioning || index === currentSlide) return
-    setIsTransitioning(true)
-    setCurrentSlide(index)
+    for (let i = firstDayOfMonth - 1; i >= 0; i--) {
+      const day = daysInPrevMonth - i
+      const date = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), day)
+      days.push(
+        <div
+          key={`prev-${day}`}
+          className="h-8 w-8 flex items-center justify-center text-sm text-gray-400 cursor-not-allowed"
+        >
+          {day}
+        </div>,
+      )
+    }
+
+    // Current month days
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
+      const hasEvents = getEventsOnDate(date).length > 0
+      const isSelected = selectedDate && isSameDay(date, selectedDate)
+      const isToday = isSameDay(date, new Date())
+
+      days.push(
+        <button
+          key={`current-${day}`}
+          onClick={() => handleDateSelect(date)}
+          className={`h-8 w-8 flex items-center justify-center text-sm rounded-full relative
+            ${isSelected ? "bg-blue-600 text-white" : isToday ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100"}
+            ${hasEvents ? "font-semibold" : ""}
+          `}
+        >
+          {day}
+          {hasEvents && <div className="absolute bottom-0 w-1 h-1 bg-blue-500 rounded-full"></div>}
+        </button>,
+      )
+    }
+
+    return days
   }
 
   // Reset page when filters change
@@ -646,6 +777,7 @@ export default function EventsPageContent() {
     selectedRelatedTopics,
     selectedLocation,
     selectedFormat,
+    selectedDate,
     selectedDateRange,
     priceRange,
     rating,
@@ -682,15 +814,38 @@ export default function EventsPageContent() {
               backgroundImage: "url('/city/c2.jpg')",
             }}
           >
-            {/* Softer overlay */}
             <div className="absolute inset-0 bg-gradient-to-r from-white/40 via-blue-50/30 to-purple-50/40"></div>
-
             <div className="relative z-10">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{getBannerTitle()}</h1>
               <p className="text-gray-700 text-lg">{getFollowerCount()}</p>
             </div>
+          </div>
 
-            <div className="relative z-10 flex items-center space-x-4">{/* Buttons / avatars */}</div>
+          {/* Active Filters */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {selectedDate && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                Date: {selectedDate.toLocaleDateString()}
+                <X className="w-3 h-3 cursor-pointer" onClick={clearDateFilter} />
+              </Badge>
+            )}
+            {selectedLocation && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                Location: {selectedLocation}
+                <X className="w-3 h-3 cursor-pointer" onClick={clearLocationFilter} />
+              </Badge>
+            )}
+            {selectedFormat !== "All Formats" && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                Format: {selectedFormat}
+                <X className="w-3 h-3 cursor-pointer" onClick={clearFormatFilter} />
+              </Badge>
+            )}
+            {(selectedDate || selectedLocation || selectedFormat !== "All Formats") && (
+              <Button variant="outline" size="sm" onClick={clearAllFilters}>
+                Clear All
+              </Button>
+            )}
           </div>
 
           {/* Tabs Navigation */}
@@ -699,10 +854,11 @@ export default function EventsPageContent() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-                  }`}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === tab
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
+                }`}
               >
                 {tab}
               </button>
@@ -725,6 +881,74 @@ export default function EventsPageContent() {
                         className={`w-4 h-4 text-gray-400 transition-transform ${calendarOpen ? "rotate-180" : ""}`}
                       />
                     </button>
+                    {calendarOpen && (
+                      <div className="px-4 pb-4">
+                        {/* Quick Date Filters */}
+                        <div className="grid grid-cols-2 gap-2 mb-4">
+                          {[
+                            { label: "Today", value: "today" },
+                            { label: "Tomorrow", value: "tomorrow" },
+                            { label: "This Week", value: "this-week" },
+                            { label: "This Month", value: "this-month" },
+                          ].map((range) => (
+                            <button
+                              key={range.value}
+                              onClick={() => {
+                                setSelectedDateRange(range.value)
+                                setSelectedDate(null)
+                              }}
+                              className={`p-2 text-xs text-center rounded border ${
+                                selectedDateRange === range.value
+                                  ? "bg-blue-100 border-blue-500 text-blue-700"
+                                  : "border-gray-200 hover:bg-gray-50"
+                              }`}
+                            >
+                              {range.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Calendar */}
+                        <div className="bg-white rounded-lg border border-gray-200 p-3">
+                          {/* Calendar Header */}
+                          <div className="flex items-center justify-between mb-4">
+                            <button onClick={handlePrevMonth} className="p-1 hover:bg-gray-100 rounded">
+                              <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <span className="text-sm font-semibold">
+                              {currentMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                            </span>
+                            <button onClick={handleNextMonth} className="p-1 hover:bg-gray-100 rounded">
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          {/* Calendar Days */}
+                          <div className="grid grid-cols-7 gap-1 mb-2">
+                            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+                              <div key={day} className="text-xs text-gray-500 text-center font-medium">
+                                {day}
+                              </div>
+                            ))}
+                          </div>
+                          <div className="grid grid-cols-7 gap-1">{renderCalendar()}</div>
+                        </div>
+
+                        {selectedDate && (
+                          <div className="mt-3 p-2 bg-blue-50 rounded border border-blue-200">
+                            <p className="text-xs text-blue-700">
+                              Showing events for {selectedDate.toLocaleDateString()}
+                            </p>
+                            <button
+                              onClick={clearDateFilter}
+                              className="text-xs text-blue-600 hover:text-blue-800 mt-1"
+                            >
+                              Clear date filter
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Format Section */}
@@ -738,6 +962,38 @@ export default function EventsPageContent() {
                         className={`w-4 h-4 text-gray-400 transition-transform ${formatOpen ? "rotate-180" : ""}`}
                       />
                     </button>
+
+                    {formatOpen && (
+                      <div className="px-4 pb-4">
+                        <div className="space-y-2">
+                          {/* All Formats option */}
+                          <button
+                            onClick={() => setSelectedFormat("All Formats")}
+                            className={`w-full text-left p-2 rounded text-sm flex justify-between items-center ${
+                              selectedFormat === "All Formats" ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
+                            }`}
+                          >
+                            <span>All Formats</span>
+                          </button>
+
+                          {/* Dynamic Formats from event.eventType */}
+                          {formats.map((format, index) => (
+                            <button
+                              key={`${format.name || "format"}-${index}`} // ✅ unique key even if name repeats
+                              onClick={() => setSelectedFormat(format.name)}
+                              className={`w-full text-left p-2 rounded text-sm flex justify-between items-center ${
+                                selectedFormat === format.name ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
+                              }`}
+                            >
+                              <span>{format.name || "Unnamed Format"}</span> {/* fallback text */}
+                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                {format.count ?? 0}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Location Section */}
@@ -751,6 +1007,36 @@ export default function EventsPageContent() {
                         className={`w-4 h-4 text-gray-400 transition-transform ${locationOpen ? "rotate-180" : ""}`}
                       />
                     </button>
+                    {locationOpen && (
+                      <div className="px-4 pb-4">
+                        <div className="relative mb-3">
+                          <Input
+                            type="text"
+                            placeholder="Search locations..."
+                            value={selectedLocation}
+                            onChange={(e) => setSelectedLocation(e.target.value)}
+                            className="text-sm pr-8 border-gray-200"
+                          />
+                          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        </div>
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {locations.map((location) => (
+                            <button
+                              key={location.name}
+                              onClick={() => setSelectedLocation(location.name)}
+                              className={`w-full text-left p-2 rounded text-sm flex justify-between items-center ${
+                                selectedLocation === location.name ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
+                              }`}
+                            >
+                              <span>{location.name}</span>
+                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                {location.count}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Category Section */}
@@ -777,43 +1063,21 @@ export default function EventsPageContent() {
                           <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         </div>
                         <div className="space-y-3">
-                          {[
-                            "Expo",
-                            "Business Event",
-                            "Food & Beverage",
-                            "Finance",
-                            "Technology",
-                            "Conference",
-                            "Workshop",
-                            "Networking",
-                          ].map((category) => {
-                            const count = events.filter((event) =>
-                              event.categories.some(
-                                (cat) =>
-                                  cat.toLowerCase().includes(category.toLowerCase()) ||
-                                  category.toLowerCase().includes(cat.toLowerCase()),
-                              ),
-                            ).length
-
-                            return (
-                              <div key={category} className="flex items-center justify-between">
-                                <div className="flex items-center space-x-3">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedCategories.includes(category)}
-                                    onChange={() => handleCategoryToggle(category)}
-                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                  />
-                                  <span className="text-sm text-gray-700">{category}</span>
-                                </div>
-                                <span className="text-xs text-gray-500">{count > 0 ? `${count}` : "0.0k"}</span>
+                          {filteredCategories.map((category) => (
+                            <div key={category.name} className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedCategories.includes(category.name)}
+                                  onChange={() => handleCategoryToggle(category.name)}
+                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-gray-700">{category.name}</span>
                               </div>
-                            )
-                          })}
+                              <span className="text-xs text-gray-500">{category.count}</span>
+                            </div>
+                          ))}
                         </div>
-                        <Button variant="ghost" size="sm" className="w-full mt-3 text-sm text-gray-600">
-                          View All
-                        </Button>
                       </div>
                     )}
                   </div>
@@ -832,37 +1096,23 @@ export default function EventsPageContent() {
                     {relatedTopicOpen && (
                       <div className="px-4 pb-4">
                         <div className="space-y-3">
-                          {["Expo", "Business Event", "Food & Beverage", "Finance", "Technology"].map((topic) => (
-                            <div key={topic} className="flex items-center justify-between">
+                          {relatedTopics.slice(0, 5).map((topic) => (
+                            <div key={topic.name} className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
                                 <input
                                   type="checkbox"
+                                  checked={selectedRelatedTopics.includes(topic.name)}
+                                  onChange={() => handleRelatedTopicToggle(topic.name)}
                                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                 />
-                                <span className="text-sm text-gray-700">{topic}</span>
+                                <span className="text-sm text-gray-700">{topic.name}</span>
                               </div>
-                              <span className="text-xs text-gray-500">0.0k</span>
+                              <span className="text-xs text-gray-500">{topic.count}</span>
                             </div>
                           ))}
                         </div>
-                        <Button variant="ghost" size="sm" className="w-full mt-3 text-sm text-gray-600">
-                          View All
-                        </Button>
                       </div>
                     )}
-                  </div>
-
-                  {/* Entry Fee Section */}
-                  <div className="border-b border-gray-100">
-                    <button
-                      onClick={() => setEntryFeeOpen(!entryFeeOpen)}
-                      className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-                    >
-                      <span className="text-gray-900 font-medium">Entry Fee</span>
-                      <ChevronDown
-                        className={`w-4 h-4 text-gray-400 transition-transform ${entryFeeOpen ? "rotate-180" : ""}`}
-                      />
-                    </button>
                   </div>
 
                   {/* Navigation Links */}
@@ -870,8 +1120,6 @@ export default function EventsPageContent() {
                     <h3 className="text-red-500 font-medium mb-1">Top 100 Events</h3>
                     <p className="text-sm text-gray-500">Discover and track top events</p>
                   </div>
-                  
-                  
                   <div className="p-4 border-b border-gray-100">
                     <h3 className="text-red-500 font-medium mb-1">Explore Speaker</h3>
                     <p className="text-sm text-gray-500">Discover and track top events</p>
@@ -894,15 +1142,17 @@ export default function EventsPageContent() {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => setViewMode("Trending")}
-                      className={`px-3 py-1 text-sm rounded-full ${viewMode === "Trending" ? "bg-orange-100 text-orange-600" : "text-gray-600 hover:text-gray-800"
-                        }`}
+                      className={`px-3 py-1 text-sm rounded-full ${
+                        viewMode === "Trending" ? "bg-orange-100 text-orange-600" : "text-gray-600 hover:text-gray-800"
+                      }`}
                     >
                       Trending 🔥
                     </button>
                     <button
                       onClick={() => setViewMode("Date")}
-                      className={`px-3 py-1 text-sm rounded-full ${viewMode === "Date" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:text-gray-800"
-                        }`}
+                      className={`px-3 py-1 text-sm rounded-full ${
+                        viewMode === "Date" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:text-gray-800"
+                      }`}
                     >
                       Date
                     </button>
@@ -924,10 +1174,11 @@ export default function EventsPageContent() {
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 rounded text-sm font-medium ${currentPage === page
-                          ? "bg-blue-600 text-white"
-                          : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                          }`}
+                        className={`w-8 h-8 rounded text-sm font-medium ${
+                          currentPage === page
+                            ? "bg-blue-600 text-white"
+                            : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                        }`}
                       >
                         {page}
                       </button>
@@ -945,6 +1196,7 @@ export default function EventsPageContent() {
                 </div>
               </div>
 
+              {/* Events List */}
               <div className="space-y-4">
                 {paginatedEvents.length === 0 ? (
                   <div className="text-center py-12">
@@ -958,7 +1210,7 @@ export default function EventsPageContent() {
                     <Link href={`/event/${event.id}`} key={event.id} className="block">
                       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all w-full">
                         <CardContent className="p-0 flex">
-                          {/* Left Image Section - Significantly reduced size */}
+                          {/* Left Image Section */}
                           <div className="relative w-[80px] h-[100px] sm:w-[100px] sm:h-[120px] md:w-[120px] md:h-[140px] lg:w-[140px] lg:h-[160px] flex-shrink-0">
                             <Image
                               src={event.image || "/images/gpex.jpg"}
@@ -972,38 +1224,30 @@ export default function EventsPageContent() {
                           <div className="flex-1 flex flex-col px-10 py-1 min-w-0">
                             {/* Top Section */}
                             <div className="min-w-0">
-                              {/* Title & Edition */}
                               <div className="flex items-start justify-between min-w-0">
                                 <div className="min-w-0 flex-1">
                                   <h3 className="text-xl font-bold text-gray-900 truncate">{event.title}</h3>
                                   <div className="flex items-center text-gray-600 mt-1">
                                     <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
                                     <span className="text-xs font-medium truncate">
-                                      {event.location?.address || "Address not comming"}
-                                      {/* {event.location?.venue || "Unknown Venue"},{" "} */}
-                                      {/* {event.location?.city || "Unknown City"} */}
+                                      {event.location?.address || "Address not available"}
                                     </span>
                                   </div>
                                   <div className="flex items-center text-gray-600 mt-1">
                                     <Calendar className="w-3 h-3 mr-1 flex-shrink-0" />
-                                    <span className="text-xs font-medium">
-                                      {event.timings?.formatted || "Mon, 27 - Wed, 29 Oct 2025"}
-                                    </span>
+                                    <span className="text-xs font-medium">{formatDate(event.timings.startDate)}</span>
                                   </div>
                                   <div className="flex items-center flex-wrap gap-3 p-2">
-                                    <div className="">
-                                      <Badge className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                                        Paid entry
-                                      </Badge>
-                                    </div>
-
+                                    <Badge className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                                      Paid entry
+                                    </Badge>
                                     <div className="flex gap-3">
                                       <div className="flex items-center gap-1 bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-xs font-semibold">
-
                                         <Star className="w-3 h-3 fill-current" />
-                                        {/* small guard for rating display to avoid runtime errors */}
                                         <span>
-                                          {Number.isFinite(event.rating?.average) ? event.rating.average.toFixed(1) : "4.5"}
+                                          {Number.isFinite(event.rating?.average)
+                                            ? event.rating.average.toFixed(1)
+                                            : "4.5"}
                                         </span>
                                         {event.totalReviews && event.totalReviews > 0 && (
                                           <span className="text-xs text-gray-500 ml-1">({event.totalReviews})</span>
@@ -1026,16 +1270,12 @@ export default function EventsPageContent() {
                                         </svg>
                                         {visitorCounts[event.id] || 0} Followers
                                       </div>
-
                                     </div>
                                   </div>
                                 </div>
 
-                                {/* Right Column: Edition + Rating + Followers + Paid Entry + Visit Button */}
                                 <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-3">
-                                  {/* Verified + Edition */}
                                   <div className="flex items-center gap-1">
-                                    {/* Verified Image */}
                                     <div className="w-5 h-5">
                                       <img
                                         src="/images/VerifiedBadge.png"
@@ -1048,7 +1288,6 @@ export default function EventsPageContent() {
                                 </div>
                               </div>
 
-                              {/* Tags */}
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {event.categories?.slice(0, 2).map((category: string, idx: number) => (
                                   <Badge
@@ -1061,14 +1300,9 @@ export default function EventsPageContent() {
                               </div>
                             </div>
 
-                            {/* Divider */}
                             <div className="border-t border-gray-200 mt-3" />
 
-                            {/* Bottom Section */}
                             <div className="flex items-center justify-between flex-wrap gap-2">
-                              {/* Organizer */}
-
-
                               <div className="flex items-center gap-2 text-xs text-gray-600 flex-wrap">
                                 <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-700 flex-shrink-0 text-xs">
                                   {typeof event.organizer === "string"
@@ -1082,9 +1316,9 @@ export default function EventsPageContent() {
                                 </span>
                               </div>
 
-                              {/* Share + Save + Visit Buttons */}
                               <div className="flex items-center gap-2 flex-shrink-0">
-                                <ShareButton id={event.id} title={event.title} type="event" />                                
+                                <ShareButton id={event.id} title={event.title} type="event" />
+                                
                                 <Button
                                   className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 mt-1 rounded-md text-sm shadow-sm"
                                   onClick={(e) => {
@@ -1093,15 +1327,14 @@ export default function EventsPageContent() {
                                     handleVisitClick(event.id, event.title)
                                   }}
                                 >
-                                    <BookmarkButton
+                                  <BookmarkButton
                                   eventId={event.id}
                                   className="p-1 rounded-full text-white transition"
                                 />
-                                  Save
+                                  save
                                 </Button>
                               </div>
                             </div>
-
                           </div>
                         </CardContent>
                       </div>
@@ -1110,6 +1343,7 @@ export default function EventsPageContent() {
                 )}
               </div>
 
+              {/* Featured Events and other sections remain the same */}
               {featuredEvents.length > 0 && (
                 <section className="py-8">
                   <div className="flex items-center justify-between mb-6">
@@ -1118,18 +1352,18 @@ export default function EventsPageContent() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={goToPrevSlide}
+                        onClick={() => setCurrentSlide((prev) => Math.max(0, prev - 1))}
                         className="p-2 bg-transparent"
-                        disabled={isTransitioning}
                       >
                         <ChevronLeft className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={goToNextSlide}
+                        onClick={() =>
+                          setCurrentSlide((prev) => Math.min(Math.ceil(featuredEvents.length / 3) - 1, prev + 1))
+                        }
                         className="p-2 bg-transparent"
-                        disabled={isTransitioning}
                       >
                         <ChevronRight className="w-4 h-4" />
                       </Button>
@@ -1137,7 +1371,7 @@ export default function EventsPageContent() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {featuredEvents.slice(0, 3).map((event) => (
+                    {featuredEvents.slice(currentSlide * 3, currentSlide * 3 + 3).map((event) => (
                       <Card key={event.id} className="hover:shadow-lg transition-shadow bg-white">
                         <div className="relative">
                           <Image
@@ -1166,13 +1400,12 @@ export default function EventsPageContent() {
                           </div>
                           <div className="flex items-center justify-between">
                             <Badge className="bg-blue-600 text-white text-xs">{event.categories[0]}</Badge>
-                            {/* small guard for rating display to avoid runtime errors */}
                             <span className="text-sm font-bold text-green-600">
                               {Number.isFinite(event.rating?.average) ? event.rating.average.toFixed(1) : "4.5"}
                             </span>
                           </div>
                           <button
-                            className="w-full  bg-blue-600 hover:bg-blue-700 text-white"
+                            className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm"
                             onClick={(e) => {
                               e.preventDefault()
                               e.stopPropagation()
@@ -1187,12 +1420,13 @@ export default function EventsPageContent() {
                   </div>
 
                   <div className="flex justify-center mt-4 space-x-1">
-                    {[0, 1, 2, 3].map((dot) => (
-                      <div key={dot} className={`w-2 h-2 rounded-full ${dot === 1 ? "bg-blue-600" : "bg-gray-300"}`} />
+                    {Array.from({ length: Math.ceil(featuredEvents.length / 3) }, (_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentSlide(i)}
+                        className={`w-2 h-2 rounded-full ${i === currentSlide ? "bg-blue-600" : "bg-gray-300"}`}
+                      />
                     ))}
-                  </div>
-                  <div className="text-center mt-2">
-                    <span className="text-xs text-gray-500">2 of 4</span>
                   </div>
                 </section>
               )}
@@ -1200,10 +1434,8 @@ export default function EventsPageContent() {
 
             {/* Right Column - Fixed width */}
             <div className="w-full lg:w-80 space-y-6 self-start flex-shrink-0">
-              {/* Advertisement */}
               <AdCard />
 
-              {/* Large Featured Event */}
               {featuredEvents[0] && (
                 <Card className="bg-white shadow-lg">
                   <div className="relative">
@@ -1222,16 +1454,14 @@ export default function EventsPageContent() {
                       <Badge className="bg-blue-600 text-white text-xs">Business Event</Badge>
                     </div>
                     <div className="absolute bottom-3 right-3 bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-semibold">
-                      {/* small guard for rating display to avoid runtime errors */}
                       {Number.isFinite(featuredEvents[0].rating?.average)
                         ? featuredEvents[0].rating.average.toFixed(1)
                         : "4.5"}
                     </div>
                   </div>
-                  <CardContent className="">
-                    {/* ensure every Visit button prevents navigation before calling handler */}
+                  <CardContent className="p-4">
                     <button
-                      className="flex items-center bg-red-600 hover:bg-red-700 text-white rounded-md text-sm shadow-sm"
+                      className="w-full flex items-center justify-center bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md text-sm shadow-sm"
                       onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
@@ -1245,18 +1475,11 @@ export default function EventsPageContent() {
                 </Card>
               )}
 
-              {/* Upcoming Events (Styled Like FeaturedEvents) */}
               <div className="space-y-5">
                 {events.slice(0, 3).map((event) => (
                   <Link key={event.id} href={`/event/${event.id}`} className="group block">
-                    <div
-                      className="bg-gradient-to-r from-yellow-100 to-yellow-300 rounded-2xl 
-                     p-4 flex flex-col gap-4 shadow-sm hover:shadow-lg hover:-translate-y-1 
-                     transition-all duration-300"
-                    >
-                      {/* Top Section */}
+                    <div className="bg-gradient-to-r from-yellow-100 to-yellow-300 rounded-2xl p-4 flex flex-col gap-4 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                       <div className="flex items-start gap-3">
-                        {/* Image */}
                         <div className="w-[90px] h-[80px] flex-shrink-0 rounded-xl overflow-hidden">
                           <Image
                             src={getEventImage(event) || "/placeholder.svg"}
@@ -1266,58 +1489,28 @@ export default function EventsPageContent() {
                             className="w-full h-full object-cover"
                           />
                         </div>
-
-                        {/* Info */}
                         <div className="flex flex-col text-left">
                           <h3 className="text-sm font-bold text-gray-900 leading-tight line-clamp-2">{event.title}</h3>
                           <p className="text-xs text-gray-700 mb-1">International Exhibition</p>
-
                           <div className="flex items-center text-xs font-semibold text-gray-800">
                             <CalendarDays className="w-3 h-3 mr-1 text-gray-700" />
-                            {new Date(event.timings.startDate).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
+                            {formatDate(event.timings.startDate)}
                           </div>
-
                           <div className="flex items-center text-xs text-gray-700 mt-1">
                             <MapPin className="w-3 h-3 mr-1 text-blue-700" />
                             {event.location?.city || "Chennai, India"}
                           </div>
                         </div>
                       </div>
-
-                      {/* Divider */}
                       <div className="border-t border-gray-300"></div>
-
-                      {/* Categories */}
                       <div className="flex gap-2 flex-wrap">
-                        <span
-                          className="px-2 py-1 text-xs rounded-full border border-gray-400 
-                         bg-white/70 text-gray-800"
-                        >
+                        <span className="px-2 py-1 text-xs rounded-full border border-gray-400 bg-white/70 text-gray-800">
                           {event.categories[0] || "General"}
                         </span>
-                        <span
-                          className="px-2 py-1 text-xs rounded-full border border-gray-400 
-                         bg-white/70 text-gray-800"
-                        >
+                        <span className="px-2 py-1 text-xs rounded-full border border-gray-400 bg-white/70 text-gray-800">
                           Power & Energy
                         </span>
                       </div>
-
-                      {/* Visit Button */}
-                      {/* <Button
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs py-1"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          handleVisitClick(event.id, event.title)
-                        }}
-                      >
-                        Visit
-                      </Button> */}
                     </div>
                   </Link>
                 ))}
