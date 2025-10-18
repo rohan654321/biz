@@ -403,7 +403,11 @@ export default function SpeakerPage({ params }: SpeakerPageProps) {
 
                           {/* Right side */}
                           <div className="flex items-center gap-2">
-                            <ShareButton eventId={e.id} eventTitle={e.title} />
+                            <ShareButton 
+  id={e.id} 
+  title={e.title} 
+  type="event" 
+/>
                           </div>
                         </div>
 
@@ -451,7 +455,11 @@ export default function SpeakerPage({ params }: SpeakerPageProps) {
                             <span className="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded">
                               {e.averageRating?.toFixed(1) || 0} ⭐
                             </span>
-                            <ShareButton eventId={e.id} eventTitle={e.title} />
+                            <ShareButton 
+  id={e.id} 
+  title={e.title} 
+  type="event" 
+/>
                           </div>
                         </div>
 

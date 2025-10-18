@@ -3,14 +3,14 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useSession } from "next-auth/react"
-import { Star, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
+import { useSession } from "next-auth/react"
+import { Star, Loader2 } from "lucide-react"
 
 interface Review {
   id: string
@@ -32,18 +32,18 @@ interface AddVenueReviewProps {
 }
 
 export function AddVenueReview({ venueId, onReviewAdded }: AddVenueReviewProps) {
-  const { data: session } = useSession()
-  const { toast } = useToast()
   const [rating, setRating] = useState(0)
-  const [hoveredRating, setHoveredRating] = useState(0)
   const [title, setTitle] = useState("")
   const [comment, setComment] = useState("")
-  const [submitting, setSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [hoveredRating, setHoveredRating] = useState(0)
+  const { toast } = useToast()
+  const { data: session } = useSession()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!session?.user?.id) {
+    if (!session?.user) {
       toast({
         title: "Authentication Required",
         description: "Please log in to submit a review.",
@@ -64,14 +64,14 @@ export function AddVenueReview({ venueId, onReviewAdded }: AddVenueReviewProps) 
     if (!comment.trim()) {
       toast({
         title: "Comment Required",
-        description: "Please write a comment before submitting.",
+        description: "Please write a comment for your review.",
         variant: "destructive",
       })
       return
     }
 
     try {
-      setSubmitting(true)
+      setIsSubmitting(true)
 
       const response = await fetch(`/api/venues/${venueId}/reviews`, {
         method: "POST",
@@ -80,53 +80,58 @@ export function AddVenueReview({ venueId, onReviewAdded }: AddVenueReviewProps) 
         },
         body: JSON.stringify({
           rating,
-          title: title.trim(),
+          title: title.trim() || null,
           comment: comment.trim(),
         }),
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Failed to submit review")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to submit review")
       }
 
-      const data = await response.json()
+      const reviewData = await response.json()
 
-      toast({
-        title: "Success",
-        description: "Your review has been submitted!",
-      })
+      if (!reviewData || typeof reviewData.rating !== "number" || !reviewData.user) {
+        console.error("[v0] Invalid review data received:", reviewData)
+        throw new Error("Invalid review data received from server")
+      }
 
-      // Call the callback with the new review
-      onReviewAdded(data.review)
+      // Call the callback with the validated review data
+      onReviewAdded(reviewData)
 
       // Reset form
       setRating(0)
       setTitle("")
       setComment("")
+
+      toast({
+        title: "Success",
+        description: "Your review has been submitted!",
+      })
     } catch (error) {
-      console.error("Error submitting review:", error)
+      console.error("[v0] Error submitting review:", error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to submit review",
         variant: "destructive",
       })
     } finally {
-      setSubmitting(false)
+      setIsSubmitting(false)
     }
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Write a Review</CardTitle>
+        <CardTitle>Share Your Experience</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Rating */}
-          <div className="space-y-2">
-            <Label>Rating *</Label>
-            <div className="flex items-center gap-1">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Rating Section */}
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">Rating</Label>
+            <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
@@ -143,40 +148,50 @@ export function AddVenueReview({ venueId, onReviewAdded }: AddVenueReviewProps) 
                   />
                 </button>
               ))}
-              {rating > 0 && <span className="ml-2 text-sm text-gray-600">{rating} out of 5 stars</span>}
             </div>
+            {rating > 0 && (
+              <p className="text-sm text-gray-600">
+                {rating === 1 && "Poor"}
+                {rating === 2 && "Fair"}
+                {rating === 3 && "Good"}
+                {rating === 4 && "Very Good"}
+                {rating === 5 && "Excellent"}
+              </p>
+            )}
           </div>
 
-          {/* Title */}
+          {/* Title Section */}
           <div className="space-y-2">
             <Label htmlFor="title">Review Title (Optional)</Label>
             <Input
               id="title"
-              placeholder="Summarize your experience"
+              placeholder="Summarize your experience..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={100}
+              disabled={isSubmitting}
             />
+            <p className="text-xs text-gray-500">{title.length}/100</p>
           </div>
 
-          {/* Comment */}
+          {/* Comment Section */}
           <div className="space-y-2">
-            <Label htmlFor="comment">Your Review *</Label>
+            <Label htmlFor="comment">Your Review</Label>
             <Textarea
               id="comment"
               placeholder="Share your experience with this venue..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              rows={4}
               maxLength={1000}
-              required
+              rows={5}
+              disabled={isSubmitting}
             />
-            <p className="text-xs text-gray-500">{comment.length}/1000 characters</p>
+            <p className="text-xs text-gray-500">{comment.length}/1000</p>
           </div>
 
           {/* Submit Button */}
-          <Button type="submit" disabled={submitting || rating === 0 || !comment.trim()} className="w-full">
-            {submitting ? (
+          <Button type="submit" disabled={isSubmitting || rating === 0 || !comment.trim()} className="w-full">
+            {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Submitting...
