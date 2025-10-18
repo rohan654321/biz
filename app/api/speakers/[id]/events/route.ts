@@ -1,4 +1,3 @@
-// app/api/speakers/[id]/events/route.ts
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
@@ -9,39 +8,38 @@ export async function GET(
   try {
     const { id } = await params
 
-    const events = await prisma.speakerSession.findMany({
-      where: {
-        speakerId: id,
+    const sessions = await prisma.speakerSession.findMany({
+      where: { speakerId: id },
+      include: { 
+        event: {
+          include: {
+            venue: true, // ✅ Include the venue data
+          },
+        },
       },
-      include: {
-        event: true,
-      },
-      orderBy: {
-        startTime: 'desc',
-      },
+      orderBy: { startTime: 'desc' },
     })
 
-    // Separate into upcoming and past events
     const now = new Date()
-    const upcoming = events.filter(session => new Date(session.startTime) > now)
-    const past = events.filter(session => new Date(session.startTime) <= now)
+    const upcoming = sessions.filter(s => new Date(s.startTime) > now)
+    const past = sessions.filter(s => new Date(s.startTime) <= now)
+
+    const mapSessionToEvent = (session: any) => ({
+      id: session.event.id,
+      title: session.event.title,
+      date: session.event.startDate.toISOString(),
+      location: session.event.venue
+        ? `${session.event.venue.venueName}, ${session.event.venue.venueCity}, ${session.event.venue.venueState}, ${session.event.venue.venueCountry}` 
+        : "TBD",
+      image: session.event.bannerImage || "/images/gpex.jpg",
+      averageRating: session.event.averageRating || 0,
+      currentAttendees: session.event.currentAttendees || 0,
+    })
 
     return NextResponse.json({
       success: true,
-      upcoming: upcoming.map(session => ({
-        id: session.id,
-        title: session.title,
-        date: session.startTime, // Format this as needed
-        location: session.room || "TBD",
-        image: "/placeholder.svg", // You might want to store event images
-      })),
-      past: past.map(session => ({
-        id: session.id,
-        title: session.title,
-        date: session.startTime, // Format this as needed
-        location: session.room || "TBD",
-        image: "/placeholder.svg", // You might want to store event images
-      })),
+      upcoming: upcoming.map(mapSessionToEvent),
+      past: past.map(mapSessionToEvent),
     })
   } catch (error) {
     console.error("Error fetching speaker events:", error)

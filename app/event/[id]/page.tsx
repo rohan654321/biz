@@ -845,7 +845,7 @@ export default function EventPage({ params }: EventPageProps) {
                             src={h.image || "/placeholder.svg?height=128&width=200"}
                             alt={h.name || "Featured Hotel"}
                             fill
-                            className="object-cover m-2 rounded-sm"
+                            className="object-cover m-2"
                             sizes="(max-width: 640px) 100vw, 33vw"
                           />
                           {h.badgeText && (
