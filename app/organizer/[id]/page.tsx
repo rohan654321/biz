@@ -8,8 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   MapPin,
-  Phone,
-  Mail,
   Globe,
   Calendar,
   Star,
@@ -19,6 +17,8 @@ import {
   Building,
   CheckCircle,
   ExternalLink,
+  X,
+  Mail,
 } from "lucide-react"
 import Image from "next/image"
 import { useParams, useRouter } from "next/navigation"
@@ -69,6 +69,13 @@ interface Event {
   isPublic: boolean
 }
 
+interface ContactFormData {
+  name: string
+  email: string
+  subject: string
+  message: string
+}
+
 export default function OrganizerPage() {
   const params = useParams()
   const router = useRouter()
@@ -80,6 +87,19 @@ export default function OrganizerPage() {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // Contact modal states
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false)
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false)
+  const [contactFormData, setContactFormData] = useState<ContactFormData>({
+    name: "",
+    email: "",
+    subject: "",
+    message: ""
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitMessage, setSubmitMessage] = useState("")
+
   const eventsPerPage = 6
 
   useEffect(() => {
@@ -121,23 +141,132 @@ export default function OrganizerPage() {
         avgRating: 0,
         upcomingEvents: 0,
         completedEvents: 0,
-        featuredEvents: 0,
       }
 
     const totalEvents = events.length
     const avgRating = 4.5 // placeholder since we don't have ratings in the API yet
     const upcomingEvents = events.filter((event) => event.status === "Active").length
     const completedEvents = events.filter((event) => event.status === "Completed").length
-    const featuredEvents = 0 // placeholder
 
     return {
       totalEvents,
       avgRating,
       upcomingEvents,
       completedEvents,
-      featuredEvents,
     }
   }, [organizer, events])
+
+  // Contact form handler
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setSubmitMessage("")
+
+    try {
+      const response = await fetch('/api/contact-organizer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...contactFormData,
+          organizerId: organizerId,
+          organizerName: organizer?.name,
+          organizerEmail: organizer?.email
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        setSubmitMessage(result.message || "Message sent successfully!")
+        setContactFormData({
+          name: "",
+          email: "",
+          subject: "",
+          message: ""
+        })
+        setTimeout(() => {
+          setIsContactModalOpen(false)
+          setSubmitMessage("")
+        }, 3000)
+      } else {
+        setSubmitMessage(result.error || "Failed to send message. Please try again.")
+      }
+    } catch (error) {
+      setSubmitMessage("An error occurred. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleContactFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setContactFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  // Quick subject buttons handler
+  const handleQuickSubject = (subject: string) => {
+    setContactFormData(prev => ({
+      ...prev,
+      subject
+    }))
+  }
+
+  // Reset contact form when modal closes
+  const handleCloseContactModal = () => {
+    setIsContactModalOpen(false)
+    setContactFormData({
+      name: "",
+      email: "",
+      subject: "",
+      message: ""
+    })
+    setSubmitMessage("")
+  }
+
+  // Handle contact button click - redirect to website
+  const handleContactClick = () => {
+    if (organizer?.website) {
+      window.open(organizer.website, '_blank', 'noopener,noreferrer')
+    } else {
+      // If no website, open contact modal as fallback
+      setIsContactModalOpen(true)
+    }
+  }
+
+  // Share functionality
+  const handleShare = (platform: string) => {
+    const shareUrl = window.location.href
+    const shareText = `Check out ${organizer?.name} on our platform!`
+    
+    const shareUrls = {
+      gmail: `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(organizer?.name || '')}&body=${encodeURIComponent(shareText + ' ' + shareUrl)}`,
+      whatsapp: `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
+      outlook: `https://outlook.office.com/mail/deeplink/compose?subject=${encodeURIComponent(organizer?.name || '')}&body=${encodeURIComponent(shareText + ' ' + shareUrl)}`,
+      twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`
+    }
+
+    const url = shareUrls[platform as keyof typeof shareUrls]
+    if (url) {
+      window.open(url, '_blank', 'width=600,height=400')
+    }
+  }
+
+  // Copy to clipboard
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      alert('Link copied to clipboard!')
+    } catch (err) {
+      console.error('Failed to copy link:', err)
+    }
+  }
 
   if (loading) {
     return (
@@ -205,40 +334,25 @@ export default function OrganizerPage() {
               </div>
               <p className="text-xl text-blue-100 mb-4">{organizer.description}</p>
 
-              {/* Contact Info */}
+              {/* Contact Info - Simplified */}
               <div className="flex flex-wrap gap-6 text-blue-100">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
                   <span>{organizer.headquarters}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  <span>{organizer.phone}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  <span>{organizer.email}</span>
-                </div>
-                {organizer.website && (
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-4 h-4" />
-                    <a href={organizer.website} className="hover:text-white transition-colors">
-                      Visit Website
-                    </a>
-                  </div>
-                )}
               </div>
             </div>
 
             {/* Action Buttons */}
             <div className="flex flex-col gap-3">
-              <Button className="bg-white text-blue-600 hover:bg-blue-50">
+              {/* <Button className="bg-white text-blue-600 hover:bg-blue-50">
                 <Heart className="w-4 h-4 mr-2" />
                 Follow
-              </Button>
+              </Button> */}
               <Button
                 variant="outline"
                 className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent"
+                onClick={() => setIsShareModalOpen(true)}
               >
                 <Share2 className="w-4 h-4 mr-2" />
                 Share
@@ -246,6 +360,7 @@ export default function OrganizerPage() {
               <Button
                 variant="outline"
                 className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent"
+                onClick={handleContactClick}
               >
                 <Mail className="w-4 h-4 mr-2" />
                 Contact
@@ -255,10 +370,10 @@ export default function OrganizerPage() {
         </div>
       </div>
 
-      {/* Stats Section */}
+      {/* Stats Section - Updated */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">{organizer.totalEvents}</div>
               <div className="text-sm text-gray-600">Total Events</div>
@@ -268,19 +383,11 @@ export default function OrganizerPage() {
               <div className="text-sm text-gray-600">Active Events</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{organizer.totalAttendees}</div>
-              <div className="text-sm text-gray-600">Total Attendees</div>
-            </div>
-            <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <Star className="w-5 h-5 text-yellow-400 fill-current" />
                 <span className="text-2xl font-bold text-gray-900">{stats.avgRating}</span>
               </div>
               <div className="text-sm text-gray-600">Avg Rating</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{stats.featuredEvents}</div>
-              <div className="text-sm text-gray-600">Featured</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">{organizer.founded}</div>
@@ -529,19 +636,17 @@ export default function OrganizerPage() {
                     {organizer.website && (
                       <div>
                         <label className="text-sm font-medium text-gray-500">Website</label>
-                        <a href={organizer.website} className="text-blue-600 hover:underline flex items-center gap-1">
+                        <a 
+                          href={organizer.website} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline flex items-center gap-1"
+                        >
                           {organizer.website}
                           <ExternalLink className="w-4 h-4" />
                         </a>
                       </div>
                     )}
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Contact</label>
-                      <div className="space-y-1">
-                        <p className="text-gray-900">{organizer.phone}</p>
-                        <p className="text-gray-900">{organizer.email}</p>
-                      </div>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -557,14 +662,6 @@ export default function OrganizerPage() {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Active Events</span>
                       <span className="font-semibold">{organizer.activeEvents}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Total Attendees</span>
-                      <span className="font-semibold">{organizer.totalAttendees.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Total Revenue</span>
-                      <span className="font-semibold">${organizer.totalRevenue.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Team Size</span>
@@ -599,6 +696,271 @@ export default function OrganizerPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Contact Modal - Only shown if no website exists */}
+      {isContactModalOpen && !organizer?.website && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold">Contact {organizer?.name}</h3>
+              <button
+                onClick={handleCloseContactModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {/* Quick Subject Buttons */}
+            <div className="p-6 border-b">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Quick Options</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickSubject("Event Partnership Inquiry")}
+                  className="text-xs"
+                >
+                  Partnership
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickSubject("Speaking Opportunity")}
+                  className="text-xs"
+                >
+                  Speaking
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickSubject("Sponsorship Inquiry")}
+                  className="text-xs"
+                >
+                  Sponsorship
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickSubject("General Question")}
+                  className="text-xs"
+                >
+                  General
+                </Button>
+              </div>
+            </div>
+            
+            <form onSubmit={handleContactSubmit} className="p-6 space-y-4">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                  Your Name *
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  required
+                  value={contactFormData.name}
+                  onChange={handleContactFormChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter your name"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Your Email *
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  required
+                  value={contactFormData.email}
+                  onChange={handleContactFormChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter your email"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
+                  Subject *
+                </label>
+                <input
+                  type="text"
+                  id="subject"
+                  name="subject"
+                  required
+                  value={contactFormData.subject}
+                  onChange={handleContactFormChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Subject of your message"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                  Message *
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  required
+                  rows={4}
+                  value={contactFormData.message}
+                  onChange={handleContactFormChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  placeholder="Enter your message..."
+                />
+              </div>
+              
+              {submitMessage && (
+                <div className={`p-3 rounded-md ${
+                  submitMessage.includes("successfully") 
+                    ? "bg-green-100 text-green-700 border border-green-200" 
+                    : "bg-red-100 text-red-700 border border-red-200"
+                }`}>
+                  {submitMessage}
+                </div>
+              )}
+              
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCloseContactModal}
+                  className="flex-1"
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Message"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold">Share {organizer?.name}</h3>
+              <button
+                onClick={() => setIsShareModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <Button
+                  variant="outline"
+                  className="flex flex-col items-center gap-2 h-auto py-4"
+                  onClick={() => handleShare('gmail')}
+                >
+                  <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">G</span>
+                  </div>
+                  <span className="text-xs">Gmail</span>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="flex flex-col items-center gap-2 h-auto py-4"
+                  onClick={() => handleShare('whatsapp')}
+                >
+                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">W</span>
+                  </div>
+                  <span className="text-xs">WhatsApp</span>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="flex flex-col items-center gap-2 h-auto py-4"
+                  onClick={() => handleShare('linkedin')}
+                >
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">in</span>
+                  </div>
+                  <span className="text-xs">LinkedIn</span>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="flex flex-col items-center gap-2 h-auto py-4"
+                  onClick={() => handleShare('outlook')}
+                >
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">O</span>
+                  </div>
+                  <span className="text-xs">Outlook</span>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="flex flex-col items-center gap-2 h-auto py-4"
+                  onClick={() => handleShare('twitter')}
+                >
+                  <div className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">X</span>
+                  </div>
+                  <span className="text-xs">Twitter</span>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="flex flex-col items-center gap-2 h-auto py-4"
+                  onClick={() => handleShare('facebook')}
+                >
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">f</span>
+                  </div>
+                  <span className="text-xs">Facebook</span>
+                </Button>
+              </div>
+              
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={window.location.href}
+                  readOnly
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+                <Button
+                  variant="outline"
+                  onClick={handleCopyLink}
+                  className="whitespace-nowrap"
+                >
+                  Copy Link
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

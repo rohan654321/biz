@@ -7,16 +7,20 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const page = Number.parseInt(searchParams.get("page") || "1")
-    const limit = Number.parseInt(searchParams.get("limit") || "10")
-    const search = searchParams.get("search")
+    const limit = Number.parseInt(searchParams.get("limit") || "12")
+    const search = searchParams.get("search") || ""
+    const category = searchParams.get("category") || ""
+    const expertise = searchParams.get("expertise") || ""
 
     const skip = (page - 1) * limit
 
+    // Build where clause for filtering
     const where: any = {
       role: "SPEAKER",
       isActive: true,
     }
 
+    // Search across multiple fields
     if (search) {
       where.OR = [
         {
@@ -50,53 +54,89 @@ export async function GET(request: NextRequest) {
           },
         },
         {
+          bio: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
           specialties: {
-            has: search,
+            hasSome: [search],
           },
         },
       ]
     }
 
-    await prisma.$connect()
-    console.log("Database connected for speakers list")
+    // Filter by expertise (specialties)
+    if (expertise) {
+      where.specialties = {
+        has: expertise
+      }
+    }
 
-    const [speakers, total] = await Promise.all([
-      prisma.user.findMany({
-        where,
-        skip,
-        take: limit,
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          phone: true,
-          avatar: true,
-          bio: true,
-          company: true,
-          jobTitle: true,
-          location: true,
-          website: true,
-          linkedin: true,
-          twitter: true,
-          specialties: true,
-          achievements: true,
-          certifications: true,
-          speakingExperience: true,
-          createdAt: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      }),
-      prisma.user.count({ where }),
-    ])
+    await prisma.$connect()
+
+    // Get speakers with enhanced data
+    const speakers = await prisma.user.findMany({
+      where,
+      skip,
+      take: limit,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        avatar: true,
+        bio: true,
+        company: true,
+        jobTitle: true,
+        location: true,
+        website: true,
+        linkedin: true,
+        twitter: true,
+        specialties: true,
+        achievements: true,
+        certifications: true,
+        speakingExperience: true,
+        isVerified: true,
+        totalEvents: true,
+        activeEvents: true,
+        totalAttendees: true,
+        totalRevenue: true,
+        averageRating: true,
+        totalReviews: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: {
+        totalEvents: "desc",
+      },
+    })
+
+    // Get total count for pagination
+    const total = await prisma.user.count({ where })
+
+    // Get unique specialties for filters
+    const allSpeakersWithSpecialties = await prisma.user.findMany({
+      where: { role: "SPEAKER", isActive: true },
+      select: { specialties: true }
+    })
+
+    const allExpertise = Array.from(
+      new Set(
+        allSpeakersWithSpecialties.flatMap(speaker => speaker.specialties)
+      )
+    ).filter(Boolean).sort()
 
     console.log(`Found ${speakers.length} speakers out of ${total} total`)
 
     return NextResponse.json({
       success: true,
       speakers,
+      filters: {
+        expertise: allExpertise,
+      },
       pagination: {
         page,
         limit,
@@ -106,7 +146,10 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Error fetching speakers:", error)
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }
 
@@ -114,7 +157,10 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      )
     }
 
     const body = await request.json()
@@ -138,7 +184,10 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!firstName || !lastName || !email) {
-      return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, error: "Missing required fields" },
+        { status: 400 }
+      )
     }
 
     // Check if user already exists
@@ -147,7 +196,10 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingUser) {
-      return NextResponse.json({ success: false, error: "User with this email already exists" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, error: "User with this email already exists" },
+        { status: 400 }
+      )
     }
 
     const speaker = await prisma.user.create({
@@ -168,7 +220,7 @@ export async function POST(request: NextRequest) {
         certifications: certifications || [],
         speakingExperience,
         role: "SPEAKER",
-        password: "temp_password", // This should be handled properly in production
+        password: "temp_password", // In production, use proper password hashing
         isActive: true,
       },
     })
@@ -180,6 +232,9 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("Error creating speaker:", error)
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }
