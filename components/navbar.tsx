@@ -85,13 +85,13 @@ export default function Navbar() {
             </Link>
 
             <div className="relative">
-              <button
+              {/* <button
                 onClick={toggleExplore}
                 className="flex items-center text-gray-700 hover:text-gray-900 focus:outline-none"
               >
                 <span>Explore</span>
                 <ChevronDown className="w-4 h-4 ml-1" />
-              </button>
+              </button> */}
 
               {exploreOpen && (
                 <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">

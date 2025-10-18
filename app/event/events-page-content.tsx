@@ -38,11 +38,13 @@ interface Event {
   tags: string[]
   images: { url: string }[]
   location: {
+    address: string
     city: string
     venue: string
     country?: string
   }
   venue?: {
+    venueAddress?: string
     venueCity?: string
     venueCountry?: string
   }
@@ -174,9 +176,10 @@ export default function EventsPageContent() {
             endDate: event.endDate,
           },
           location: {
-            city: event.venue?.venueCity || event.location?.city || "Unknown City",
-            venue: event.location?.venue || "Unknown Venue",
-            country: event.venue?.venueCountry || event.location?.country,
+            address: event.venue?.venueAddress || "Not Added"
+            // city: event.venue?.venueCity || event.location?.city || "Unknown City",
+            // venue: event.location?.venue || "Unknown Venue",
+            // country: event.venue?.venueCountry || event.location?.country,
           },
           featured: event.tags?.includes("featured") || false,
           categories: event.categories || [],
@@ -976,8 +979,9 @@ export default function EventsPageContent() {
                                   <div className="flex items-center text-gray-600 mt-1">
                                     <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
                                     <span className="text-xs font-medium truncate">
-                                      {event.location?.venue || "Unknown Venue"},{" "}
-                                      {event.location?.city || "Unknown City"}
+                                      {event.location?.address || "Address not comming"}
+                                      {/* {event.location?.venue || "Unknown Venue"},{" "} */}
+                                      {/* {event.location?.city || "Unknown City"} */}
                                     </span>
                                   </div>
                                   <div className="flex items-center text-gray-600 mt-1">
@@ -1115,28 +1119,28 @@ export default function EventsPageContent() {
                                 </span>
                               </div>
 
-                              {/* Share + Save + Visit Buttons */}
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                <ShareButton eventId={event.id} eventTitle={event.title} />
-                                <BookmarkButton
-                                  eventId={event.id}
-                                  className="p-1 rounded-full hover:bg-gray-100 transition"
-                                />
-                                <Button
-                                  className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 mt-1 rounded-md text-sm shadow-sm"
-                                  onClick={(e) => {
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    handleVisitClick(event.id, event.title)
-                                  }}
-                                >
-                                  <UserPlus className="w-2 h-2 mr-1" />
-                                  Visit
-                                </Button>
+                                {/* Share + Save + Visit Buttons */}
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <ShareButton id={event.id} title={event.title} type="event" />
+                                  <BookmarkButton
+                                    eventId={event.id}
+                                    className="p-1 rounded-full hover:bg-gray-100 transition"
+                                  />
+                                  <Button
+                                    className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 mt-1 rounded-md text-sm shadow-sm"
+                                    onClick={(e) => {
+                                      e.preventDefault()
+                                      e.stopPropagation()
+                                      handleVisitClick(event.id, event.title)
+                                    }}
+                                  >
+                                    <UserPlus className="w-2 h-2 mr-1" />
+                                    Visit
+                                  </Button>
+                                </div>
                               </div>
+                              
                             </div>
-
-                          </div>
                         </CardContent>
                       </div>
                     </Link>

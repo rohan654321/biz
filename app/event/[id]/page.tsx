@@ -923,7 +923,7 @@ export default function EventPage({ params }: EventPageProps) {
               </CardContent>
             </Card>
             {/* Featured Hotels Card */}
-            <Card className="hover:shadow-md transition-shadow border border-gray-200 rounded-lg">
+            <div className="hover:shadow-md  transition-shadow border border-gray-200 rounded-lg">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-semibold">Featured Hotels</CardTitle>
               </CardHeader>
@@ -949,7 +949,7 @@ export default function EventPage({ params }: EventPageProps) {
                             src={h.image || "/placeholder.svg?height=128&width=200"}
                             alt={h.name || "Featured Hotel"}
                             fill
-                            className="object-cover"
+                            className="object-cover m-2"
                             sizes="(max-width: 640px) 100vw, 33vw"
                           />
                           {h.badgeText && (
@@ -1032,7 +1032,7 @@ export default function EventPage({ params }: EventPageProps) {
                   ))
                 )}
               </CardContent>
-            </Card>
+            </div>
 
             {/* Featured Travel Partners */}
             <Card className="hover:shadow-md transition-shadow border border-gray-200 rounded-lg">
