@@ -1084,10 +1084,7 @@ export default function EventsPageContent() {
 
                               {/* Share + Save + Visit Buttons */}
                               <div className="flex items-center gap-2 flex-shrink-0">
-                                <ShareButton id={event.id} title={event.title} type="event" />                                  <BookmarkButton
-                                  eventId={event.id}
-                                  className="p-1 rounded-full hover:bg-gray-100 transition"
-                                />
+                                <ShareButton id={event.id} title={event.title} type="event" />                                
                                 <Button
                                   className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 mt-1 rounded-md text-sm shadow-sm"
                                   onClick={(e) => {
@@ -1096,8 +1093,11 @@ export default function EventsPageContent() {
                                     handleVisitClick(event.id, event.title)
                                   }}
                                 >
-                                  <UserPlus className="w-2 h-2 mr-1" />
-                                  Visit
+                                    <BookmarkButton
+                                  eventId={event.id}
+                                  className="p-1 rounded-full text-white transition"
+                                />
+                                  Save
                                 </Button>
                               </div>
                             </div>
