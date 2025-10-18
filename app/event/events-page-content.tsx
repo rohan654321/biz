@@ -1045,43 +1045,6 @@ export default function EventsPageContent() {
                                     </div>
                                     <span className="text-gray-600 font-medium text-xs">2nd Edition</span>
                                   </div>
-
-                                  {/* Rating */}
-                                  {/* <div className="flex items-center gap-1 bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-xs font-semibold">
-                                    <Star className="w-3 h-3 fill-current" />
-                                    
-                                    <span>
-                                      {Number.isFinite(event.rating?.average) ? event.rating.average.toFixed(1) : "4.5"}
-                                    </span>
-                                    {event.totalReviews && event.totalReviews > 0 && (
-                                      <span className="text-xs text-gray-500 ml-1">({event.totalReviews})</span>
-                                    )}
-                                   </div> */}
-
-                                  {/* replace per-card random followers with real count */}
-                                  {/* Followers */}
-                                  {/* <div className="flex items-center text-gray-600 text-xs gap-1">
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      className="w-3 h-3 text-gray-400"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                      strokeWidth={2}
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m4-9a4 4 0 100 8 4 4 0 000-8z"
-                                      />
-                                    </svg>
-                                    {visitorCounts[event.id] || 0} Followers
-                                     </div> */}
-
-                                  {/* Paid Entry */}
-                                  {/* <Badge className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                                    Paid entry
-                                    </Badge> */}
                                 </div>
                               </div>
 
@@ -1119,28 +1082,27 @@ export default function EventsPageContent() {
                                 </span>
                               </div>
 
-                                {/* Share + Save + Visit Buttons */}
-                                <div className="flex items-center gap-2 flex-shrink-0">
-                                  <ShareButton id={event.id} title={event.title} type="event" />
-                                  <BookmarkButton
-                                    eventId={event.id}
-                                    className="p-1 rounded-full hover:bg-gray-100 transition"
-                                  />
-                                  <Button
-                                    className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 mt-1 rounded-md text-sm shadow-sm"
-                                    onClick={(e) => {
-                                      e.preventDefault()
-                                      e.stopPropagation()
-                                      handleVisitClick(event.id, event.title)
-                                    }}
-                                  >
-                                    <UserPlus className="w-2 h-2 mr-1" />
-                                    Visit
-                                  </Button>
-                                </div>
+                              {/* Share + Save + Visit Buttons */}
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <ShareButton id={event.id} title={event.title} type="event" />                                
+                                <Button
+                                  className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 mt-1 rounded-md text-sm shadow-sm"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    handleVisitClick(event.id, event.title)
+                                  }}
+                                >
+                                    <BookmarkButton
+                                  eventId={event.id}
+                                  className="p-1 rounded-full text-white transition"
+                                />
+                                  Save
+                                </Button>
                               </div>
-                              
                             </div>
+
+                          </div>
                         </CardContent>
                       </div>
                     </Link>

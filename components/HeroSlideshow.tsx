@@ -85,7 +85,7 @@ export default async function HeroSlideshow() {
             const venue = event.venue
             const location = venue
               ? [
-                  venue.venueName,
+                  // venue.venueName,
                   venue.venueAddress,
                   venue.venueCity,
                   venue.venueCountry,

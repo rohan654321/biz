@@ -39,7 +39,7 @@ export default function Home() {
        <ExploreVenues />
        <FeaturedOrganizers />
        <EventReviews />
-       <GetAppSection />
+       {/* <GetAppSection /> */}
        <div></div>
     </div>
     </div>
