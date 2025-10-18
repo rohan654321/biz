@@ -25,22 +25,25 @@ interface Speaker {
   achievements: string[]
   certifications: string[]
   speakingExperience: string | null
+  isVerified: boolean
+  totalEvents: number
+  activeEvents: number
+  totalAttendees: number
+  totalRevenue: number
+  averageRating: number
+  totalReviews: number
   createdAt: string
-  totalEvents?: number
-  upcomingEvents?: number
-  eventCategories?: string[]
-  nextEvent?: any
-  rating?: {
-    average: number
-    count: number
-  }
-  followers?: number
-  isVerified?: boolean
+  updatedAt: string
+  upcomingEventsCount?: number
+  pastEventsCount?: number
 }
 
 interface ApiResponse {
   success: boolean
   speakers: Speaker[]
+  filters: {
+    expertise: string[]
+  }
   pagination: {
     page: number
     limit: number
@@ -49,13 +52,19 @@ interface ApiResponse {
   }
 }
 
+interface SpeakerEventsResponse {
+  success: boolean
+  upcoming: any[]
+  past: any[]
+}
+
 export default function SpeakersPage() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("")
   const [selectedExpertise, setSelectedExpertise] = useState("")
-  const [sortBy, setSortBy] = useState("followers")
+  const [sortBy, setSortBy] = useState("events")
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [speakers, setSpeakers] = useState<Speaker[]>([])
+  const [availableExpertise, setAvailableExpertise] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -64,7 +73,13 @@ export default function SpeakersPage() {
     async function fetchSpeakers() {
       try {
         setLoading(true)
-        const response = await fetch(`/api/speakers?search=${searchQuery}`)
+        
+        // Build query parameters
+        const params = new URLSearchParams()
+        if (searchQuery) params.append('search', searchQuery)
+        if (selectedExpertise) params.append('expertise', selectedExpertise)
+        
+        const response = await fetch(`/api/speakers?${params.toString()}`)
         
         if (!response.ok) {
           throw new Error('Failed to fetch speakers')
@@ -73,22 +88,49 @@ export default function SpeakersPage() {
         const data: ApiResponse = await response.json()
         
         if (data.success) {
-          // Enhance speaker data with additional properties for UI
-          const enhancedSpeakers = data.speakers.map(speaker => ({
-            ...speaker,
-            // Mock data for UI elements that aren't in your schema yet
-            totalEvents: Math.floor(Math.random() * 20) + 1,
-            upcomingEvents: Math.floor(Math.random() * 5),
-            eventCategories: ["Technology", "Business", "Marketing"].slice(0, Math.floor(Math.random() * 3) + 1),
-            rating: {
-              average: Math.random() * 2 + 3, // Random rating between 3-5
-              count: Math.floor(Math.random() * 100) + 10
-            },
-            followers: Math.floor(Math.random() * 1000) + 100,
-            isVerified: Math.random() > 0.3 // 70% chance of being verified
-          }))
+          // Fetch events count for each speaker
+          const speakersWithEventsCount = await Promise.all(
+            data.speakers.map(async (speaker) => {
+              try {
+                // Fetch events for each speaker to get counts
+                const eventsResponse = await fetch(`/api/speakers/${speaker.id}/events`)
+                if (eventsResponse.ok) {
+                  const eventsData: SpeakerEventsResponse = await eventsResponse.json()
+                  if (eventsData.success) {
+                    const upcomingCount = eventsData.upcoming?.length || 0
+                    const pastCount = eventsData.past?.length || 0
+                    const totalEventsCount = upcomingCount + pastCount
+                    
+                    return {
+                      ...speaker,
+                      upcomingEventsCount: upcomingCount,
+                      pastEventsCount: pastCount,
+                      // Use calculated total if not provided by API, otherwise use API value
+                      totalEvents: speaker.totalEvents || totalEventsCount
+                    }
+                  }
+                }
+                // Return speaker with zero counts if API fails
+                return {
+                  ...speaker,
+                  upcomingEventsCount: 0,
+                  pastEventsCount: 0,
+                  totalEvents: speaker.totalEvents || 0
+                }
+              } catch (error) {
+                console.error(`Error fetching events for speaker ${speaker.id}:`, error)
+                return {
+                  ...speaker,
+                  upcomingEventsCount: 0,
+                  pastEventsCount: 0,
+                  totalEvents: speaker.totalEvents || 0
+                }
+              }
+            })
+          )
           
-          setSpeakers(enhancedSpeakers)
+          setSpeakers(speakersWithEventsCount)
+          setAvailableExpertise(data.filters.expertise)
         } else {
           throw new Error('Failed to load speakers')
         }
@@ -106,7 +148,7 @@ export default function SpeakersPage() {
     }, 300)
 
     return () => clearTimeout(timeoutId)
-  }, [searchQuery])
+  }, [searchQuery, selectedExpertise])
 
   const toggleFavorite = (speakerId: string) => {
     const newFavorites = new Set(favorites)
@@ -118,59 +160,41 @@ export default function SpeakersPage() {
     setFavorites(newFavorites)
   }
 
-  // Get unique expertise areas and categories for filters
-  const allExpertise = useMemo(() => {
-    const expertiseSet = new Set<string>()
-    speakers.forEach((speaker) => {
-      speaker.specialties.forEach((skill) => expertiseSet.add(skill))
-    })
-    return Array.from(expertiseSet).sort()
-  }, [speakers])
-
-  const allCategories = useMemo(() => {
-    const categorySet = new Set<string>()
-    speakers.forEach((speaker) => {
-      if (speaker.eventCategories) {
-        speaker.eventCategories.forEach((category) => categorySet.add(category))
-      }
-    })
-    return Array.from(categorySet).sort()
-  }, [speakers])
-
   // Filter and sort speakers
   const filteredSpeakers = useMemo(() => {
-    let filtered = speakers
+    let filtered = [...speakers]
 
-    // Search filter (already handled by API, but we can do additional filtering)
-    if (selectedCategory) {
-      filtered = filtered.filter((speaker) => 
-        speaker.eventCategories?.some((category) => category === selectedCategory)
-      )
-    }
-
-    // Expertise filter
-    if (selectedExpertise) {
-      filtered = filtered.filter((speaker) => speaker.specialties.includes(selectedExpertise))
-    }
-
-    // Sort speakers
+    // Sort speakers based on selected criteria
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "rating":
-          return (b.rating?.average || 0) - (a.rating?.average || 0)
+          return (b.averageRating || 0) - (a.averageRating || 0)
+        case "reviews":
+          return (b.totalReviews || 0) - (a.totalReviews || 0)
+        case "upcoming":
+          return (b.upcomingEventsCount || 0) - (a.upcomingEventsCount || 0)
+        case "past":
+          return (b.pastEventsCount || 0) - (a.pastEventsCount || 0)
         case "events":
-          return (b.totalEvents || 0) - (a.totalEvents || 0)
-        case "followers":
         default:
-          return (b.followers || 0) - (a.followers || 0)
+          return (b.totalEvents || 0) - (a.totalEvents || 0)
       }
     })
 
     return filtered
-  }, [speakers, selectedCategory, selectedExpertise, sortBy])
+  }, [speakers, sortBy])
 
   const handleSpeakerClick = (speakerId: string) => {
     router.push(`/speakers/${speakerId}`)
+  }
+
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase()
+  }
+
+  // Calculate total events for a speaker
+  const getTotalEvents = (speaker: Speaker) => {
+    return speaker.totalEvents || (speaker.upcomingEventsCount || 0) + (speaker.pastEventsCount || 0)
   }
 
   if (loading) {
@@ -185,6 +209,12 @@ export default function SpeakersPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-red-600 text-xl">Error: {error}</div>
+        <Button 
+          onClick={() => window.location.reload()} 
+          className="ml-4"
+        >
+          Retry
+        </Button>
       </div>
     )
   }
@@ -199,7 +229,7 @@ export default function SpeakersPage() {
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Search speakers by name, expertise, or company..."
+              placeholder="Search speakers by name, expertise, company, or bio..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 py-3 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -217,56 +247,36 @@ export default function SpeakersPage() {
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">
-                {filteredSpeakers.reduce((sum, speaker) => sum + (speaker.totalEvents || 0), 0)}
+                {filteredSpeakers.reduce((sum, speaker) => sum + getTotalEvents(speaker), 0)}
               </div>
               <div className="text-sm text-gray-600">Total Events</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">
-                {(
-                  filteredSpeakers.reduce((sum, speaker) => sum + (speaker.rating?.average || 0), 0) / 
-                  (filteredSpeakers.length || 1)
-                ).toFixed(1)}
+                {filteredSpeakers.reduce((sum, speaker) => sum + (speaker.upcomingEventsCount || 0), 0)}
               </div>
-              <div className="text-sm text-gray-600">Avg Rating</div>
+              <div className="text-sm text-gray-600">Upcoming Events</div>
             </div>
           </div>
 
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-4">
-            {/* Category Filter */}
-            <div className="relative">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="appearance-none bg-white border border-gray-300 rounded-md px-4 py-2 pr-8 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">All Categories</option>
-                {allCategories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            </div>
-
             {/* Expertise Filter */}
-            <div className="relative">
+            {/* <div className="relative">
               <select
                 value={selectedExpertise}
                 onChange={(e) => setSelectedExpertise(e.target.value)}
                 className="appearance-none bg-white border border-gray-300 rounded-md px-4 py-2 pr-8 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">All Expertise</option>
-                {allExpertise.map((skill) => (
-                  <option key={skill} value={skill}>
-                    {skill}
+                {availableExpertise.map((expertise) => (
+                  <option key={expertise} value={expertise}>
+                    {expertise}
                   </option>
                 ))}
               </select>
               <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            </div>
+            </div> */}
 
             {/* Sort By */}
             <div className="relative">
@@ -275,9 +285,11 @@ export default function SpeakersPage() {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="appearance-none bg-white border border-gray-300 rounded-md px-4 py-2 pr-8 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="followers">Sort by Followers</option>
+                <option value="events">Sort by Total Events</option>
+                <option value="upcoming">Sort by Upcoming Events</option>
+                <option value="past">Sort by Past Events</option>
                 <option value="rating">Sort by Rating</option>
-                <option value="events">Sort by Events</option>
+                <option value="reviews">Sort by Reviews</option>
               </select>
               <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
@@ -285,17 +297,12 @@ export default function SpeakersPage() {
         </div>
 
         {/* Clear Filters */}
-        {(selectedCategory || selectedExpertise || searchQuery) && (
+        {(selectedExpertise || searchQuery) && (
           <div className="mb-6 flex items-center space-x-2">
             <span className="text-sm text-gray-500">Active filters:</span>
             {searchQuery && (
               <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                 Search: {searchQuery}
-              </Badge>
-            )}
-            {selectedCategory && (
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                Category: {selectedCategory}
               </Badge>
             )}
             {selectedExpertise && (
@@ -308,7 +315,6 @@ export default function SpeakersPage() {
               size="sm"
               onClick={() => {
                 setSearchQuery("")
-                setSelectedCategory("")
                 setSelectedExpertise("")
               }}
               className="text-xs text-gray-500 hover:text-gray-700"
@@ -324,6 +330,15 @@ export default function SpeakersPage() {
             <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No speakers found</h3>
             <p className="text-gray-600">Try adjusting your search criteria or filters</p>
+            <Button
+              onClick={() => {
+                setSearchQuery("")
+                setSelectedExpertise("")
+              }}
+              className="mt-4"
+            >
+              Clear Filters
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -334,7 +349,7 @@ export default function SpeakersPage() {
                 onClick={() => handleSpeakerClick(speaker.id)}
               >
                 {/* Favorite Button */}
-                <button
+                {/* <button
                   onClick={(e) => {
                     e.stopPropagation()
                     toggleFavorite(speaker.id)
@@ -342,22 +357,23 @@ export default function SpeakersPage() {
                   className="absolute top-2 right-2 p-1 hover:bg-gray-100 rounded-full z-10"
                 >
                   <Heart
-                    className={`w-4 h-4 ${favorites.has(speaker.id)
-                      ? "fill-red-500 text-red-500"
-                      : "text-gray-400 hover:text-red-500"
-                      }`}
+                    className={`w-4 h-4 ${
+                      favorites.has(speaker.id)
+                        ? "fill-red-500 text-red-500"
+                        : "text-gray-400 hover:text-red-500"
+                    }`}
                   />
-                </button>
+                </button> */}
 
                 {/* Left: Image */}
                 <div className="relative w-20 h-20 shrink-0">
                   <Avatar className="w-20 h-20 border-2 border-blue-100">
                     <AvatarImage 
-                      src={speaker.avatar || `/placeholder.svg?height=80&width=80&text=${speaker.firstName[0]}${speaker.lastName[0]}`} 
+                      src={speaker.avatar || ""} 
                       alt={`${speaker.firstName} ${speaker.lastName}`} 
                     />
                     <AvatarFallback className="text-sm font-semibold bg-blue-100 text-blue-600">
-                      {speaker.firstName[0]}{speaker.lastName[0]}
+                      {getInitials(speaker.firstName, speaker.lastName)}
                     </AvatarFallback>
                   </Avatar>
                   {speaker.isVerified && (
@@ -378,21 +394,41 @@ export default function SpeakersPage() {
                     {speaker.company && (
                       <p className="text-xs text-blue-500">{speaker.company}</p>
                     )}
+                    {speaker.location && (
+                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                        <MapPin className="w-3 h-3" />
+                        <span>{speaker.location}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Stats */}
-                  <div className="flex gap-4 text-xs text-gray-600 mt-2">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-3 h-3 text-yellow-400" />
-                      <span>{(speaker.rating?.average || 0).toFixed(1)}</span>
+                  <div className="flex flex-col gap-2 text-xs text-gray-600 mt-2">
+                    <div className="flex items-center justify-between">
+                      {/* <div className="flex items-center gap-1">
+                        <Star className="w-3 h-3 text-yellow-400" />
+                        <span>{(speaker.averageRating || 0).toFixed(1)}</span>
+                        <span>({speaker.totalReviews})</span>
+                      </div> */}
+                      <div className="font-semibold text-blue-600">
+                        {getTotalEvents(speaker)} Total Events
+                      </div>
                     </div>
-                    <div>{speaker.totalEvents} Events</div>
-                    <div>{speaker.followers} Follows</div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-green-600">
+                        <Calendar className="w-3 h-3" />
+                        <span>{speaker.upcomingEventsCount || 0} Upcoming Events</span>
+                      </div>
+                      <div className="text-gray-500">
+                        {speaker.pastEventsCount || 0} Past Events
+                      </div>
+                    </div>
                   </div>
 
                   {/* Tags */}
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {speaker.specialties.slice(0, 2).map((skill, index) => (
+                    {speaker.specialties.slice(0, 3).map((skill, index) => (
                       <Badge
                         key={index}
                         className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700"
@@ -400,9 +436,9 @@ export default function SpeakersPage() {
                         {skill}
                       </Badge>
                     ))}
-                    {speaker.specialties.length > 2 && (
+                    {speaker.specialties.length > 3 && (
                       <Badge className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700">
-                        +{speaker.specialties.length - 2}
+                        +{speaker.specialties.length - 3}
                       </Badge>
                     )}
                   </div>

@@ -54,9 +54,10 @@ export default function VenuesPage() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
+  // Fetch venues only once on component mount
   useEffect(() => {
     fetchVenues()
-  }, [selectedCities, selectedCountries, searchQuery])
+  }, []) // Empty dependency array - fetch only once
 
   const fetchVenues = async () => {
     try {
@@ -108,6 +109,25 @@ export default function VenuesPage() {
     { name: "Auditoriums", icon: Music },
   ]
 
+  // Helper function to extract city from address
+  const extractCityFromAddress = (address: string): string => {
+    if (!address) return ""
+    
+    // Convert to lowercase for case-insensitive matching
+    const lowerAddress = address.toLowerCase()
+    
+    // Check for each popular city in the address
+    for (const city of popularCities) {
+      if (lowerAddress.includes(city.toLowerCase())) {
+        return city
+      }
+    }
+    
+    // If no popular city found, try to extract city using common patterns
+    const cityMatch = address.match(/(?:^|,\s*)([A-Za-z\s]+)(?:,|$)/)
+    return cityMatch ? cityMatch[1].trim() : ""
+  }
+
   const getAmenityIcon = (amenity: string) => {
     switch (amenity) {
       case "wifi":
@@ -156,31 +176,6 @@ export default function VenuesPage() {
     )
   }
 
-  const filteredVenues = Array.isArray(venues)
-    ? venues.filter((venue) => {
-        const name = venue.venueName && venue.venueName.trim() ? venue.venueName : "Unnamed Venue"
-        const addr =
-          (venue.venueAddress && venue.venueAddress.trim()) ||
-          (venue.address && venue.address.trim()) ||
-          "Address not provided"
-        const matchesSearch =
-          name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          addr.toLowerCase().includes(searchQuery.toLowerCase())
-
-        const matchesCity =
-          selectedCities.length === 0 || selectedCities.some((city) => addr.toLowerCase().includes(city.toLowerCase()))
-        const matchesCountry =
-          selectedCountries.length === 0 ||
-          selectedCountries.some((country) => addr.toLowerCase().includes(country.toLowerCase()))
-
-        return matchesSearch && matchesCity && matchesCountry
-      })
-    : []
-
-  const handleVenueClick = (venueId: string) => {
-    router.push(`/venue/${venueId}`)
-  }
-
   const displayName = (v: Venue) => (v.venueName && v.venueName.trim() ? v.venueName : "Unnamed Venue")
 
   const displayDesc = (v: Venue) => {
@@ -196,6 +191,41 @@ export default function VenuesPage() {
   const displayCapacity = (v: Venue) => (v.maxCapacity && v.maxCapacity > 0 ? v.maxCapacity : "N/A")
 
   const displayHalls = (v: Venue) => (v.totalHalls && v.totalHalls > 0 ? v.totalHalls : "N/A")
+
+  // Improved filtering logic - now only filters locally without API calls
+  const filteredVenues = Array.isArray(venues)
+    ? venues.filter((venue) => {
+        const name = displayName(venue)
+        const addr = displayAddress(venue)
+        const extractedCity = extractCityFromAddress(addr)
+        
+        const matchesSearch =
+          searchQuery === "" ||
+          name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          addr.toLowerCase().includes(searchQuery.toLowerCase())
+
+        // Improved city matching - check if extracted city matches selected cities
+        const matchesCity =
+          selectedCities.length === 0 || 
+          selectedCities.some((selectedCity) => 
+            extractedCity.toLowerCase() === selectedCity.toLowerCase() ||
+            addr.toLowerCase().includes(selectedCity.toLowerCase())
+          )
+
+        // Country matching
+        const matchesCountry =
+          selectedCountries.length === 0 ||
+          selectedCountries.some((country) => 
+            addr.toLowerCase().includes(country.toLowerCase())
+          )
+
+        return matchesSearch && matchesCity && matchesCountry
+      })
+    : []
+
+  const handleVenueClick = (venueId: string) => {
+    router.push(`/venue/${venueId}`)
+  }
 
   if (loading) {
     return (
@@ -331,7 +361,7 @@ export default function VenuesPage() {
                 <h2 className="text-xl font-semibold text-gray-900">{filteredVenues.length} venues found</h2>
                 <p className="text-gray-600">Best venues for your events</p>
               </div>
-              <div className="flex items-center space-x-2">
+              {/* <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">Sort by:</span>
                 <select className="border border-gray-300 rounded-md px-3 py-1 text-sm">
                   <option>Recommended</option>
@@ -340,7 +370,7 @@ export default function VenuesPage() {
                   <option>Rating</option>
                   <option>Capacity</option>
                 </select>
-              </div>
+              </div> */}
             </div>
 
             {/* Venues Grid */}
@@ -362,7 +392,7 @@ export default function VenuesPage() {
 
                     {venue.isVerified && (
                       <div className="absolute top-3 left-3">
-                        <Badge className="bg-orange-500 text-white">Featured</Badge>
+                        {/* <Badge className="bg-orange-500 text-white">Featured</Badge> */}
                       </div>
                     )}
                   </div>
@@ -386,10 +416,7 @@ export default function VenuesPage() {
                     {/* Address */}
                     <div className="flex items-center text-gray-600 mb-2">
                       <MapPin className="w-4 h-4 mr-1" />
-                      {/* <span className="text-sm">{displayAddress(venue)}</span> */}
-                        <span className="text-sm">{venue.venueAddress}</span>
-                         <span className="text-sm">{venue.address}</span>
-
+                      <span className="text-sm">{displayAddress(venue)}</span>
                     </div>
 
                     {/* Capacity & Halls */}

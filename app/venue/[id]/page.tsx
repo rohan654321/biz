@@ -543,10 +543,10 @@ export default function VenueDetailPage() {
                     <span className="font-medium">{venue.stats.averageRating.toFixed(1)}</span>
                     <span className="ml-1">({venue.stats.totalReviews} reviews)</span>
                   </div>
-                  <div className="flex items-center">
+                  {/* <div className="flex items-center">
                     <Users className="w-5 h-5 mr-1" />
                     <span>Up to {venue.capacity.total.toLocaleString()} guests</span>
-                  </div>
+                  </div> */}
                 </div>
               </div>
               <div className="flex items-center gap-3">
