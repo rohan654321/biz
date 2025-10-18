@@ -870,14 +870,8 @@ export default function EventsPageContent() {
                     <h3 className="text-red-500 font-medium mb-1">Top 100 Events</h3>
                     <p className="text-sm text-gray-500">Discover and track top events</p>
                   </div>
-                  <div className="p-4 border-b border-gray-100">
-                    <h3 className="text-red-500 font-medium mb-1">Social Events</h3>
-                    <p className="text-sm text-gray-500">Discover and track top events</p>
-                  </div>
-                  <div className="p-4 border-b border-gray-100">
-                    <h3 className="text-red-500 font-medium mb-1">Search by Company</h3>
-                    <p className="text-sm text-gray-500">Discover and track top events</p>
-                  </div>
+                  
+                  
                   <div className="p-4 border-b border-gray-100">
                     <h3 className="text-red-500 font-medium mb-1">Explore Speaker</h3>
                     <p className="text-sm text-gray-500">Discover and track top events</p>
@@ -1090,7 +1084,10 @@ export default function EventsPageContent() {
 
                               {/* Share + Save + Visit Buttons */}
                               <div className="flex items-center gap-2 flex-shrink-0">
-                                <ShareButton id={event.id} title={event.title} type="event" />      
+                                <ShareButton id={event.id} title={event.title} type="event" />                                  <BookmarkButton
+                                  eventId={event.id}
+                                  className="p-1 rounded-full hover:bg-gray-100 transition"
+                                />
                                 <Button
                                   className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 mt-1 rounded-md text-sm shadow-sm"
                                   onClick={(e) => {
@@ -1099,11 +1096,8 @@ export default function EventsPageContent() {
                                     handleVisitClick(event.id, event.title)
                                   }}
                                 >
-                                  <BookmarkButton
-                                  eventId={event.id}
-                                  className="p-1 rounded-full text-white transition"
-                                />
-                                  save
+                                  <UserPlus className="w-2 h-2 mr-1" />
+                                  Visit
                                 </Button>
                               </div>
                             </div>

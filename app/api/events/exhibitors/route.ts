@@ -160,7 +160,10 @@ export async function GET(request: NextRequest) {
             phone: true,
             
             description: true,
-          
+
+             _count: {
+              select: { appointmentsReceived: true },
+             }
           },
         },
         event: {
@@ -196,6 +199,7 @@ export async function GET(request: NextRequest) {
       description: b.exhibitor?.description || "",
       // status: b.exhibitor?.status || "UNKNOWN",
       totalCost: b.totalCost || 0,
+      totalAppointmentsReceived: b.exhibitor?._count?.appointmentsReceived || 0, // 👈 added here
       event: b.event,
     }))
 

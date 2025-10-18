@@ -4,9 +4,9 @@ import { authOptions } from "@/lib/auth-options"
 import { prisma } from "@/lib/prisma"
 
 // ✅ Correct: params is not a Promise
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise< { id: string }> }) {
   try {
-    const eventId = params.id
+    const eventId = (await params).id
     const { searchParams } = new URL(request.url)
     const includeReplies = searchParams.get("includeReplies") === "true"
 

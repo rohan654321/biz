@@ -4,18 +4,21 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useRouter } from 'next/navigation';
 
 interface Speaker {
   id: string
   name: string
   company: string
   designation?: string
-  imageUrl?: string
+  avatar?: string
 }
 
 export default function SpeakersTab({ eventId }: { eventId: string }) {
   const [speakers, setSpeakers] = useState<Speaker[]>([])
   const [loading, setLoading] = useState(true)
+  const router = useRouter();
+
 
  useEffect(() => {
   async function fetchSpeakers() {
@@ -66,7 +69,7 @@ export default function SpeakersTab({ eventId }: { eventId: string }) {
               <div className="flex gap-4 items-center mb-4">
                 <div className="w-16 h-16 flex justify-center">
                   <Image
-                    src={speaker.imageUrl || "/placeholder.svg"}
+                    src={speaker.avatar || "/placeholder.svg"}
                     alt={speaker.name}
                     width={60}
                     height={60}
@@ -79,8 +82,8 @@ export default function SpeakersTab({ eventId }: { eventId: string }) {
                 </div>
               </div>
               <p className="text-lg font-bold text-gray-700 mb-3">{speaker.company}</p>
-              <Button className="w-full border-2 border-red-600 text-white bg-red-600 text-sm py-2 rounded-full font-semibold hover:bg-red-700 transition">
-                Schedule Meeting
+              <Button className="w-full border-2 border-red-600 text-white bg-red-600 text-sm py-2 rounded-full font-semibold hover:bg-red-700 transition"onClick={() => router.push(`/speakers/${speaker.id}`)}>
+                View Profile
               </Button>
             </CardContent>
           </Card>

@@ -970,18 +970,8 @@ function EventsPageContent() {
                 </div>
 
                 {/* Navigation Sections */}
-                <Link href="/event?filter=top100" className="block border-b border-gray-200 hover:bg-gray-50">
-                  <div className="p-4">
-                    <h3 className="text-red-500 font-medium mb-1">Top 100 Events</h3>
-                    <p className="text-sm text-gray-500">Discover and track top events</p>
-                  </div>
-                </Link>
-                <Link href="/event?filter=social" className="block border-b border-gray-200 hover:bg-gray-50">
-                  <div className="p-4">
-                    <h3 className="text-red-500 font-medium mb-1">Social Events</h3>
-                    <p className="text-sm text-gray-500">Discover and track top events</p>
-                  </div>
-                </Link>
+                
+                
                 <Link href="/event?filter=company" className="block border-b border-gray-200 hover:bg-gray-50">
                   <div className="p-4">
                     <h3 className="text-red-500 font-medium mb-1">Search by Company</h3>

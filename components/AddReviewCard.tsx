@@ -60,6 +60,11 @@ console.log('Fetched reviews:', data)
 // Use data.reviews instead of data
 const reviewsWithReplies = await Promise.all(
   (data.reviews || []).map(async (review: Review) => {
+    // <CHANGE> Only fetch replies if the current user is an organizer
+    if (!isOrganizer) {
+      return { ...review, replies: [] }
+    }
+
     try {
       console.log(`Fetching replies for review ${review.id}`)
       const repliesRes = await fetch(`/api/reviews/${review.id}/replies`)

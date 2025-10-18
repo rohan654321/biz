@@ -100,18 +100,17 @@ export function FollowButton({ userId, currentUserId, variant = "default", size 
   }
 
   return (
-    <Button onClick={handleFollow} disabled={isLoading} variant={isFollowing ? "outline" : variant} size={size}>
-      {isFollowing ? (
-        <>
-          <UserCheck className="mr-2 h-4 w-4" />
-          Following
-        </>
-      ) : (
-        <>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Follow
-        </>
-      )}
-    </Button>
+<button
+  onClick={handleFollow}
+  disabled={isLoading}
+  className={` py-2 rounded-md font-medium ${
+    isFollowing
+      ? "border border-gray-300 text-gray-700 bg-white hover:bg-gray-100"
+      : "text-blue-600"
+  }`}
+>
+  {isFollowing ? "Following" : "Follow"}
+</button>
+
   )
 }
