@@ -108,6 +108,7 @@ export async function GET(request: NextRequest) {
         currency: true,
         images: true,
         videos: true,
+        leads:true,
         documents: true,
         bannerImage: true,
         thumbnailImage: true,

@@ -17,6 +17,7 @@ export interface Venue {
 export interface Event {
   id: string
   title: string
+  leads: string
   bannerImage?: string
   logo?: string
   edition?: string
@@ -47,11 +48,11 @@ export default function EventReviews() {
           ...event,
           location: event.venue
             ? {
-                venue: event.venue.venueName,
-                city: event.venue.venueCity,
-                country: event.venue.venueCountry,
-                address: event.venue.venueAddress,
-              }
+              venue: event.venue.venueName,
+              city: event.venue.venueCity,
+              country: event.venue.venueCountry,
+              address: event.venue.venueAddress,
+            }
             : undefined,
         }))
         const shuffled = eventsWithLocation.sort(() => 0.5 - Math.random())
@@ -90,6 +91,11 @@ export default function EventReviews() {
     })
     alert("Thank you for showing interest on this event!")
   }
+  const formatFollowers = (num: number) => {
+    if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+    if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
+    return num.toString();
+  };
 
   return (
     <section className="py-12 px-6 bg-white max-w-6xl mx-auto">
@@ -118,8 +124,8 @@ export default function EventReviews() {
 
               {/* Edition Tag */}
               <div className="absolute top-2 left-2 flex items-center z-10">
-                <span className="bg-red-600 text-white text-sm font-bold px-1.5 py-0.5 rounded-sm mr-1">2</span>
-                <span className="bg-white text-[#0A2B61] font-semibold text-sm px-2 py-0.5 rounded-r-md">Edition</span>
+                <span className="bg-red-600 text-white text-sm font-bold px-1.5 py-0.5 rounded-sm mr-1">{event.edition || "2 Edition"}</span>
+                {/* <span className="bg-white text-[#0A2B61] font-semibold text-sm px-2 py-0.5 rounded-r-md">Edition</span> */}
               </div>
 
               {/* Categories */}
@@ -142,15 +148,16 @@ export default function EventReviews() {
               <div className="flex justify-center items-center gap-4 mb-3">
                 <span className="text-gray-700 text-sm flex items-center gap-1">
                   <Users size={18} className="text-gray-500" />
-                  {(event.followers || 131) + (visitorCounts[event.id || String(index)] || 0)} Followers
+                  {formatFollowers(visitorCounts[event.id] || 0)} Followers
                 </span>
+
                 <button
                   className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm shadow-sm"
                   aria-label="Visit event"
                   onClick={(e) => handleVisitClick(e, event, index)}
                 >
                   <UserPlus className="w-4 h-4 mr-1" />
-                  Visit
+                  Save
                 </button>
               </div>
 
@@ -161,7 +168,7 @@ export default function EventReviews() {
               {/* Updated location display with address */}
               <p className="flex justify-center items-center font-bold text-gray-700 text-xs mt-1 text-center line-clamp-2 min-h-[2rem]">
                 {event.location?.venue ? `${event.location.venue}, ` : ""}
-                {event.location?.city || "No City added"}, {event.location?.country || "No Country added"}
+                {event.location?.city}, {event.location?.country}
               </p>
 
               {/* Display address if available */}
@@ -178,10 +185,10 @@ export default function EventReviews() {
                 })}
                 {event.endDate
                   ? ` - ${new Date(event.endDate).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}`
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}`
                   : ""}
               </p>
             </div>

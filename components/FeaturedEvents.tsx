@@ -12,6 +12,7 @@ export async function getFeaturedEvents() {
       id: true,
       title: true,
       startDate: true,
+      edition:true,
       endDate: true,
       bannerImage: true,
       category: true,
@@ -104,7 +105,7 @@ export default async function FeaturedEvents() {
                   <img
                     src={event.bannerImage || "/herosection-images/food.jpg"}
                     alt={event.title}
-                    className="w-full h-full object-cover rounded-xl"
+                    className="w-full h-full rounded-xl"
                   />
                 </div>
 
@@ -129,8 +130,9 @@ export default async function FeaturedEvents() {
                         )} */}
                       </div>
                       <ShareButton
-                        eventId={event.id}
-                        eventTitle={event.title}
+                        id={event.id}
+                        title={event.title}
+                        type="event"
                       />
                       <BookmarkButton
                         eventId={event.id}
@@ -147,7 +149,7 @@ export default async function FeaturedEvents() {
                     </span>
                     <span className="flex items-center">
                       <Layers className="w-4 h-4 mr-1 text-gray-700" />
-                      2nd Edition
+                      {event.edition || "2nd Edition"}
                     </span>
                   </div>
 
