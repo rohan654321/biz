@@ -5,38 +5,37 @@ import { Share2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface ShareButtonProps {
-  eventId: string
-  eventTitle: string
+  id: string
+  title: string
+  type: 'venue' | 'event' | 'speaker'
   className?: string
 }
 
-export function ShareButton({ eventId, eventTitle, className = "" }: ShareButtonProps) {
+export function ShareButton({ id, title, type, className = "" }: ShareButtonProps) {
   const { toast } = useToast()
 
   const handleShare = async (e: React.MouseEvent) => {
-    e.preventDefault() // Prevent default behavior
-    e.stopPropagation() // Stop event from bubbling up to parent
+    e.preventDefault()
+    e.stopPropagation()
 
-    const shareUrl = `${window.location.origin}/event/${eventId}`
+    const shareUrl = `${window.location.origin}/${type}/${id}`
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: eventTitle,
-          text: "Check out this event!",
+          title: title,
+          text: `Check out this ${type}!`,
           url: shareUrl,
         })
       } catch (err) {
-        // User cancelled the share or error occurred
         console.error("Error sharing:", err)
       }
     } else {
-      // Fallback for browsers that don't support Web Share API
       try {
         await navigator.clipboard.writeText(shareUrl)
         toast({
           title: "Link copied!",
-          description: "Event link copied to clipboard",
+          description: `${type.charAt(0).toUpperCase() + type.slice(1)} link copied to clipboard`,
         })
       } catch (err) {
         toast({
@@ -50,7 +49,7 @@ export function ShareButton({ eventId, eventTitle, className = "" }: ShareButton
 
   return (
     <Button
-      variant="ghost"
+      variant="outline"
       size="sm"
       onClick={handleShare}
       className={`hover:bg-gray-100 ${className}`}
