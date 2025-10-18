@@ -100,6 +100,7 @@ export default function EventsPageContent() {
   const [categorySearch, setCategorySearch] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedRelatedTopics, setSelectedRelatedTopics] = useState<string[]>([])
+  const [showAllCategories, setShowAllCategories] = useState(false)
 
   // Calendar state
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -303,19 +304,46 @@ export default function EventsPageContent() {
 
   const itemsPerPage = 6
 
-  // Get unique categories, locations, and other filter options from data
   const categories = useMemo(() => {
-    if (!events || events.length === 0) return []
+    const hardcodedCategories = [
+      "Education Training",
+      "Medical & Pharma",
+      "IT & Technology",
+      "Banking & Finance",
+      "Business Services",
+      "Industrial Engineering",
+      "Building & Construction",
+      "Power & Energy",
+      "Entertainment & Media",
+      "Wellness, Health & Fitness",
+      "Science & Research",
+      "Environment & Waste",
+      "Agriculture & Forestry",
+      "Food & Beverages",
+      "Logistics & Transportation",
+      "Electric & Electronics",
+      "Arts & Crafts",
+      "Auto & Automotive",
+      "Home & Office",
+      "Security & Defense",
+      "Fashion & Beauty",
+      "Travel & Tourism",
+      "Telecommunication",
+      "Apparel & Clothing",
+      "Animals & Pets",
+      "Baby, Kids & Maternity",
+      "Hospitality",
+      "Packing & Packaging",
+      "Miscellaneous",
+    ]
 
-    const categoryMap = new Map()
-    events.forEach((event) => {
-      if (event.categories && Array.isArray(event.categories)) {
-        event.categories.forEach((cat) => {
-          categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1)
-        })
-      }
+    // Calculate counts for each category
+    return hardcodedCategories.map((categoryName) => {
+      const count = events.filter((event) =>
+        event.categories?.some((cat) => cat.toLowerCase().trim() === categoryName.toLowerCase().trim()),
+      ).length
+      return { name: categoryName, count }
     })
-    return Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count }))
   }, [events])
 
   // Get unique formats from eventType
@@ -1063,21 +1091,31 @@ export default function EventsPageContent() {
                           <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         </div>
                         <div className="space-y-3">
-                          {filteredCategories.map((category) => (
-                            <div key={category.name} className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedCategories.includes(category.name)}
-                                  onChange={() => handleCategoryToggle(category.name)}
-                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                />
-                                <span className="text-sm text-gray-700">{category.name}</span>
+                          {filteredCategories
+                            .slice(0, showAllCategories ? filteredCategories.length : 10)
+                            .map((category) => (
+                              <div key={category.name} className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedCategories.includes(category.name)}
+                                    onChange={() => handleCategoryToggle(category.name)}
+                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  />
+                                  <span className="text-sm text-gray-700">{category.name}</span>
+                                </div>
+                                <span className="text-xs text-gray-500">{category.count}</span>
                               </div>
-                              <span className="text-xs text-gray-500">{category.count}</span>
-                            </div>
-                          ))}
+                            ))}
                         </div>
+                        {filteredCategories.length > 10 && (
+                          <button
+                            onClick={() => setShowAllCategories(!showAllCategories)}
+                            className="w-full mt-3 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                          >
+                            {showAllCategories ? "View Less" : "View All"}
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1124,9 +1162,12 @@ export default function EventsPageContent() {
                     <h3 className="text-red-500 font-medium mb-1">Explore Speaker</h3>
                     <p className="text-sm text-gray-500">Discover and track top events</p>
                   </div>
-                  <div className="p-4 border-b border-gray-100">
+                  <button
+                    onClick={clearAllFilters}
+                    className="w-full p-4 border-b border-gray-100 text-left hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
                     <h3 className="text-blue-600 font-medium">All Events</h3>
-                  </div>
+                  </button>
                 </CardContent>
               </Card>
             </div>
@@ -1139,7 +1180,7 @@ export default function EventsPageContent() {
                   <span className="text-sm text-gray-600">
                     Showing {paginatedEvents.length} of {filteredEvents.length} events
                   </span>
-                  <div className="flex items-center space-x-2">
+                  {/* <div className="flex items-center space-x-2">
                     <button
                       onClick={() => setViewMode("Trending")}
                       className={`px-3 py-1 text-sm rounded-full ${
@@ -1156,7 +1197,7 @@ export default function EventsPageContent() {
                     >
                       Date
                     </button>
-                  </div>
+                  </div> */}
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
@@ -1318,7 +1359,10 @@ export default function EventsPageContent() {
 
                               <div className="flex items-center gap-2 flex-shrink-0">
                                 <ShareButton id={event.id} title={event.title} type="event" />
-                                
+                                <BookmarkButton
+                                  eventId={event.id}
+                                  className="p-1 rounded-full hover:bg-gray-100 transition"
+                                />
                                 <Button
                                   className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 mt-1 rounded-md text-sm shadow-sm"
                                   onClick={(e) => {
@@ -1327,11 +1371,8 @@ export default function EventsPageContent() {
                                     handleVisitClick(event.id, event.title)
                                   }}
                                 >
-                                  <BookmarkButton
-                                  eventId={event.id}
-                                  className="p-1 rounded-full text-white transition"
-                                />
-                                  save
+                                  <UserPlus className="w-2 h-2 mr-1" />
+                                  Visit
                                 </Button>
                               </div>
                             </div>
