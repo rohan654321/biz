@@ -144,7 +144,9 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
   // Validate file type
   const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif']
-  if (!validTypes.includes(file.type)) {
+  const isValidType = validTypes.includes(file.type) || file.name.toLowerCase().endsWith('.pdf')
+  
+  if (!isValidType) {
     toast({
       title: "Invalid file type",
       description: "Please upload a PDF or image file (JPEG, PNG, GIF)",
@@ -177,16 +179,17 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (response.ok) {
       const updatedEvent = await response.json()
       
-      // Update the event state with the new brochure
+      // Update the event state with cache busting
       setEvent((prev: any) => ({
         ...prev,
-        brochure: updatedEvent.brochure
+        brochure: `${updatedEvent.brochure}?t=${Date.now()}`
       }))
       
       toast({
         title: "Success",
         description: "Brochure updated successfully",
       })
+      
       // Clear the file input
       e.target.value = ''
     } else {
@@ -204,7 +207,6 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setUpdatingBrochure(false)
   }
 }
-
   const handleSaveEvent = async () => {
     if (!session) {
       alert("Please log in to save events")
@@ -824,13 +826,12 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 </Card>
               </TabsContent>
 
-            <TabsContent value="brochure">
+<TabsContent value="brochure">
   <Card>
     <CardHeader>
       <CardTitle className="flex items-center justify-between">
         <span>Brochure</span>
         <div className="flex gap-2">
-          {/* Update Brochure Button */}
           <Button
             variant="outline"
             size="sm"
@@ -844,7 +845,6 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
             )}
             {updatingBrochure ? "Updating..." : "Update"}
           </Button>
-          {/* Hidden file input */}
           <input
             id="brochure-upload"
             type="file"
@@ -852,7 +852,6 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
             className="hidden"
             onChange={handleBrochureUpdate}
           />
-          {/* Delete Brochure Button */}
           <Button variant="destructive" size="sm" onClick={handleDeleteBrochure}>
             <Trash2 className="w-4 h-4 mr-2" />
             Delete
@@ -865,28 +864,41 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
         {event?.brochure ? (
           <>
             <div className="bg-gray-100 rounded-lg overflow-hidden border border-gray-300">
-              {event.brochure.endsWith('.pdf') ? (
+              {/* Check if it's a PDF or Image */}
+              {event.brochure.toLowerCase().endsWith('.pdf') || 
+               event.brochure.includes('.pdf') ? (
+                // PDF Display
                 <iframe
-                  src={`/api/events/${event.id}/brochure?action=view`}
+                  key={event.brochure + '?t=' + Date.now()}
+                  src={`/api/events/${event.id}/brochure?action=view&t=${Date.now()}`}
                   className="w-full h-[600px]"
                   title="Event Brochure PDF"
                 />
               ) : (
-                // Display image if brochure is an image file
+                // Image Display - Use regular img tag for dynamic images
                 <div className="flex items-center justify-center h-96">
-                  <Image
-                    src={event.brochure.startsWith('/uploads/') ? event.brochure : `/api/events/${event.id}/brochure`}
+                  <img
+                    src={event.brochure.startsWith('/uploads/') 
+                      ? `${event.brochure}?t=${Date.now()}` 
+                      : `/api/events/${event.id}/brochure?t=${Date.now()}`
+                    }
                     alt="Event Brochure"
-                    width={600}
-                    height={800}
-                    className="object-contain max-h-96"
+                    className="object-contain max-h-96 max-w-full"
+                    onError={(e) => {
+                      // Fallback if image fails to load
+                      console.error('Error loading brochure image:', event.brochure);
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 </div>
               )}
             </div>
             <div className="flex justify-center gap-4">
               <Button asChild size="lg" className="w-full sm:w-auto">
-                <a href={`/api/events/${event.id}/brochure?action=download`} download>
+                <a 
+                  href={`/api/events/${event.id}/brochure?action=download&t=${Date.now()}`} 
+                  download
+                >
                   Download Brochure
                 </a>
               </Button>
