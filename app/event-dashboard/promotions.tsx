@@ -394,7 +394,7 @@ export default function EventPromotion( { eventId }: { eventId: string } ) {
       </div>
 
       {/* Active Promotions */}
-      {promotions.length > 0 && (
+      {/* {promotions.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -435,7 +435,7 @@ export default function EventPromotion( { eventId }: { eventId: string } ) {
             </div>
           </CardContent>
         </Card>
-      )}
+      )} */}
 
       {/* Category Selection */}
       <Card>
