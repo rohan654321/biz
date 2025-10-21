@@ -882,11 +882,10 @@ export default function EventsPageContent() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700"
-                }`}
+                  }`}
               >
                 {tab}
               </button>
@@ -925,11 +924,10 @@ export default function EventsPageContent() {
                                 setSelectedDateRange(range.value)
                                 setSelectedDate(null)
                               }}
-                              className={`p-2 text-xs text-center rounded border ${
-                                selectedDateRange === range.value
+                              className={`p-2 text-xs text-center rounded border ${selectedDateRange === range.value
                                   ? "bg-blue-100 border-blue-500 text-blue-700"
                                   : "border-gray-200 hover:bg-gray-50"
-                              }`}
+                                }`}
                             >
                               {range.label}
                             </button>
@@ -997,9 +995,8 @@ export default function EventsPageContent() {
                           {/* All Formats option */}
                           <button
                             onClick={() => setSelectedFormat("All Formats")}
-                            className={`w-full text-left p-2 rounded text-sm flex justify-between items-center ${
-                              selectedFormat === "All Formats" ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
-                            }`}
+                            className={`w-full text-left p-2 rounded text-sm flex justify-between items-center ${selectedFormat === "All Formats" ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
+                              }`}
                           >
                             <span>All Formats</span>
                           </button>
@@ -1009,9 +1006,8 @@ export default function EventsPageContent() {
                             <button
                               key={`${format.name || "format"}-${index}`} // ✅ unique key even if name repeats
                               onClick={() => setSelectedFormat(format.name)}
-                              className={`w-full text-left p-2 rounded text-sm flex justify-between items-center ${
-                                selectedFormat === format.name ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
-                              }`}
+                              className={`w-full text-left p-2 rounded text-sm flex justify-between items-center ${selectedFormat === format.name ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
+                                }`}
                             >
                               <span>{format.name || "Unnamed Format"}</span> {/* fallback text */}
                               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
@@ -1052,9 +1048,8 @@ export default function EventsPageContent() {
                             <button
                               key={location.name}
                               onClick={() => setSelectedLocation(location.name)}
-                              className={`w-full text-left p-2 rounded text-sm flex justify-between items-center ${
-                                selectedLocation === location.name ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
-                              }`}
+                              className={`w-full text-left p-2 rounded text-sm flex justify-between items-center ${selectedLocation === location.name ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
+                                }`}
                             >
                               <span>{location.name}</span>
                               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
@@ -1158,8 +1153,8 @@ export default function EventsPageContent() {
                     <h3 className="text-red-500 font-medium mb-1">Top 100 Events</h3>
                     <p className="text-sm text-gray-500">Discover and track top events</p>
                   </div>
-                  
-                  
+
+
                   <div className="p-4 border-b border-gray-100">
                     <h3 className="text-red-500 font-medium mb-1">Explore Speaker</h3>
                     <p className="text-sm text-gray-500">Discover and track top events</p>
@@ -1217,11 +1212,10 @@ export default function EventsPageContent() {
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 rounded text-sm font-medium ${
-                          currentPage === page
+                        className={`w-8 h-8 rounded text-sm font-medium ${currentPage === page
                             ? "bg-blue-600 text-white"
                             : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                        }`}
+                          }`}
                       >
                         {page}
                       </button>
@@ -1361,7 +1355,7 @@ export default function EventsPageContent() {
 
                               {/* Share + Save + Visit Buttons */}
                               <div className="flex items-center gap-2 flex-shrink-0">
-                                <ShareButton id={event.id} title={event.title} type="event" />                                
+                                <ShareButton id={event.id} title={event.title} type="event" />
                                 <Button
                                   className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 mt-1 rounded-md text-sm shadow-sm"
                                   onClick={(e) => {
@@ -1370,10 +1364,10 @@ export default function EventsPageContent() {
                                     handleVisitClick(event.id, event.title)
                                   }}
                                 >
-                                    <BookmarkButton
-                                  eventId={event.id}
-                                  className="p-1 rounded-full text-white transition"
-                                />
+                                  <BookmarkButton
+                                    eventId={event.id}
+                                    className="p-1 rounded-full text-white transition"
+                                  />
                                   Save
                                 </Button>
                               </div>
