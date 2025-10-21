@@ -1,31 +1,15 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
-import {
-  Building2,
-  User,
-  Mail,
-  Phone,
-  Globe,
-  Upload,
-  Edit,
-  Save,
-  X,
-  Facebook,
-  Twitter,
-  Linkedin,
-  Instagram,
-  Plus,
-} from "lucide-react"
+import { Building2, Upload, Edit, Save, Facebook, Twitter, Linkedin, Instagram, Camera } from "lucide-react"
 
 interface ExhibitorData {
   id: string
@@ -49,10 +33,11 @@ interface CompanyInfoProps {
   onUpdate: (data: Partial<ExhibitorData>) => void
 }
 
-export default function CompanyInfo({  exhibitorData, onUpdate }: CompanyInfoProps) {
+export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProps) {
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [formData, setFormData] = useState(exhibitorData)
   const [categories, setCategories] = useState<string[]>(["Technology", "Software", "AI/ML"])
 
@@ -60,11 +45,79 @@ export default function CompanyInfo({  exhibitorData, onUpdate }: CompanyInfoPro
     setFormData(exhibitorData)
   }, [exhibitorData])
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      setUploading(true)
+
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("type", "image")
+
+      const response = await fetch("/api/upload/cloudinary", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (data.success && data.url) {
+        // Update local state
+        setFormData((prev) => ({ ...prev, avatar: data.url }))
+
+        // Save to database immediately
+        await onUpdate({ avatar: data.url })
+
+        toast({
+          title: "Success",
+          description: "Avatar updated successfully",
+        })
+      } else {
+        throw new Error("Upload failed")
+      }
+    } catch (error) {
+      console.error("Error uploading avatar:", error)
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload avatar. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const handleSave = async () => {
     try {
       setLoading(true)
       await onUpdate(formData)
       setIsEditing(false)
+      toast({
+        title: "Success",
+        description: "Company information updated successfully",
+      })
     } catch (error) {
       console.error("Error updating company info:", error)
       toast({
@@ -94,7 +147,7 @@ export default function CompanyInfo({  exhibitorData, onUpdate }: CompanyInfoPro
     { name: "Instagram", icon: Instagram, url: "https://instagram.com/company", color: "text-pink-600" },
   ]
 
-  if (loading) {
+  if (loading && !formData) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-64" />
@@ -132,19 +185,35 @@ export default function CompanyInfo({  exhibitorData, onUpdate }: CompanyInfoPro
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-center">
-              <Avatar className="w-32 h-32 mx-auto mb-4">
-                <AvatarImage src={formData.avatar || "/placeholder.svg"} />
-                <AvatarFallback className="text-2xl">
-                  {formData.firstName?.[0]}
-                  {formData.lastName?.[0]}
-                </AvatarFallback>
-              </Avatar>
-              {isEditing && (
-                <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
-                  <Upload className="w-4 h-4" />
-                  Upload Logo
-                </Button>
-              )}
+              <div className="relative inline-block">
+                <Avatar className="w-32 h-32 mx-auto mb-4">
+                  <AvatarImage src={formData.avatar || "/placeholder.svg"} />
+                  <AvatarFallback className="text-2xl">
+                    {formData.firstName?.[0]}
+                    {formData.lastName?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                {isEditing && (
+                  <label
+                    htmlFor="avatar-upload"
+                    className="absolute bottom-4 right-1/2 translate-x-16 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors"
+                  >
+                    {uploading ? (
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                    ) : (
+                      <Camera className="w-4 h-4" />
+                    )}
+                  </label>
+                )}
+                <input
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                  disabled={uploading}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -161,206 +230,7 @@ export default function CompanyInfo({  exhibitorData, onUpdate }: CompanyInfoPro
             </div>
           </CardContent>
         </Card>
-
-        {/* Contact Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Contact Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="first-name">First Name</Label>
-                <Input
-                  id="first-name"
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="last-name">Last Name</Label>
-                <Input
-                  id="last-name"
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  disabled={!isEditing}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="company">Company Name</Label>
-              <Input
-                id="company"
-                value={formData.company || ""}
-                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                disabled={!isEditing}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="job-title">Job Title</Label>
-              <Input
-                id="job-title"
-                value={formData.jobTitle || ""}
-                onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
-                disabled={!isEditing}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  disabled={!isEditing}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <Input
-                  id="phone"
-                  value={formData.phone || ""}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  disabled={!isEditing}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
-              <div className="relative">
-                <Globe className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <Input
-                  id="website"
-                  value={formData.website || ""}
-                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                  disabled={!isEditing}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Social Links */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Social Media Links</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {socialLinks.map((social) => (
-              <div key={social.name} className="flex items-center gap-3">
-                <social.icon className={`w-5 h-5 ${social.color}`} />
-                <div className="flex-1">
-                  <Input
-                    value={social.url}
-                    disabled={!isEditing}
-                    placeholder={`${social.name} URL`}
-                    onChange={(e) => {
-                      if (social.name === "LinkedIn") {
-                        setFormData({ ...formData, linkedin: e.target.value })
-                      } else if (social.name === "Twitter") {
-                        setFormData({ ...formData, twitter: e.target.value })
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
       </div>
-
-      {/* Product Categories & Description */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Product Categories / Services</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
-                <Badge key={category} variant="secondary" className="flex items-center gap-1">
-                  {category}
-                  {isEditing && (
-                    <X
-                      className="w-3 h-3 cursor-pointer hover:text-red-500"
-                      onClick={() => handleRemoveCategory(category)}
-                    />
-                  )}
-                </Badge>
-              ))}
-            </div>
-
-            {isEditing && (
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add new category"
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      handleAddCategory(e.currentTarget.value)
-                      e.currentTarget.value = ""
-                    }
-                  }}
-                />
-                <Button
-                  onClick={() => {
-                    const input = document.querySelector('input[placeholder="Add new category"]') as HTMLInputElement
-                    if (input) {
-                      handleAddCategory(input.value)
-                      input.value = ""
-                    }
-                  }}
-                  size="sm"
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Company Description</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Textarea
-              value={formData.bio || ""}
-              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-              disabled={!isEditing}
-              rows={6}
-              placeholder="Describe your company, products, and services..."
-            />
-          </CardContent>
-        </Card>
-      </div>
-
-      {isEditing && (
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => setIsEditing(false)} disabled={loading}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? "Saving..." : "Save Changes"}
-          </Button>
-        </div>
-      )}
     </div>
   )
 }
