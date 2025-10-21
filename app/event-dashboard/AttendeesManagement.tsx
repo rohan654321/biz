@@ -418,12 +418,12 @@ export default function AttendeesManagement({ eventId }: AttendeesManagementProp
                           <BadgeCheck className="w-4 h-4 mr-2" />
                           Send Badge
                         </DropdownMenuItem>
-                        {attendee.phone && (
+                        {/* {attendee.phone && (
                           <DropdownMenuItem>
                             <Phone className="w-4 h-4 mr-2" />
                             Call
                           </DropdownMenuItem>
-                        )}
+                        )} */}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

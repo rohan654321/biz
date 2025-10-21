@@ -356,12 +356,12 @@ export default function ExhibitorManagement({ eventId }: AttendeesManagementProp
                           <Mail className="w-4 h-4 mr-2" />
                           Send Email
                         </DropdownMenuItem>
-                        {attendee.phone && (
+                        {/* {attendee.phone && (
                           <DropdownMenuItem>
                             <Phone className="w-4 h-4 mr-2" />
                             Call
                           </DropdownMenuItem>
-                        )}
+                        )} */}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

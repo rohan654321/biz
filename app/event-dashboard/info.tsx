@@ -33,6 +33,7 @@ export default function EventPage({ params }: EventPageProps) {
 
   const [editingSpaceId, setEditingSpaceId] = useState<string | null>(null)
   const [editingSpaceData, setEditingSpaceData] = useState<any>({})
+  const [updatingBrochure, setUpdatingBrochure] = useState(false)
 
   const { data: session } = useSession()
   const router = useRouter()
@@ -108,7 +109,104 @@ export default function EventPage({ params }: EventPageProps) {
       console.error("Error checking saved status:", error)
     }
   }
+  const handleDeleteBrochure = async () => {
+  if (!confirm("Are you sure you want to delete the brochure?")) return
 
+  try {
+    const response = await fetch(`/api/events/${event.id}/brochure`, {
+      method: "DELETE",
+    })
+
+    if (response.ok) {
+      // Update the event state to remove brochure
+      setEvent((prev: any) => ({
+        ...prev,
+        brochure: null
+      }))
+      
+      toast({
+        title: "Success",
+        description: "Brochure removed successfully",
+      })
+    }
+  } catch (error) {
+    console.error("Error deleting brochure:", error)
+    toast({
+      title: "Error",
+      description: "Failed to delete brochure",
+      variant: "destructive",
+    })
+  }
+}
+const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+
+  // Validate file type
+  const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif']
+  const isValidType = validTypes.includes(file.type) || file.name.toLowerCase().endsWith('.pdf')
+  
+  if (!isValidType) {
+    toast({
+      title: "Invalid file type",
+      description: "Please upload a PDF or image file (JPEG, PNG, GIF)",
+      variant: "destructive",
+    })
+    return
+  }
+
+  // Validate file size (10MB max for brochures)
+  if (file.size > 10 * 1024 * 1024) {
+    toast({
+      title: "File too large",
+      description: "Please upload a file smaller than 10MB",
+      variant: "destructive",
+    })
+    return
+  }
+
+  setUpdatingBrochure(true)
+
+  try {
+    const formData = new FormData()
+    formData.append('brochure', file)
+
+    const response = await fetch(`/api/events/${event.id}/brochure`, {
+      method: 'PUT',
+      body: formData,
+    })
+
+    if (response.ok) {
+      const updatedEvent = await response.json()
+      
+      // Update the event state with cache busting
+      setEvent((prev: any) => ({
+        ...prev,
+        brochure: `${updatedEvent.brochure}?t=${Date.now()}`
+      }))
+      
+      toast({
+        title: "Success",
+        description: "Brochure updated successfully",
+      })
+      
+      // Clear the file input
+      e.target.value = ''
+    } else {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to update brochure')
+    }
+  } catch (error) {
+    console.error('Error updating brochure:', error)
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : "Failed to update brochure",
+      variant: "destructive",
+    })
+  } finally {
+    setUpdatingBrochure(false)
+  }
+}
   const handleSaveEvent = async () => {
     if (!session) {
       alert("Please log in to save events")
@@ -144,7 +242,67 @@ export default function EventPage({ params }: EventPageProps) {
       setSaving(false)
     }
   }
+  const handleLayoutUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
 
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf']
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image (JPEG, PNG, GIF) or PDF file",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload a file smaller than 5MB",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append('layout', file)
+
+      const response = await fetch(`/api/events/${event.id}/layout`, {
+        method: 'PUT',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const updatedEvent = await response.json()
+
+        // Update the event state with the new layout
+        setEvent((prev: any) => ({
+          ...prev,
+          layoutPlan: updatedEvent.layoutPlan
+        }))
+
+        toast({
+          title: "Success",
+          description: "Layout plan updated successfully",
+        })
+        // Clear the file input
+        e.target.value = ''
+      } else {
+        throw new Error('Failed to update layout plan')
+      }
+    } catch (error) {
+      console.error('Error updating layout plan:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update layout plan",
+        variant: "destructive",
+      })
+    }
+  }
   const handleDeleteExhibitor = async (exhibitorId: string) => {
     if (!confirm("Are you sure you want to remove this exhibitor?")) return
 
@@ -241,6 +399,12 @@ export default function EventPage({ params }: EventPageProps) {
       })
 
       if (response.ok) {
+        // Update the event state to remove layout plan
+        setEvent((prev: any) => ({
+          ...prev,
+          layoutPlan: null
+        }))
+
         toast({
           title: "Success",
           description: "Layout plan removed successfully",
@@ -256,29 +420,6 @@ export default function EventPage({ params }: EventPageProps) {
     }
   }
 
-  const handleDeleteBrochure = async () => {
-    if (!confirm("Are you sure you want to delete the brochure?")) return
-
-    try {
-      const response = await fetch(`/api/events/${event.id}/brochure`, {
-        method: "DELETE",
-      })
-
-      if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Brochure removed successfully",
-        })
-      }
-    } catch (error) {
-      console.error("Error deleting brochure:", error)
-      toast({
-        title: "Error",
-        description: "Failed to delete brochure",
-        variant: "destructive",
-      })
-    }
-  }
 
   if (loading) {
     return (
@@ -616,78 +757,180 @@ export default function EventPage({ params }: EventPageProps) {
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
                       <span>Layout Plan</span>
-                      <Button variant="destructive" size="sm" onClick={handleDeleteLayout}>
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </Button>
+                      <div className="flex gap-2">
+                        {/* Update Layout Button */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => document.getElementById('layout-upload')?.click()}
+                        >
+                          <Edit2 className="w-4 h-4 mr-2" />
+                          Update
+                        </Button>
+                        {/* Hidden file input */}
+                        <input
+                          id="layout-upload"
+                          type="file"
+                          accept="image/*,.pdf"
+                          className="hidden"
+                          onChange={handleLayoutUpdate}
+                        />
+                        {/* Delete Layout Button */}
+                        <Button variant="destructive" size="sm" onClick={handleDeleteLayout}>
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </Button>
+                      </div>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center overflow-hidden">
                       {event?.layoutPlan ? (
-                        <Image
-                          src={event.layoutPlan.startsWith("http")
-                            ? event.layoutPlan
-                            : `/uploads/${event.layoutPlan}`} // adjust path if stored locally
-                          alt="Event Layout Plan"
-                          width={800}
-                          height={600}
-                          className="object-contain rounded-lg"
-                        />
-                      ) : (
-                        <p className="text-gray-500">Floor plan will be displayed here</p>
-                      )}
-                    </div>
-                  </CardContent>
-
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="brochure">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>Brochure</span>
-                      <Button variant="destructive" size="sm" onClick={handleDeleteBrochure}>
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {event?.brochure ? (
-                        <>
-                          <div className="bg-gray-100 rounded-lg overflow-hidden border border-gray-300">
-                            <iframe
-                              src={`/api/events/${event.id}/brochure?action=view`}
-                              className="w-full h-[600px]"
-                              title="Event Brochure PDF"
-                            />
-                          </div>
-                          <div className="flex justify-center gap-4">
-                            <Button asChild size="lg" className="w-full sm:w-auto">
-                              <a href={`/api/events/${event.id}/brochure?action=download`} download>
-                                Download Brochure
-                              </a>
-                            </Button>
-                            <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
-                              <a href={event.brochure} target="_blank" rel="noopener noreferrer">
-                                Open Original in New Tab
+                        event.layoutPlan.startsWith('/uploads/') ? (
+                          <Image
+                            src={event.layoutPlan}
+                            alt="Event Layout Plan"
+                            width={800}
+                            height={600}
+                            className="object-contain rounded-lg"
+                            onError={(e) => {
+                              console.error('Error loading image:', event.layoutPlan)
+                              e.currentTarget.style.display = 'none'
+                            }}
+                          />
+                        ) : event.layoutPlan.startsWith('http') ? (
+                          <Image
+                            src={event.layoutPlan}
+                            alt="Event Layout Plan"
+                            width={800}
+                            height={600}
+                            className="object-contain rounded-lg"
+                          />
+                        ) : (
+                          <div className="text-center">
+                            <p className="text-gray-500 mb-2">Layout plan available</p>
+                            <Button asChild>
+                              <a href={event.layoutPlan} target="_blank" rel="noopener noreferrer">
+                                View Layout Plan
                               </a>
                             </Button>
                           </div>
-                        </>
+                        )
                       ) : (
-                        <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center">
-                          <p className="text-gray-600">No brochure available</p>
-                        </div>
+                        <p className="text-gray-500">No layout plan available</p>
                       )}
                     </div>
+
+                    {/* Debug information - you can remove this in production */}
                   </CardContent>
                 </Card>
               </TabsContent>
 
+<TabsContent value="brochure">
+  <Card>
+    <CardHeader>
+      <CardTitle className="flex items-center justify-between">
+        <span>Brochure</span>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => document.getElementById('brochure-upload')?.click()}
+            disabled={updatingBrochure}
+          >
+            {updatingBrochure ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2" />
+            ) : (
+              <Edit2 className="w-4 h-4 mr-2" />
+            )}
+            {updatingBrochure ? "Updating..." : "Update"}
+          </Button>
+          <input
+            id="brochure-upload"
+            type="file"
+            accept=".pdf,image/*"
+            className="hidden"
+            onChange={handleBrochureUpdate}
+          />
+          <Button variant="destructive" size="sm" onClick={handleDeleteBrochure}>
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete
+          </Button>
+        </div>
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-4">
+        {event?.brochure ? (
+          <>
+            <div className="bg-gray-100 rounded-lg overflow-hidden border border-gray-300">
+              {/* Check if it's a PDF or Image */}
+              {event.brochure.toLowerCase().endsWith('.pdf') || 
+               event.brochure.includes('.pdf') ? (
+                // PDF Display
+                <iframe
+                  key={event.brochure + '?t=' + Date.now()}
+                  src={`/api/events/${event.id}/brochure?action=view&t=${Date.now()}`}
+                  className="w-full h-[600px]"
+                  title="Event Brochure PDF"
+                />
+              ) : (
+                // Image Display - Use regular img tag for dynamic images
+                <div className="flex items-center justify-center h-96">
+                  <img
+                    src={event.brochure.startsWith('/uploads/') 
+                      ? `${event.brochure}?t=${Date.now()}` 
+                      : `/api/events/${event.id}/brochure?t=${Date.now()}`
+                    }
+                    alt="Event Brochure"
+                    className="object-contain max-h-96 max-w-full"
+                    onError={(e) => {
+                      // Fallback if image fails to load
+                      console.error('Error loading brochure image:', event.brochure);
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="flex justify-center gap-4">
+              <Button asChild size="lg" className="w-full sm:w-auto">
+                <a 
+                  href={`/api/events/${event.id}/brochure?action=download&t=${Date.now()}`} 
+                  download
+                >
+                  Download Brochure
+                </a>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
+                <a 
+                  href={event.brochure.startsWith('/uploads/') 
+                    ? `${window.location.origin}${event.brochure}` 
+                    : event.brochure
+                  } 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  Open in New Tab
+                </a>
+              </Button>
+            </div>
+          </>
+        ) : (
+          <div className="bg-gray-100 h-96 rounded-lg flex flex-col items-center justify-center">
+            <p className="text-gray-600 mb-4">No brochure available</p>
+            <Button 
+              onClick={() => document.getElementById('brochure-upload')?.click()}
+              disabled={updatingBrochure}
+            >
+              {updatingBrochure ? "Uploading..." : "Upload Brochure"}
+            </Button>
+          </div>
+        )}
+      </div>
+    </CardContent>
+  </Card>
+</TabsContent>
 
               <TabsContent value="venue">
                 <Card>

@@ -16,8 +16,8 @@ import {
   SidebarIcon,
   Store,
   HelpCircle,
-  MessageSquare,
   List,
+  Menu,
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
@@ -57,29 +57,58 @@ export function UserDashboard({ userId }: UserDashboardProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [interestedEvents, setInterestedEvents] = useState<any[]>([])
 
   useEffect(() => {
     if (status === "loading") return
+    
     if (status === "unauthenticated") {
       router.push("/login")
       return
     }
-    fetchUserData()
-    fetchInterestedEvents()
-  }, [status, userId])
+    
+    // Only fetch data if we have a valid session
+    if (session?.user?.id) {
+      fetchUserData()
+      fetchInterestedEvents()
+    }
+  }, [status, userId, session])
+
+  // Close mobile sidebar when switching sections
+  useEffect(() => {
+    if (isMobileSidebarOpen) {
+      setIsMobileSidebarOpen(false)
+    }
+  }, [activeSection])
 
   const fetchUserData = async () => {
     try {
       setLoading(true)
       setError(null)
       const res = await fetch(`/api/users/${userId}`)
-      if (!res.ok) throw new Error("Failed to load user")
+      
+      if (!res.ok) {
+        throw new Error(`Failed to load user: ${res.status}`)
+      }
+      
       const data = await res.json()
+      
+      if (!data.user) {
+        throw new Error("User data not found")
+      }
+      
       setUserData(data.user)
       setUserInterests(data.user.interests || [])
     } catch (err) {
-      setError("Error loading user data")
+      console.error("Error fetching user data:", err)
+      setError(err instanceof Error ? err.message : "Error loading user data")
+      
+      toast({
+        title: "Error",
+        description: "Failed to load user data",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
@@ -88,11 +117,23 @@ export function UserDashboard({ userId }: UserDashboardProps) {
   const fetchInterestedEvents = async () => {
     try {
       const response = await fetch(`/api/users/${userId}/interested-events`)
-      if (!response.ok) throw new Error("Failed to fetch interested events")
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch interested events: ${response.status}`)
+      }
+      
       const data = await response.json()
-      setInterestedEvents(data.events || [])
+      
+      // Ensure unique events to prevent duplicate key errors
+      const uniqueEvents = data.events ? 
+        data.events.filter((event: any, index: number, self: any[]) => 
+          index === self.findIndex((e: any) => e.id === event.id)
+        ) : []
+        
+      setInterestedEvents(uniqueEvents)
     } catch (err) {
       console.error("Error fetching interested events:", err)
+      // Don't show toast for this as it's secondary data
     }
   }
 
@@ -113,19 +154,67 @@ export function UserDashboard({ userId }: UserDashboardProps) {
   }
 
   const toggleMenu = (menu: string) => {
-    setOpenMenus((prev) => (prev.includes(menu) ? prev.filter((m) => m !== menu) : [...prev, menu]))
+    setOpenMenus((prev) => 
+      prev.includes(menu) 
+        ? prev.filter((m) => m !== menu) 
+        : [...prev, menu]
+    )
+  }
+
+  const toggleSidebar = () => {
+    if (window.innerWidth < 768) {
+      setIsMobileSidebarOpen(!isMobileSidebarOpen)
+    } else {
+      setIsSidebarCollapsed(!isSidebarCollapsed)
+    }
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut({ callbackUrl: "/login" })
+    } catch (error) {
+      console.error("Error during sign out:", error)
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive",
+      })
+    }
   }
 
   const renderContent = () => {
     if (loading) {
-      return <Skeleton className="h-64 w-full" />
+      return (
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-1/3" />
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      )
     }
+    
     if (error) {
-      return <p className="text-red-600">{error}</p>
+      return (
+        <div className="text-center py-8">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={fetchUserData} variant="outline">
+            Retry
+          </Button>
+        </div>
+      )
     }
+    
+    if (!userData) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-gray-600">No user data found</p>
+        </div>
+      )
+    }
+
     switch (activeSection) {
       case "profile":
-        return <ProfileSection userData={userData!} onUpdate={handleProfileUpdate} organizerId={""} />
+        return <ProfileSection userData={userData} onUpdate={handleProfileUpdate} organizerId={""} />
       case "events":
         return <EventsSection userId={userId} />
       case "past-events":
@@ -151,33 +240,27 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       case "messages":
         return <MessagesSection organizerId={userId} />
       case "settings":
-        return <SettingsSection userData={userData!} onUpdate={handleProfileUpdate} />
+        return <SettingsSection userData={userData} onUpdate={handleProfileUpdate} />
       case "travel":
         return <TravelAccommodation />
       case "Help & Support":
         return <HelpSupport />
       default:
-        return <ProfileSection userData={userData!} onUpdate={handleProfileUpdate} organizerId={""} />
+        return <ProfileSection userData={userData} onUpdate={handleProfileUpdate} organizerId={""} />
     }
   }
 
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <aside className={`${isSidebarCollapsed ? "w-16" : "w-64"} bg-white border-r flex flex-col justify-between transition-all duration-300`}>
+  const renderSidebar = () => {
+    const sidebarContent = (
+      <div className={`${isSidebarCollapsed ? "w-16" : "w-64"} bg-white border-r flex flex-col justify-between transition-all duration-300 h-full`}>
         <div>
           <nav className="p-4 text-sm space-y-2">
             {/* Dashboard */}
             <div>
-              <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("dashboard")}>
+              <button 
+                className="flex items-center justify-between w-full py-2 font-medium hover:text-blue-600 transition-colors" 
+                onClick={() => toggleMenu("dashboard")}
+              >
                 <span className="flex items-center gap-2">
                   <LayoutDashboard size={16} />
                   {!isSidebarCollapsed && "Dashboard"}
@@ -189,10 +272,11 @@ export function UserDashboard({ userId }: UserDashboardProps) {
                 <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
                   <li
                     onClick={() => setActiveSection("profile")}
-                    className={`cursor-pointer pl-3 py-1 border-l-4 ${activeSection === "profile"
+                    className={`cursor-pointer pl-3 py-1 border-l-4 transition-colors ${
+                      activeSection === "profile"
                         ? "border-blue-500 text-blue-600 font-medium"
                         : "border-transparent hover:text-blue-600"
-                      }`}
+                    }`}
                   >
                     Profile
                   </li>
@@ -202,26 +286,38 @@ export function UserDashboard({ userId }: UserDashboardProps) {
 
             {/* Event */}
             <div>
-              <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("event")}>
+              <button 
+                className="flex items-center justify-between w-full py-2 font-medium hover:text-blue-600 transition-colors" 
+                onClick={() => toggleMenu("event")}
+              >
                 <span className="flex items-center gap-2">
                   <Calendar size={16} />
-                  {!isSidebarCollapsed && "My-Events"}
+                  {!isSidebarCollapsed && "My Events"}
                 </span>
                 {!isSidebarCollapsed &&
                   (openMenus.includes("event") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
               </button>
               {openMenus.includes("event") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li onClick={() => setActiveSection("events")} className={menuItemClass(activeSection, "events")}>Interested Events</li>
-                  <li onClick={() => setActiveSection("past-events")} className={menuItemClass(activeSection, "past-events")}>Past Events</li>
-                  <li onClick={() => setActiveSection("wishlist")} className={menuItemClass(activeSection, "wishlist")}>Wishlist</li>
+                  <li onClick={() => setActiveSection("events")} className={menuItemClass(activeSection, "events")}>
+                    Interested Events
+                  </li>
+                  <li onClick={() => setActiveSection("past-events")} className={menuItemClass(activeSection, "past-events")}>
+                    Past Events
+                  </li>
+                  <li onClick={() => setActiveSection("wishlist")} className={menuItemClass(activeSection, "wishlist")}>
+                    Wishlist
+                  </li>
                 </ul>
               )}
             </div>
 
             {/* Networking */}
             <div>
-              <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("networking")}>
+              <button 
+                className="flex items-center justify-between w-full py-2 font-medium hover:text-blue-600 transition-colors" 
+                onClick={() => toggleMenu("networking")}
+              >
                 <span className="flex items-center gap-2">
                   <Network size={16} />
                   {!isSidebarCollapsed && "Networking"}
@@ -231,33 +327,47 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               </button>
               {openMenus.includes("networking") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li onClick={() => setActiveSection("connections")} className={menuItemClass(activeSection, "connections")}>My Connections</li>
-                  <li onClick={() => setActiveSection("messages")} className={menuItemClass(activeSection, "messages")}>Messages</li>
+                  <li onClick={() => setActiveSection("connections")} className={menuItemClass(activeSection, "connections")}>
+                    My Connections
+                  </li>
+                  <li onClick={() => setActiveSection("messages")} className={menuItemClass(activeSection, "messages")}>
+                    Messages
+                  </li>
                 </ul>
               )}
             </div>
 
             {/* Exhibitor */}
             <div>
-              <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("exhibitor")}>
+              <button 
+                className="flex items-center justify-between w-full py-2 font-medium hover:text-blue-600 transition-colors" 
+                onClick={() => toggleMenu("exhibitor")}
+              >
                 <span className="flex items-center gap-2">
                   <Store size={16} />
-                  {!isSidebarCollapsed && "My-Exhibitors"}
+                  {!isSidebarCollapsed && "My Exhibitors"}
                 </span>
                 {!isSidebarCollapsed &&
                   (openMenus.includes("exhibitor") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
               </button>
               {openMenus.includes("exhibitor") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li onClick={() => setActiveSection("my-appointments")} className={menuItemClass(activeSection, "my-appointments")}>Exhibitor Appointments</li>
-                  <li onClick={() => setActiveSection("Suggested")} className={menuItemClass(activeSection, "Suggested")}>Suggested</li>
+                  <li onClick={() => setActiveSection("my-appointments")} className={menuItemClass(activeSection, "my-appointments")}>
+                    Exhibitor Appointments
+                  </li>
+                  <li onClick={() => setActiveSection("Suggested")} className={menuItemClass(activeSection, "Suggested")}>
+                    Suggested
+                  </li>
                 </ul>
               )}
             </div>
 
             {/* Event Planning Tools */}
             <div>
-              <button className="flex items-center justify-between w-full py-2 font-medium" onClick={() => toggleMenu("tools")}>
+              <button 
+                className="flex items-center justify-between w-full py-2 font-medium hover:text-blue-600 transition-colors" 
+                onClick={() => toggleMenu("tools")}
+              >
                 <span className="flex items-center gap-2">
                   <List size={16} />
                   {!isSidebarCollapsed && "Event Planning Tools"}
@@ -267,8 +377,12 @@ export function UserDashboard({ userId }: UserDashboardProps) {
               </button>
               {openMenus.includes("tools") && !isSidebarCollapsed && (
                 <ul className="ml-2 mt-2 space-y-2 border-l">
-                  <li onClick={() => setActiveSection("travel")} className={menuItemClass(activeSection, "travel")}>Travel & Stay</li>
-                  <li onClick={() => setActiveSection("schedule")} className={menuItemClass(activeSection, "schedule")}>Schedule</li>
+                  <li onClick={() => setActiveSection("travel")} className={menuItemClass(activeSection, "travel")}>
+                    Travel & Stay
+                  </li>
+                  <li onClick={() => setActiveSection("schedule")} className={menuItemClass(activeSection, "schedule")}>
+                    Schedule
+                  </li>
                 </ul>
               )}
             </div>
@@ -277,8 +391,9 @@ export function UserDashboard({ userId }: UserDashboardProps) {
             <div>
               <button
                 onClick={() => setActiveSection("Help & Support")}
-                className={`flex items-center gap-2 w-full py-2 font-medium ${activeSection === "Help & Support" ? "text-blue-600 font-medium" : "hover:text-blue-600"
-                  }`}
+                className={`flex items-center gap-2 w-full py-2 font-medium transition-colors ${
+                  activeSection === "Help & Support" ? "text-blue-600 font-medium" : "hover:text-blue-600"
+                }`}
               >
                 <HelpCircle size={16} />
                 {!isSidebarCollapsed && "Help & Support"}
@@ -289,8 +404,9 @@ export function UserDashboard({ userId }: UserDashboardProps) {
             <div>
               <button
                 onClick={() => setActiveSection("settings")}
-                className={`flex items-center gap-2 w-full py-2 font-medium ${activeSection === "settings" ? "text-blue-600 font-medium" : "hover:text-blue-600"
-                  }`}
+                className={`flex items-center gap-2 w-full py-2 font-medium transition-colors ${
+                  activeSection === "settings" ? "text-blue-600 font-medium" : "hover:text-blue-600"
+                }`}
               >
                 <Settings size={16} />
                 {!isSidebarCollapsed && "Settings"}
@@ -300,21 +416,83 @@ export function UserDashboard({ userId }: UserDashboardProps) {
         </div>
 
         {/* Collapse & Logout */}
-        <div className="p-4 space-y-2">
-          <Button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="w-full flex items-center gap-2 mb-2" variant="outline">
+        <div className="p-4 space-y-2 border-t">
+          <Button 
+            onClick={toggleSidebar} 
+            className="w-full flex items-center gap-2 mb-2" 
+            variant="outline"
+            size="sm"
+          >
             <SidebarIcon size={16} />
-            {!isSidebarCollapsed && "Collapse"}
+            {!isSidebarCollapsed && (isSidebarCollapsed ? "Expand" : "Collapse")}
           </Button>
-          <Button onClick={() => signOut({ callbackUrl: "/login" })} className="w-full flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white">
+          <Button 
+            onClick={handleSignOut} 
+            className="w-full flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white"
+            size="sm"
+          >
             <LogOut size={16} />
             {!isSidebarCollapsed && "Logout"}
           </Button>
         </div>
-      </aside>
+      </div>
+    )
+
+    return (
+      <>
+        {/* Mobile Sidebar Overlay */}
+        {isMobileSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+        )}
+
+        {/* Sidebar */}
+        <div className={`
+          fixed md:static inset-y-0 left-0 z-50
+          transform transition-transform duration-300 ease-in-out
+          ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}>
+          {sidebarContent}
+        </div>
+      </>
+    )
+  }
+
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar */}
+      {renderSidebar()}
 
       {/* Main content */}
-      <div className="">
-        <main className="flex-1 p-6 overflow-auto">{renderContent()}</main>
+      <div className="flex-1 flex flex-col min-w-0"> {/* min-w-0 prevents flex overflow */}
+        {/* Mobile header */}
+        <header className="md:hidden bg-white border-b p-4 flex items-center justify-between sticky top-0 z-30">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileSidebarOpen(true)}
+          >
+            <Menu size={20} />
+          </Button>
+          <h1 className="text-lg font-semibold capitalize">
+            {activeSection.replace('-', ' ')}
+          </h1>
+          <div className="w-10"></div> {/* Spacer for balance */}
+        </header>
+
+        <main className="flex-1 p-4 md:p-6 overflow-auto">
+          {renderContent()}
+        </main>
       </div>
     </div>
   )
@@ -322,6 +500,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
 
 // Helper for menu items
 function menuItemClass(activeSection: string, id: string) {
-  return `cursor-pointer pl-3 py-1 border-l-4 ${activeSection === id ? "border-blue-500 text-blue-600 font-medium" : "border-transparent hover:text-blue-600"
-    }`
+  return `cursor-pointer pl-3 py-1 border-l-4 transition-colors ${
+    activeSection === id ? "border-blue-500 text-blue-600 font-medium" : "border-transparent hover:text-blue-600"
+  }`
 }
