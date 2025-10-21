@@ -333,7 +333,7 @@ export default function FeedbackReplyManagement({ eventId }: { eventId: string }
               </Select>
             </div>
 
-            <div>
+            {/* <div>
               <label className="text-sm font-medium mb-2 block">Status</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
@@ -345,7 +345,7 @@ export default function FeedbackReplyManagement({ eventId }: { eventId: string }
                   <SelectItem value="pending">Pending</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
 
             <div>
               <label className="text-sm font-medium mb-2 block">Reply Status</label>

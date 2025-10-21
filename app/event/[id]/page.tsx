@@ -303,7 +303,7 @@ export default function EventPage({ params }: EventPageProps) {
               <h1 className="text-3xl font-bold text-blue-900 mb-2">{event.slug || "Tag Name will be updated by backend"}</h1>
               <div className="flex items-center gap-2 text-gray-600 mb-3">
                 <MapPin className="w-4 h-4" />
-                <span>{event.venue.venueAddress || "Location TBA"}</span>
+                <span>{event?.venue?.venueAddress || event?.location?.address || "Location TBA"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center justify-center gap-4">
