@@ -870,8 +870,8 @@ export default function EventsPageContent() {
                     <h3 className="text-red-500 font-medium mb-1">Top 100 Events</h3>
                     <p className="text-sm text-gray-500">Discover and track top events</p>
                   </div>
-                  
-                  
+
+
                   <div className="p-4 border-b border-gray-100">
                     <h3 className="text-red-500 font-medium mb-1">Explore Speaker</h3>
                     <p className="text-sm text-gray-500">Discover and track top events</p>
@@ -1083,22 +1083,25 @@ export default function EventsPageContent() {
                               </div>
 
                               {/* Share + Save + Visit Buttons */}
+                              {/* Share + Save + Visit Buttons */}
                               <div className="flex items-center gap-2 flex-shrink-0">
-                                <ShareButton id={event.id} title={event.title} type="event" />                                
-                                <Button
-                                  className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 mt-1 rounded-md text-sm shadow-sm"
+                                <ShareButton id={event.id} title={event.title} type="event" />
+
+                                {/* Use div instead of Button for the save container */}
+                                <div
+                                  className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 py-2 mt-1 rounded-md text-sm shadow-sm cursor-pointer transition-colors"
                                   onClick={(e) => {
                                     e.preventDefault()
                                     e.stopPropagation()
                                     handleVisitClick(event.id, event.title)
                                   }}
                                 >
-                                    <BookmarkButton
-                                  eventId={event.id}
-                                  className="p-1 rounded-full text-white transition"
-                                />
-                                  Save
-                                </Button>
+                                  <BookmarkButton
+                                    eventId={event.id}
+                                    className="p-1 rounded-full text-white transition"
+                                  />
+                                  <span className="ml-1">Save</span>
+                                </div>
                               </div>
                             </div>
 

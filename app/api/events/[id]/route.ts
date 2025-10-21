@@ -66,6 +66,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       isAvailable: availableTickets > 0 && new Date() < event.registrationEnd,
       registrationCount: event._count?.registrations ?? 0,
       reviewCount: event._count?.reviews ?? 0,
+      // Include layoutPlan in the response
+      layoutPlan: event.layoutPlan,
     }
 
     return NextResponse.json(eventData)
