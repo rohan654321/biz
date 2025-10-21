@@ -337,7 +337,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="images">Images</TabsTrigger>
           <TabsTrigger value="amenities">Amenities</TabsTrigger>
-          <TabsTrigger value="spaces">Meeting Spaces</TabsTrigger>
+          <TabsTrigger value="spaces">Halls</TabsTrigger>
           <TabsTrigger value="floorplan">Floor Plan</TabsTrigger>
         </TabsList>
 
@@ -767,13 +767,13 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                         <span className="text-muted-foreground">Area:</span>
                         <span className="font-medium">{space.area} sq ft</span>
                       </div>
-                      <div className="flex justify-between text-sm">
+                      {/* <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Hourly Rate:</span>
                         <span className="font-medium text-blue-600 dark:text-blue-400">
                           {profileData?.currency}
                           {space.hourlyRate.toLocaleString()}
                         </span>
-                      </div>
+                      </div> */}
                     </div>
 
                     {space.features && space.features.length > 0 && (
@@ -814,12 +814,12 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                       value={newSpace.area}
                       onChange={(e) => setNewSpace({ ...newSpace, area: e.target.value })}
                     />
-                    <Input
+                    {/* <Input
                       placeholder={`Hourly rate (${profileData?.currency})`}
                       type="number"
                       value={newSpace.hourlyRate}
                       onChange={(e) => setNewSpace({ ...newSpace, hourlyRate: e.target.value })}
-                    />
+                    /> */}
                   </div>
                   <Input
                     placeholder="Features (comma separated)"
