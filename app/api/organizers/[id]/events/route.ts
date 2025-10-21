@@ -7,6 +7,8 @@ import { ObjectId } from "mongodb"
 
 const prisma = new PrismaClient()
 
+
+
 // ✅ GET Handler
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -37,12 +39,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
             firstName: true,
             lastName: true,
             location: true,
+            venueAddress: true,
             venueCity: true,
             venueState: true,
             venueCountry: true,
           },
         },
         exhibitionSpaces: true,
+        ticketTypes: true,
         _count: {
           select: {
             registrations: {
@@ -75,24 +79,57 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         id: event.id,
         title: event.title,
         description: event.description || "",
+        shortDescription: event.shortDescription || "",
+        slug: event.slug,
         date: event.startDate.toISOString().split("T")[0],
         startDate: event.startDate.toISOString(),
         endDate: event.endDate.toISOString(),
+        registrationStart: event.registrationStart.toISOString(),
+        registrationEnd: event.registrationEnd.toISOString(),
+        timezone: event.timezone,
         location: event.isVirtual
           ? "Virtual Event"
-          : (event.venue ? `${event.venue.firstName} ${event.venue.lastName ?? ""}`.trim() : null) || "TBD",
+          : event.venue
+            ? `${event.venue.firstName} ${event.venue.lastName ?? ""}`.trim()
+            : "TBD",
+        venueAddress: event.venue?.venueAddress || "",
+        city: event.venue?.venueCity || "",
+        venueState: event.venue?.venueState || "",
+        venueCountry: event.venue?.venueCountry || "",
         status: event.status,
+        category: event.category || "",
+        edition: event.edition || "",
+        tags: event.tags ?? [],
+        eventType: event.eventType ?? [],
+        isFeatured: event.isFeatured || false,
+        isVIP: event.isVIP || false,
         attendees: confirmedRegistrations,
         registrations: confirmedRegistrations,
         revenue: totalRevenue,
-        eventType: event.category || "Conference",
         maxAttendees: event.maxAttendees,
+        currentAttendees: event.currentAttendees,
+        currency: event.currency,
         isVirtual: event.isVirtual || false,
-        bannerImage: event.bannerImage,
-        thumbnailImage: event.thumbnailImage,
+        virtualLink: event.virtualLink || "",
+        images: event.images ?? [],
+        videos: event.videos ?? [],
+        documents: event.documents ?? [],
+        brochure: event.brochure || "",
+        layoutPlan: event.layoutPlan || "",
+        bannerImage: event.bannerImage || "",
+        thumbnailImage: event.thumbnailImage || "",
         isPublic: event.isPublic ?? true,
-        tags: event.tags ?? [],
+        requiresApproval: event.requiresApproval || false,
+        allowWaitlist: event.allowWaitlist || false,
+        refundPolicy: event.refundPolicy || "",
+        metaTitle: event.metaTitle || "",
+        metaDescription: event.metaDescription || "",
         exhibitionSpaces: event.exhibitionSpaces,
+        ticketTypes: event.ticketTypes,
+        averageRating: event.averageRating,
+        totalReviews: event.totalReviews,
+        createdAt: event.createdAt.toISOString(),
+        updatedAt: event.updatedAt.toISOString(),
       }
     })
 
@@ -103,11 +140,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 }
 
+
+
 // ✅ POST Handler
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
-    const { id } = await params
+    const { id } =await params
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -134,6 +173,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         id: new ObjectId().toHexString(),
         title: body.title,
         description: body.description,
+        edition: body.edition ? String(body.edition) : null,
         shortDescription: body.shortDescription || null,
         slug:
           body.slug ??
@@ -158,7 +198,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         images: images,
         videos: videos,
         documents: documents,
-        brochure: body.brochure ,
+        brochure: body.brochure,
         layoutPlan: body.layoutPlan,
         bannerImage: body.bannerImage || images[0] || null,
         thumbnailImage: body.thumbnailImage || images[0] || null,

@@ -6,34 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Search,
-  Building,
-  Mail,
-  Phone,
-  MapPin,
-  Users,
-  Star,
-  Plus,
-  Trash2,
-  Wifi,
-  Car,
-  Coffee,
-  Utensils,
-  Accessibility,
-  Camera,
-  Mic,
-  Projector,
-  Shield,
-  Zap,
-  Home,
-  Globe,
-  CheckCircle2,
-} from "lucide-react"
+import { Search, Building, Mail, Phone, MapPin, Users, Star, CheckCircle2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface Venue {
@@ -124,10 +100,6 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
     },
   ])
 
-
-
-
-
   useEffect(() => {
     fetchVenues()
   }, [])
@@ -136,8 +108,17 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
     try {
       const response = await fetch("/api/venues")
       if (response.ok) {
-        const data = await response.json()
-        setVenues(data.venues || [])
+        const result = await response.json()
+        console.log("[v0] Venues API response:", result)
+
+        // API returns { success: true, data: venues, pagination: {...} }
+        if (result.success && Array.isArray(result.data)) {
+          setVenues(result.data)
+          console.log("[v0] Loaded venues:", result.data.length)
+        } else {
+          console.error("[v0] Invalid API response format:", result)
+          setVenues([])
+        }
       }
     } catch (error) {
       console.error("Error fetching venues:", error)
@@ -187,8 +168,6 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
     }))
   }
 
-
-
   const removeMeetingSpace = (index: number) => {
     setMeetingSpaces((prev) => prev.filter((_, i) => i !== index))
   }
@@ -202,11 +181,11 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
       prev.map((space, i) =>
         i === spaceIndex
           ? {
-            ...space,
-            features: space.features.includes(feature)
-              ? space.features.filter((f) => f !== feature)
-              : [...space.features, feature],
-          }
+              ...space,
+              features: space.features.includes(feature)
+                ? space.features.filter((f) => f !== feature)
+                : [...space.features, feature],
+            }
           : space,
       ),
     )
@@ -221,7 +200,6 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
       })
       return
     }
-
 
     setLoading(true)
     try {
@@ -248,8 +226,7 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
           totalReviews: 0,
           amenities: newVenue.amenities,
           meetingSpaces: meetingSpaces.filter((space) => space.name.trim() !== ""),
-        })
-
+        }),
       })
 
       if (response.ok) {
@@ -363,10 +340,11 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                 {filteredVenues.map((venue) => (
                   <Card
                     key={venue.id}
-                    className={`cursor-pointer transition-all ${selectedVenueId === venue.id
+                    className={`cursor-pointer transition-all ${
+                      selectedVenueId === venue.id
                         ? "ring-2 ring-green-500 bg-green-50 shadow-md"
                         : "hover:bg-gray-50 hover:shadow-sm"
-                      }`}
+                    }`}
                     onClick={() => handleVenueSelect(venue.id!)}
                   >
                     <CardContent className="p-4">
@@ -532,11 +510,7 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                         rows={4}
                       />
                     </div>
-
-
                   </div>
-
-
                 </div>
               </div>
 
@@ -597,9 +571,6 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                   </div>
                 </div>
               </div>
-
-
-
 
               <div className="flex justify-end">
                 <Button onClick={handleCreateVenue} disabled={loading}>

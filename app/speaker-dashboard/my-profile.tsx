@@ -1,15 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import type React from "react"
+
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Edit, Save, X, Plus, Camera, MapPin, Mail, Phone, Linkedin, Globe } from "lucide-react"
+import { Edit, Save, Camera, MapPin, Mail, Phone, Linkedin, Globe } from "lucide-react"
 
 type SpeakerProfile = {
   fullName: string
@@ -22,7 +23,7 @@ type SpeakerProfile = {
   location: string
   bio: string
   speakingExperience: string
-  // expertise?: string[]
+  avatar?: string
 }
 
 export default function MyProfile({ speakerId }: { speakerId: string }) {
@@ -31,48 +32,107 @@ export default function MyProfile({ speakerId }: { speakerId: string }) {
   const [loading, setLoading] = useState(false)
   const [profile, setProfile] = useState<SpeakerProfile | null>(null)
   const [newExpertise, setNewExpertise] = useState("")
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // 🔹 Save profile (PUT request)
-const handleSave = async () => {
-  if (!profile) return
-  try {
-    setLoading(true)
-    const response = await fetch(`/api/speakers/${speakerId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(profile),
-    })
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
 
-    const data = await response.json()
-
-    if (!response.ok) {
-      throw new Error(data.error || data.message || "Failed to update speaker")
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Error",
+        description: "Please select an image file",
+        variant: "destructive",
+      })
+      return
     }
 
-    if (data.success) {
-      setProfile(data.profile) // Use the profile returned by the backend
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "Image size should be less than 5MB",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      setUploadingAvatar(true)
+
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("folder", "avatars")
+
+      const response = await fetch("/api/upload/cloudinary", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to upload image")
+      }
+
+      setProfile((prev) => (prev ? { ...prev, avatar: data.url } : null))
+
       toast({
         title: "Success",
-        description: "Profile updated successfully",
+        description: "Avatar uploaded successfully",
       })
-      setIsEditing(false)
-    } else {
-      throw new Error(data.error || "Update failed")
+    } catch (error) {
+      console.error("Error uploading avatar:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to upload avatar",
+        variant: "destructive",
+      })
+    } finally {
+      setUploadingAvatar(false)
     }
-  } catch (error) {
-    console.error("Error updating profile:", error)
-    toast({
-      title: "Error",
-      description: error instanceof Error ? error.message : "Failed to update profile",
-      variant: "destructive",
-    })
-  } finally {
-    setLoading(false)
   }
-}
-  // 🔹 Fetch profile (GET request)
+
+  const handleSave = async () => {
+    if (!profile) return
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/speakers/${speakerId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(profile),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || "Failed to update speaker")
+      }
+
+      if (data.success) {
+        setProfile(data.profile)
+        toast({
+          title: "Success",
+          description: "Profile updated successfully",
+        })
+        setIsEditing(false)
+      } else {
+        throw new Error(data.error || "Update failed")
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update profile",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     const loadProfile = async () => {
       try {
@@ -95,7 +155,6 @@ const handleSave = async () => {
 
   return (
     <div className="space-y-6">
-      {/* Header with edit/save button */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">My Profile</h2>
         <Button
@@ -108,7 +167,6 @@ const handleSave = async () => {
         </Button>
       </div>
 
-      {/* Profile Picture */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
@@ -118,15 +176,27 @@ const handleSave = async () => {
             <div className="flex flex-col items-center space-y-4">
               <div className="relative">
                 <Avatar className="w-32 h-32">
-                  <AvatarImage src="/placeholder.svg?height=128&width=128" />
-                  <AvatarFallback className="text-2xl">
-                    {profile.fullName?.charAt(0)}
-                  </AvatarFallback>
+                  <AvatarImage src={profile.avatar || "/placeholder.svg"} alt={profile.fullName} />
+                  <AvatarFallback className="text-2xl">{profile.fullName?.charAt(0)}</AvatarFallback>
                 </Avatar>
                 {isEditing && (
-                  <Button size="sm" className="absolute bottom-0 right-0 rounded-full w-8 h-8 p-0">
-                    <Camera className="h-4 w-4" />
-                  </Button>
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      size="sm"
+                      className="absolute bottom-0 right-0 rounded-full w-8 h-8 p-0"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingAvatar}
+                    >
+                      <Camera className="h-4 w-4" />
+                    </Button>
+                  </>
                 )}
               </div>
               <div className="text-center">
@@ -138,7 +208,6 @@ const handleSave = async () => {
           </CardContent>
         </Card>
 
-        {/* Contact Info */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Contact Information</CardTitle>
@@ -146,14 +215,52 @@ const handleSave = async () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
-                { id: "fullName", label: "Full Name", value: profile.fullName },
-                { id: "designation", label: "Designation", value: profile.designation },
-                { id: "company", label: "Company/Institution", value: profile.company },
-                { id: "location", label: "Location", value: profile.location, icon: <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> },
-                { id: "email", label: "Email", value: profile.email, type: "email", icon: <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> },
-                { id: "phone", label: "Phone", value: profile.phone, icon: <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> },
-                { id: "linkedin", label: "LinkedIn", value: profile.linkedin, icon: <Linkedin className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> },
-                { id: "website", label: "Website", value: profile.website, icon: <Globe className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> },
+                {
+                  id: "fullName",
+                  label: "Full Name",
+                  value: profile.fullName,
+                },
+                {
+                  id: "designation",
+                  label: "Designation",
+                  value: profile.designation,
+                },
+                {
+                  id: "company",
+                  label: "Company/Institution",
+                  value: profile.company,
+                },
+                {
+                  id: "location",
+                  label: "Location",
+                  value: profile.location,
+                  icon: <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />,
+                },
+                {
+                  id: "email",
+                  label: "Email",
+                  value: profile.email,
+                  type: "email",
+                  icon: <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />,
+                },
+                {
+                  id: "phone",
+                  label: "Phone",
+                  value: profile.phone,
+                  icon: <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />,
+                },
+                {
+                  id: "linkedin",
+                  label: "LinkedIn",
+                  value: profile.linkedin,
+                  icon: <Linkedin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />,
+                },
+                {
+                  id: "website",
+                  label: "Website",
+                  value: profile.website,
+                  icon: <Globe className="absolute left-3 top-3 h-4 w-4 text-gray-400" />,
+                },
               ].map((field) => (
                 <div key={field.id} className="space-y-2">
                   <Label htmlFor={field.id}>{field.label}</Label>
@@ -175,7 +282,6 @@ const handleSave = async () => {
         </Card>
       </div>
 
-      {/* Bio & Speaking Experience */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>

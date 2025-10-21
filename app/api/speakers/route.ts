@@ -1,86 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-options"
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { searchParams } = new URL(request.url)
-    const page = Number.parseInt(searchParams.get("page") || "1")
-    const limit = Number.parseInt(searchParams.get("limit") || "12")
-    const search = searchParams.get("search") || ""
-    const category = searchParams.get("category") || ""
-    const expertise = searchParams.get("expertise") || ""
-
-    const skip = (page - 1) * limit
-
-    // Build where clause for filtering
-    const where: any = {
-      role: "SPEAKER",
-      isActive: true,
-    }
-
-    // Search across multiple fields
-    if (search) {
-      where.OR = [
-        {
-          firstName: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-        {
-          lastName: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-        {
-          email: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-        {
-          company: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-        {
-          jobTitle: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-        {
-          bio: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-        {
-          specialties: {
-            hasSome: [search],
-          },
-        },
-      ]
-    }
-
-    // Filter by expertise (specialties)
-    if (expertise) {
-      where.specialties = {
-        has: expertise
-      }
-    }
+    const { id } = await params
 
     await prisma.$connect()
 
-    // Get speakers with enhanced data
-    const speakers = await prisma.user.findMany({
-      where,
-      skip,
-      take: limit,
+    const speaker = await prisma.user.findUnique({
+      where: {
+        id,
+        role: "SPEAKER",
+      },
       select: {
         id: true,
         firstName: true,
@@ -109,132 +40,123 @@ export async function GET(request: NextRequest) {
         createdAt: true,
         updatedAt: true,
       },
-      orderBy: {
-        totalEvents: "desc",
-      },
     })
 
-    // Get total count for pagination
-    const total = await prisma.user.count({ where })
+    if (!speaker) {
+      return NextResponse.json({ success: false, error: "Speaker not found" }, { status: 404 })
+    }
 
-    // Get unique specialties for filters
-    const allSpeakersWithSpecialties = await prisma.user.findMany({
-      where: { role: "SPEAKER", isActive: true },
-      select: { specialties: true }
-    })
-
-    const allExpertise = Array.from(
-      new Set(
-        allSpeakersWithSpecialties.flatMap(speaker => speaker.specialties)
-      )
-    ).filter(Boolean).sort()
-
-    console.log(`Found ${speakers.length} speakers out of ${total} total`)
+    const profile = {
+      fullName: `${speaker.firstName} ${speaker.lastName}`,
+      designation: speaker.jobTitle || "",
+      company: speaker.company || "",
+      email: speaker.email,
+      phone: speaker.phone || "",
+      linkedin: speaker.linkedin || "",
+      website: speaker.website || "",
+      location: speaker.location || "",
+      bio: speaker.bio || "",
+      speakingExperience: speaker.speakingExperience || "",
+      avatar: speaker.avatar || undefined,
+    }
 
     return NextResponse.json({
       success: true,
-      speakers,
-      filters: {
-        expertise: allExpertise,
-      },
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
+      profile,
     })
   } catch (error) {
-    console.error("Error fetching speakers:", error)
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    )
+    console.error("Error fetching speaker:", error)
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
-
+    const { id } = await params
     const body = await request.json()
-    const {
-      firstName,
-      lastName,
-      email,
-      phone,
-      bio,
-      company,
-      jobTitle,
-      location,
-      website,
-      linkedin,
-      twitter,
-      specialties,
-      achievements,
-      certifications,
-      speakingExperience,
-    } = body
 
-    // Validate required fields
-    if (!firstName || !lastName || !email) {
-      return NextResponse.json(
-        { success: false, error: "Missing required fields" },
-        { status: 400 }
-      )
-    }
+    console.log("[v0] Received update request for speaker:", id)
+    console.log("[v0] Update data:", body)
+    console.log("[v0] Avatar in request:", body.avatar)
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
+    await prisma.$connect()
+
+    const existingSpeaker = await prisma.user.findUnique({
+      where: { id, role: "SPEAKER" },
     })
 
-    if (existingUser) {
-      return NextResponse.json(
-        { success: false, error: "User with this email already exists" },
-        { status: 400 }
-      )
+    if (!existingSpeaker) {
+      return NextResponse.json({ success: false, error: "Speaker not found" }, { status: 404 })
     }
 
-    const speaker = await prisma.user.create({
-      data: {
-        firstName,
-        lastName,
-        email,
-        phone,
-        bio,
-        company,
-        jobTitle,
-        location,
-        website,
-        linkedin,
-        twitter,
-        specialties: specialties || [],
-        achievements: achievements || [],
-        certifications: certifications || [],
-        speakingExperience,
-        role: "SPEAKER",
-        password: "temp_password", // In production, use proper password hashing
-        isActive: true,
+    const [firstName, ...lastNameParts] = (body.fullName || "").split(" ")
+    const lastName = lastNameParts.join(" ")
+
+    const updateData: any = {
+      firstName: firstName || existingSpeaker.firstName,
+      lastName: lastName || existingSpeaker.lastName,
+      email: body.email || existingSpeaker.email,
+      phone: body.phone || existingSpeaker.phone,
+      bio: body.bio || existingSpeaker.bio,
+      company: body.company || existingSpeaker.company,
+      jobTitle: body.designation || existingSpeaker.jobTitle,
+      location: body.location || existingSpeaker.location,
+      website: body.website || existingSpeaker.website,
+      linkedin: body.linkedin || existingSpeaker.linkedin,
+      speakingExperience: body.speakingExperience || existingSpeaker.speakingExperience,
+      avatar: body.avatar !== undefined ? body.avatar : existingSpeaker.avatar,
+    }
+
+    console.log("[v0] Update data prepared:", updateData)
+    console.log("[v0] Avatar to be saved:", updateData.avatar)
+
+    const updatedSpeaker = await prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        avatar: true,
+        bio: true,
+        company: true,
+        jobTitle: true,
+        location: true,
+        website: true,
+        linkedin: true,
+        speakingExperience: true,
       },
     })
 
+    console.log("[v0] Speaker updated successfully")
+    console.log("[v0] Avatar after update:", updatedSpeaker.avatar)
+
+    const profile = {
+      fullName: `${updatedSpeaker.firstName} ${updatedSpeaker.lastName}`,
+      designation: updatedSpeaker.jobTitle || "",
+      company: updatedSpeaker.company || "",
+      email: updatedSpeaker.email,
+      phone: updatedSpeaker.phone || "",
+      linkedin: updatedSpeaker.linkedin || "",
+      website: updatedSpeaker.website || "",
+      location: updatedSpeaker.location || "",
+      bio: updatedSpeaker.bio || "",
+      speakingExperience: updatedSpeaker.speakingExperience || "",
+      avatar: updatedSpeaker.avatar || "",
+    }
+
+    console.log("[v0] Profile response:", profile)
+    console.log("[v0] Avatar in response:", profile.avatar)
+
     return NextResponse.json({
       success: true,
-      speaker,
-      message: "Speaker created successfully",
+      profile,
+      message: "Speaker updated successfully",
     })
   } catch (error) {
-    console.error("Error creating speaker:", error)
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    )
+    console.error("[v0] Error updating speaker:", error)
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }

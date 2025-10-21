@@ -99,7 +99,7 @@ export default function MySessions({ speakerId }: { speakerId: string }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">My Sessions</h2>
-        <div className="flex space-x-2">
+        {/* <div className="flex space-x-2">
           <Button variant={filter === "all" ? "default" : "outline"} size="sm" onClick={() => setFilter("all")}>
             All ({sessions.length})
           </Button>
@@ -113,7 +113,7 @@ export default function MySessions({ speakerId }: { speakerId: string }) {
           <Button variant={filter === "pending" ? "default" : "outline"} size="sm" onClick={() => setFilter("pending")}>
             Pending ({sessions.filter((s) => s.status.toLowerCase() === "pending").length})
           </Button>
-        </div>
+        </div> */}
       </div>
 
       <div className="grid gap-6">
