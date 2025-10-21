@@ -323,12 +323,12 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
                 <button onClick={() => setActiveSection("ratings-reviews")} className={menuItemClass("ratings-reviews")}>
                   Ratings & Reviews
                 </button>
-                <button
+                {/* <button
                   onClick={() => setActiveSection("legal-documentation")}
                   className={menuItemClass("legal-documentation")}
                 >
                   Legal & Documentation
-                </button>
+                </button> */}
               </div>
             )}
           </div>

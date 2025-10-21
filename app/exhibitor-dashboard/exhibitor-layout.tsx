@@ -525,7 +525,7 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
           </div>
 
           {/* Analytics Dropdown */}
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <button
               className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
               onClick={() => toggleMenu("analytics")}
@@ -550,7 +550,7 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
                 </button>
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Network Dropdown */}
           <div className="mb-4">

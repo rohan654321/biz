@@ -409,10 +409,10 @@ const fetchAppointments = async () => {
               <SelectItem value="CANCELLED">Cancelled</SelectItem>
             </SelectContent>
           </Select>
-          <Button className="flex items-center gap-2">
+          {/* <Button className="flex items-center gap-2">
             <CalendarIcon className="w-4 h-4" />
             Calendar View
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -440,14 +440,14 @@ const fetchAppointments = async () => {
             <div className="text-gray-600">Confirmed</div>
           </CardContent>
         </Card>
-        <Card>
+        {/* <Card>
           <CardContent className="p-6 text-center">
             <div className="text-3xl font-bold text-purple-600">
               {appointments.filter((a) => a.status === "COMPLETED").length}
             </div>
             <div className="text-gray-600">Completed</div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
