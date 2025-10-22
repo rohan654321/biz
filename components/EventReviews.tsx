@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Calendar, UserPlus, Users } from "lucide-react"
 
 export interface Venue {
@@ -26,37 +26,42 @@ export interface Event {
   startDate: string
   endDate?: string
   venueId?: string
-  venue?: Venue // Add this
+  venue?: Venue
   location?: {
     city: string
     venue?: string
     country?: string
     address?: string
   }
+  slug?: string
 }
 
 export default function EventReviews() {
   const [nearByEvents, setNearByEvents] = useState<Event[]>([])
   const [visitorCounts, setVisitorCounts] = useState<Record<string, number>>({})
+  const router = useRouter()
 
   useEffect(() => {
     const fetchNearByEvents = async () => {
       try {
         const response = await fetch("/api/events?featured=true")
         const data = await response.json()
-        const eventsWithLocation = data.events.map((event: Event) => ({
-          ...event,
-          location: event.venue
-            ? {
-              venue: event.venue.venueName,
-              city: event.venue.venueCity,
-              country: event.venue.venueCountry,
-              address: event.venue.venueAddress,
-            }
-            : undefined,
-        }))
-        const shuffled = eventsWithLocation.sort(() => 0.5 - Math.random())
-        setNearByEvents(shuffled.slice(0, 4))
+        
+        if (data.events && Array.isArray(data.events)) {
+          const eventsWithLocation = data.events.map((event: Event) => ({
+            ...event,
+            location: event.venue
+              ? {
+                  venue: event.venue.venueName,
+                  city: event.venue.venueCity,
+                  country: event.venue.venueCountry,
+                  address: event.venue.venueAddress,
+                }
+              : undefined,
+          }))
+          const shuffled = eventsWithLocation.sort(() => 0.5 - Math.random())
+          setNearByEvents(shuffled.slice(0, 4))
+        }
       } catch (error) {
         console.error("Error fetching featured events:", error)
       }
@@ -91,11 +96,17 @@ export default function EventReviews() {
     })
     alert("Thank you for showing interest on this event!")
   }
+
+  const handleCardClick = (event: Event) => {
+    // Navigate to event detail page at /event/[id]
+    router.push(`/event/${event.id}`)
+  }
+
   const formatFollowers = (num: number) => {
-    if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
-    if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
-    return num.toString();
-  };
+    if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M"
+    if (num >= 1_000) return (num / 1_000).toFixed(1) + "K"
+    return num.toString()
+  }
 
   return (
     <section className="py-12 px-6 bg-white max-w-6xl mx-auto">
@@ -112,34 +123,41 @@ export default function EventReviews() {
         {nearByEvents.map((event, index) => (
           <div
             key={event.id || index}
-            className="bg-white shadow-md overflow-hidden hover:shadow-xl border border-gray-100 text-center"
+            className="bg-white shadow-md overflow-hidden hover:shadow-xl border border-gray-100 text-center cursor-pointer transition-all duration-300 hover:scale-105"
+            onClick={() => handleCardClick(event)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleCardClick(event)
+              }
+            }}
           >
             {/* Gradient Top Banner */}
             <div className="relative h-40 w-full overflow-hidden">
               <img
-                src={event.logo || "/herosection-images/food.jpg"}
-                alt="event logo"
+                src={event.logo || event.bannerImage || "/herosection-images/food.jpg"}
+                alt={`${event.title} logo`}
                 className="absolute inset-0 w-full h-full object-cover"
               />
 
               {/* Edition Tag */}
               <div className="absolute top-2 left-2 flex items-center z-10">
-                <span className="bg-red-600 text-white text-sm font-bold px-1.5 py-0.5 rounded-sm mr-1">{event.edition || "2 Edition"}</span>
-                {/* <span className="bg-white text-[#0A2B61] font-semibold text-sm px-2 py-0.5 rounded-r-md">Edition</span> */}
+                <span className="bg-red-600 text-white text-sm font-bold px-1.5 py-0.5 rounded-sm mr-1">
+                  {event.edition || "2 Edition"}
+                </span>
               </div>
 
               {/* Categories */}
               <div className="absolute top-2 right-2 flex gap-2 z-10">
-                {event.categories?.slice(0, 2).map(
-                  (
-                    cat,
-                    idx, // Limit to 2 categories for better fit
-                  ) => (
-                    <span key={idx} className="bg-white text-gray-700 text-xs px-2 py-0.5 rounded-full shadow-sm">
-                      {cat}
-                    </span>
-                  ),
-                )}
+                {event.categories?.slice(0, 2).map((cat, idx) => (
+                  <span
+                    key={idx}
+                    className="bg-white text-gray-700 text-xs px-2 py-0.5 rounded-full shadow-sm"
+                  >
+                    {cat}
+                  </span>
+                ))}
               </div>
             </div>
 
@@ -153,7 +171,7 @@ export default function EventReviews() {
 
                 <button
                   className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm shadow-sm"
-                  aria-label="Visit event"
+                  aria-label="Save event"
                   onClick={(e) => handleVisitClick(e, event, index)}
                 >
                   <UserPlus className="w-4 h-4 mr-1" />
@@ -185,10 +203,10 @@ export default function EventReviews() {
                 })}
                 {event.endDate
                   ? ` - ${new Date(event.endDate).toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })}`
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}`
                   : ""}
               </p>
             </div>
