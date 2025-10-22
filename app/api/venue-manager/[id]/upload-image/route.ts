@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import cloudinary from "@/lib/cloudinary"
+import { Cloudinary } from "@/lib/cloudinary"
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     // Upload to Cloudinary
     const result = await new Promise((resolve, reject) => {
-      cloudinary.uploader
+      Cloudinary.uploader
         .upload_stream(
           {
             folder: `venues/${id}/${type || "images"}`,

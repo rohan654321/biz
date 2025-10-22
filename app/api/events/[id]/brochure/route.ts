@@ -1,15 +1,38 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { writeFile, mkdir, readFile } from "fs/promises"
-import { join } from "path"
-import { existsSync } from "fs"
+import { uploadToCloudinary, deleteFromCloudinary } from "@/lib/cloudinary"
 
 // ✅ Allowed file types
 const VALID_FILE_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/gif"]
 // ✅ Max file size (10 MB)
 const MAX_FILE_SIZE = 10 * 1024 * 1024
-// ✅ Upload directory
-const UPLOAD_DIR = join(process.cwd(), "public/uploads")
+
+// Helper function to extract public_id from Cloudinary URL
+function extractPublicId(cloudinaryUrl: string): string {
+  try {
+    const url = new URL(cloudinaryUrl);
+    const pathParts = url.pathname.split('/');
+    
+    // Find the index after 'upload'
+    const uploadIndex = pathParts.findIndex(part => part === 'upload');
+    if (uploadIndex === -1) {
+      throw new Error("Invalid Cloudinary URL format");
+    }
+    
+    // Get the parts after upload (version and public_id)
+    const publicIdParts = pathParts.slice(uploadIndex + 2); // Skip 'upload' and version
+    let publicId = publicIdParts.join('/');
+    
+    // Remove file extension
+    publicId = publicId.replace(/\.[^/.]+$/, "");
+    
+    return publicId;
+  } catch (error) {
+    console.error("Error extracting public_id from URL:", cloudinaryUrl);
+    console.error("Extraction error:", error);
+    throw new Error("Invalid Cloudinary URL");
+  }
+}
 
 // ========================
 // PUT — Upload / Replace Brochure
@@ -19,58 +42,73 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
-    const formData = await request.formData()
-    const brochureFile = formData.get("brochure") as File | null
+    const { id } = await params;
+    const formData = await request.formData();
+    const brochureFile = formData.get("brochure") as File | null;
 
     if (!brochureFile) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 })
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
     if (!VALID_FILE_TYPES.includes(brochureFile.type)) {
       return NextResponse.json(
         { error: "Invalid file type. Please upload a PDF or image file." },
         { status: 400 }
-      )
+      );
     }
 
     if (brochureFile.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         { error: "File too large. Please upload a file smaller than 10MB." },
         { status: 400 }
-      )
+      );
     }
 
-    // ✅ Ensure upload directory exists
-    if (!existsSync(UPLOAD_DIR)) {
-      await mkdir(UPLOAD_DIR, { recursive: true })
+    // Get existing event to check for old brochure
+    const existingEvent = await prisma.event.findUnique({
+      where: { id },
+      select: { brochure: true }
+    });
+
+    // Delete old brochure from Cloudinary if exists
+    if (existingEvent?.brochure && existingEvent.brochure.includes('cloudinary.com')) {
+      try {
+        console.log("Deleting old brochure:", existingEvent.brochure);
+        const publicId = extractPublicId(existingEvent.brochure);
+        console.log("Extracted public_id for deletion:", publicId);
+        
+        const deleteResult = await deleteFromCloudinary(publicId);
+        console.log("Delete result:", deleteResult);
+      } catch (deleteError) {
+        console.error("Error deleting old brochure:", deleteError);
+        // Continue with upload even if delete fails
+      }
     }
 
-    // ✅ Create unique file name
-    const ext = brochureFile.name.split(".").pop() || "pdf"
-    const fileName = `brochure-${Date.now()}.${ext}`
-    const filePath = join(UPLOAD_DIR, fileName)
+    // ✅ Upload to Cloudinary
+    console.log("Uploading new brochure...");
+    const uploadResult = await uploadToCloudinary(brochureFile, 'events/brochures');
+    console.log("Upload result:", uploadResult.secure_url);
 
-    // ✅ Convert to buffer & write
-    const bytes = await brochureFile.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    await writeFile(filePath, buffer)
-
-    // ✅ Update DB
+    // ✅ Update DB with Cloudinary URL
     const updatedEvent = await prisma.event.update({
       where: { id },
-      data: { brochure: `/uploads/${fileName}` },
-    })
+      data: { brochure: uploadResult.secure_url },
+    });
 
-    return NextResponse.json(updatedEvent, { status: 200 })
+    return NextResponse.json(updatedEvent, { status: 200 });
   } catch (error) {
-    console.error("❌ Error updating brochure:", error)
+    console.error("❌ Error updating brochure:", error);
     return NextResponse.json(
       { error: "Failed to update brochure" },
       { status: 500 }
-    )
+    );
   }
 }
+
+// ========================
+// GET — View or Download Brochure
+// ========================
 
 // ========================
 // GET — View or Download Brochure
@@ -80,84 +118,61 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
-    const { searchParams } = new URL(request.url)
-    const action = searchParams.get("action") // "view" | "download"
+    const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const action = searchParams.get("action"); // "view" | "download"
 
     const event = await prisma.event.findUnique({
       where: { id },
-      select: { brochure: true },
-    })
+      select: { brochure: true, title: true },
+    });
 
     if (!event?.brochure) {
-      return NextResponse.json({ error: "Brochure not found" }, { status: 404 })
+      return NextResponse.json({ error: "Brochure not found" }, { status: 404 });
     }
 
-    const brochurePath = event.brochure
+    let brochureUrl = event.brochure;
 
-    // ✅ Handle Local File
-    if (brochurePath.startsWith("/uploads/")) {
-      const filePath = join(process.cwd(), "public", brochurePath)
-      const fileBuffer = await readFile(filePath)
-
-      // ✅ Convert to Uint8Array (fixes TS error)
-      const uint8Array = new Uint8Array(fileBuffer)
-
-      // ✅ Determine MIME type
-      const contentType = brochurePath.endsWith(".pdf")
-        ? "application/pdf"
-        : brochurePath.endsWith(".jpg") || brochurePath.endsWith(".jpeg")
-        ? "image/jpeg"
-        : brochurePath.endsWith(".png")
-        ? "image/png"
-        : brochurePath.endsWith(".gif")
-        ? "image/gif"
-        : "application/octet-stream"
-
-      return new NextResponse(uint8Array, {
-        headers: {
-          "Content-Type": contentType,
-          "Content-Disposition":
-            action === "download"
-              ? `attachment; filename="brochure.${brochurePath.split(".").pop()}"`
-              : "inline",
-          "Cache-Control": "public, max-age=31536000",
-        },
-      })
+    // For download action - modify Cloudinary URL for download
+    if (event.brochure.includes('cloudinary.com') && action === "download") {
+      brochureUrl = event.brochure.replace('/upload/', '/upload/fl_attachment/');
+      
+      // Return the modified URL in JSON for frontend to handle
+      return NextResponse.json({ 
+        success: true,
+        brochure: brochureUrl,
+        action: 'download',
+        eventTitle: event.title,
+        message: "Download URL generated"
+      });
     }
 
-    // ✅ Handle External URL (e.g., Cloudinary)
-    const response = await fetch(brochurePath)
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: `Failed to fetch external brochure (${response.status})` },
-        { status: response.status }
-      )
+    // For view action - return the original URL
+    if (action === "view") {
+      return NextResponse.json({
+        success: true,
+        brochure: brochureUrl,
+        action: 'view',
+        eventTitle: event.title,
+        message: "View URL generated"
+      });
     }
 
-    const fileArrayBuffer = await response.arrayBuffer()
-    const contentType =
-      response.headers.get("content-type") ||
-      (brochurePath.endsWith(".pdf") ? "application/pdf" : "application/octet-stream")
+    // Default: return JSON info
+    return NextResponse.json({ 
+      success: true,
+      brochure: brochureUrl,
+      action: action || 'view',
+      eventTitle: event.title,
+      message: "URL generated"
+    });
 
-    // ✅ Convert to Uint8Array to ensure compatibility
-    const uint8Array = new Uint8Array(fileArrayBuffer)
-
-    return new NextResponse(uint8Array, {
-      headers: {
-        "Content-Type": contentType,
-        "Content-Disposition":
-          action === "download"
-            ? `attachment; filename="brochure.${brochurePath.split(".").pop() || "pdf"}"`
-            : "inline",
-        "Cache-Control": "public, max-age=31536000",
-      },
-    })
   } catch (error) {
-    console.error("❌ Error fetching brochure:", error)
-    return NextResponse.json({ error: "Failed to fetch brochure" }, { status: 500 })
+    console.error("❌ Error fetching brochure:", error);
+    return NextResponse.json({ error: "Failed to fetch brochure" }, { status: 500 });
   }
 }
+
 
 // ========================
 // DELETE — Remove Brochure
@@ -167,32 +182,51 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
+    const { id } = await params;
 
     const event = await prisma.event.findUnique({
       where: { id },
       select: { brochure: true },
-    })
+    });
 
     if (!event) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 })
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    if (!event.brochure) {
+      return NextResponse.json({ error: "No brochure to delete" }, { status: 404 });
+    }
+
+    // ✅ Delete from Cloudinary if exists
+    if (event.brochure.includes('cloudinary.com')) {
+      try {
+        console.log("Deleting brochure from Cloudinary:", event.brochure);
+        const publicId = extractPublicId(event.brochure);
+        console.log("Extracted public_id for deletion:", publicId);
+        
+        const deleteResult = await deleteFromCloudinary(publicId);
+        console.log("Delete result:", deleteResult);
+      } catch (deleteError) {
+        console.error("Error deleting brochure from Cloudinary:", deleteError);
+        // Don't fail the request if Cloudinary deletion fails
+      }
     }
 
     // ✅ Remove brochure field from DB
     await prisma.event.update({
       where: { id },
       data: { brochure: null },
-    })
+    });
 
     return NextResponse.json(
       { message: "Brochure removed successfully" },
       { status: 200 }
-    )
+    );
   } catch (error) {
-    console.error("❌ Error deleting brochure:", error)
+    console.error("❌ Error deleting brochure:", error);
     return NextResponse.json(
       { error: "Failed to delete brochure" },
       { status: 500 }
-    )
+    );
   }
 }

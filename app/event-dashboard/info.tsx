@@ -109,104 +109,145 @@ export default function EventPage({ params }: EventPageProps) {
       console.error("Error checking saved status:", error)
     }
   }
-  const handleDeleteBrochure = async () => {
-  if (!confirm("Are you sure you want to delete the brochure?")) return
-
+const handleDownloadBrochure = async (eventId: string) => {
   try {
-    const response = await fetch(`/api/events/${event.id}/brochure`, {
-      method: "DELETE",
-    })
-
-    if (response.ok) {
-      // Update the event state to remove brochure
-      setEvent((prev: any) => ({
-        ...prev,
-        brochure: null
-      }))
-      
-      toast({
-        title: "Success",
-        description: "Brochure removed successfully",
-      })
+    // Get the download URL from the API
+    const response = await fetch(`/api/events/${eventId}/brochure?action=download`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-  } catch (error) {
-    console.error("Error deleting brochure:", error)
-    toast({
-      title: "Error",
-      description: "Failed to delete brochure",
-      variant: "destructive",
-    })
-  }
-}
-const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0]
-  if (!file) return
 
-  // Validate file type
-  const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif']
-  const isValidType = validTypes.includes(file.type) || file.name.toLowerCase().endsWith('.pdf')
-  
-  if (!isValidType) {
-    toast({
-      title: "Invalid file type",
-      description: "Please upload a PDF or image file (JPEG, PNG, GIF)",
-      variant: "destructive",
-    })
-    return
-  }
-
-  // Validate file size (10MB max for brochures)
-  if (file.size > 10 * 1024 * 1024) {
-    toast({
-      title: "File too large",
-      description: "Please upload a file smaller than 10MB",
-      variant: "destructive",
-    })
-    return
-  }
-
-  setUpdatingBrochure(true)
-
-  try {
-    const formData = new FormData()
-    formData.append('brochure', file)
-
-    const response = await fetch(`/api/events/${event.id}/brochure`, {
-      method: 'PUT',
-      body: formData,
-    })
-
-    if (response.ok) {
-      const updatedEvent = await response.json()
+    const data = await response.json();
+    
+    if (data.success && data.brochure) {
+      // Create a temporary anchor element to trigger download
+      const link = document.createElement('a');
+      link.href = data.brochure;
       
-      // Update the event state with cache busting
-      setEvent((prev: any) => ({
-        ...prev,
-        brochure: `${updatedEvent.brochure}?t=${Date.now()}`
-      }))
+      // Set the download attribute with a proper filename
+      const filename = `brochure-${data.eventTitle || eventId}.pdf`;
+      link.download = filename;
+      
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       
       toast({
-        title: "Success",
-        description: "Brochure updated successfully",
-      })
-      
-      // Clear the file input
-      e.target.value = ''
+        title: "Download Started",
+        description: "Brochure download has started",
+      });
     } else {
-      const errorData = await response.json()
-      throw new Error(errorData.error || 'Failed to update brochure')
+      throw new Error(data.error || 'Failed to get download URL');
     }
   } catch (error) {
-    console.error('Error updating brochure:', error)
+    console.error('Error downloading brochure:', error);
     toast({
-      title: "Error",
-      description: error instanceof Error ? error.message : "Failed to update brochure",
+      title: "Download Failed",
+      description: error instanceof Error ? error.message : "Failed to download brochure. Please try again.",
       variant: "destructive",
-    })
-  } finally {
-    setUpdatingBrochure(false)
+    });
   }
-}
+};
+  const handleDeleteBrochure = async () => {
+    if (!confirm("Are you sure you want to delete the brochure?")) return
+
+    try {
+      const response = await fetch(`/api/events/${event.id}/brochure`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        // Update the event state to remove brochure
+        setEvent((prev: any) => ({
+          ...prev,
+          brochure: null
+        }))
+
+        toast({
+          title: "Success",
+          description: "Brochure removed successfully",
+        })
+      }
+    } catch (error) {
+      console.error("Error deleting brochure:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete brochure",
+        variant: "destructive",
+      })
+    }
+  }
+  const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif']
+    const isValidType = validTypes.includes(file.type) || file.name.toLowerCase().endsWith('.pdf')
+
+    if (!isValidType) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a PDF or image file (JPEG, PNG, GIF)",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate file size (10MB max for brochures)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload a file smaller than 10MB",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setUpdatingBrochure(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('brochure', file)
+
+      const response = await fetch(`/api/events/${event.id}/brochure`, {
+        method: 'PUT',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const updatedEvent = await response.json()
+
+        // Update the event state with cache busting
+        setEvent((prev: any) => ({
+          ...prev,
+          brochure: `${updatedEvent.brochure}?t=${Date.now()}`
+        }))
+
+        toast({
+          title: "Success",
+          description: "Brochure updated successfully",
+        })
+
+        // Clear the file input
+        e.target.value = ''
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update brochure')
+      }
+    } catch (error) {
+      console.error('Error updating brochure:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update brochure",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingBrochure(false)
+    }
+  }
   const handleSaveEvent = async () => {
     if (!session) {
       alert("Please log in to save events")
@@ -852,10 +893,12 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
             className="hidden"
             onChange={handleBrochureUpdate}
           />
-          <Button variant="destructive" size="sm" onClick={handleDeleteBrochure}>
-            <Trash2 className="w-4 h-4 mr-2" />
-            Delete
-          </Button>
+          {event?.brochure && (
+            <Button variant="destructive" size="sm" onClick={handleDeleteBrochure}>
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </Button>
+          )}
         </div>
       </CardTitle>
     </CardHeader>
@@ -863,63 +906,89 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
       <div className="space-y-4">
         {event?.brochure ? (
           <>
-            <div className="bg-gray-100 rounded-lg overflow-hidden border border-gray-300">
-              {/* Check if it's a PDF or Image */}
-              {event.brochure.toLowerCase().endsWith('.pdf') || 
-               event.brochure.includes('.pdf') ? (
-                // PDF Display
-                <iframe
-                  key={event.brochure + '?t=' + Date.now()}
-                  src={`/api/events/${event.id}/brochure?action=view&t=${Date.now()}`}
-                  className="w-full h-[600px]"
-                  title="Event Brochure PDF"
-                />
+            <div className="bg-gray-100 rounded-lg border border-gray-300 min-h-[400px] flex flex-col">
+              {/* Better file type detection */}
+              {event.brochure.toLowerCase().includes('.pdf') || 
+               event.brochure.includes('/raw/upload/') ? (
+                <>
+                  {/* PDF Display Options */}
+                  <div className="flex justify-between items-center p-3 bg-white border-b">
+                    <span className="text-sm font-medium">PDF Brochure</span>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.open(event.brochure, '_blank')}
+                      >
+                        Open Full Screen
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* PDF Display Area */}
+                  <div className="flex-1 p-4">
+                    <div className="flex flex-col items-center justify-center h-full">
+                      {/* Simple PDF viewer using Google Docs */}
+                      <iframe
+                        src={`https://docs.google.com/gview?url=${encodeURIComponent(event.brochure)}&embedded=true`}
+                        className="w-full h-80 border-0"
+                        title="PDF Brochure"
+                      />
+                      
+                      <div className="text-center mt-4">
+                        <p className="text-sm text-gray-600 mb-4">
+                          PDF document loaded. Use the buttons below to download or open in a new tab.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </>
               ) : (
-                // Image Display - Use regular img tag for dynamic images
-                <div className="flex items-center justify-center h-96">
-                  <img
-                    src={event.brochure.startsWith('/uploads/') 
-                      ? `${event.brochure}?t=${Date.now()}` 
-                      : `/api/events/${event.id}/brochure?t=${Date.now()}`
-                    }
-                    alt="Event Brochure"
-                    className="object-contain max-h-96 max-w-full"
-                    onError={(e) => {
-                      // Fallback if image fails to load
-                      console.error('Error loading brochure image:', event.brochure);
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
+                // Image display - only for actual image files
+                <div className="flex flex-col">
+                  <div className="flex justify-between items-center p-3 bg-white border-b">
+                    <span className="text-sm font-medium">Image Brochure</span>
+                  </div>
+                  <div className="flex items-center justify-center h-96 p-4">
+                    <img
+                      src={event.brochure}
+                      alt="Event Brochure"
+                      className="max-h-full max-w-full object-contain"
+                      onError={(e) => {
+                        console.error('Error loading brochure image:', event.brochure);
+                        // If image fails to load, show download option
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
                 </div>
               )}
             </div>
-            <div className="flex justify-center gap-4">
-              <Button asChild size="lg" className="w-full sm:w-auto">
-                <a 
-                  href={`/api/events/${event.id}/brochure?action=download&t=${Date.now()}`} 
-                  download
-                >
-                  Download Brochure
-                </a>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Button 
+                size="lg" 
+                className="w-full sm:w-auto"
+                onClick={() => handleDownloadBrochure(event.id)}
+                disabled={updatingBrochure}
+              >
+                Download Brochure
               </Button>
-              <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
-                <a 
-                  href={event.brochure.startsWith('/uploads/') 
-                    ? `${window.location.origin}${event.brochure}` 
-                    : event.brochure
-                  } 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                >
-                  Open in New Tab
-                </a>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="w-full sm:w-auto"
+                onClick={() => window.open(event.brochure, '_blank')}
+              >
+                Open in New Tab
               </Button>
             </div>
           </>
         ) : (
           <div className="bg-gray-100 h-96 rounded-lg flex flex-col items-center justify-center">
             <p className="text-gray-600 mb-4">No brochure available</p>
-            <Button 
+            <Button
               onClick={() => document.getElementById('brochure-upload')?.click()}
               disabled={updatingBrochure}
             >
