@@ -144,6 +144,47 @@ export default function EventPage({ params }: EventPageProps) {
       setSaving(false)
     }
   }
+  const handleDownloadBrochure = async (eventId: string) => {
+  try {
+    // Get the download URL from the API
+    const response = await fetch(`/api/events/${eventId}/brochure?action=download`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.success && data.brochure) {
+      // Create a temporary anchor element to trigger download
+      const link = document.createElement('a');
+      link.href = data.brochure;
+      
+      // Set the download attribute with a proper filename
+      const filename = `brochure-${data.eventTitle || eventId}.pdf`;
+      link.download = filename;
+      
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Download Started",
+        description: "Brochure download has started",
+      });
+    } else {
+      throw new Error(data.error || 'Failed to get download URL');
+    }
+  } catch (error) {
+    console.error('Error downloading brochure:', error);
+    toast({
+      title: "Download Failed",
+      description: error instanceof Error ? error.message : "Failed to download brochure. Please try again.",
+      variant: "destructive",
+    });
+  }
+};
 
   const handleVisitClick = async () => {
     if (!session) {
@@ -768,43 +809,63 @@ export default function EventPage({ params }: EventPageProps) {
               </TabsContent>
 
               
-             <TabsContent value="brochure">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>Brochure</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {event?.brochure ? (
-                        <>
-                          <div className="bg-gray-100 rounded-lg overflow-hidden border border-gray-300">
-                            <iframe
-                              src={`/api/events/${event.id}/brochure?action=view`}
-                              className="w-full h-[600px]"
-                              title="Event Brochure PDF"
-                            />
-                          </div>
-                          <div className="flex justify-center gap-4">
-                            <Button asChild size="lg" className="w-full sm:w-auto">
-                              <a href={`/api/events/${event.id}/brochure?action=download`} download>
-                                Download Brochure
-                              </a>
-                            </Button>
-                            
-                          </div>
-                        </>
-                      ) : (
-                        <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center">
-                          <p className="text-gray-600">No brochure available</p>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
+<TabsContent value="brochure">
+  <Card>
+    <CardHeader>
+      <CardTitle className="flex items-center justify-between">
+        <span>Brochure</span>
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-4">
+        {event?.brochure ? (
+          <>
+            {/* Brochure Display */}
+            <div className="bg-gray-100 rounded-lg border border-gray-300 min-h-[400px] flex flex-col">
+              <div className="flex justify-between items-center p-3 bg-white border-b">
+                <span className="text-sm font-medium">Event Brochure</span>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDownloadBrochure(event.id)}
+                  >
+                    Download PDF
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(event.brochure, '_blank')}
+                  >
+                    Open Full Screen
+                  </Button>
+                </div>
+              </div>
+              
+              {/* PDF Display using Google Docs Viewer */}
+              <div className="flex-1 p-4">
+                <iframe
+                  src={`https://docs.google.com/gview?url=${encodeURIComponent(event.brochure)}&embedded=true`}
+                  className="w-full h-96 border-0"
+                  title="PDF Brochure"
+                />
+                <div className="text-center mt-4">
+                  <p className="text-sm text-gray-600">
+                    If the PDF doesn't load, use the buttons above to download or open in a new tab.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="bg-gray-100 h-96 rounded-lg flex flex-col items-center justify-center">
+            <p className="text-gray-600 mb-4">No brochure available</p>
+          </div>
+        )}
+      </div>
+    </CardContent>
+  </Card>
+</TabsContent>
               <TabsContent value="venue">
                 <Card className="border border-gray-200 rounded-lg shadow-sm">
                   <CardHeader className="border-b border-gray-100 py-4">
