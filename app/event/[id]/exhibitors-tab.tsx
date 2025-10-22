@@ -25,8 +25,8 @@ interface Exhibitor {
   totalCost: number
   totalAppointmentsReceived: number
   spaceReference?: string
-  isSample?: boolean // Add this to identify sample data
-  userId?: string // The actual user ID for scheduling meetings
+  isSample?: boolean
+  userId?: string
 }
 
 interface ExhibitorsTabProps {
@@ -37,7 +37,6 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
   const [exhibitors, setExhibitors] = useState<Exhibitor[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [creating, setCreating] = useState<string | null>(null)
   const { toast } = useToast()
   const { data: session } = useSession()
 
@@ -46,9 +45,8 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
       try {
         setLoading(true)
         setError(null)
-
         const response = await fetch(`/api/events/exhibitors?eventId=${eventId}`)
-
+        
         if (!response.ok) {
           throw new Error(`Failed to fetch exhibitors: ${response.statusText}`)
         }
@@ -71,10 +69,8 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
 
   // Sample exhibitors with isSample flag
   const fallbackExhibitors: Exhibitor[] = [
-
+    // Your sample exhibitors here...
   ]
-
-
 
   if (loading) {
     return (
@@ -123,31 +119,38 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-20 mt-20">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-6">
         {displayExhibitors?.map((exhibitor) => (
           <Card
             key={exhibitor.id}
-            className="relative border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition p-4 flex flex-col items-center text-center"
+            className="relative border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 p-4 flex flex-col items-center text-center group cursor-pointer hover:border-blue-300"
           >
+            {/* Clickable area covering the entire card */}
+            <Link 
+              href={`/exhibitor/${exhibitor.id}`}
+              className="absolute inset-0 z-10"
+              aria-label={`View ${exhibitor.company} details`}
+            />
+            
             {/* Logo Circle */}
-            <div className="relative w-28 h-28 -mt-12 bg-white border-4 border-blue-600 rounded-full flex items-center justify-center">
+            <div className="relative w-28 h-28 -mt-12 bg-white border-4 border-blue-600 rounded-full flex items-center justify-center z-20 group-hover:border-blue-700 transition-colors">
               <Image
                 src={exhibitor.avatar || "/Organizers/maxx.png?height=96&width=96&text=Logo"}
                 alt={`${exhibitor.company} logo`}
                 width={80}
                 height={80}
-                className="object-contain"
+                className="object-contain rounded-full"
               />
             </div>
 
             {/* Verified Badge */}
-            <div className="absolute top-4 right-4 bg-green-500 text-white rounded-full p-1.5">
+            <div className="absolute top-4 right-4 bg-green-500 text-white rounded-full p-1.5 z-20">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
 
-            <CardContent className="mt-4 w-full">
+            <CardContent className="mt-4 w-full relative z-20">
               {/* Followers Section */}
               <div className="flex justify-center items-center space-x-1 mb-2">
                 <div className="flex -space-x-2">
@@ -159,11 +162,12 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
               </div>
 
               {/* Company Name */}
-              <h3 className="text-lg font-semibold text-gray-800">{exhibitor.company}</h3>
-              {/* <Link href={`/exhibitor/${exhibitor.id}`}>link</Link> */}
+              <h3 className="text-lg font-semibold text-gray-800 group-hover:text-blue-600 transition-colors mb-2">
+                {exhibitor.company}
+              </h3>
 
               {/* Location & Booth */}
-              <div className="flex flex-col items-center mt-2 space-y-1 text-sm text-gray-600">
+              <div className="flex flex-col items-center mt-2 space-y-1 text-sm text-gray-600 mb-4">
                 <div className="flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-1 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3H6a1 1 0 100 2h3v3a1 1 0 102 0v-3h3a1 1 0 100-2h-3V7z" clipRule="evenodd" />
@@ -179,19 +183,16 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
                 </div>
               </div>
 
-              {/* Follow Button */}
-              {/* <button className="mt-3 px-4 py-1.5 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600">
-        + Follow
-      </button> */}
-
-              {/* Schedule Meeting */}
-              <button className="">
-                <ScheduleMeetingButton exhibitor={exhibitor} eventId={eventId} />
-              </button>
+              {/* Schedule Meeting Button - positioned above the link */}
+              <div className="mt-4 relative z-20" onClick={(e) => e.stopPropagation()}>
+                <ScheduleMeetingButton 
+                  exhibitor={exhibitor} 
+                  eventId={eventId}
+                />
+              </div>
             </CardContent>
           </Card>
         ))}
-
       </div>
 
       {exhibitors.length > 6 && (
