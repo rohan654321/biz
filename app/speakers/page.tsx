@@ -69,90 +69,90 @@ export default function SpeakersPage() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
-useEffect(() => {
-  async function fetchSpeakers() {
-    try {
-      setLoading(true)
-      
-      // Build query parameters
-      const params = new URLSearchParams()
-      if (searchQuery) params.append('search', searchQuery)
-      if (selectedExpertise) params.append('expertise', selectedExpertise)
-      
-      const response = await fetch(`/api/speakers?${params.toString()}`)
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch speakers')
-      }
-      
-      const data: ApiResponse = await response.json()
-      
-      if (data.success) {
-        // Extract expertise from speakers' specialties
-        const allExpertise = data.speakers.flatMap(speaker => speaker.specialties || [])
-        const uniqueExpertise = [...new Set(allExpertise)].filter(Boolean)
-        
-        // Fetch events count for each speaker
-        const speakersWithEventsCount = await Promise.all(
-          data.speakers.map(async (speaker) => {
-            try {
-              // Fetch events for each speaker to get counts
-              const eventsResponse = await fetch(`/api/speakers/${speaker.id}/events`)
-              if (eventsResponse.ok) {
-                const eventsData: SpeakerEventsResponse = await eventsResponse.json()
-                if (eventsData.success) {
-                  const upcomingCount = eventsData.upcoming?.length || 0
-                  const pastCount = eventsData.past?.length || 0
-                  const totalEventsCount = upcomingCount + pastCount
-                  
-                  return {
-                    ...speaker,
-                    upcomingEventsCount: upcomingCount,
-                    pastEventsCount: pastCount,
-                    // Use calculated total if not provided by API, otherwise use API value
-                    totalEvents: speaker.totalEvents || totalEventsCount
+  useEffect(() => {
+    async function fetchSpeakers() {
+      try {
+        setLoading(true)
+
+        // Build query parameters
+        const params = new URLSearchParams()
+        if (searchQuery) params.append('search', searchQuery)
+        if (selectedExpertise) params.append('expertise', selectedExpertise)
+
+        const response = await fetch(`/api/speakers?${params.toString()}`)
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch speakers')
+        }
+
+        const data: ApiResponse = await response.json()
+
+        if (data.success) {
+          // Extract expertise from speakers' specialties
+          const allExpertise = data.speakers.flatMap(speaker => speaker.specialties || [])
+          const uniqueExpertise = [...new Set(allExpertise)].filter(Boolean)
+
+          // Fetch events count for each speaker
+          const speakersWithEventsCount = await Promise.all(
+            data.speakers.map(async (speaker) => {
+              try {
+                // Fetch events for each speaker to get counts
+                const eventsResponse = await fetch(`/api/speakers/${speaker.id}/events`)
+                if (eventsResponse.ok) {
+                  const eventsData: SpeakerEventsResponse = await eventsResponse.json()
+                  if (eventsData.success) {
+                    const upcomingCount = eventsData.upcoming?.length || 0
+                    const pastCount = eventsData.past?.length || 0
+                    const totalEventsCount = upcomingCount + pastCount
+
+                    return {
+                      ...speaker,
+                      upcomingEventsCount: upcomingCount,
+                      pastEventsCount: pastCount,
+                      // Use calculated total if not provided by API, otherwise use API value
+                      totalEvents: speaker.totalEvents || totalEventsCount
+                    }
                   }
                 }
+                // Return speaker with zero counts if API fails
+                return {
+                  ...speaker,
+                  upcomingEventsCount: 0,
+                  pastEventsCount: 0,
+                  totalEvents: speaker.totalEvents || 0
+                }
+              } catch (error) {
+                console.error(`Error fetching events for speaker ${speaker.id}:`, error)
+                return {
+                  ...speaker,
+                  upcomingEventsCount: 0,
+                  pastEventsCount: 0,
+                  totalEvents: speaker.totalEvents || 0
+                }
               }
-              // Return speaker with zero counts if API fails
-              return {
-                ...speaker,
-                upcomingEventsCount: 0,
-                pastEventsCount: 0,
-                totalEvents: speaker.totalEvents || 0
-              }
-            } catch (error) {
-              console.error(`Error fetching events for speaker ${speaker.id}:`, error)
-              return {
-                ...speaker,
-                upcomingEventsCount: 0,
-                pastEventsCount: 0,
-                totalEvents: speaker.totalEvents || 0
-              }
-            }
-          })
-        )
-        
-        setSpeakers(speakersWithEventsCount)
-        setAvailableExpertise(uniqueExpertise) // Use derived expertise instead of data.filters.expertise
-      } else {
-        throw new Error('Failed to load speakers')
+            })
+          )
+
+          setSpeakers(speakersWithEventsCount)
+          setAvailableExpertise(uniqueExpertise) // Use derived expertise instead of data.filters.expertise
+        } else {
+          throw new Error('Failed to load speakers')
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred')
+        console.error('Error fetching speakers:', err)
+      } finally {
+        setLoading(false)
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-      console.error('Error fetching speakers:', err)
-    } finally {
-      setLoading(false)
     }
-  }
 
-  // Debounce the search to avoid too many API calls
-  const timeoutId = setTimeout(() => {
-    fetchSpeakers()
-  }, 300)
+    // Debounce the search to avoid too many API calls
+    const timeoutId = setTimeout(() => {
+      fetchSpeakers()
+    }, 300)
 
-  return () => clearTimeout(timeoutId)
-}, [searchQuery, selectedExpertise])
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery, selectedExpertise])
   const toggleFavorite = (speakerId: string) => {
     const newFavorites = new Set(favorites)
     if (newFavorites.has(speakerId)) {
@@ -212,8 +212,8 @@ useEffect(() => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-red-600 text-xl">Error: {error}</div>
-        <Button 
-          onClick={() => window.location.reload()} 
+        <Button
+          onClick={() => window.location.reload()}
           className="ml-4"
         >
           Retry
@@ -371,9 +371,9 @@ useEffect(() => {
                 {/* Left: Image */}
                 <div className="relative w-20 h-20 shrink-0">
                   <Avatar className="w-20 h-20 border-2 border-blue-100">
-                    <AvatarImage 
-                      src={speaker.avatar || ""} 
-                      alt={`${speaker.firstName} ${speaker.lastName}`} 
+                    <AvatarImage
+                      src={speaker.avatar || ""}
+                      alt={`${speaker.firstName} ${speaker.lastName}`}
                     />
                     <AvatarFallback className="text-sm font-semibold bg-blue-100 text-blue-600">
                       {getInitials(speaker.firstName, speaker.lastName)}
@@ -417,7 +417,7 @@ useEffect(() => {
                         {getTotalEvents(speaker)} Total Events
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1 text-green-600">
                         <Calendar className="w-3 h-3" />
@@ -432,15 +432,15 @@ useEffect(() => {
                   {/* Tags */}
                   <div className="flex flex-wrap gap-1 mt-2">
                     {(speaker.specialties || []).slice(0, 3).map((skill, index) => (
-  <Badge key={index} className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700">
-    {skill}
-  </Badge>
-))}
-{(speaker.specialties?.length || 0) > 3 && (
-  <Badge className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700">
-    +{speaker.specialties.length - 3}
-  </Badge>
-)}
+                      <Badge key={index} className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700">
+                        {skill}
+                      </Badge>
+                    ))}
+                    {(speaker.specialties?.length || 0) > 3 && (
+                      <Badge className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700">
+                        +{speaker.specialties.length - 3}
+                      </Badge>
+                    )}
 
                   </div>
                 </div>
