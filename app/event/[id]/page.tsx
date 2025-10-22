@@ -337,97 +337,110 @@ export default function EventPage({ params }: EventPageProps) {
     <div className="min-h-screen bg-gray-50 py-8">
       <EventHero event={event} />
 
-      <div className="max-w-7xl mx-auto py-4">
-        <div className="bg-white rounded-sm p-6 mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-blue-900 mb-2">{event.slug || "Tag Name will be updated by backend"}</h1>
-              <div className="flex items-center gap-2 text-gray-600 mb-3">
-                <MapPin className="w-4 h-4" />
-                <span>{event?.venue?.venueAddress || event?.location?.address || "Location TBA"}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center gap-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-2"
-                    onClick={() => {
-                      const query = encodeURIComponent(event.venueAddress || "Location")
-                      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank")
-                    }}
-                  >
-                    <Plus className="w-4 h-4" />
-                    Get Directions
-                  </Button>
+<div className="max-w-7xl mx-auto py-4">
+  <div className="bg-white rounded-sm p-6 mb-8 shadow-sm">
+    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+      
+      {/* LEFT SECTION */}
+      <div className="flex-1">
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-3">
+          {event.slug || "Tag Name will be updated by backend"}
+        </h1>
 
-                  <div className="flex items-center">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="ml-1 font-medium">
-                      {averageRating > 0 ? averageRating.toFixed(1) : "No ratings"}
-                    </span>
-                    {totalReviews > 0 && (
-                      <span className="ml-1 text-sm text-gray-500">
-                        ({totalReviews} review{totalReviews !== 1 ? "s" : ""})
-                      </span>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleSaveEvent}
-                    disabled={saving}
-                    className={isSaved ? "text-blue-600" : ""}
-                  >
-                    <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
-                    {isSaved ? "Saved" : "Save"}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator
-                          .share({
-                            title: event.title,
-                            text: "Check out this event!",
-                            url: window.location.href,
-                          })
-                          .catch((err) => console.error("Error sharing:", err))
-                      } else {
-                        alert("Sharing is not supported in this browser.")
-                      }
-                    }}
-                  >
-                    <Share2 className="w-4 h-4" />
-                    Share
-                  </Button>
-                </div>
-              </div>
-            </div>
+        <div className="flex items-center gap-2 text-gray-600 mb-4">
+          <MapPin className="w-4 h-4" />
+          <span>{event?.venue?.venueAddress || event?.location?.address || "Location TBA"}</span>
+        </div>
 
-            <div className="flex flex-col gap-4">
-              <p className="text-center text-gray-700 font-medium">Interested in this Event ?</p>
-              <div className="flex gap-3 flex-col sm:flex-row">
-                <Button variant="outline" className="flex-1 border-gray-300 bg-transparent" onClick={handleVisitClick}>
-                  Visit
-                </Button>
+        <div className="flex flex-wrap items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+            onClick={() => {
+              const query = encodeURIComponent(event.venueAddress || "Location")
+              window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank")
+            }}
+          >
+            <Plus className="w-4 h-4" />
+            Get Directions
+          </Button>
 
-                {/* Only show Exhibit button for users with EXHIBITOR role */}
-
-                <Button
-                  variant="outline"
-                  className="flex-1 border-blue-300 bg-transparent text-blue-600 hover:text-blue-700"
-                  onClick={handleExhibitClick}
-                >
-                  Exhibit
-                </Button>
-
-              </div>
-            </div>
+          <div className="flex items-center text-sm">
+            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+            <span className="ml-1 font-medium">
+              {averageRating > 0 ? averageRating.toFixed(1) : "No ratings"}
+            </span>
+            {totalReviews > 0 && (
+              <span className="ml-1 text-gray-500">
+                ({totalReviews} review{totalReviews !== 1 ? "s" : ""})
+              </span>
+            )}
           </div>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSaveEvent}
+            disabled={saving}
+            className={`flex items-center gap-2 ${isSaved ? "text-blue-600" : ""}`}
+          >
+            <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
+            {isSaved ? "Saved" : "Save"}
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-2"
+            onClick={() => {
+              if (navigator.share) {
+                navigator
+                  .share({
+                    title: event.title,
+                    text: "Check out this event!",
+                    url: window.location.href,
+                  })
+                  .catch((err) => console.error("Error sharing:", err))
+              } else {
+                alert("Sharing is not supported in this browser.")
+              }
+            }}
+          >
+            <Share2 className="w-4 h-4" />
+            Share
+          </Button>
         </div>
       </div>
+
+      {/* RIGHT SECTION - slightly shifted left */}
+      <div className="flex flex-col gap-4 lg:-ml-8">
+        <p className="text-center lg:text-left text-gray-700 font-medium text-base sm:text-lg">
+          Interested in this Event?
+        </p>
+
+        <div className="flex gap-3 flex-col sm:flex-row sm:justify-start">
+          <Button
+            variant="outline"
+            className="sm:w-[180px] w-full border-gray-300 bg-transparent hover:bg-gray-50"
+            onClick={handleVisitClick}
+          >
+            Visit
+          </Button>
+
+          <Button
+            variant="outline"
+            className="sm:w-[180px] w-full border-blue-300 bg-transparent text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            onClick={handleExhibitClick}
+          >
+            Exhibit
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col lg:flex-row gap-6">
@@ -655,64 +668,67 @@ export default function EventPage({ params }: EventPageProps) {
                 </div>
 
 
-                <Card className="border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <CardHeader className="border-b border-gray-100 pb-2">
-                    <CardTitle className="text-gray-800 text-base font-semibold">Organizer</CardTitle>
-                  </CardHeader>
+             <Card className="border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+  <Link href={`/organizer/${event.organizer?.id}`}>
+    <CardHeader className="border-b border-gray-100 pb-2">
+      <CardTitle className="text-gray-800 text-base font-semibold">Organizer</CardTitle>
+    </CardHeader>
 
-                  <CardContent className="flex flex-col md:flex-row justify-between items-center gap-4 py-4">
-                    {/* Left Section: Organizer Info */}
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 flex items-center justify-center border border-gray-100 rounded overflow-hidden bg-white">
-                        <Image
-                          src={event.organizer?.avatar || "/public/image/Ellipse_72.png"}
-                          alt="Organizer"
-                          width={64}
-                          height={64}
-                          className="object-contain"
-                        />
-                      </div>
+    <CardContent className="flex flex-col md:flex-row justify-between items-center gap-4 py-4">
+      {/* Left Section: Organizer Info */}
+      <div className="flex items-center gap-4">
+        <div className="w-16 h-16 flex items-center justify-center border border-gray-100 rounded overflow-hidden bg-white">
+          <Image
+            src={event.organizer?.avatar || "/public/image/Ellipse_72.png"}
+            alt="Organizer"
+            width={64}
+            height={64}
+            className="object-contain"
+          />
+        </div>
 
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-gray-900 text-sm">
-                            {event.organizer?.firstName || "Organizer Name"}
-                          </h3>
-                          <span className="bg-blue-100 text-blue-700 text-[11px] font-medium px-2 py-[2px] rounded">
-                            Top Rated
-                          </span>
-                        </div>
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-semibold text-gray-900 text-sm">
+              {event.organizer?.firstName || "Organizer Name"}
+            </h3>
+            <span className="bg-blue-100 text-blue-700 text-[11px] font-medium px-2 py-[2px] rounded">
+              Top Rated
+            </span>
+          </div>
 
-                        <p className="text-sm text-gray-600">
-                          {event.organizer?.country || "USA"}
-                        </p>
+          <p className="text-sm text-gray-600">
+            {event.organizer?.country || "USA"}
+          </p>
 
-                        <p className="text-xs text-gray-500 mt-1">
-                          {event.organizer?.upcomingEvents
-                            ? `${event.organizer.upcomingEvents} Upcoming Events`
-                            : "1 Upcoming Event"}{" "}
-                          ·{" "}
-                          {event.organizer?.followers
-                            ? `${event.organizer.followers} Followers`
-                            : "302 Followers"}
-                        </p>
-                      </div>
-                    </div>
+          <p className="text-xs text-gray-500 mt-1">
+            {event.organizer?.upcomingEvents
+              ? `${event.organizer.upcomingEvents} Upcoming Events`
+              : "1 Upcoming Event"}{" "}
+            ·{" "}
+            {event.organizer?.followers
+              ? `${event.organizer.followers} Followers`
+              : "302 Followers"}
+          </p>
+        </div>
+      </div>
 
-                    {/* Right Section: Button */}
-                    <div className="flex flex-col items-center text-center">
-                      <button className="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-md shadow" onClick={handleVisitClick}>
-                        Send Stall Book Request
-                      </button>
-                      {/* <p className="text-xs text-gray-500 mt-2">
-                        Queries about the event?{" "}
-                        <a href="#" className="text-blue-600 hover:underline font-medium">
-                          Ask Organizer
-                        </a>
-                      </p> */}
-                    </div>
-                  </CardContent>
-                </Card>
+      {/* Right Section: Button */}
+      <div className="flex flex-col items-center text-center">
+        <button 
+          className="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-md shadow"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleVisitClick();
+          }}
+        >
+          Send Stall Book Request
+        </button>
+      </div>
+    </CardContent>
+  </Link>
+</Card>
 
 
                 <Card className="border border-gray-200 rounded-lg shadow-sm">
