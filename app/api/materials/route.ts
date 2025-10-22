@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import cloudinary from "@/lib/cloudinary"
+import {Cloudinary} from "@/lib/cloudinary"
 
 // GET - Fetch materials (optionally filtered by sessionId or speakerId)
 export async function GET(request: NextRequest) {
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     // Upload to Cloudinary
     const uploadResult = await new Promise<any>((resolve, reject) => {
-      cloudinary.uploader
+      Cloudinary.uploader
         .upload_stream(
           {
             resource_type: resourceType,

@@ -1,3 +1,4 @@
+// If you're still having issues with the server component, try this:
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { redirect } from "next/navigation"
@@ -11,30 +12,35 @@ interface DashboardPageProps {
 }
 
 export default async function DashboardPage({ params }: DashboardPageProps) {
-  const { id } = await params
-  const session = await getServerSession(authOptions)
+  try {
+    const { id } = await params
+    const session = await getServerSession(authOptions)
 
-  if (!session) {
+    if (!session) {
+      redirect("/login")
+    }
+
+    // Only allow self or attendee
+    if (session.user.id !== id && session.user.role !== "ATTENDEE") {
+      redirect("/login")
+    }
+
+    return (
+      <DashboardProvider>
+        <Navbar />
+        <NameBanner
+          name={session.user.name || "User"}
+          designation={
+            session.user.role === "ATTENDEE"
+              ? "Visitor"
+              : session.user.role || ""
+          }
+        />
+        <UserDashboard userId={id} />
+      </DashboardProvider>
+    )
+  } catch (error) {
+    console.error("Error in DashboardPage:", error)
     redirect("/login")
   }
-
-  // Only allow self or attendee
-  if (session.user.id !== id && session.user.role !== "ATTENDEE") {
-    redirect("/login")
-  }
-
-  return (
-    <DashboardProvider>
-      <Navbar />
-      <NameBanner
-        name={session.user.name || "User"}
-        designation={
-          session.user.role === "ATTENDEE"
-            ? "Visitor"
-            : session.user.role || ""
-        }
-      />
-      <UserDashboard userId={id} />
-    </DashboardProvider>
-  )
 }

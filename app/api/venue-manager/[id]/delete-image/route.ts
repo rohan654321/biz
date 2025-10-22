@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import cloudinary from "@/lib/cloudinary"
+import { Cloudinary } from "@/lib/cloudinary"
 
 export async function DELETE(req: NextRequest) {
   try {
@@ -11,7 +11,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Delete from Cloudinary
-    const result = await cloudinary.uploader.destroy(publicId)
+    const result = await Cloudinary.uploader.destroy(publicId)
 
     return NextResponse.json({
       success: true,

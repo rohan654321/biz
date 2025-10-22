@@ -46,6 +46,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
+
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
@@ -67,6 +68,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           website: body.website,
           twitter: body.twitter,
           jobTitle: body.jobTitle,
+          avatar: body.avatar || null,
         },
         select: {
           id: true,

@@ -40,7 +40,7 @@ interface EventFormData {
   description: string
   eventType: string
   categories: string[]
-  edition: string
+  edition: number
   startDate: string
   endDate: string
   dailyStart: string
@@ -142,7 +142,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     description: "",
     eventType: "",
     categories: [],
-    edition: "",
+    edition: 0, // Changed to number type
     startDate: "",
     endDate: "",
     dailyStart: "09:00",
@@ -555,7 +555,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         description: formData.description,
         shortDescription: formData.description.substring(0, 200),
         category: formData.eventType,
-        edition: formData.edition || null,
+        edition: formData.edition || null, // Keep as null if 0 to match backend expectation
         tags: formData.tags,
         startDate: formData.startDate,
         endDate: formData.endDate,
@@ -642,7 +642,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         description: "",
         eventType: "",
         categories: [],
-        edition: "", // Reset edition
+        edition: 0, // Reset edition to 0
         startDate: "",
         endDate: "",
         dailyStart: "09:00",
@@ -807,7 +807,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     }
   }
 
-   const handleBrochureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBrochureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -884,7 +884,6 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       }
     }
   }
-
 
   const handleLayoutPlanUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -1072,11 +1071,18 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
                   <Label htmlFor="edition">Edition</Label>
                   <Input
                     id="edition"
-                    value={formData.edition}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, edition: e.target.value }))}
-                    placeholder="e.g., 2025, 5th Annual, Spring Edition"
+                    type="number"
+                    value={formData.edition === 0 ? "" : formData.edition}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        edition: e.target.value === "" ? 0 : Number(e.target.value),
+                      }))
+                    }
+                    placeholder="e.g., 1, 2, 3"
+                    min="0"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Optional: Specify the edition or year</p>
+                  <p className="text-xs text-muted-foreground mt-1">Optional: Specify the edition number</p>
                 </div>
 
                 <div>

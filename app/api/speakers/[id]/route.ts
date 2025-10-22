@@ -1,30 +1,44 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-options"
 
-// GET handler – fetch speaker by ID
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
 
-    console.log(`GET speaker with id: ${id}`)
-
-    if (!id || id === "undefined") {
-      return NextResponse.json({ success: false, error: "Invalid speaker ID" }, { status: 400 })
-    }
-
-    if (id.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(id)) {
-      return NextResponse.json({ success: false, error: "Invalid speaker ID format" }, { status: 400 })
-    }
-
     await prisma.$connect()
-    console.log("Database connected")
 
-    const speaker = await prisma.user.findFirst({
+    const speaker = await prisma.user.findUnique({
       where: {
         id,
         role: "SPEAKER",
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        avatar: true,
+        bio: true,
+        company: true,
+        jobTitle: true,
+        location: true,
+        website: true,
+        linkedin: true,
+        twitter: true,
+        specialties: true,
+        achievements: true,
+        certifications: true,
+        speakingExperience: true,
+        isVerified: true,
+        totalEvents: true,
+        activeEvents: true,
+        totalAttendees: true,
+        totalRevenue: true,
+        averageRating: true,
+        totalReviews: true,
+        createdAt: true,
+        updatedAt: true,
       },
     })
 
@@ -32,156 +46,117 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: "Speaker not found" }, { status: 404 })
     }
 
+    const profile = {
+      fullName: `${speaker.firstName} ${speaker.lastName}`,
+      designation: speaker.jobTitle || "",
+      company: speaker.company || "",
+      email: speaker.email,
+      phone: speaker.phone || "",
+      linkedin: speaker.linkedin || "",
+      website: speaker.website || "",
+      location: speaker.location || "",
+      bio: speaker.bio || "",
+      speakingExperience: speaker.speakingExperience || "",
+      avatar: speaker.avatar || undefined,
+    }
+
     return NextResponse.json({
       success: true,
-      profile: {
-        fullName: `${speaker.firstName} ${speaker.lastName}`.trim(),
-        designation: speaker.jobTitle || "",
-        company: speaker.company || "",
-        email: speaker.email || "",
-        phone: speaker.phone || "",
-        linkedin: speaker.linkedin || "",
-        website: speaker.website || "",
-        location: speaker.location || "",
-        bio: speaker.bio || "",
-        speakingExperience: speaker.speakingExperience || "",
-      },
+      profile,
     })
   } catch (error) {
-    console.error("Error in speaker API:", error)
+    console.error("Error fetching speaker:", error)
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }
 
-// PUT handler – update speaker by ID
-export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const body = await req.json()
+    const body = await request.json()
 
-    if (id.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(id)) {
-      return NextResponse.json({ success: false, error: "Invalid speaker ID format" }, { status: 400 })
+    console.log("[v0] Received update request for speaker:", id)
+    console.log("[v0] Update data:", body)
+    console.log("[v0] Avatar in request:", body.avatar)
+
+    await prisma.$connect()
+
+    const existingSpeaker = await prisma.user.findUnique({
+      where: { id, role: "SPEAKER" },
+    })
+
+    if (!existingSpeaker) {
+      return NextResponse.json({ success: false, error: "Speaker not found" }, { status: 404 })
     }
 
-    console.log("Received data:", body)
-
-    const [firstName, ...lastNameParts] = body.fullName?.split(" ") || []
+    const [firstName, ...lastNameParts] = (body.fullName || "").split(" ")
     const lastName = lastNameParts.join(" ")
 
-    const updatedProfile = await prisma.user.update({
+    const updateData: any = {
+      firstName: firstName || existingSpeaker.firstName,
+      lastName: lastName || existingSpeaker.lastName,
+      email: body.email || existingSpeaker.email,
+      phone: body.phone || existingSpeaker.phone,
+      bio: body.bio || existingSpeaker.bio,
+      company: body.company || existingSpeaker.company,
+      jobTitle: body.designation || existingSpeaker.jobTitle,
+      location: body.location || existingSpeaker.location,
+      website: body.website || existingSpeaker.website,
+      linkedin: body.linkedin || existingSpeaker.linkedin,
+      speakingExperience: body.speakingExperience || existingSpeaker.speakingExperience,
+      avatar: body.avatar !== undefined ? body.avatar : existingSpeaker.avatar,
+    }
+
+    console.log("[v0] Update data prepared:", updateData)
+    console.log("[v0] Avatar to be saved:", updateData.avatar)
+
+    const updatedSpeaker = await prisma.user.update({
       where: { id },
-      data: {
-        firstName: firstName || "",
-        lastName: lastName || "",
-        jobTitle: body.designation || "",
-        company: body.company || "",
-        email: body.email || "",
-        phone: body.phone || "",
-        linkedin: body.linkedin || "",
-        website: body.website || "",
-        location: body.location || "",
-        bio: body.bio || "",
-        speakingExperience: body.speakingExperience || "",
+      data: updateData,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        avatar: true,
+        bio: true,
+        company: true,
+        jobTitle: true,
+        location: true,
+        website: true,
+        linkedin: true,
+        speakingExperience: true,
       },
     })
+
+    console.log("[v0] Speaker updated successfully")
+    console.log("[v0] Avatar after update:", updatedSpeaker.avatar)
+
+    const profile = {
+      fullName: `${updatedSpeaker.firstName} ${updatedSpeaker.lastName}`,
+      designation: updatedSpeaker.jobTitle || "",
+      company: updatedSpeaker.company || "",
+      email: updatedSpeaker.email,
+      phone: updatedSpeaker.phone || "",
+      linkedin: updatedSpeaker.linkedin || "",
+      website: updatedSpeaker.website || "",
+      location: updatedSpeaker.location || "",
+      bio: updatedSpeaker.bio || "",
+      speakingExperience: updatedSpeaker.speakingExperience || "",
+      avatar: updatedSpeaker.avatar || "",
+    }
+
+    console.log("[v0] Profile response:", profile)
+    console.log("[v0] Avatar in response:", profile.avatar)
 
     return NextResponse.json({
       success: true,
-      profile: {
-        fullName: `${updatedProfile.firstName} ${updatedProfile.lastName}`.trim(),
-        designation: updatedProfile.jobTitle || "",
-        company: updatedProfile.company || "",
-        email: updatedProfile.email || "",
-        phone: updatedProfile.phone || "",
-        linkedin: updatedProfile.linkedin || "",
-        website: updatedProfile.website || "",
-        location: updatedProfile.location || "",
-        bio: updatedProfile.bio || "",
-        speakingExperience: updatedProfile.speakingExperience || "",
-      },
+      profile,
+      message: "Speaker updated successfully",
     })
   } catch (error) {
-    console.error("PUT /api/speakers/[id] error:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to update profile",
-        error: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    )
-  }
-}
-
-// POST handler – create a new speaker
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
-    }
-
-    const body = await request.json()
-    const {
-      firstName,
-      lastName,
-      email,
-      phone,
-      bio,
-      company,
-      jobTitle,
-      location,
-      website,
-      linkedin,
-      twitter,
-      specialties,
-      achievements,
-      certifications,
-      speakingExperience,
-    } = body
-
-    if (!firstName || !lastName || !email) {
-      return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 })
-    }
-
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    })
-
-    if (existingUser) {
-      return NextResponse.json({ success: false, error: "User with this email already exists" }, { status: 400 })
-    }
-
-    const speaker = await prisma.user.create({
-      data: {
-        firstName,
-        lastName,
-        email,
-        phone,
-        bio,
-        company,
-        jobTitle,
-        location,
-        website,
-        linkedin,
-        twitter,
-        specialties: specialties || [],
-        achievements: achievements || [],
-        certifications: certifications || [],
-        speakingExperience,
-        role: "SPEAKER",
-        password: "temp_password", // Handle properly in production!
-        isActive: true,
-      },
-    })
-
-    return NextResponse.json({
-      success: true,
-      speaker,
-      message: "Speaker created successfully",
-    })
-  } catch (error) {
-    console.error("Error creating speaker:", error)
+    console.error("[v0] Error updating speaker:", error)
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }

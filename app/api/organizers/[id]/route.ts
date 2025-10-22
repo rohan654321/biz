@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma"
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
-    const { id } = await params
+    const { id } =await params
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -133,10 +133,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 }
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(request: Request, { params }: { params:Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
-    const { id } = await params
+    const { id } =await params
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -149,37 +149,43 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     const body = await request.json()
 
+    const updateData: any = {}
+
+    if (body.name || body.firstName) {
+      updateData.firstName = body.name?.split(" ")[0] || body.firstName
+    }
+    if (body.name || body.lastName) {
+      updateData.lastName = body.name?.split(" ").slice(1).join(" ") || body.lastName
+    }
+    if (body.email !== undefined) updateData.email = body.email
+    if (body.phone !== undefined) updateData.phone = body.phone
+    if (body.description !== undefined) updateData.bio = body.description
+    if (body.website !== undefined) updateData.website = body.website
+    if (body.linkedin !== undefined) updateData.linkedin = body.linkedin
+    if (body.twitter !== undefined) updateData.twitter = body.twitter
+    if (body.company !== undefined) updateData.company = body.company || body.organizationName
+    if (body.location !== undefined) updateData.location = body.location || body.headquarters
+    if (body.organizationName !== undefined) updateData.organizationName = body.company || body.organizationName
+    if (body.headquarters !== undefined) updateData.headquarters = body.headquarters
+    if (body.founded !== undefined) updateData.founded = body.founded
+    if (body.teamSize !== undefined) updateData.teamSize = body.teamSize
+    if (body.specialties !== undefined) updateData.specialties = body.specialties
+    if (body.achievements !== undefined) updateData.achievements = body.achievements
+    if (body.certifications !== undefined) updateData.certifications = body.certifications
+    if (body.businessEmail !== undefined) updateData.businessEmail = body.businessEmail || body.email
+    if (body.businessPhone !== undefined) updateData.businessPhone = body.businessPhone || body.phone
+    if (body.businessAddress !== undefined) updateData.businessAddress = body.businessAddress || body.headquarters
+    if (body.avatar !== undefined) updateData.avatar = body.avatar
+
+    updateData.updatedAt = new Date()
+
     // Update organizer in database
     const updatedOrganizer = await prisma.user.update({
       where: {
         id: id,
         role: "ORGANIZER",
       },
-      data: {
-        firstName: body.name?.split(" ")[0] || body.firstName,
-        lastName: body.name?.split(" ").slice(1).join(" ") || body.lastName,
-        email: body.email,
-        phone: body.phone,
-        bio: body.description,
-        website: body.website,
-        linkedin: body.linkedin,
-        twitter: body.twitter,
-        company: body.company || body.organizationName,
-        location: body.location || body.headquarters,
-        organizationName: body.company || body.organizationName,
-        description: body.description,
-        headquarters: body.headquarters,
-        founded: body.founded,
-        teamSize: body.teamSize,
-        specialties: body.specialties,
-        achievements: body.achievements,
-        certifications: body.certifications,
-        businessEmail: body.businessEmail || body.email,
-        businessPhone: body.businessPhone || body.phone,
-        businessAddress: body.businessAddress || body.headquarters,
-        avatar: body.avatar,
-        updatedAt: new Date(),
-      },
+      data: updateData,
       select: {
         id: true,
         firstName: true,
@@ -187,6 +193,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         email: true,
         organizationName: true,
         description: true,
+        avatar: true,
         updatedAt: true,
       },
     })

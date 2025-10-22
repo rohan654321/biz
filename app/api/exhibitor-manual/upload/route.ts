@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import cloudinary from "@/lib/cloudinary"
+import { Cloudinary } from "@/lib/cloudinary"
 import { prisma } from "@/lib/prisma"
 
 export async function POST(request: Request) {
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
     // ✅ Correct Cloudinary upload
     const uploadResult = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
+      const uploadStream = Cloudinary.uploader.upload_stream(
         {
           resource_type: "raw",
           folder: "exhibitor-manuals",

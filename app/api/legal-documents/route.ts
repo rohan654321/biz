@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import cloudinary from "@/lib/cloudinary"
+import {Cloudinary} from "@/lib/cloudinary"
 
 function mapCategoryToType(category: string): string | undefined {
   const categoryMap: Record<string, string> = {
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
       const buffer = Buffer.from(bytes)
 
       const uploadResult = await new Promise<any>((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
+        const uploadStream = Cloudinary.uploader.upload_stream(
           {
             folder: "legal-documents",
             resource_type: "auto",
