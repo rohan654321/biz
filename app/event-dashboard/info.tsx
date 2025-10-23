@@ -109,47 +109,47 @@ export default function EventPage({ params }: EventPageProps) {
       console.error("Error checking saved status:", error)
     }
   }
-const handleDownloadBrochure = async (eventId: string) => {
-  try {
-    // Get the download URL from the API
-    const response = await fetch(`/api/events/${eventId}/brochure?action=download`);
+// const handleDownloadBrochure = async (eventId: string) => {
+//   try {
+//     // Get the download URL from the API
+//     const response = await fetch(`/api/events/${eventId}/brochure?action=download`);
     
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+//     if (!response.ok) {
+//       throw new Error(`HTTP error! status: ${response.status}`);
+//     }
 
-    const data = await response.json();
+//     const data = await response.json();
 
-    if (data.success && data.brochure) {
-      // Create a temporary anchor element to trigger download
-      const link = document.createElement('a');
-      link.href = data.brochure;
+//     if (data.success && data.brochure) {
+//       // Create a temporary anchor element to trigger download
+//       const link = document.createElement('a');
+//       link.href = data.brochure;
       
-      // Set the download attribute with a proper filename
-      const filename = `brochure-${data.eventTitle || eventId}.pdf`;
-      link.download = filename;
+//       // Set the download attribute with a proper filename
+//       const filename = `brochure-${data.eventTitle || eventId}.pdf`;
+//       link.download = filename;
       
-      // Append to body, click, and remove
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+//       // Append to body, click, and remove
+//       document.body.appendChild(link);
+//       link.click();
+//       document.body.removeChild(link);
 
-      toast({
-        title: "Download Started",
-        description: "Brochure download has started",
-      });
-    } else {
-      throw new Error(data.error || 'Failed to get download URL');
-    }
-  } catch (error) {
-    console.error('Error downloading brochure:', error);
-    toast({
-      title: "Download Failed",
-      description: error instanceof Error ? error.message : "Failed to download brochure. Please try again.",
-      variant: "destructive",
-    });
-  }
-};
+//       toast({
+//         title: "Download Started",
+//         description: "Brochure download has started",
+//       });
+//     } else {
+//       throw new Error(data.error || 'Failed to get download URL');
+//     }
+//   } catch (error) {
+//     console.error('Error downloading brochure:', error);
+//     toast({
+//       title: "Download Failed",
+//       description: error instanceof Error ? error.message : "Failed to download brochure. Please try again.",
+//       variant: "destructive",
+//     });
+//   }
+// };
   const handleDeleteBrochure = async () => {
     if (!confirm("Are you sure you want to delete the brochure?")) return
 
@@ -923,13 +923,13 @@ const handleDownloadBrochure = async (eventId: string) => {
               <div className="flex justify-between items-center p-3 bg-white border-b">
                 <span className="text-sm font-medium">Event Brochure</span>
                 <div className="flex gap-2">
-                  <Button
+                  {/* <Button
                     size="sm"
                     variant="outline"
                     onClick={() => handleDownloadBrochure(event.id)}
                   >
                     Download PDF
-                  </Button>
+                  </Button> */}
                   <Button
                     size="sm"
                     variant="outline"
