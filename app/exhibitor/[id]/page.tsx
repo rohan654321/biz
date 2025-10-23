@@ -51,51 +51,79 @@ interface Exhibitor {
   createdAt: string
 }
 
-// Define types for event data based on your MongoDB structure
-interface Event {
-  id:string
-  rating: any
-  images: any
-  _id: string
-  title: string
+// Define types for booth data based on your API response
+interface Booth {
+  id: string
+  eventId: string
+  exhibitorId: string
+  spaceId: string
+  spaceReference: string
+  boothNumber: string
+  companyName: string
   description: string
-  shortDescription?: string
-  slug: string
-  status: "DRAFT" | "PUBLISHED" | "CANCELLED" | "upcoming" | "completed" | "cancelled"
-  category: string
-  tags: string[]
-  isFeatured: boolean
-  isVIP: boolean
-  startDate: string | { $date: string }
-  endDate: string | { $date: string }
-  registrationStart: string | { $date: string }
-  registrationEnd: string | { $date: string }
-  timezone: string
-  venueId: string | null
-  isVirtual: boolean
-  virtualLink: string | null
-  address: string
-  location: string | { city?: string; venue?: string }
-  city: string
-  state: string | null
-  country: string
-  zipCode: string | null
-  maxAttendees: number | null
-  currentAttendees: number | { $numberLong: string }
+  additionalPower: number
+  compressedAir: number
+  setupRequirements: {
+    requirements: string
+  }
+  specialRequests: string
+  totalCost: number
   currency: string
-  bannerImage: string | null
-  thumbnailImage: string | null
-  isPublic: boolean
-  requiresApproval: boolean
-  allowWaitlist: boolean
-  refundPolicy: string | null
-  metaTitle: string | null
-  metaDescription: string | null
-  organizerId: string | { $oid: string }
-  createdAt: string | { $date: string }
-  updatedAt: string | { $date: string }
-  averageRating: number
-  totalReviews: number | { $numberLong: string }
+  status: string
+  createdAt: string
+  updatedAt: string
+  exhibitor: any
+  event: {
+    id: string
+    title: string
+    description: string
+    shortDescription?: string
+    slug: string
+    status: "DRAFT" | "PUBLISHED" | "CANCELLED"
+    category: string
+    tags: string[]
+    isFeatured: boolean
+    isVIP: boolean
+    startDate: string
+    endDate: string
+    registrationStart: string
+    registrationEnd: string
+    timezone: string
+    venueId: string | null
+    isVirtual: boolean
+    virtualLink: string | null
+    maxAttendees: number | null
+    currentAttendees: number
+    currency: string
+    bannerImage: string | null
+    thumbnailImage: string | null
+    isPublic: boolean
+    requiresApproval: boolean
+    allowWaitlist: boolean
+    refundPolicy: string | null
+    metaTitle: string | null
+    metaDescription: string | null
+    organizerId: string
+    createdAt: string
+    updatedAt: string
+    averageRating: number
+    totalReviews: number
+    organizer: {
+      id: string
+      firstName: string
+      lastName: string
+      company: string
+    }
+    venue: {
+      id: string
+      venueName: string
+      venueDescription: string
+      venueAddress: string
+      venueCity: string
+      venueState: string
+      venueCountry: string
+    }
+  }
 }
 
 // Review interface
@@ -290,14 +318,11 @@ function AddReview({ exhibitorId, onReviewAdded }: { exhibitorId: string; onRevi
 }
 
 // Helper function to safely extract date
-const safeFormatDate = (dateInput: string | { $date: string } | null | undefined): string => {
+const safeFormatDate = (dateInput: string | null | undefined): string => {
   if (!dateInput) return "Date TBD";
 
   try {
-    const dateString = typeof dateInput === 'string' ? dateInput : dateInput?.$date;
-    if (!dateString) return "Date TBD";
-
-    return new Date(dateString).toLocaleDateString("en-US", {
+    return new Date(dateInput).toLocaleDateString("en-US", {
       weekday: "short",
       day: "2-digit",
       month: "short",
@@ -309,40 +334,20 @@ const safeFormatDate = (dateInput: string | { $date: string } | null | undefined
   }
 };
 
-// Helper function to safely access location
-const getLocationString = (location: string | { city?: string; venue?: string }): string => {
-  if (typeof location === 'string') {
-    return location || "Location TBD";
-  }
-
-  const city = location?.city || "";
-  const venue = location?.venue || "";
-
-  if (city && venue) {
-    return `${city}, ${venue}`;
-  } else if (city) {
-    return city;
-  } else if (venue) {
-    return venue;
-  }
-
-  return "Location TBD";
-};
-
-// Helper function to extract date from MongoDB format
-const extractDate = (dateObj: any): string => {
-  if (!dateObj) return "";
-  if (typeof dateObj === 'string') return dateObj;
-  if (dateObj.$date) return dateObj.$date;
-  return "";
-};
-
-// Helper function to extract number from MongoDB format
-const extractNumber = (numObj: any): number => {
-  if (!numObj) return 0;
-  if (typeof numObj === 'number') return numObj;
-  if (numObj.$numberLong) return parseInt(numObj.$numberLong, 10);
-  return 0;
+// Helper function to get location string
+const getLocationString = (venue: any): string => {
+  if (!venue) return "Location TBD";
+  
+  const { venueName, venueAddress, venueCity, venueState, venueCountry } = venue;
+  
+  const parts = [];
+  if (venueName) parts.push(venueName);
+  if (venueAddress) parts.push(venueAddress);
+  if (venueCity) parts.push(venueCity);
+  if (venueState) parts.push(venueState);
+  if (venueCountry) parts.push(venueCountry);
+  
+  return parts.length > 0 ? parts.join(", ") : "Location TBD";
 };
 
 // Main Exhibitor Page Component
@@ -351,13 +356,13 @@ export default function ExhibitorPage() {
   const router = useRouter()
   const exhibitorId = params.id as string
 
-    const { data: session } = useSession()
+  const { data: session } = useSession()
 
   const [activeTab, setActiveTab] = useState("overview")
   const [eventsTab, setEventsTab] = useState("upcoming")
   const [currentPage, setCurrentPage] = useState(1)
   const [exhibitor, setExhibitor] = useState<Exhibitor | null>(null)
-  const [exhibitorEvents, setExhibitorEvents] = useState<Event[]>([])
+  const [booths, setBooths] = useState<Booth[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [eventsLoading, setEventsLoading] = useState(false)
@@ -388,57 +393,33 @@ export default function ExhibitorPage() {
     }
   }, [exhibitorId])
 
-  // Fetch exhibitor events data
+  // Fetch exhibitor booths data
   useEffect(() => {
-    async function fetchExhibitorEvents() {
+    async function fetchExhibitorBooths() {
       if (!exhibitorId) return;
 
       setEventsLoading(true);
       try {
         const response = await fetch(`/api/events/exhibitors/${exhibitorId}`);
         const data = await response.json();
-        console.log("Events API Response:", data);
+        console.log("Booths API Response:", data);
 
-        if (data.success) {
-          const events = data.data?.events || data.events || data.data || [];
-          console.log("Processed events:", events);
-
-          const transformedEvents = events.map((item: any) => {
-            const event = item.event || item;
-            return {
-              ...event,
-              startDate: extractDate(event.startDate),
-              endDate: extractDate(event.endDate),
-              status: determineEventStatus(event.startDate, event.endDate),
-              rating: {
-                average: event.averageRating || 0,
-                count: extractNumber(event.totalReviews) || 0
-              },
-              location: {
-                city: event.city || "Unknown City",
-                venue: event.location || event.address || "Unknown Venue"
-              },
-              images: event.bannerImage || event.thumbnailImage ?
-                [{ url: event.bannerImage || event.thumbnailImage }] :
-                []
-            };
-          });
-
-          setExhibitorEvents(transformedEvents);
+        if (data.success && data.booths) {
+          setBooths(data.booths);
         } else {
-          console.error("Failed to fetch exhibitor events:", data.message);
-          setExhibitorEvents([]);
+          console.error("Failed to fetch exhibitor booths:", data.message);
+          setBooths([]);
         }
       } catch (error) {
-        console.error("Error fetching exhibitor events:", error);
-        setExhibitorEvents([]);
+        console.error("Error fetching exhibitor booths:", error);
+        setBooths([]);
       } finally {
         setEventsLoading(false);
       }
     }
 
     if (exhibitorId) {
-      fetchExhibitorEvents();
+      fetchExhibitorBooths();
     }
   }, [exhibitorId]);
 
@@ -473,61 +454,24 @@ export default function ExhibitorPage() {
     setReviews(prevReviews => [newReview, ...prevReviews])
   }
 
-  // Determine event status based on dates
-  const determineEventStatus = (startDate: any, endDate: any): "upcoming" | "completed" | "cancelled" => {
-    const start = extractDate(startDate);
-    const end = extractDate(endDate);
-
-    if (!start) return "upcoming";
-
-    const now = new Date();
-    const eventStart = new Date(start);
-    const eventEnd = new Date(end || start);
-
-    if (now > eventEnd) return "completed";
-    if (now < eventStart) return "upcoming";
-    return "upcoming";
-  };
-
-  // Mock data for achievements and social proof
-  const mockDetails = {
-    achievements: [
-      "Best Tech Innovation Award 2023",
-      "Top 50 Startups in India 2022",
-      "Excellence in Customer Service",
-      "Sustainability Leader Recognition",
-    ],
-    socialProof: {
-      clientsServed: "500+",
-      projectsCompleted: "1,200+",
-      yearsExperience: "8+",
-      teamSize: "150+",
-    },
-  }
-
   // Calculate exhibitor statistics
   const stats = useMemo(() => {
-    const totalEvents = exhibitorEvents.length;
+    const totalEvents = booths.length;
 
-    const upcomingEvents = exhibitorEvents.filter(
-      (event) => event.status === "upcoming"
-    ).length;
+    // Get current date for comparison
+    const currentDate = new Date();
 
-    const completedEvents = exhibitorEvents.filter(
-      (event) => event.status === "completed"
-    ).length;
+    // Upcoming events: events that haven't ended yet
+    const upcomingEvents = booths.filter(booth => {
+      const eventEndDate = new Date(booth.event.endDate);
+      return eventEndDate > currentDate;
+    }).length;
 
-    const cancelledEvents = exhibitorEvents.filter(
-      (event) => event.status === "cancelled"
-    ).length;
-
-    const avgRating =
-      exhibitorEvents.length > 0
-        ? exhibitorEvents.reduce((sum, event) => {
-          const rating = event.rating?.average || 0;
-          return sum + rating;
-        }, 0) / exhibitorEvents.length
-        : 4.8;
+    // Past events: events that have ended
+    const pastEvents = booths.filter(booth => {
+      const eventEndDate = new Date(booth.event.endDate);
+      return eventEndDate <= currentDate;
+    }).length;
 
     // Calculate average review rating
     const reviewAvgRating = reviews.length > 0
@@ -537,26 +481,29 @@ export default function ExhibitorPage() {
     return {
       totalEvents,
       upcomingEvents,
-      completedEvents,
-      cancelledEvents,
-      pastEvents: completedEvents + cancelledEvents,
-      avgRating: Math.round(avgRating * 10) / 10,
+      pastEvents,
       reviewAvgRating: Math.round(reviewAvgRating * 10) / 10,
       totalReviews: reviews.length,
-      clientsServed: mockDetails.socialProof.clientsServed,
+      clientsServed: "500+", // Mock data
     };
-  }, [exhibitorEvents, reviews]);
+  }, [booths, reviews]);
 
   // Filter events based on active events tab
   const filteredEvents = useMemo(() => {
+    const currentDate = new Date();
+    
     if (eventsTab === "upcoming") {
-      return exhibitorEvents.filter(event => event.status === "upcoming");
+      return booths.filter(booth => {
+        const eventEndDate = new Date(booth.event.endDate);
+        return eventEndDate > currentDate;
+      });
     } else {
-      return exhibitorEvents.filter(event =>
-        event.status === "completed" || event.status === "cancelled"
-      );
+      return booths.filter(booth => {
+        const eventEndDate = new Date(booth.event.endDate);
+        return eventEndDate <= currentDate;
+      });
     }
-  }, [exhibitorEvents, eventsTab]);
+  }, [booths, eventsTab]);
 
   // Pagination for events
   const totalPages = Math.ceil(filteredEvents.length / eventsPerPage)
@@ -567,7 +514,7 @@ export default function ExhibitorPage() {
     setCurrentPage(1);
   }, [eventsTab]);
 
-  const formatDateRange = (startDate: string | { $date: string }, endDate: string | { $date: string }) => {
+  const formatDateRange = (startDate: string, endDate: string) => {
     const start = safeFormatDate(startDate);
     const end = safeFormatDate(endDate);
 
@@ -600,6 +547,22 @@ export default function ExhibitorPage() {
   const exhibitorDescription = exhibitor.bio || "No description available."
   const exhibitorSpecialties = exhibitor.specialties || ["Enterprise Software", "AI/ML Solutions", "Cloud Computing"]
   const exhibitorCertifications = exhibitor.certifications || ["ISO 27001:2013", "SOC 2 Type II", "GDPR Compliant"]
+
+  // Mock data for achievements and social proof
+  const mockDetails = {
+    achievements: [
+      "Best Tech Innovation Award 2023",
+      "Top 50 Startups in India 2022",
+      "Excellence in Customer Service",
+      "Sustainability Leader Recognition",
+    ],
+    socialProof: {
+      clientsServed: "500+",
+      projectsCompleted: "1,200+",
+      yearsExperience: "8+",
+      teamSize: "150+",
+    },
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -671,41 +634,32 @@ export default function ExhibitorPage() {
               <div className="space-x-3">
                 <Button className="bg-white text-blue-600 hover:bg-blue-50">
                   <Heart className="w-4 h-4 mr-2" />
-                 <FollowButton userId={exhibitor.id} currentUserId={session?.user.id} variant="default" size="default" />
+                  <FollowButton userId={exhibitor.id} currentUserId={session?.user.id} variant="default" size="default" />
                 </Button>
                 <Button
                   variant="outline"
                   className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent"
-                    size="sm"
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({
-                          title: exhibitor.firstName,
-                          text: "Check out this event!",
-                          url: window.location.href,
-                        })
-                          .catch((err) => console.error("Error sharing:", err));
-                      } else {
-                        alert("Sharing is not supported in this browser.");
-                      }
-                    }}
-                  
+                  size="sm"
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: exhibitor.firstName,
+                        text: "Check out this event!",
+                        url: window.location.href,
+                      })
+                        .catch((err) => console.error("Error sharing:", err));
+                    } else {
+                      alert("Sharing is not supported in this browser.");
+                    }
+                  }}
                 >
                   <Share2 className="w-4 h-4 mr-2" />
                   Share
                 </Button>
               </div>
               <button>
-                <ScheduleMeetingButton exhibitor={exhibitor} eventId={exhibitorEvents[0]?.id} />
+                <ScheduleMeetingButton exhibitor={exhibitor} eventId={booths[0]?.event.id} />
               </button>
-
-              {/* <Button
-                variant="outline"
-                className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent"
-              >
-                <Mail className="w-4 h-4 mr-2" />
-                Contact
-              </Button> */}
             </div>
           </div>
         </div>
@@ -723,18 +677,10 @@ export default function ExhibitorPage() {
               <div className="text-2xl font-bold text-gray-900">{stats.clientsServed}</div>
               <div className="text-sm text-gray-600">Clients Served</div>
             </div>
-            {/* <div className="text-center">
-              <div className="flex items-center justify-center gap-1">
-                <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                <span className="text-2xl font-bold text-gray-900">{stats.avgRating}</span>
-              </div>
-              <div className="text-sm text-gray-600">Event Rating</div>
-            </div> */}
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <Star className="w-5 h-5 text-yellow-400 fill-current" />
                 <span className="text-2xl font-bold text-gray-900">{stats.reviewAvgRating}</span>
-                {/* <span className="text-sm text-gray-500">({stats.totalReviews})</span> */}
               </div>
               <div className="text-sm text-gray-600">Event Rating</div>
             </div>
@@ -782,30 +728,31 @@ export default function ExhibitorPage() {
                     <h3 className="text-xl font-semibold mb-6">Recent Event Participation</h3>
                     {eventsLoading ? (
                       <div className="text-center py-8">Loading events...</div>
-                    ) : exhibitorEvents.length === 0 ? (
+                    ) : booths.length === 0 ? (
                       <div className="text-center py-8 text-gray-500">
                         No events found for this exhibitor.
                       </div>
                     ) : (
                       <>
                         <div className="space-y-4">
-                          {exhibitorEvents.slice(0, 3).map((event) => {
-                            if (!event) return null;
+                          {booths.slice(0, 3).map((booth) => {
+                            const event = booth.event;
+                            const isUpcoming = new Date(event.endDate) > new Date();
 
                             return (
                               <div
-                                key={event._id}
+                                key={booth.id}
                                 className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                                 onClick={() => {
                                   // Navigate to event details page or open modal
-                                  console.log('Event clicked:', event._id);
+                                  console.log('Event clicked:', event.id);
                                 }}
                               >
                                 {/* Event Image */}
                                 <div className="relative w-16 h-16 flex-shrink-0">
                                   <Image
                                     alt={event.title || "Event"}
-                                    src={event.images?.[0]?.url || "/images/signupimg.png"}
+                                    src={event.bannerImage || event.thumbnailImage || "/images/signupimg.png"}
                                     fill
                                     className="object-cover rounded-md"
                                   />
@@ -821,7 +768,7 @@ export default function ExhibitorPage() {
                                     <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded">
                                       <Star className="w-3 h-3 text-yellow-400 fill-current" />
                                       <span className="text-xs font-medium text-yellow-800">
-                                        {event.rating?.average || "4.5"}
+                                        {event.averageRating || "4.5"}
                                       </span>
                                     </div>
                                   </div>
@@ -835,22 +782,23 @@ export default function ExhibitorPage() {
                                   {/* Event Location */}
                                   <div className="flex items-center gap-2 text-sm text-gray-600">
                                     <MapPin className="w-4 h-4" />
-                                    <span className="truncate">{getLocationString(event.location)}</span>
+                                    <span className="truncate">{getLocationString(event.venue)}</span>
+                                  </div>
+
+                                  {/* Booth Information */}
+                                  <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                                    <Building className="w-4 h-4" />
+                                    <span>Booth: {booth.boothNumber}</span>
                                   </div>
                                 </div>
 
                                 {/* Status Badge */}
                                 <div className="flex-shrink-0">
                                   <Badge
-                                    variant={
-                                      event.status === "upcoming" ? "default" :
-                                        event.status === "completed" ? "secondary" : "destructive"
-                                    }
+                                    variant={isUpcoming ? "default" : "secondary"}
                                     className="ml-2"
                                   >
-                                    {event.status === "upcoming" ? "Upcoming" :
-                                      event.status === "completed" ? "Completed" :
-                                        event.status === "cancelled" ? "Cancelled" : "Unknown"}
+                                    {isUpcoming ? "Upcoming" : "Completed"}
                                   </Badge>
                                 </div>
                               </div>
@@ -859,14 +807,14 @@ export default function ExhibitorPage() {
                         </div>
 
                         {/* View All Button - Only show if there are more than 3 events */}
-                        {exhibitorEvents.length > 3 && (
+                        {booths.length > 3 && (
                           <div className="mt-6 text-center">
                             <Button
                               variant="outline"
                               onClick={() => setActiveTab("events")}
                               className="border-gray-300 text-gray-700 hover:bg-gray-50"
                             >
-                              View All Events ({exhibitorEvents.length})
+                              View All Events ({booths.length})
                             </Button>
                           </div>
                         )}
@@ -878,38 +826,6 @@ export default function ExhibitorPage() {
 
               {/* Sidebar */}
               <div className="space-y-6">
-                {/* Key Metrics */}
-                {/* <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5" />
-                      Key Metrics
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Clients Served</span>
-                        <span className="font-semibold">{mockDetails.socialProof.clientsServed}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Projects Completed</span>
-                        <span className="font-semibold">{mockDetails.socialProof.projectsCompleted}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Team Size</span>
-                        <span className="font-semibold">{mockDetails.socialProof.teamSize}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Company Size</span>
-                        <span className="font-semibold">{exhibitor.companySize || "201-500 employees"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Total Reviews</span>
-                        <span className="font-semibold">{stats.totalReviews}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card> */}
-
                 {/* Specialties */}
                 <Card>
                   <CardContent className="p-6">
@@ -994,15 +910,15 @@ export default function ExhibitorPage() {
                 ) : (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {paginatedEvents.map((event) => {
-                        if (!event) return null;
+                      {paginatedEvents.map((booth) => {
+                        const event = booth.event;
 
                         return (
-                          <Card key={event._id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                          <Card key={booth.id} className="hover:shadow-lg transition-shadow cursor-pointer">
                             <CardContent className="p-0">
                               <div className="relative">
                                 <Image
-                                  src={event.images?.[0]?.url || "/herosection-images/weld.jpg"}
+                                  src={event.bannerImage || event.thumbnailImage || "/herosection-images/weld.jpg"}
                                   alt={event.title || "Event"}
                                   width={400}
                                   height={200}
@@ -1021,17 +937,21 @@ export default function ExhibitorPage() {
                                   </div>
                                   <div className="flex items-center text-sm text-gray-600">
                                     <MapPin className="w-4 h-4 mr-2" />
-                                    {getLocationString(event.location)}
+                                    {getLocationString(event.venue)}
+                                  </div>
+                                  <div className="flex items-center text-sm text-gray-600">
+                                    <Building className="w-4 h-4 mr-2" />
+                                    Booth: {booth.boothNumber}
                                   </div>
                                 </div>
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-1">
                                     <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                    <span className="text-sm font-medium">{event.rating?.average || "N/A"}</span>
-                                    <span className="text-sm text-gray-500">({event.rating?.count || 0})</span>
+                                    <span className="text-sm font-medium">{event.averageRating || "N/A"}</span>
+                                    <span className="text-sm text-gray-500">({event.totalReviews || 0})</span>
                                   </div>
                                   <Badge variant="default">
-                                    {event.status || "upcoming"}
+                                    Upcoming
                                   </Badge>
                                 </div>
                               </div>
@@ -1092,15 +1012,15 @@ export default function ExhibitorPage() {
                 ) : (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {paginatedEvents.map((event) => {
-                        if (!event) return null;
+                      {paginatedEvents.map((booth) => {
+                        const event = booth.event;
 
                         return (
-                          <Card key={event._id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                          <Card key={booth.id} className="hover:shadow-lg transition-shadow cursor-pointer">
                             <CardContent className="p-0">
                               <div className="relative">
                                 <Image
-                                  src={event.images?.[0]?.url || "/herosection-images/weld.jpg"}
+                                  src={event.bannerImage || event.thumbnailImage || "/herosection-images/weld.jpg"}
                                   alt={event.title || "Event"}
                                   width={400}
                                   height={200}
@@ -1119,17 +1039,21 @@ export default function ExhibitorPage() {
                                   </div>
                                   <div className="flex items-center text-sm text-gray-600">
                                     <MapPin className="w-4 h-4 mr-2" />
-                                    {getLocationString(event.location)}
+                                    {getLocationString(event.venue)}
+                                  </div>
+                                  <div className="flex items-center text-sm text-gray-600">
+                                    <Building className="w-4 h-4 mr-2" />
+                                    Booth: {booth.boothNumber}
                                   </div>
                                 </div>
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-1">
                                     <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                    <span className="text-sm font-medium">{event.rating?.average || "4.5"}</span>
-                                    {/* <span className="text-sm text-gray-500">({event.rating?.count ||})</span> */}
+                                    <span className="text-sm font-medium">{event.averageRating || "4.5"}</span>
+                                    <span className="text-sm text-gray-500">({event.totalReviews || 0})</span>
                                   </div>
-                                  <Badge variant={event.status === "completed" ? "secondary" : "destructive"}>
-                                    {event.status || "completed"}
+                                  <Badge variant="secondary">
+                                    Completed
                                   </Badge>
                                 </div>
                               </div>
@@ -1264,7 +1188,6 @@ export default function ExhibitorPage() {
             </Card>
           </TabsContent>
 
-          {/* Reviews Tab */}
           {/* Reviews Tab */}
           <TabsContent value="reviews" className="space-y-6">
             <div className="max-w-4xl mx-auto">

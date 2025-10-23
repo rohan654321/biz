@@ -24,6 +24,60 @@ interface EventParticipationProps {
   exhibitorId: string
 }
 
+interface Booth {
+  id: string
+  eventId: string
+  exhibitorId: string
+  spaceId: string
+  spaceReference: string
+  boothNumber: string
+  companyName: string
+  description: string
+  additionalPower: number
+  compressedAir: number
+  setupRequirements: {
+    requirements: string
+  }
+  specialRequests: string
+  totalCost: number
+  currency: string
+  status: string
+  createdAt: string
+  updatedAt: string
+  exhibitor: any
+  event: {
+    id: string
+    title: string
+    description: string
+    shortDescription: string
+    slug: string
+    status: string
+    category: string
+    startDate: string
+    endDate: string
+    registrationStart: string
+    registrationEnd: string
+    timezone: string
+    venueId: string
+    isVirtual: boolean
+    maxAttendees: number | null
+    currentAttendees: number
+    currency: string
+    organizer: {
+      id: string
+      firstName: string
+      lastName: string
+      company: string
+    }
+    venue: {
+      id: string
+      venueName: string
+      venueDescription: string
+      venueAddress: string
+    }
+  }
+}
+
 interface Event {
   id: string
   eventId: string
@@ -41,12 +95,16 @@ interface Event {
   invoiceAmount: number
   status: string
   specialRequests?: string
+  currency: string
   organizer?: {
     id: string
     firstName: string
     lastName: string
     company: string
   }
+  // Add raw date fields for proper comparison
+  rawStartDate: string
+  rawEndDate: string
 }
 
 export default function EventParticipation({ exhibitorId }: EventParticipationProps) {
@@ -79,36 +137,43 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
       }
 
       const data = await response.json()
+      console.log("EventParticipation - API Response:", data)
 
-      if (data.success && data.data?.events) {
-        const transformedEvents = data.data.events.map((eventData: any) => ({
-          id: eventData.booth.id,
-          eventId: eventData.event.id,
-          eventName: eventData.event.title,
-          date: new Date(eventData.event.startDate).toLocaleDateString(),
-          endDate: new Date(eventData.event.endDate).toLocaleDateString(),
-          venue: eventData.event.venue?.name || "TBD",
-          boothSize: eventData.booth.size || "Standard",
-          boothNumber: eventData.booth.boothNumber || "TBD",
-          paymentStatus: eventData.booth.paymentStatus || "PENDING",
-          setupTime: eventData.event.setupTime,
-          dismantleTime: eventData.event.dismantleTime,
-          passes: eventData.booth.passes || 2,
-          passesUsed: eventData.booth.passesUsed || 0,
-          invoiceAmount: eventData.booth.price || 0,
-          status: eventData.event.status,
-          specialRequests: eventData.booth.specialRequests,
-          organizer: eventData.event.organizer
+      if (data.success && data.booths) {
+        const transformedEvents = data.booths.map((booth: Booth) => ({
+          id: booth.id,
+          eventId: booth.event.id,
+          eventName: booth.event.title,
+          date: new Date(booth.event.startDate).toLocaleDateString(),
+          endDate: new Date(booth.event.endDate).toLocaleDateString(),
+          venue: booth.event.venue?.venueName || booth.event.venue?.venueAddress || "TBD",
+          boothSize: "Standard",
+          boothNumber: booth.boothNumber,
+          paymentStatus: booth.status === "BOOKED" ? "PAID" : "PENDING",
+          setupTime: "2 hours before event",
+          dismantleTime: "1 hour after event",
+          passes: 2,
+          passesUsed: 0,
+          invoiceAmount: booth.totalCost,
+          currency: booth.currency,
+          status: booth.event.status,
+          specialRequests: booth.specialRequests,
+          organizer: booth.event.organizer
             ? {
-                id: eventData.event.organizer.id,
-                firstName: eventData.event.organizer.firstName,
-                lastName: eventData.event.organizer.lastName,
-                company: eventData.event.organizer.company || "",
+                id: booth.event.organizer.id,
+                firstName: booth.event.organizer.firstName,
+                lastName: booth.event.organizer.lastName,
+                company: booth.event.organizer.company || "",
               }
             : undefined,
+          // Store raw dates for proper comparison
+          rawStartDate: booth.event.startDate,
+          rawEndDate: booth.event.endDate,
         }))
+        console.log("EventParticipation - Transformed events:", transformedEvents)
         setEvents(transformedEvents)
       } else {
+        console.log("EventParticipation - No booths found")
         setEvents([])
       }
     } catch (err) {
@@ -124,9 +189,41 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
     }
   }
 
-  const upcomingEvents = events.filter((event) => event.status === "PUBLISHED" && new Date(event.endDate) > new Date())
+  // Get current date for comparison (UTC to avoid timezone issues)
+  const currentDate = new Date()
+  console.log("EventParticipation - Current date:", currentDate.toISOString())
 
-  const pastEvents = events.filter((event) => event.status === "COMPLETED" || new Date(event.endDate) <= new Date())
+  // Upcoming events: events that haven't ended yet
+  const upcomingEvents = events.filter((event) => {
+    try {
+      const eventEndDate = new Date(event.rawEndDate)
+      const isUpcoming = eventEndDate > currentDate
+      console.log(`Event: ${event.eventName}, Raw End: ${event.rawEndDate}, Parsed End: ${eventEndDate.toISOString()}, Is Upcoming: ${isUpcoming}`)
+      return isUpcoming
+    } catch (error) {
+      console.error(`Error parsing date for event ${event.eventName}:`, error)
+      return false
+    }
+  })
+
+  // Past events: events that have ended
+  const pastEvents = events.filter((event) => {
+    try {
+      const eventEndDate = new Date(event.rawEndDate)
+      const isPast = eventEndDate <= currentDate
+      console.log(`Event: ${event.eventName}, Raw End: ${event.rawEndDate}, Parsed End: ${eventEndDate.toISOString()}, Is Past: ${isPast}`)
+      return isPast
+    } catch (error) {
+      console.error(`Error parsing date for event ${event.eventName}:`, error)
+      return false
+    }
+  })
+
+  console.log("EventParticipation - All events:", events.length)
+  console.log("EventParticipation - Upcoming events:", upcomingEvents.length)
+  console.log("EventParticipation - Past events:", pastEvents.length)
+  console.log("EventParticipation - Upcoming events names:", upcomingEvents.map(e => e.eventName))
+  console.log("EventParticipation - Past events names:", pastEvents.map(e => e.eventName))
 
   const EventCard = ({ event, isPast = false }: { event: Event; isPast?: boolean }) => (
     <Card>
@@ -191,7 +288,9 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
             <div className="text-gray-600">Used Passes</div>
           </div>
           <div className="text-center p-3 bg-purple-50 rounded-lg">
-            <div className="font-semibold text-purple-600">₹{(event.invoiceAmount / 1000).toFixed(0)}K</div>
+            <div className="font-semibold text-purple-600">
+              {event.currency === "USD" ? "$" : "₹"}{event.invoiceAmount}
+            </div>
             <div className="text-gray-600">Invoice Amount</div>
           </div>
           {isPast && (

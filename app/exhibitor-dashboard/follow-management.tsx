@@ -130,7 +130,7 @@ export function FollowManagement({ userId }: FollowManagementProps) {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Followers</CardTitle>
@@ -152,14 +152,14 @@ export function FollowManagement({ userId }: FollowManagementProps) {
             <p className="text-xs text-muted-foreground">People you follow</p>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       {/* Tabs for Followers and Following */}
       <Tabs defaultValue="followers" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        {/* <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="followers">Followers ({followers.length})</TabsTrigger>
           <TabsTrigger value="following">Following ({following.length})</TabsTrigger>
-        </TabsList>
+        </TabsList> */}
 
         <TabsContent value="followers" className="space-y-4">
           <Card>
