@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import cloudinary from "@/lib/cloudinary"
+import {Cloudinary} from "@/lib/cloudinary"
 
 // GET - Fetch single material
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -95,7 +95,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     // Delete from Cloudinary
-    await cloudinary.uploader.destroy(material.publicId, {
+    await Cloudinary.uploader.destroy(material.publicId, {
       resource_type: resourceType,
     })
 

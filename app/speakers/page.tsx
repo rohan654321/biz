@@ -73,21 +73,25 @@ export default function SpeakersPage() {
     async function fetchSpeakers() {
       try {
         setLoading(true)
-        
+
         // Build query parameters
         const params = new URLSearchParams()
         if (searchQuery) params.append('search', searchQuery)
         if (selectedExpertise) params.append('expertise', selectedExpertise)
-        
+
         const response = await fetch(`/api/speakers?${params.toString()}`)
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch speakers')
         }
-        
+
         const data: ApiResponse = await response.json()
-        
+
         if (data.success) {
+          // Extract expertise from speakers' specialties
+          const allExpertise = data.speakers.flatMap(speaker => speaker.specialties || [])
+          const uniqueExpertise = [...new Set(allExpertise)].filter(Boolean)
+
           // Fetch events count for each speaker
           const speakersWithEventsCount = await Promise.all(
             data.speakers.map(async (speaker) => {
@@ -100,7 +104,7 @@ export default function SpeakersPage() {
                     const upcomingCount = eventsData.upcoming?.length || 0
                     const pastCount = eventsData.past?.length || 0
                     const totalEventsCount = upcomingCount + pastCount
-                    
+
                     return {
                       ...speaker,
                       upcomingEventsCount: upcomingCount,
@@ -128,9 +132,9 @@ export default function SpeakersPage() {
               }
             })
           )
-          
+
           setSpeakers(speakersWithEventsCount)
-          setAvailableExpertise(data.filters.expertise)
+          setAvailableExpertise(uniqueExpertise) // Use derived expertise instead of data.filters.expertise
         } else {
           throw new Error('Failed to load speakers')
         }
@@ -149,7 +153,6 @@ export default function SpeakersPage() {
 
     return () => clearTimeout(timeoutId)
   }, [searchQuery, selectedExpertise])
-
   const toggleFavorite = (speakerId: string) => {
     const newFavorites = new Set(favorites)
     if (newFavorites.has(speakerId)) {
@@ -209,8 +212,8 @@ export default function SpeakersPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-red-600 text-xl">Error: {error}</div>
-        <Button 
-          onClick={() => window.location.reload()} 
+        <Button
+          onClick={() => window.location.reload()}
           className="ml-4"
         >
           Retry
@@ -368,9 +371,9 @@ export default function SpeakersPage() {
                 {/* Left: Image */}
                 <div className="relative w-20 h-20 shrink-0">
                   <Avatar className="w-20 h-20 border-2 border-blue-100">
-                    <AvatarImage 
-                      src={speaker.avatar || ""} 
-                      alt={`${speaker.firstName} ${speaker.lastName}`} 
+                    <AvatarImage
+                      src={speaker.avatar || ""}
+                      alt={`${speaker.firstName} ${speaker.lastName}`}
                     />
                     <AvatarFallback className="text-sm font-semibold bg-blue-100 text-blue-600">
                       {getInitials(speaker.firstName, speaker.lastName)}
@@ -414,7 +417,7 @@ export default function SpeakersPage() {
                         {getTotalEvents(speaker)} Total Events
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1 text-green-600">
                         <Calendar className="w-3 h-3" />
@@ -428,19 +431,17 @@ export default function SpeakersPage() {
 
                   {/* Tags */}
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {speaker.specialties.slice(0, 3).map((skill, index) => (
-                      <Badge
-                        key={index}
-                        className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700"
-                      >
+                    {(speaker.specialties || []).slice(0, 3).map((skill, index) => (
+                      <Badge key={index} className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700">
                         {skill}
                       </Badge>
                     ))}
-                    {speaker.specialties.length > 3 && (
+                    {(speaker.specialties?.length || 0) > 3 && (
                       <Badge className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700">
                         +{speaker.specialties.length - 3}
                       </Badge>
                     )}
+
                   </div>
                 </div>
               </div>

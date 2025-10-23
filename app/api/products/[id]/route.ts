@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import cloudinary from "@/lib/cloudinary"
+import { Cloudinary } from "@/lib/cloudinary"
 
 export async function GET(
   request: Request,
@@ -36,7 +36,7 @@ export async function PUT(
     const uploadToCloudinary = async (file: File) => {
       const buffer = Buffer.from(await file.arrayBuffer())
       const base64 = `data:${file.type};base64,${buffer.toString("base64")}`
-      const result = await cloudinary.uploader.upload(base64, {
+      const result = await Cloudinary.uploader.upload(base64, {
         folder: "products",
       })
       return result.secure_url

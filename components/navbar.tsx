@@ -131,7 +131,7 @@ export default function Navbar() {
   }
 
   const handleVenueClick = (venueId: string) => {
-    router.push(`/venues/${venueId}`) // Updated to match your venue page structure
+    router.push(`/venue/${venueId}`) // Updated to match your venue page structure
     setShowSearchResults(false)
     setSearchQuery("")
   }

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 interface Exhibitor {
   id: string
@@ -25,6 +26,7 @@ interface Exhibitor {
   userId?: string
 }
 
+// Add proper interface for props
 interface ExhibitorsTabProps {
   eventId: string
 }
@@ -36,6 +38,7 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
   const [deleting, setDeleting] = useState<string | null>(null)
   const { toast } = useToast()
   const { data: session } = useSession()
+  const router = useRouter()
 
   useEffect(() => {
     const fetchExhibitors = async () => {
@@ -65,7 +68,13 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
     }
   }, [eventId])
 
-  const handleDelete = async (exhibitor: Exhibitor) => {
+  const handleExhibitorClick = (exhibitorId: string) => {
+    router.push(`/exhibitor/${exhibitorId}`)
+  }
+
+  const handleDelete = async (exhibitor: Exhibitor, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent triggering the card click when deleting
+    
     if (!confirm(`Are you sure you want to delete ${exhibitor.company}? This action cannot be undone.`)) {
       return
     }
@@ -141,7 +150,11 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {exhibitors.map((exhibitor) => (
-          <Card key={exhibitor.id} className="border hover:shadow-lg transition-shadow">
+          <Card 
+            key={exhibitor.id} 
+            className="border hover:shadow-lg transition-shadow cursor-pointer"
+            onClick={() => handleExhibitorClick(exhibitor.id)}
+          >
             <CardContent className="p-4">
               <div className="flex gap-4 items-start mb-4">
                 <div className="w-16 h-16 flex-shrink-0">
@@ -153,15 +166,12 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
                     className="object-contain shadow-sm rounded-md border border-gray-200"
                   />
                 </div>
-                {/* <div className="flex-1">
-                  <button className="px-3 py-1 text-red-600 text-sm border-2 border-red-600 rounded-md hover:bg-red-50 transition">
-                    +Follow
-                  </button>
-                </div> */}
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-lg font-bold text-gray-700">{exhibitor.company}</h3>
+                <h3 className="text-lg font-bold text-gray-700 hover:text-blue-600 transition-colors">
+                  {exhibitor.company}
+                </h3>
 
                 {exhibitor.boothNumber && (
                   <div className="flex items-center text-sm text-gray-600">
@@ -190,7 +200,7 @@ export default function ExhibitorsTab({ eventId }: ExhibitorsTabProps) {
               </div>
 
               <button
-                onClick={() => handleDelete(exhibitor)}
+                onClick={(e) => handleDelete(exhibitor, e)}
                 disabled={deleting === exhibitor.id}
                 className={`w-full mt-4 border-2 text-sm py-2 rounded-full font-semibold transition flex items-center justify-center border-red-600 text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed`}
               >
