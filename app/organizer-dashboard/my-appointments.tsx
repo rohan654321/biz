@@ -7,28 +7,51 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { CalendarIcon, CalendarDays, Mail, Phone, Search, Loader2, Filter, Eye, MapPin, Users } from "lucide-react"
+import { CalendarIcon, CalendarDays, Mail, Phone, Search, Loader2, Filter, Eye, MapPin, Users, Clock, Building, Target } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import Image from "next/image"
 
 interface Appointment {
   id: string
   venueId: string
-  venueName: string
-  venueCompany: string
-  venueEmail: string
-  venuePhone?: string
-  venueAvatar?: string
-  boothNumber?: string
-  scheduledAt: string
+  requesterId: string
+  title: string
+  description?: string
+  type: "VENUE_TOUR" | "MEETING" | "CONSULTATION" | "OTHER"
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED"
-  notes?: string
+  priority: "LOW" | "MEDIUM" | "HIGH"
+  requestedDate: string
+  requestedTime: string
+  duration: number
+  meetingType: "IN_PERSON" | "VIRTUAL" | "PHONE"
+  purpose?: string
+  requesterCompany?: string
+  requesterTitle?: string
+  requesterPhone?: string
+  requesterEmail?: string
+  eventType?: string
+  expectedAttendees?: number
+  eventDate?: string
+  meetingSpacesInterested: string[]
+  location?: string
+  agenda: string[]
+  reminderSent: boolean
+  followUpRequired: boolean
   createdAt: string
-  eventTitle?: string
-  eventStartDate?: string
-  eventEndDate?: string
-  eventVenue?: string
-  eventCity?: string
+  updatedAt: string
+  venue: {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+    avatar?: string
+  }
+  requester: {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+    avatar?: string
+  }
 }
 
 interface MyAppointmentsProps {
@@ -40,8 +63,9 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedEvent, setSelectedEvent] = useState<string>("all")
+  const [selectedType, setSelectedType] = useState<string>("all")
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -58,28 +82,7 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
       }
 
       const result = await response.json()
-
-      const transformedAppointments = result.data.map((apt: any) => ({
-        id: apt.id,
-        venueId: apt.venue.id,
-        venueName: `${apt.venue.firstName} ${apt.venue.lastName}`,
-        venueCompany: apt.venueCompany || "No company specified",
-        venueEmail: apt.venue.email,
-        venuePhone: apt.venuePhone,
-        venueAvatar: apt.venue.avatar,
-        boothNumber: apt.boothNumber,
-        scheduledAt: apt.scheduledAt,
-        status: apt.status,
-        notes: apt.notes,
-        createdAt: apt.createdAt,
-        eventTitle: apt.eventTitle,
-        eventStartDate: apt.eventStartDate,
-        eventEndDate: apt.eventEndDate,
-        eventVenue: apt.eventVenue,
-        eventCity: apt.eventCity,
-      }))
-
-      setAppointments(transformedAppointments)
+      setAppointments(result.data || [])
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
@@ -93,34 +96,42 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     }
   }
 
-  const cancelAppointment = async (appointmentId: string) => {
-    try {
-      const response = await fetch(`/api/venue-appointments/${appointmentId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: "CANCELLED" }),
-      })
+const cancelAppointment = async (appointmentId: string) => {
+  try {
+    const response = await fetch(`/api/venue-appointments`, {
+      method: "PATCH", // Change to PATCH instead of PUT
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ 
+        id: appointmentId, 
+        status: "CANCELLED" 
+      }),
+    })
 
-      if (!response.ok) {
-        throw new Error("Failed to cancel appointment")
-      }
-
-      toast({
-        title: "Success",
-        description: "Appointment cancelled successfully",
-      })
-
-      fetchAppointments()
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to cancel appointment",
-        variant: "destructive",
-      })
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || "Failed to cancel appointment")
     }
+
+    const result = await response.json()
+    
+    toast({
+      title: "Success",
+      description: result.message || "Appointment cancelled successfully",
+    })
+
+    fetchAppointments() // Refresh the list
+    setDialogOpen(false) // Close the dialog if open
+  } catch (err) {
+    console.error("Cancel appointment error:", err)
+    toast({
+      title: "Error",
+      description: err instanceof Error ? err.message : "Failed to cancel appointment",
+      variant: "destructive",
+    })
   }
+}
 
   const stats = useMemo(() => {
     const pending = appointments.filter((a) => a.status === "PENDING").length
@@ -136,26 +147,22 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     }
   }, [appointments])
 
-  const formatDate = (dateStr?: string) =>
-    dateStr
-      ? new Date(dateStr).toLocaleDateString("en-US", {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        })
-      : "N/A"
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })
 
-  const formatDateTime = (dateStr?: string) =>
-    dateStr
-      ? new Date(dateStr).toLocaleString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : "N/A"
+  const formatDateTime = (dateStr: string) =>
+    new Date(dateStr).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -187,32 +194,80 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
     }
   }
 
-  const uniqueEvents = useMemo(() => {
-    const events = appointments
-      .map((appointment) => appointment.eventTitle)
-      .filter((title): title is string => Boolean(title))
-    return Array.from(new Set(events)).sort()
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case "VENUE_TOUR":
+        return "Venue Tour"
+      case "MEETING":
+        return "Meeting"
+      case "CONSULTATION":
+        return "Consultation"
+      case "OTHER":
+        return "Other"
+      default:
+        return type
+    }
+  }
+
+  const getMeetingTypeLabel = (meetingType: string) => {
+    switch (meetingType) {
+      case "IN_PERSON":
+        return "In Person"
+      case "VIRTUAL":
+        return "Virtual"
+      case "PHONE":
+        return "Phone"
+      default:
+        return meetingType
+    }
+  }
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "HIGH":
+        return "destructive"
+      case "MEDIUM":
+        return "secondary"
+      case "LOW":
+        return "outline"
+      default:
+        return "secondary"
+    }
+  }
+
+  const uniqueTypes = useMemo(() => {
+    const types = appointments.map((appointment) => appointment.type)
+    return Array.from(new Set(types)).sort()
   }, [appointments])
 
   const filteredAppointments = appointments.filter((a) => {
     const matchesSearch =
-      a.eventTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.venueName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.venueCompany?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesEvent = selectedEvent === "all" || a.eventTitle === selectedEvent
-    return matchesSearch && matchesEvent
+      a.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.venue.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.venue.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.requesterCompany?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.purpose?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesType = selectedType === "all" || a.type === selectedType
+    return matchesSearch && matchesType
   })
 
-  const defaultImage = "/image/Ellipse 72.png"
+  // Safe avatar URL handler
+  const getAvatarUrl = (avatarUrl?: string) => {
+    if (!avatarUrl) {
+      return null
+    }
 
-  const getImageSrc = (avatarUrl?: string) => {
-    if (!avatarUrl) return defaultImage
-
-    if (avatarUrl.startsWith("/") || avatarUrl.startsWith("http")) {
+    // Check if it's a valid URL or path
+    if (avatarUrl.startsWith('/') || avatarUrl.startsWith('http')) {
       return avatarUrl
     }
 
-    return defaultImage
+    return null
+  }
+
+  const handleViewDetails = (appointment: Appointment) => {
+    setSelectedAppointment(appointment)
+    setDialogOpen(true)
   }
 
   if (loading) {
@@ -290,7 +345,7 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
-                  placeholder="Search by event, venue, or company..."
+                  placeholder="Search by title, venue, company, or purpose..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -299,15 +354,15 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
             </div>
             <div className="flex items-center gap-2 w-full md:w-auto">
               <Filter className="h-4 w-4 text-muted-foreground" />
-              <Select value={selectedEvent} onValueChange={setSelectedEvent}>
+              <Select value={selectedType} onValueChange={setSelectedType}>
                 <SelectTrigger className="w-full md:w-[200px]">
-                  <SelectValue placeholder="Filter by event" />
+                  <SelectValue placeholder="Filter by type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Events</SelectItem>
-                  {uniqueEvents.map((event) => (
-                    <SelectItem key={event} value={event}>
-                      {event}
+                  <SelectItem value="all">All Types</SelectItem>
+                  {uniqueTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {getTypeLabel(type)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -317,10 +372,10 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
         </CardContent>
       </Card>
 
-      {(searchTerm || selectedEvent !== "all") && (
+      {(searchTerm || selectedType !== "all") && (
         <div className="text-sm text-muted-foreground">
           Showing {filteredAppointments.length} of {appointments.length} appointments
-          {selectedEvent !== "all" && ` for "${selectedEvent}"`}
+          {selectedType !== "all" && ` for "${getTypeLabel(selectedType)}"`}
         </div>
       )}
 
@@ -328,187 +383,99 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
         {filteredAppointments.map((appointment) => (
           <Card key={appointment.id} className="overflow-hidden hover:shadow-lg transition-shadow w-full">
             <div className="flex flex-col md:flex-row">
+              {/* Avatar Section - Fixed to prevent image errors */}
               <div className="relative w-full md:w-1/3 h-48 bg-gray-100 flex items-center justify-center">
-                {appointment.venueAvatar ? (
-                  <Image
-                    src={getImageSrc(appointment.venueAvatar) || "/placeholder.svg"}
-                    alt={appointment.venueName}
-                    fill
-                    className="object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.src = defaultImage
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-                    <div className="text-4xl font-bold text-blue-600">
-                      {appointment.venueName[0]?.toUpperCase() || "V"}
-                    </div>
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {appointment.venue.firstName[0]?.toUpperCase() || "V"}
                   </div>
-                )}
-                <div className="absolute top-4 right-4">
+                </div>
+                <div className="absolute top-4 right-4 flex flex-col gap-2">
                   <Badge variant={getStatusColor(appointment.status)}>{getStatusLabel(appointment.status)}</Badge>
+                  <Badge variant={getPriorityColor(appointment.priority)}>{appointment.priority}</Badge>
                 </div>
               </div>
 
               <CardContent className="p-6 flex-1">
                 <div className="space-y-3">
                   <div>
-                    <h3 className="font-semibold text-xl line-clamp-1">{appointment.venueName}</h3>
+                    <h3 className="font-semibold text-xl line-clamp-1">{appointment.title}</h3>
                     <p className="text-sm text-gray-600 line-clamp-2">
-                      {appointment.venueCompany || "No company specified"}
+                      with {appointment.venue.firstName} {appointment.venue.lastName}
                     </p>
-                    {appointment.eventTitle && (
-                      <Badge variant="outline" className="mt-1">
-                        {appointment.eventTitle}
-                      </Badge>
-                    )}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <Badge variant="outline">{getTypeLabel(appointment.type)}</Badge>
+                      <Badge variant="outline">{getMeetingTypeLabel(appointment.meetingType)}</Badge>
+                      {appointment.requesterCompany && (
+                        <Badge variant="secondary">{appointment.requesterCompany}</Badge>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-2 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
                       <CalendarDays className="w-4 h-4" />
-                      <span>Scheduled: {formatDateTime(appointment.scheduledAt)}</span>
+                      <span>
+                        {formatDate(appointment.requestedDate)} at {appointment.requestedTime}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      <span>{appointment.duration} minutes</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4" />
-                      <span className="line-clamp-1">{appointment.venueEmail}</span>
+                      <span className="line-clamp-1">{appointment.venue.email}</span>
                     </div>
-                    {appointment.venuePhone && (
+                    {appointment.requesterPhone && (
                       <div className="flex items-center gap-2">
                         <Phone className="w-4 h-4" />
-                        <span>{appointment.venuePhone}</span>
+                        <span>{appointment.requesterPhone}</span>
                       </div>
                     )}
-                    {appointment.boothNumber && (
+                    {appointment.location && (
                       <div className="flex items-center gap-2">
                         <MapPin className="w-4 h-4" />
-                        <span>Booth {appointment.boothNumber}</span>
+                        <span className="line-clamp-1">{appointment.location}</span>
                       </div>
                     )}
-                    {appointment.eventStartDate && appointment.eventEndDate && (
+                    {appointment.eventType && (
+                      <div className="flex items-center gap-2">
+                        <Target className="w-4 h-4" />
+                        <span>{appointment.eventType}</span>
+                      </div>
+                    )}
+                    {appointment.expectedAttendees && (
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4" />
-                        <span>
-                          Event: {formatDate(appointment.eventStartDate)} - {formatDate(appointment.eventEndDate)}
-                        </span>
+                        <span>{appointment.expectedAttendees} attendees</span>
                       </div>
                     )}
                   </div>
 
-                  {appointment.notes && (
+                  {appointment.purpose && (
                     <div className="bg-gray-50 p-3 rounded-md text-gray-700 text-sm">
-                      <p className="line-clamp-2">{appointment.notes}</p>
+                      <p className="line-clamp-2">{appointment.purpose}</p>
                     </div>
                   )}
 
                   <div className="flex items-center justify-between pt-3 border-t">
                     <div className="text-xs text-gray-500">Created: {formatDate(appointment.createdAt)}</div>
                     <div className="flex items-center gap-1">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedAppointment(appointment)}>
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>Appointment Details</DialogTitle>
-                          </DialogHeader>
-                          {selectedAppointment && (
-                            <div className="space-y-4">
-                              <div className="flex items-center gap-4">
-                                <div className="relative w-16 h-16 rounded-full overflow-hidden">
-                                  <Image
-                                    src={getImageSrc(selectedAppointment.venueAvatar) || "/placeholder.svg"}
-                                    alt={selectedAppointment.venueName}
-                                    fill
-                                    className="object-cover rounded-full"
-                                    onError={(e) => {
-                                      const target = e.target as HTMLImageElement
-                                      target.src = defaultImage
-                                    }}
-                                  />
-                                </div>
-                                <div>
-                                  <h3 className="font-semibold text-lg">{selectedAppointment.venueName}</h3>
-                                  <p className="text-gray-600">{selectedAppointment.venueCompany}</p>
-                                  <Badge variant={getStatusColor(selectedAppointment.status)} className="mt-1">
-                                    {getStatusLabel(selectedAppointment.status)}
-                                  </Badge>
-                                </div>
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <h4 className="font-medium mb-2">Appointment Details</h4>
-                                  <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Scheduled Time:</span>
-                                      <span>{formatDateTime(selectedAppointment.scheduledAt)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Event:</span>
-                                      <span>{selectedAppointment.eventTitle || "N/A"}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Booth Number:</span>
-                                      <span>{selectedAppointment.boothNumber || "N/A"}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div>
-                                  <h4 className="font-medium mb-2">Contact Information</h4>
-                                  <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Email:</span>
-                                      <span>{selectedAppointment.venueEmail}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Phone:</span>
-                                      <span>{selectedAppointment.venuePhone || "N/A"}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Event Dates:</span>
-                                      <span className="text-right">
-                                        {selectedAppointment.eventStartDate && selectedAppointment.eventEndDate
-                                          ? `${formatDate(selectedAppointment.eventStartDate)} - ${formatDate(selectedAppointment.eventEndDate)}`
-                                          : "N/A"}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {selectedAppointment.notes && (
-                                <div>
-                                  <h4 className="font-medium mb-2">Notes</h4>
-                                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
-                                    {selectedAppointment.notes}
-                                  </p>
-                                </div>
-                              )}
-
-                              {selectedAppointment.status === "PENDING" ||
-                              selectedAppointment.status === "CONFIRMED" ? (
-                                <div className="flex justify-end gap-2 pt-4 border-t">
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => cancelAppointment(selectedAppointment.id)}
-                                  >
-                                    Cancel Appointment
-                                  </Button>
-                                </div>
-                              ) : null}
-                            </div>
-                          )}
-                        </DialogContent>
-                      </Dialog>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleViewDetails(appointment)}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
 
                       {(appointment.status === "PENDING" || appointment.status === "CONFIRMED") && (
-                        <Button variant="ghost" size="sm" onClick={() => cancelAppointment(appointment.id)}>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => cancelAppointment(appointment.id)}
+                        >
                           Cancel
                         </Button>
                       )}
@@ -521,13 +488,195 @@ export function MyAppointments({ userId }: MyAppointmentsProps) {
         ))}
       </div>
 
+      {/* Dialog moved outside the map loop to prevent infinite re-renders */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Appointment Details</DialogTitle>
+          </DialogHeader>
+          {selectedAppointment && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                  <div className="text-xl font-bold text-blue-600">
+                    {selectedAppointment.venue.firstName[0]?.toUpperCase() || "V"}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">{selectedAppointment.title}</h3>
+                  <p className="text-gray-600">
+                    with {selectedAppointment.venue.firstName} {selectedAppointment.venue.lastName}
+                  </p>
+                  <div className="flex gap-2 mt-1">
+                    <Badge variant={getStatusColor(selectedAppointment.status)}>
+                      {getStatusLabel(selectedAppointment.status)}
+                    </Badge>
+                    <Badge variant={getPriorityColor(selectedAppointment.priority)}>
+                      {selectedAppointment.priority}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">Appointment Details</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Type:</span>
+                      <span>{getTypeLabel(selectedAppointment.type)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Meeting Type:</span>
+                      <span>{getMeetingTypeLabel(selectedAppointment.meetingType)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Date & Time:</span>
+                      <span className="text-right">
+                        {formatDate(selectedAppointment.requestedDate)} at {selectedAppointment.requestedTime}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Duration:</span>
+                      <span>{selectedAppointment.duration} minutes</span>
+                    </div>
+                    {selectedAppointment.location && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Location:</span>
+                        <span className="text-right">{selectedAppointment.location}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Contact Information</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Venue Email:</span>
+                      <span>{selectedAppointment.venue.email}</span>
+                    </div>
+                    {selectedAppointment.requesterPhone && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Your Phone:</span>
+                        <span>{selectedAppointment.requesterPhone}</span>
+                      </div>
+                    )}
+                    {selectedAppointment.requesterEmail && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Your Email:</span>
+                        <span>{selectedAppointment.requesterEmail}</span>
+                      </div>
+                    )}
+                    {selectedAppointment.requesterCompany && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Company:</span>
+                        <span>{selectedAppointment.requesterCompany}</span>
+                      </div>
+                    )}
+                    {selectedAppointment.requesterTitle && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Your Title:</span>
+                        <span>{selectedAppointment.requesterTitle}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {selectedAppointment.purpose && (
+                <div>
+                  <h4 className="font-medium mb-2">Purpose</h4>
+                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
+                    {selectedAppointment.purpose}
+                  </p>
+                </div>
+              )}
+
+              {selectedAppointment.description && (
+                <div>
+                  <h4 className="font-medium mb-2">Description</h4>
+                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
+                    {selectedAppointment.description}
+                  </p>
+                </div>
+              )}
+
+              {selectedAppointment.eventType && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Event Details</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Event Type:</span>
+                        <span>{selectedAppointment.eventType}</span>
+                      </div>
+                      {selectedAppointment.eventDate && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Event Date:</span>
+                          <span>{formatDate(selectedAppointment.eventDate)}</span>
+                        </div>
+                      )}
+                      {selectedAppointment.expectedAttendees && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Expected Attendees:</span>
+                          <span>{selectedAppointment.expectedAttendees}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedAppointment.meetingSpacesInterested.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">Meeting Spaces Interested</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedAppointment.meetingSpacesInterested.map((space, index) => (
+                      <Badge key={index} variant="outline">
+                        {space}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedAppointment.agenda.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">Agenda</h4>
+                  <ul className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md space-y-1">
+                    {selectedAppointment.agenda.map((item, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="mr-2">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {(selectedAppointment.status === "PENDING" || selectedAppointment.status === "CONFIRMED") && (
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => cancelAppointment(selectedAppointment.id)}
+                  >
+                    Cancel Appointment
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {filteredAppointments.length === 0 && (
         <Card>
           <CardContent className="p-12 text-center">
             <CalendarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No appointments found</h3>
             <p className="text-gray-600 mb-4">
-              {searchTerm || selectedEvent !== "all"
+              {searchTerm || selectedType !== "all"
                 ? "Try adjusting your search or filters"
                 : "No appointments scheduled yet"}
             </p>

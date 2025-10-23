@@ -291,7 +291,7 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
             organizerId={organizerId}
             onCreateEventClick={() => setActiveSection("create-event")}
             onManageAttendeesClick={() => {
-              window.location.href = `/event-dashboard/${organizerId}?section=attendees`
+              window.location.href = `/organizers/${organizerId}/total-attendees`
             }}
             onViewAnalyticsClick={() => {
               window.location.href = `/event-dashboard/${organizerId}?section=analytics`

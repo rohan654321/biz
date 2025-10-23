@@ -10,6 +10,7 @@ const prisma = new PrismaClient()
 
 
 // ✅ GET Handler
+// ✅ GET Handler - Updated to include lead counts
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
@@ -52,6 +53,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
             registrations: {
               where: { status: "CONFIRMED" },
             },
+            leads: true, // Add leads count
           },
         },
         registrations: {
@@ -62,18 +64,36 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
             },
           },
         },
+        leads: { // Include leads data
+          select: {
+            id: true,
+            type: true,
+            status: true,
+            createdAt: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     })
 
     const transformedEvents = events.map((event) => {
       const confirmedRegistrations = event._count.registrations
+      const totalLeads = event._count.leads // Get total leads count
       const totalRevenue = event.registrations.reduce((sum, reg) => {
         if (reg.payment?.status === "COMPLETED") {
           return sum + (reg.payment.amount || 0)
         }
         return sum + reg.totalAmount
       }, 0)
+
+      // Count leads by type
+      const leadCounts = {
+        ATTENDEE: event.leads.filter(lead => lead.type === 'ATTENDEE').length,
+        EXHIBITOR: event.leads.filter(lead => lead.type === 'EXHIBITOR').length,
+        SPEAKER: event.leads.filter(lead => lead.type === 'SPEAKER').length,
+        SPONSOR: event.leads.filter(lead => lead.type === 'SPONSOR').length,
+        PARTNER: event.leads.filter(lead => lead.type === 'PARTNER').length,
+      }
 
       return {
         id: event.id,
@@ -105,6 +125,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         isVIP: event.isVIP || false,
         attendees: confirmedRegistrations,
         registrations: confirmedRegistrations,
+        leads: totalLeads, // Add total leads count
+        leadCounts: leadCounts, // Add breakdown by type
         revenue: totalRevenue,
         maxAttendees: event.maxAttendees,
         currentAttendees: event.currentAttendees,
@@ -139,7 +161,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
-
 
 
 // ✅ POST Handler
