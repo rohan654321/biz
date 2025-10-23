@@ -1,136 +1,48 @@
 import nodemailer from "nodemailer"
 
-interface SendBadgeEmailParams {
-  to: string
-  attendeeName: string
-  eventTitle: string
-  badgeDataUrl: string
-}
+// Create reusable transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER || "mondalrohan201@gmail.com",
+    pass: process.env.EMAIL_PASS || "vwpg xiry lmgg jgbp",
+  },
+})
 
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: Number.parseInt(process.env.SMTP_PORT || "587"),
-    secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
-    },
-  })
-}
-
-export async function sendBadgeEmail({ to, attendeeName, eventTitle, badgeDataUrl }: SendBadgeEmailParams) {
-  console.log("[v0] Preparing to send badge email to:", to)
-
-  const base64Data = badgeDataUrl.replace(/^data:image\/\w+;base64,/, "")
-  const buffer = Buffer.from(base64Data, "base64")
-
-  const transporter = createTransporter()
-
-  const mailOptions = {
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
-    to,
-    subject: `Your Visitor Badge for ${eventTitle}`,
-    html: `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              line-height: 1.6;
-              color: #333;
-              max-width: 600px;
-              margin: 0 auto;
-              padding: 20px;
-            }
-            .header {
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white;
-              padding: 30px;
-              text-align: center;
-              border-radius: 10px 10px 0 0;
-            }
-            .content {
-              background: #f9f9f9;
-              padding: 30px;
-              border-radius: 0 0 10px 10px;
-            }
-            .badge-preview {
-              text-align: center;
-              margin: 20px 0;
-            }
-            .badge-preview img {
-              max-width: 100%;
-              height: auto;
-              border-radius: 8px;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            }
-            .button {
-              display: inline-block;
-              background: #667eea;
-              color: white;
-              padding: 12px 30px;
-              text-decoration: none;
-              border-radius: 5px;
-              margin: 20px 0;
-            }
-            .footer {
-              text-align: center;
-              margin-top: 30px;
-              padding-top: 20px;
-              border-top: 1px solid #ddd;
-              color: #666;
-              font-size: 14px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>Your Visitor Badge is Ready!</h1>
-          </div>
-          <div class="content">
-            <p>Dear ${attendeeName},</p>
-            
-            <p>Your visitor badge for <strong>${eventTitle}</strong> has been generated and is attached to this email.</p>
-            
-            <div class="badge-preview">
-              <img src="cid:badge" alt="Visitor Badge" />
-            </div>
-            
-            <p><strong>Important Instructions:</strong></p>
-            <ul>
-              <li>Download and save the attached badge image</li>
-              <li>Print the badge or display it on your mobile device</li>
-              <li>Present your badge at the event entrance for quick check-in</li>
-              <li>The QR code on your badge contains your registration details</li>
-            </ul>
-            
-            <p>We look forward to seeing you at the event!</p>
-            
-            <p>Best regards,<br>Event Management Team</p>
-          </div>
-          <div class="footer">
-            <p>This is an automated email. Please do not reply to this message.</p>
-          </div>
-        </body>
-      </html>
-    `,
-    attachments: [
-      {
-        filename: `visitor-badge-${attendeeName.replace(/\s+/g, "-").toLowerCase()}.png`,
-        content: buffer,
-        cid: "badge", // Content ID for embedding in HTML
-      },
-    ],
-  }
-
+export async function sendBadgeEmail(email: string, badgeDataUrl: string, attendeeName: string, eventName: string) {
   try {
-    const info = await transporter.sendMail(mailOptions)
-    console.log("[v0] Email sent successfully:", info.messageId)
+    // Convert data URL to buffer
+    const base64Data = badgeDataUrl.replace(/^data:image\/\w+;base64,/, "")
+    const buffer = Buffer.from(base64Data, "base64")
+
+    // Send email with badge as attachment
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: `Your Event Badge - ${eventName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Hello ${attendeeName},</h2>
+          <p>Your event badge for <strong>${eventName}</strong> is ready!</p>
+          <p>Please find your badge attached to this email. You can print it or save it to your mobile device.</p>
+          <p>We look forward to seeing you at the event!</p>
+          <br>
+          <p>Best regards,<br>The Event Team</p>
+        </div>
+      `,
+      attachments: [
+        {
+          filename: `badge-${attendeeName.replace(/\s+/g, "-")}.png`,
+          content: buffer,
+          contentType: "image/png",
+        },
+      ],
+    })
+
+    console.log("[v0] Badge email sent:", info.messageId)
     return { success: true, messageId: info.messageId }
   } catch (error) {
-    console.error("[v0] Error sending email:", error)
-    throw new Error(`Failed to send email: ${error instanceof Error ? error.message : "Unknown error"}`)
+    console.error("[v0] Error sending badge email:", error)
+    throw error
   }
 }

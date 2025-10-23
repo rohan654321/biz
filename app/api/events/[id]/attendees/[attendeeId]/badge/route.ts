@@ -1,118 +1,85 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { sendBadgeEmail } from "@/lib/email-service"
 
-export async function POST(request: NextRequest, { params }: { params: { eventId: string; attendeeId: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string; attendeeId: string }> }) {
   try {
-    const { eventId, attendeeId } = params
+    // ✅ Await params before accessing (Next.js 15 requirement)
+    const { id: eventId, attendeeId } = await params
     const body = await request.json()
     const { badgeDataUrl, email } = body
 
-    console.log("[v0] Generating badge for attendee:", attendeeId, "event:", eventId)
+    console.log("[v0] Processing badge for:", email, "in event:", eventId)
 
-    // <CHANGE> Fetch attendee and event data from database
     const attendeeLead = await prisma.eventLead.findUnique({
       where: { id: attendeeId },
       include: {
-        user: true,
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
         event: {
-          include: {
-            organizer: true,
+          select: {
+            title: true,
           },
         },
       },
     })
 
-    if (!attendeeLead) {
-      return NextResponse.json({ success: false, error: "Attendee not found" }, { status: 404 })
+    if (!attendeeLead || !attendeeLead.user) {
+      console.log("[v0] Attendee lead not found for ID:", attendeeId)
+      return NextResponse.json({ error: "Attendee or event not found" }, { status: 404 })
     }
 
-    // <CHANGE> Send badge via email
-    try {
-      await sendBadgeEmail({
-        to: email,
-        attendeeName: `${attendeeLead.user.firstName} ${attendeeLead.user.lastName}`,
-        eventTitle: attendeeLead.event.title,
-        badgeDataUrl,
-      })
+    const attendee = attendeeLead.user
+    const event = attendeeLead.event
+    const attendeeName = `${attendee.firstName} ${attendee.lastName}`
+    const attendeeEmail = email || attendee.email || ""
 
-      console.log("[v0] Badge sent successfully to:", email)
+    console.log("[v0] Found attendee:", attendeeName, "for event:", event.title)
 
-      return NextResponse.json({
-        success: true,
-        message: "Badge generated and sent successfully",
-        data: {
-          attendee: {
-            name: `${attendeeLead.user.firstName} ${attendeeLead.user.lastName}`,
-            email: attendeeLead.user.email,
-          },
-          event: {
-            title: attendeeLead.event.title,
-          },
-        },
-      })
-    } catch (emailError) {
-      console.error("[v0] Error sending email:", emailError)
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Badge generated but failed to send email. Please try again.",
-        },
-        { status: 500 }
-      )
-    }
-  } catch (error) {
-    console.error("[v0] Error generating badge:", error)
-    return NextResponse.json({ success: false, error: "Failed to generate badge" }, { status: 500 })
-  }
-}
-
-export async function GET(request: NextRequest, { params }: { params: { eventId: string; attendeeId: string } }) {
-  try {
-    const { eventId, attendeeId } = params
-
-    // <CHANGE> Fetch attendee data for badge download
-    const attendeeLead = await prisma.eventLead.findUnique({
-      where: { id: attendeeId },
-      include: {
-        user: true,
-        event: {
-          include: {
-            organizer: true,
-          },
-        },
-      },
-    })
-
-    if (!attendeeLead) {
-      return NextResponse.json({ success: false, error: "Attendee not found" }, { status: 404 })
-    }
-
-    // <CHANGE> Return attendee data for client-side badge generation
-    return NextResponse.json({
-      success: true,
+    const badgeSent = await prisma.badgeSent.create({
       data: {
-        attendee: {
-          id: attendeeLead.id,
-          firstName: attendeeLead.user.firstName,
-          lastName: attendeeLead.user.lastName,
-          email: attendeeLead.user.email,
-          jobTitle: attendeeLead.user.jobTitle,
-          company: attendeeLead.user.company,
-        },
-        event: {
-          id: attendeeLead.event.id,
-          title: attendeeLead.event.title,
-          images: attendeeLead.event.images,
-        },
-        organizer: {
-          avatar: attendeeLead.event.organizer?.avatar,
-          organizationName: attendeeLead.event.organizer?.company,
-        },
+        eventId,
+        attendeeId: attendee.id,
+        email: attendeeEmail,
+        badgeUrl: badgeDataUrl,
+        status: "SENT",
       },
     })
+
+    console.log("[v0] Badge record saved to database:", badgeSent.id)
+
+    try {
+      await sendBadgeEmail(attendeeEmail, badgeDataUrl, attendeeName, event.title)
+
+      console.log("[v0] Badge email sent successfully to:", attendeeEmail)
+    } catch (emailError) {
+      console.error("[v0] Failed to send badge email:", emailError)
+
+      await prisma.badgeSent.update({
+        where: { id: badgeSent.id },
+        data: { status: "FAILED" },
+      })
+
+      return NextResponse.json({ error: "Badge saved but email sending failed" }, { status: 500 })
+    }
+
+    // ✅ Return success response
+    return NextResponse.json({
+      message: "Badge created and sent successfully",
+      eventId,
+      attendeeId: attendee.id,
+      email: attendeeEmail,
+      badgeId: badgeSent.id,
+    })
   } catch (error) {
-    console.error("[v0] Error fetching badge data:", error)
-    return NextResponse.json({ success: false, error: "Failed to fetch badge data" }, { status: 500 })
+    console.error("[v0] Error creating badge:", error)
+    return NextResponse.json({ error: "Error creating badge" }, { status: 500 })
   }
 }

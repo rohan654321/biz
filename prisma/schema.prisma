@@ -1354,3 +1354,27 @@ enum VenueAppointmentType {
   CONTRACT_DISCUSSION
   FOLLOW_UP
 }
+
+model BadgeSent {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId    String   @db.ObjectId
+  attendeeId String   @db.ObjectId
+  email      String
+  badgeUrl   String?
+  sentAt     DateTime @default(now())
+  status     BadgeSentStatus @default(SENT)
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([eventId])
+  @@index([attendeeId])
+  @@index([email])
+  @@map("badges_sent")
+}
+
+enum BadgeSentStatus {
+  SENT
+  FAILED
+  BOUNCED
+}

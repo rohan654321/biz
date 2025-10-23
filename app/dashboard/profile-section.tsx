@@ -74,6 +74,7 @@ interface FormData {
   email: string
   firstName: string
   lastName: string
+  avatar:string
   phone: string
   bio: string
   website: string
@@ -98,6 +99,7 @@ interface Event {
 export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSectionProps) {
   const initialFormData: FormData = {
     email: userData?.email || "",
+    avatar: userData?.avatar || "",
     firstName: userData?.firstName || "",
     lastName: userData?.lastName || "",
     phone: userData?.phone || "",
@@ -175,6 +177,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
       email: localUserData?.email || "",
       firstName: localUserData?.firstName || "",
       lastName: localUserData?.lastName || "",
+      avatar: localUserData?.avatar || "",
       phone: localUserData?.phone || "",
       bio: localUserData?.bio || "",
       website: localUserData?.website || "",
@@ -224,6 +227,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
       firstName: localUserData?.firstName || "",
       lastName: localUserData?.lastName || "",
       phone: localUserData?.phone || "",
+      avatar:localUserData?.avatar || "",
       bio: localUserData?.bio || "",
       website: localUserData?.website || "",
       company: localUserData?.company || "",
