@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import cloudinary from "@/lib/cloudinary"
+import {Cloudinary } from "@/lib/cloudinary"
 
 // GET - Fetch single legal document
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -79,7 +79,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (existingDocument.fileUrl) {
         try {
           const publicId = existingDocument.fileUrl.split("/").slice(-2).join("/").split(".")[0]
-          await cloudinary.uploader.destroy(publicId)
+          await Cloudinary.uploader.destroy(publicId)
         } catch (error) {
           console.error("Error deleting old file:", error)
         }
@@ -90,7 +90,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       const buffer = Buffer.from(bytes)
 
       const uploadResult = await new Promise<any>((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
+        const uploadStream = Cloudinary.uploader.upload_stream(
           {
             folder: "legal-documents",
             resource_type: "auto",
@@ -174,7 +174,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (document.fileUrl) {
       try {
         const publicId = document.fileUrl.split("/").slice(-2).join("/").split(".")[0]
-        await cloudinary.uploader.destroy(publicId)
+        await Cloudinary.uploader.destroy(publicId)
       } catch (error) {
         console.error("Error deleting file from Cloudinary:", error)
       }

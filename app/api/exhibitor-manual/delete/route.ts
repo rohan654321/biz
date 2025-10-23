@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import cloudinary from "@/lib/cloudinary"
+import {Cloudinary} from "@/lib/cloudinary"
 import { prisma } from "@/lib/prisma"
 
 export async function DELETE(request: Request) {
@@ -25,7 +25,7 @@ export async function DELETE(request: Request) {
     const publicId = publicIdWithExtension.replace(".pdf", "")
 
     // Delete from Cloudinary
-    await cloudinary.uploader.destroy(publicId, { resource_type: "raw" })
+    await Cloudinary.uploader.destroy(publicId, { resource_type: "raw" })
 
     // Delete from database
     await prisma.exhibitorManual.delete({

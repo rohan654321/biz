@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, MapPin, Users, DollarSign, Search } from "lucide-react"
+import { Calendar, MapPin, Users, DollarSign, Search, TrendingUp } from "lucide-react"
 import Image from "next/image"
 
 interface Event {
@@ -15,9 +15,9 @@ interface Event {
   description: string
   startDate: string
   endDate: string
-  location: string // Changed from venue
+  location: string
   city: string
-  venueAddress: string // Changed from address
+  venueAddress: string
   eventType: string[]
   images: string[]
   bannerImage?: string
@@ -27,6 +27,14 @@ interface Event {
   status: "draft" | "published" | "cancelled" | "archived"
   attendees?: number
   registrations?: number
+  leads?: number // Add leads count
+  leadCounts?: { // Add lead breakdown
+    ATTENDEE: number
+    EXHIBITOR: number
+    SPEAKER: number
+    SPONSOR: number
+    PARTNER: number
+  }
   revenue?: number
   maxAttendees?: number
   isPublic?: boolean
@@ -47,7 +55,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const defaultImage = "/path/to/default/image.jpg"
+  const defaultImage = "/placeholder.svg"
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -155,6 +163,17 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
       archived: "secondary",
     }
     return colors[status] || "default"
+  }
+
+  const getLeadTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      ATTENDEE: "Attendee",
+      EXHIBITOR: "Exhibitor",
+      SPEAKER: "Speaker",
+      SPONSOR: "Sponsor",
+      PARTNER: "Partner",
+    }
+    return labels[type] || type
   }
 
   const uniqueTypes = [
@@ -295,15 +314,23 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                           {event.city && `, ${event.city}`}
                         </span>
                       </div>
+                      
+                      {/* Leads Count Section - Replaced Attendees */}
                       <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        <span>{event.attendees || event.registrations || 0} attendees</span>
-                        {event.maxAttendees && <span className="text-gray-400">/ {event.maxAttendees}</span>}
+                        <TrendingUp className="w-4 h-4 text-green-500" />
+                        <span className="font-medium">{event.leads || 0} leads</span>
                       </div>
-                      {/* {event.revenue !== undefined && (
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4" />
-                          <span>{formatCurrency(event.revenue, event.currency)}</span>
+
+                      {/* Lead Type Breakdown */}
+                      {/* {event.leadCounts && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {Object.entries(event.leadCounts).map(([type, count]) => (
+                            count > 0 && (
+                              <Badge key={type} variant="outline" className="text-xs">
+                                {getLeadTypeLabel(type)}: {count}
+                              </Badge>
+                            )
+                          ))}
                         </div>
                       )} */}
                     </div>

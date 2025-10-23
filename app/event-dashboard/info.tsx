@@ -109,104 +109,145 @@ export default function EventPage({ params }: EventPageProps) {
       console.error("Error checking saved status:", error)
     }
   }
+// const handleDownloadBrochure = async (eventId: string) => {
+//   try {
+//     // Get the download URL from the API
+//     const response = await fetch(`/api/events/${eventId}/brochure?action=download`);
+    
+//     if (!response.ok) {
+//       throw new Error(`HTTP error! status: ${response.status}`);
+//     }
+
+//     const data = await response.json();
+
+//     if (data.success && data.brochure) {
+//       // Create a temporary anchor element to trigger download
+//       const link = document.createElement('a');
+//       link.href = data.brochure;
+      
+//       // Set the download attribute with a proper filename
+//       const filename = `brochure-${data.eventTitle || eventId}.pdf`;
+//       link.download = filename;
+      
+//       // Append to body, click, and remove
+//       document.body.appendChild(link);
+//       link.click();
+//       document.body.removeChild(link);
+
+//       toast({
+//         title: "Download Started",
+//         description: "Brochure download has started",
+//       });
+//     } else {
+//       throw new Error(data.error || 'Failed to get download URL');
+//     }
+//   } catch (error) {
+//     console.error('Error downloading brochure:', error);
+//     toast({
+//       title: "Download Failed",
+//       description: error instanceof Error ? error.message : "Failed to download brochure. Please try again.",
+//       variant: "destructive",
+//     });
+//   }
+// };
   const handleDeleteBrochure = async () => {
-  if (!confirm("Are you sure you want to delete the brochure?")) return
+    if (!confirm("Are you sure you want to delete the brochure?")) return
 
-  try {
-    const response = await fetch(`/api/events/${event.id}/brochure`, {
-      method: "DELETE",
-    })
+    try {
+      const response = await fetch(`/api/events/${event.id}/brochure`, {
+        method: "DELETE",
+      })
 
-    if (response.ok) {
-      // Update the event state to remove brochure
-      setEvent((prev: any) => ({
-        ...prev,
-        brochure: null
-      }))
-      
+      if (response.ok) {
+        // Update the event state to remove brochure
+        setEvent((prev: any) => ({
+          ...prev,
+          brochure: null
+        }))
+
+        toast({
+          title: "Success",
+          description: "Brochure removed successfully",
+        })
+      }
+    } catch (error) {
+      console.error("Error deleting brochure:", error)
       toast({
-        title: "Success",
-        description: "Brochure removed successfully",
+        title: "Error",
+        description: "Failed to delete brochure",
+        variant: "destructive",
       })
     }
-  } catch (error) {
-    console.error("Error deleting brochure:", error)
-    toast({
-      title: "Error",
-      description: "Failed to delete brochure",
-      variant: "destructive",
-    })
   }
-}
-const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0]
-  if (!file) return
+  const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
 
-  // Validate file type
-  const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif']
-  const isValidType = validTypes.includes(file.type) || file.name.toLowerCase().endsWith('.pdf')
-  
-  if (!isValidType) {
-    toast({
-      title: "Invalid file type",
-      description: "Please upload a PDF or image file (JPEG, PNG, GIF)",
-      variant: "destructive",
-    })
-    return
-  }
+    // Validate file type
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif']
+    const isValidType = validTypes.includes(file.type) || file.name.toLowerCase().endsWith('.pdf')
 
-  // Validate file size (10MB max for brochures)
-  if (file.size > 10 * 1024 * 1024) {
-    toast({
-      title: "File too large",
-      description: "Please upload a file smaller than 10MB",
-      variant: "destructive",
-    })
-    return
-  }
-
-  setUpdatingBrochure(true)
-
-  try {
-    const formData = new FormData()
-    formData.append('brochure', file)
-
-    const response = await fetch(`/api/events/${event.id}/brochure`, {
-      method: 'PUT',
-      body: formData,
-    })
-
-    if (response.ok) {
-      const updatedEvent = await response.json()
-      
-      // Update the event state with cache busting
-      setEvent((prev: any) => ({
-        ...prev,
-        brochure: `${updatedEvent.brochure}?t=${Date.now()}`
-      }))
-      
+    if (!isValidType) {
       toast({
-        title: "Success",
-        description: "Brochure updated successfully",
+        title: "Invalid file type",
+        description: "Please upload a PDF or image file (JPEG, PNG, GIF)",
+        variant: "destructive",
       })
-      
-      // Clear the file input
-      e.target.value = ''
-    } else {
-      const errorData = await response.json()
-      throw new Error(errorData.error || 'Failed to update brochure')
+      return
     }
-  } catch (error) {
-    console.error('Error updating brochure:', error)
-    toast({
-      title: "Error",
-      description: error instanceof Error ? error.message : "Failed to update brochure",
-      variant: "destructive",
-    })
-  } finally {
-    setUpdatingBrochure(false)
+
+    // Validate file size (10MB max for brochures)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload a file smaller than 10MB",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setUpdatingBrochure(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('brochure', file)
+
+      const response = await fetch(`/api/events/${event.id}/brochure`, {
+        method: 'PUT',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const updatedEvent = await response.json()
+
+        // Update the event state with cache busting
+        setEvent((prev: any) => ({
+          ...prev,
+          brochure: `${updatedEvent.brochure}?t=${Date.now()}`
+        }))
+
+        toast({
+          title: "Success",
+          description: "Brochure updated successfully",
+        })
+
+        // Clear the file input
+        e.target.value = ''
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update brochure')
+      }
+    } catch (error) {
+      console.error('Error updating brochure:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update brochure",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingBrochure(false)
+    }
   }
-}
   const handleSaveEvent = async () => {
     if (!session) {
       alert("Please log in to save events")
@@ -647,9 +688,21 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
                   </CardContent>
                 </Card>
               </TabsContent>
-
               <TabsContent value="exhibitors">
-                <ExhibitorsTab eventId={event.id} />
+                {loading ? (
+                  <div className="py-12 flex justify-center">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                      <p className="text-gray-600">Loading exhibitors...</p>
+                    </div>
+                  </div>
+                ) : event ? (
+                  <ExhibitorsTab eventId={event.id} />
+                ) : (
+                  <div className="py-12 text-center text-gray-500">
+                    <p>Event not found</p>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="space-cost">
@@ -826,7 +879,7 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 </Card>
               </TabsContent>
 
-<TabsContent value="brochure">
+            <TabsContent value="brochure">
   <Card>
     <CardHeader>
       <CardTitle className="flex items-center justify-between">
@@ -852,10 +905,12 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
             className="hidden"
             onChange={handleBrochureUpdate}
           />
-          <Button variant="destructive" size="sm" onClick={handleDeleteBrochure}>
-            <Trash2 className="w-4 h-4 mr-2" />
-            Delete
-          </Button>
+          {event?.brochure && (
+            <Button variant="destructive" size="sm" onClick={handleDeleteBrochure}>
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </Button>
+          )}
         </div>
       </CardTitle>
     </CardHeader>
@@ -863,63 +918,47 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
       <div className="space-y-4">
         {event?.brochure ? (
           <>
-            <div className="bg-gray-100 rounded-lg overflow-hidden border border-gray-300">
-              {/* Check if it's a PDF or Image */}
-              {event.brochure.toLowerCase().endsWith('.pdf') || 
-               event.brochure.includes('.pdf') ? (
-                // PDF Display
-                <iframe
-                  key={event.brochure + '?t=' + Date.now()}
-                  src={`/api/events/${event.id}/brochure?action=view&t=${Date.now()}`}
-                  className="w-full h-[600px]"
-                  title="Event Brochure PDF"
-                />
-              ) : (
-                // Image Display - Use regular img tag for dynamic images
-                <div className="flex items-center justify-center h-96">
-                  <img
-                    src={event.brochure.startsWith('/uploads/') 
-                      ? `${event.brochure}?t=${Date.now()}` 
-                      : `/api/events/${event.id}/brochure?t=${Date.now()}`
-                    }
-                    alt="Event Brochure"
-                    className="object-contain max-h-96 max-w-full"
-                    onError={(e) => {
-                      // Fallback if image fails to load
-                      console.error('Error loading brochure image:', event.brochure);
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
+            {/* Simple PDF Viewer */}
+            <div className="bg-gray-100 rounded-lg border border-gray-300 min-h-[400px] flex flex-col">
+              <div className="flex justify-between items-center p-3 bg-white border-b">
+                <span className="text-sm font-medium">Event Brochure</span>
+                <div className="flex gap-2">
+                  {/* <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDownloadBrochure(event.id)}
+                  >
+                    Download PDF
+                  </Button> */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(event.brochure, '_blank')}
+                  >
+                    Open Full Screen
+                  </Button>
                 </div>
-              )}
-            </div>
-            <div className="flex justify-center gap-4">
-              <Button asChild size="lg" className="w-full sm:w-auto">
-                <a 
-                  href={`/api/events/${event.id}/brochure?action=download&t=${Date.now()}`} 
-                  download
-                >
-                  Download Brochure
-                </a>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
-                <a 
-                  href={event.brochure.startsWith('/uploads/') 
-                    ? `${window.location.origin}${event.brochure}` 
-                    : event.brochure
-                  } 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                >
-                  Open in New Tab
-                </a>
-              </Button>
+              </div>
+              
+              {/* PDF Display */}
+              <div className="flex-1 p-4">
+                <iframe
+                  src={`https://docs.google.com/gview?url=${encodeURIComponent(event.brochure)}&embedded=true`}
+                  className="w-full h-96 border-0"
+                  title="PDF Brochure"
+                />
+                <div className="text-center mt-4">
+                  <p className="text-sm text-gray-600">
+                    If the PDF doesn't load, use the buttons above to download or open in a new tab.
+                  </p>
+                </div>
+              </div>
             </div>
           </>
         ) : (
           <div className="bg-gray-100 h-96 rounded-lg flex flex-col items-center justify-center">
             <p className="text-gray-600 mb-4">No brochure available</p>
-            <Button 
+            <Button
               onClick={() => document.getElementById('brochure-upload')?.click()}
               disabled={updatingBrochure}
             >
@@ -932,16 +971,22 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
   </Card>
 </TabsContent>
 
+
               <TabsContent value="venue">
                 <Card>
                   <CardHeader>
                     <CardTitle>Venue Information</CardTitle>
                   </CardHeader>
-                  <CardContent className="p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
+                  <CardContent
+                    className="p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+                    onClick={() => router.push(`/venue/${event.venue?.id}`)}
+                  >
                     <div className="space-y-4">
                       {/* Venue Header */}
                       <div>
-                        <h4 className="text-xl font-bold text-gray-800">{event.venue?.company}</h4>
+                        <h4 className="text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
+                          {event.venue?.company}
+                        </h4>
                         {/* Bio / Description */}
                         {event.venue?.bio && (
                           <p className="text-gray-600 text-sm">{event.venue.bio}</p>
@@ -953,6 +998,7 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-500 hover:underline"
+                            onClick={(e) => e.stopPropagation()} // Prevent navigation when clicking link
                           >
                             {event.venue.website}
                           </a>
@@ -975,15 +1021,10 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
                           </div>
                         </div>
                       )}
-
-
                     </div>
                   </CardContent>
-
                 </Card>
               </TabsContent>
-
-
               <TabsContent value="speakers">
                 <Card>
                   <CardHeader>
@@ -994,7 +1035,8 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
                       event.speakerSessions.map((session: any) => (
                         <div
                           key={session.id}
-                          className="flex justify-between items-start p-4 bg-white rounded-lg border shadow-sm"
+                          className="flex justify-between items-start p-4 bg-white rounded-lg border shadow-sm cursor-pointer hover:bg-gray-50 transition-colors"
+                          onClick={() => router.push(`/speakers/${session.speaker?.id}`)}
                         >
                           <div className="flex gap-4">
                             <Avatar className="w-12 h-12">
@@ -1002,12 +1044,21 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
                               <AvatarFallback>{session.speaker?.firstName?.charAt(0) || "S"}</AvatarFallback>
                             </Avatar>
                             <div>
-                              <h4 className="font-semibold">{session.speaker?.firstName || "Speaker"}</h4>
+                              <h4 className="font-semibold hover:text-blue-600 transition-colors">
+                                {session.speaker?.firstName || "Speaker"}
+                              </h4>
                               <p className="text-sm text-gray-600">{session.title}</p>
                               <p className="text-xs text-gray-500">{session.description}</p>
                             </div>
                           </div>
-                          <Button variant="destructive" size="sm" onClick={() => handleDeleteSpeaker(session.id)}>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent navigation when clicking delete
+                              handleDeleteSpeaker(session.id);
+                            }}
+                          >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -1019,13 +1070,17 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 </Card>
               </TabsContent>
 
+
               <TabsContent value="organizer">
                 <Card>
                   <CardHeader>
                     <CardTitle>Event Organizer</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-start gap-4">
+                    <div
+                      className="flex items-start gap-4 cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors"
+                      onClick={() => router.push(`/organizer/${event.organizer?.id}`)}
+                    >
                       <Avatar className="w-16 h-16">
                         <AvatarImage src={event.organizer?.avatar || "/placeholder.svg"} />
                         <AvatarFallback className="text-lg">
@@ -1033,7 +1088,9 @@ const handleBrochureUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-lg">{event.organizer?.firstName || "Event Organizer"}</h4>
+                        <h4 className="font-semibold text-lg hover:text-blue-600 transition-colors">
+                          {event.organizer?.firstName || "Event Organizer"}
+                        </h4>
                         <p className="text-gray-600 mb-3">Professional event organizer and manager</p>
                         <div className="flex flex-wrap items-center gap-4">
                           <div className="flex items-center gap-2 text-sm">

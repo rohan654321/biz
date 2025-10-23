@@ -22,6 +22,8 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import { useParams, useRouter } from "next/navigation"
+import { AddOrganizerReview } from "@/components/AddOrganizerReview"
+import { ReviewCard } from "@/components/ReviewCard"
 
 interface Organizer {
   id: string
@@ -47,6 +49,8 @@ interface Organizer {
   businessEmail: string
   businessPhone: string
   businessAddress: string
+  averageRating?: number
+  totalReviews?: number
 }
 
 interface Event {
@@ -69,6 +73,38 @@ interface Event {
   isPublic: boolean
 }
 
+interface ReviewReply {
+  id: string
+  content: string
+  createdAt: string
+  isOrganizerReply: boolean
+  user: {
+    id: string
+    firstName: string
+    lastName: string
+    avatar?: string
+  }
+}
+
+interface Review {
+  id: string
+  rating: number
+  title?: string
+  comment: string
+  createdAt: string
+  user: {
+    id: string
+    firstName: string
+    lastName: string
+    avatar?: string
+  }
+  event?: {
+    id: string
+    title: string
+  }
+  replies: ReviewReply[]
+}
+
 interface ContactFormData {
   name: string
   email: string
@@ -85,9 +121,11 @@ export default function OrganizerPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [organizer, setOrganizer] = useState<Organizer | null>(null)
   const [events, setEvents] = useState<Event[]>([])
+  const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
+  const [reviewsLoading, setReviewsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Contact modal states
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
@@ -133,6 +171,36 @@ export default function OrganizerPage() {
     }
   }, [organizerId])
 
+  // Fetch reviews when reviews tab is active
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (activeTab === "reviews") {
+        setReviewsLoading(true)
+        try {
+          const response = await fetch(`/api/organizers/${organizerId}/reviews`)
+          if (response.ok) {
+            const data = await response.json()
+            setReviews(data.reviews || [])
+            // Update organizer stats from response
+            if (data.organizer) {
+              setOrganizer(prev => prev ? {
+                ...prev,
+                averageRating: data.organizer.averageRating,
+                totalReviews: data.organizer.totalReviews
+              } : null)
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching reviews:", error)
+        } finally {
+          setReviewsLoading(false)
+        }
+      }
+    }
+
+    fetchReviews()
+  }, [activeTab, organizerId])
+
   // Calculate organizer statistics
   const stats = useMemo(() => {
     if (!organizer || !events)
@@ -141,10 +209,12 @@ export default function OrganizerPage() {
         avgRating: 0,
         upcomingEvents: 0,
         completedEvents: 0,
+        totalReviews: 0,
       }
 
     const totalEvents = events.length
-    const avgRating = 4.5 // placeholder since we don't have ratings in the API yet
+    const avgRating = organizer.averageRating || 4.5
+    const totalReviews = organizer.totalReviews || reviews.length
     const upcomingEvents = events.filter((event) => event.status === "Active").length
     const completedEvents = events.filter((event) => event.status === "Completed").length
 
@@ -153,8 +223,35 @@ export default function OrganizerPage() {
       avgRating,
       upcomingEvents,
       completedEvents,
+      totalReviews,
     }
-  }, [organizer, events])
+  }, [organizer, events, reviews])
+
+  // Handle new review submission
+  const handleReviewAdded = (newReview: Review) => {
+    setReviews(prevReviews => [newReview, ...prevReviews])
+
+    // Update organizer stats
+    if (organizer) {
+      const newTotalReviews = (organizer.totalReviews || reviews.length) + 1
+      const newAvgRating = ((organizer.averageRating || 0) * (newTotalReviews - 1) + newReview.rating) / newTotalReviews
+
+      setOrganizer(prev => prev ? {
+        ...prev,
+        totalReviews: newTotalReviews,
+        averageRating: Math.round(newAvgRating * 10) / 10
+      } : null)
+    }
+  }
+
+  // Handle new reply submission
+  const handleReplyAdded = (reviewId: string, newReply: ReviewReply) => {
+    setReviews(prev => prev.map(review =>
+      review.id === reviewId
+        ? { ...review, replies: [...review.replies, newReply] }
+        : review
+    ))
+  }
 
   // Contact form handler
   const handleContactSubmit = async (e: React.FormEvent) => {
@@ -242,7 +339,7 @@ export default function OrganizerPage() {
   const handleShare = (platform: string) => {
     const shareUrl = window.location.href
     const shareText = `Check out ${organizer?.name} on our platform!`
-    
+
     const shareUrls = {
       gmail: `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(organizer?.name || '')}&body=${encodeURIComponent(shareText + ' ' + shareUrl)}`,
       whatsapp: `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`,
@@ -304,6 +401,14 @@ export default function OrganizerPage() {
     })
   }
 
+  // Calculate rating distribution
+  const ratingDistribution = [0, 0, 0, 0, 0]
+  reviews.forEach(review => {
+    if (review.rating >= 1 && review.rating <= 5) {
+      ratingDistribution[5 - review.rating]++
+    }
+  })
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -345,10 +450,6 @@ export default function OrganizerPage() {
 
             {/* Action Buttons */}
             <div className="flex flex-col gap-3">
-              {/* <Button className="bg-white text-blue-600 hover:bg-blue-50">
-                <Heart className="w-4 h-4 mr-2" />
-                Follow
-              </Button> */}
               <Button
                 variant="outline"
                 className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent"
@@ -385,9 +486,9 @@ export default function OrganizerPage() {
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                <span className="text-2xl font-bold text-gray-900">{stats.avgRating}</span>
+                <span className="text-2xl font-bold text-gray-900">{stats.avgRating.toFixed(1)}</span>
               </div>
-              <div className="text-sm text-gray-600">Avg Rating</div>
+              <div className="text-sm text-gray-600">Avg Rating ({stats.totalReviews})</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">{organizer.founded}</div>
@@ -404,7 +505,7 @@ export default function OrganizerPage() {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="events">Events ({stats.totalEvents})</TabsTrigger>
             <TabsTrigger value="about">About</TabsTrigger>
-            <TabsTrigger value="reviews">Reviews</TabsTrigger>
+            <TabsTrigger value="reviews">Reviews ({stats.totalReviews})</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -598,9 +699,8 @@ export default function OrganizerPage() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`w-8 h-8 rounded text-sm ${
-                        currentPage === page ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100"
-                      }`}
+                      className={`w-8 h-8 rounded text-sm ${currentPage === page ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100"
+                        }`}
                     >
                       {page}
                     </button>
@@ -636,9 +736,9 @@ export default function OrganizerPage() {
                     {organizer.website && (
                       <div>
                         <label className="text-sm font-medium text-gray-500">Website</label>
-                        <a 
-                          href={organizer.website} 
-                          target="_blank" 
+                        <a
+                          href={organizer.website}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:underline flex items-center gap-1"
                         >
@@ -689,9 +789,50 @@ export default function OrganizerPage() {
 
           {/* Reviews Tab */}
           <TabsContent value="reviews" className="space-y-6">
-            <div className="text-center py-12">
-              <h3 className="text-xl font-semibold mb-2">Reviews Coming Soon</h3>
-              <p className="text-gray-600">We're working on adding event reviews and ratings from attendees.</p>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Reviews List */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold">
+                    Reviews ({reviews.length})
+                  </h3>
+                </div>
+
+                {reviewsLoading ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">Loading reviews...</p>
+                  </div>
+                ) : reviews.length === 0 ? (
+                  <Card>
+                    <CardContent className="p-8 text-center">
+                      <Star className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2">No Reviews Yet</h4>
+                      <p className="text-gray-600">Be the first to share your experience with this organizer!</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  // In the Reviews Tab section of OrganizerPage, update the ReviewCard usage:
+                  <div className="space-y-4">
+                    {reviews.map((review) => (
+                      <ReviewCard
+                        key={review.id}
+                        review={review}
+                        organizerId={organizerId}
+                        onReplyAdded={handleReplyAdded}
+                        hideReplyButton={true} // Add this prop
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Add Review Form */}
+              <div className="space-y-6">
+                <AddOrganizerReview
+                  organizerId={organizerId}
+                  onReviewAdded={handleReviewAdded}
+                />
+              </div>
             </div>
           </TabsContent>
         </Tabs>
@@ -710,7 +851,7 @@ export default function OrganizerPage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             {/* Quick Subject Buttons */}
             <div className="p-6 border-b">
               <h4 className="text-sm font-medium text-gray-700 mb-3">Quick Options</h4>
@@ -753,7 +894,7 @@ export default function OrganizerPage() {
                 </Button>
               </div>
             </div>
-            
+
             <form onSubmit={handleContactSubmit} className="p-6 space-y-4">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -770,7 +911,7 @@ export default function OrganizerPage() {
                   placeholder="Enter your name"
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                   Your Email *
@@ -786,7 +927,7 @@ export default function OrganizerPage() {
                   placeholder="Enter your email"
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
                   Subject *
@@ -802,7 +943,7 @@ export default function OrganizerPage() {
                   placeholder="Subject of your message"
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
                   Message *
@@ -818,17 +959,16 @@ export default function OrganizerPage() {
                   placeholder="Enter your message..."
                 />
               </div>
-              
+
               {submitMessage && (
-                <div className={`p-3 rounded-md ${
-                  submitMessage.includes("successfully") 
-                    ? "bg-green-100 text-green-700 border border-green-200" 
+                <div className={`p-3 rounded-md ${submitMessage.includes("successfully")
+                    ? "bg-green-100 text-green-700 border border-green-200"
                     : "bg-red-100 text-red-700 border border-red-200"
-                }`}>
+                  }`}>
                   {submitMessage}
                 </div>
               )}
-              
+
               <div className="flex gap-3 pt-2">
                 <Button
                   type="button"
@@ -872,7 +1012,7 @@ export default function OrganizerPage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="p-6">
               <div className="grid grid-cols-3 gap-4 mb-6">
                 <Button
@@ -885,7 +1025,7 @@ export default function OrganizerPage() {
                   </div>
                   <span className="text-xs">Gmail</span>
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   className="flex flex-col items-center gap-2 h-auto py-4"
@@ -896,7 +1036,7 @@ export default function OrganizerPage() {
                   </div>
                   <span className="text-xs">WhatsApp</span>
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   className="flex flex-col items-center gap-2 h-auto py-4"
@@ -907,7 +1047,7 @@ export default function OrganizerPage() {
                   </div>
                   <span className="text-xs">LinkedIn</span>
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   className="flex flex-col items-center gap-2 h-auto py-4"
@@ -918,7 +1058,7 @@ export default function OrganizerPage() {
                   </div>
                   <span className="text-xs">Outlook</span>
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   className="flex flex-col items-center gap-2 h-auto py-4"
@@ -929,7 +1069,7 @@ export default function OrganizerPage() {
                   </div>
                   <span className="text-xs">Twitter</span>
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   className="flex flex-col items-center gap-2 h-auto py-4"
@@ -941,7 +1081,7 @@ export default function OrganizerPage() {
                   <span className="text-xs">Facebook</span>
                 </Button>
               </div>
-              
+
               <div className="flex gap-2">
                 <input
                   type="text"

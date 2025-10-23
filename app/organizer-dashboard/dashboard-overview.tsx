@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Users, BarChart3, MessageSquare, TrendingUp, TrendingDown } from "lucide-react"
+import { Plus, Users, BarChart3, MessageSquare, TrendingUp, TrendingDown, Calendar, Loader2 } from "lucide-react"
+import { useState, useEffect } from "react"
 
 interface DashboardStats {
   title: string
@@ -35,8 +36,21 @@ interface DashboardOverviewProps {
   onSendMessageClick: () => void
 }
 
+interface OrganizerAttendeeStats {
+  totalAttendees: number
+  eventsCount: number
+  statusCounts: {
+    NEW: number
+    CONTACTED: number
+    QUALIFIED: number
+    CONVERTED: number
+    FOLLOW_UP: number
+    REJECTED: number
+  }
+}
 
 export default function DashboardOverview({
+  organizerId,
   organizerName,
   dashboardStats,
   recentEvents,
@@ -45,6 +59,68 @@ export default function DashboardOverview({
   onViewAnalyticsClick,
   onSendMessageClick
 }: DashboardOverviewProps) {
+  const [attendeeStats, setAttendeeStats] = useState<OrganizerAttendeeStats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch total attendees data
+  useEffect(() => {
+    const fetchAttendeeStats = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/organizers/${organizerId}/total-attendees`)
+        
+        if (!response.ok) throw new Error("Failed to fetch attendee statistics")
+        
+        const data = await response.json()
+        
+        if (data.success) {
+          setAttendeeStats(data)
+        } else {
+          throw new Error(data.error || "Failed to fetch data")
+        }
+      } catch (err) {
+        console.error("Error fetching attendee stats:", err)
+        setError(err instanceof Error ? err.message : "An error occurred")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (organizerId) {
+      fetchAttendeeStats()
+    }
+  }, [organizerId])
+
+  // Calculate conversion rate
+  const conversionRate = attendeeStats && attendeeStats.totalAttendees > 0 
+    ? Math.round((attendeeStats.statusCounts.CONVERTED / attendeeStats.totalAttendees) * 100)
+    : 0
+
+  // Enhanced stats with real attendee data
+  const enhancedStats = [
+    {
+      title: "Total Events",
+      value: dashboardStats.find(stat => stat.title === "Total Events")?.value || "0",
+      change: "+12%",
+      trend: "up" as const,
+      icon: Calendar,
+    },
+    {
+      title: "Active Events",
+      value: dashboardStats.find(stat => stat.title === "Active Events")?.value || "0",
+      change: "+3",
+      trend: "up" as const,
+      icon: Calendar,
+    },
+    {
+      title: "Total Attendees",
+      value: loading ? "..." : attendeeStats ? attendeeStats.totalAttendees.toString() : "0",
+      change: loading ? "" : "+18%",
+      trend: "up" as const,
+      icon: Users,
+    }
+  ]
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto px-4">
@@ -55,7 +131,7 @@ export default function DashboardOverview({
         </div>
 
         <Button
-          onClick={onCreateEventClick}   // <-- call parent to switch section
+          onClick={onCreateEventClick}
           className="flex items-center gap-2 cursor-pointer"
         >
           <Plus className="w-4 h-4 cursor-pointer" />
@@ -65,15 +141,20 @@ export default function DashboardOverview({
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {dashboardStats
-          .filter((stat) => stat.title !== "Revenue")
-          .map((stat, index) => (
-            <Card key={index}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                    <p className="text-2xl font-bold">{stat.value}</p>
+        {enhancedStats.map((stat, index) => (
+          <Card key={index}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                  <p className="text-2xl font-bold">
+                    {loading && stat.title.includes("Attendee") ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : (
+                      stat.value
+                    )}
+                  </p>
+                  {!loading && stat.change && (
                     <div className="flex items-center gap-1 mt-1">
                       {stat.trend === "up" ? (
                         <TrendingUp className="w-4 h-4 text-green-500" />
@@ -84,17 +165,17 @@ export default function DashboardOverview({
                         {stat.change}
                       </span>
                     </div>
-                  </div>
-                  <div className="p-3 bg-blue-100 rounded-full">
-                    <stat.icon className="w-6 h-6 text-blue-600" />
-                  </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+                <div className="p-3 bg-blue-100 rounded-full">
+                  <stat.icon className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
-
-      {/* Recent Events */}
+      {/* Recent Events & Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -132,20 +213,23 @@ export default function DashboardOverview({
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <Button
-                onClick={onCreateEventClick} // <-- same callback
+                onClick={onCreateEventClick}
                 variant="outline"
                 className="h-20 flex flex-col gap-2 bg-transparent"
               >
                 <Plus className="w-6 h-6" />
                 Create Event
               </Button>
+              
               <button
                 onClick={onManageAttendeesClick}
                 // variant="outline"
                 className="h-20 flex flex-col gap-2 bg-transparent"
               >
-              
+                {/* <Users className="w-6 h-6" />
+                Manage Attendees */}
               </button>
+              
               <button
                 onClick={onViewAnalyticsClick}
                 // variant="outline"
@@ -154,6 +238,7 @@ export default function DashboardOverview({
                 {/* <BarChart3 className="w-6 h-6" />
                 View Analytics */}
               </button>
+              
               <Button
                 onClick={onSendMessageClick}
                 variant="outline"
@@ -166,6 +251,18 @@ export default function DashboardOverview({
           </CardContent>
         </Card>
       </div>
+
+      {/* Error State */}
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-red-700">
+              <TrendingDown className="w-4 h-4" />
+              <span>Error loading attendee data: {error}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

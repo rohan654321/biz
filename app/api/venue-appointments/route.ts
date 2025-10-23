@@ -3,17 +3,16 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 
+// --------------------- CREATE APPOINTMENT ---------------------
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized. Please log in to schedule meetings." }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized. Please log in." }, { status: 401 })
     }
 
     const body = await request.json()
-
-    // Validate required fields
     const {
       venueId,
       title,
@@ -36,7 +35,7 @@ export async function POST(request: NextRequest) {
       agenda = [],
     } = body
 
-    // Validate required fields
+    // Required fields
     if (!venueId || !title || !requestedDate || !requestedTime) {
       return NextResponse.json(
         { error: "Missing required fields: venueId, title, requestedDate, requestedTime" },
@@ -44,7 +43,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify the venue exists and get the venue manager
+    // Validate venue
     const venue = await prisma.user.findUnique({
       where: { id: venueId },
       select: { id: true, role: true },
@@ -58,8 +57,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid venue. User is not a venue manager." }, { status: 400 })
     }
 
-    // Create the venue appointment
-    const venueAppointment = await prisma.venueAppointment.create({
+    // Create appointment
+    const appointment = await prisma.venueAppointment.create({
       data: {
         venueId,
         requesterId: session.user.id,
@@ -88,20 +87,10 @@ export async function POST(request: NextRequest) {
       },
       include: {
         venue: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
+          select: { id: true, firstName: true, lastName: true, email: true, avatar: true },
         },
         requester: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
+          select: { id: true, firstName: true, lastName: true, email: true, avatar: true },
         },
       },
     })
@@ -110,16 +99,15 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         message: "Venue appointment created successfully",
-        data: venueAppointment,
+        data: appointment,
       },
       { status: 201 },
     )
   } catch (error) {
-    console.error("Error creating venue appointment:", error)
-
+    console.error("Error creating appointment:", error)
     return NextResponse.json(
       {
-        error: "Failed to create venue appointment",
+        error: "Failed to create appointment",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
@@ -127,10 +115,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// --------------------- GET APPOINTMENTS ---------------------
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -139,19 +127,13 @@ export async function GET(request: NextRequest) {
     const venueId = searchParams.get("venueId")
     const requesterId = searchParams.get("requesterId")
 
-    // Build the query filter
     const where: any = {}
 
-    if (venueId) {
-      where.venueId = venueId
-    }
+    if (venueId) where.venueId = venueId
+    if (requesterId) where.requesterId = requesterId
 
-    if (requesterId) {
-      where.requesterId = requesterId
-    }
-
-    // If no filters, return appointments for the current user
     if (!venueId && !requesterId) {
+      // show appointments related to logged-in user
       where.OR = [{ venueId: session.user.id }, { requesterId: session.user.id }]
     }
 
@@ -159,27 +141,13 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         venue: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            avatar: true,
-          },
+          select: { id: true, firstName: true, lastName: true, email: true, avatar: true },
         },
         requester: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            avatar: true,
-          },
+          select: { id: true, firstName: true, lastName: true, email: true, avatar: true },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: { createdAt: "desc" },
     })
 
     return NextResponse.json(
@@ -190,14 +158,85 @@ export async function GET(request: NextRequest) {
       { status: 200 },
     )
   } catch (error) {
-    console.error("Error fetching venue appointments:", error)
-
+    console.error("Error fetching appointments:", error)
     return NextResponse.json(
       {
-        error: "Failed to fetch venue appointments",
+        error: "Failed to fetch appointments",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
     )
   }
+}
+
+// --------------------- UPDATE APPOINTMENT STATUS ---------------------
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { id, status } = await request.json()
+
+    if (!id || !status) {
+      return NextResponse.json({ error: "Missing appointment ID or status" }, { status: 400 })
+    }
+
+    const validStatuses = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"]
+    if (!validStatuses.includes(status)) {
+      return NextResponse.json({ error: "Invalid status value" }, { status: 400 })
+    }
+
+    // Check if user has permission to update this appointment
+    const existingAppointment = await prisma.venueAppointment.findUnique({
+      where: { id },
+      select: { venueId: true, requesterId: true }
+    })
+
+    if (!existingAppointment) {
+      return NextResponse.json({ error: "Appointment not found" }, { status: 404 })
+    }
+
+    // User can only update if they are the venue or requester
+    if (existingAppointment.venueId !== session.user.id && existingAppointment.requesterId !== session.user.id) {
+      return NextResponse.json({ error: "Unauthorized to update this appointment" }, { status: 403 })
+    }
+
+    const appointment = await prisma.venueAppointment.update({
+      where: { id },
+      data: { status },
+      include: {
+        venue: {
+          select: { id: true, firstName: true, lastName: true, email: true, avatar: true },
+        },
+        requester: {
+          select: { id: true, firstName: true, lastName: true, email: true, avatar: true },
+        },
+      },
+    })
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: `Appointment ${status.toLowerCase()} successfully`,
+        data: appointment,
+      },
+      { status: 200 },
+    )
+  } catch (error) {
+    console.error("Error updating appointment:", error)
+    return NextResponse.json(
+      {
+        error: "Failed to update appointment",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
+  }
+}
+
+// Add PUT method that calls the same logic as PATCH
+export async function PUT(request: NextRequest) {
+  return PATCH(request)
 }
