@@ -144,47 +144,47 @@ export default function EventPage({ params }: EventPageProps) {
       setSaving(false)
     }
   }
-  const handleDownloadBrochure = async (eventId: string) => {
-  try {
-    // Get the download URL from the API
-    const response = await fetch(`/api/events/${eventId}/brochure?action=download`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+  //   const handleDownloadBrochure = async (eventId: string) => {
+  //   try {
+  //     // Get the download URL from the API
+  //     const response = await fetch(`/api/events/${eventId}/brochure?action=download`);
 
-    const data = await response.json();
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //     }
 
-    if (data.success && data.brochure) {
-      // Create a temporary anchor element to trigger download
-      const link = document.createElement('a');
-      link.href = data.brochure;
-      
-      // Set the download attribute with a proper filename
-      const filename = `brochure-${data.eventTitle || eventId}.pdf`;
-      link.download = filename;
-      
-      // Append to body, click, and remove
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+  //     const data = await response.json();
 
-      toast({
-        title: "Download Started",
-        description: "Brochure download has started",
-      });
-    } else {
-      throw new Error(data.error || 'Failed to get download URL');
-    }
-  } catch (error) {
-    console.error('Error downloading brochure:', error);
-    toast({
-      title: "Download Failed",
-      description: error instanceof Error ? error.message : "Failed to download brochure. Please try again.",
-      variant: "destructive",
-    });
-  }
-};
+  //     if (data.success && data.brochure) {
+  //       // Create a temporary anchor element to trigger download
+  //       const link = document.createElement('a');
+  //       link.href = data.brochure;
+
+  //       // Set the download attribute with a proper filename
+  //       const filename = `brochure-${data.eventTitle || eventId}.pdf`;
+  //       link.download = filename;
+
+  //       // Append to body, click, and remove
+  //       document.body.appendChild(link);
+  //       link.click();
+  //       document.body.removeChild(link);
+
+  //       toast({
+  //         title: "Download Started",
+  //         description: "Brochure download has started",
+  //       });
+  //     } else {
+  //       throw new Error(data.error || 'Failed to get download URL');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error downloading brochure:', error);
+  //     toast({
+  //       title: "Download Failed",
+  //       description: error instanceof Error ? error.message : "Failed to download brochure. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
 
   const handleVisitClick = async () => {
     if (!session) {
@@ -337,109 +337,109 @@ export default function EventPage({ params }: EventPageProps) {
     <div className="min-h-screen bg-gray-50 py-8">
       <EventHero event={event} />
 
-<div className="max-w-7xl mx-auto py-4">
-  <div className="bg-white rounded-sm p-6 mb-8 shadow-sm">
-    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-      
-      {/* LEFT SECTION */}
-      <div className="flex-1">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-3">
-          {event.slug || "Tag Name will be updated by backend"}
-        </h1>
+      <div className="max-w-7xl mx-auto py-4">
+        <div className="bg-white rounded-sm p-6 mb-8 shadow-sm">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
 
-        <div className="flex items-center gap-2 text-gray-600 mb-4">
-          <MapPin className="w-4 h-4" />
-          <span>{event?.venue?.venueAddress || event?.location?.address || "Location TBA"}</span>
-        </div>
+            {/* LEFT SECTION */}
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-3">
+                {event.slug || "Tag Name will be updated by backend"}
+              </h1>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
-            onClick={() => {
-              const query = encodeURIComponent(event.venueAddress || "Location")
-              window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank")
-            }}
-          >
-            <Plus className="w-4 h-4" />
-            Get Directions
-          </Button>
+              <div className="flex items-center gap-2 text-gray-600 mb-4">
+                <MapPin className="w-4 h-4" />
+                <span>{event?.venue?.venueAddress || event?.location?.address || "Location TBA"}</span>
+              </div>
 
-          <div className="flex items-center text-sm">
-            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-            <span className="ml-1 font-medium">
-              {averageRating > 0 ? averageRating.toFixed(1) : "No ratings"}
-            </span>
-            {totalReviews > 0 && (
-              <span className="ml-1 text-gray-500">
-                ({totalReviews} review{totalReviews !== 1 ? "s" : ""})
-              </span>
-            )}
+              <div className="flex flex-wrap items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+                  onClick={() => {
+                    const query = encodeURIComponent(event.venueAddress || "Location")
+                    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank")
+                  }}
+                >
+                  <Plus className="w-4 h-4" />
+                  Get Directions
+                </Button>
+
+                <div className="flex items-center text-sm">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span className="ml-1 font-medium">
+                    {averageRating > 0 ? averageRating.toFixed(1) : "No ratings"}
+                  </span>
+                  {totalReviews > 0 && (
+                    <span className="ml-1 text-gray-500">
+                      ({totalReviews} review{totalReviews !== 1 ? "s" : ""})
+                    </span>
+                  )}
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSaveEvent}
+                  disabled={saving}
+                  className={`flex items-center gap-2 ${isSaved ? "text-blue-600" : ""}`}
+                >
+                  <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
+                  {isSaved ? "Saved" : "Save"}
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator
+                        .share({
+                          title: event.title,
+                          text: "Check out this event!",
+                          url: window.location.href,
+                        })
+                        .catch((err) => console.error("Error sharing:", err))
+                    } else {
+                      alert("Sharing is not supported in this browser.")
+                    }
+                  }}
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </Button>
+              </div>
+            </div>
+
+            {/* RIGHT SECTION - slightly shifted left */}
+            <div className="flex flex-col gap-4 lg:-ml-8">
+              <p className="text-center lg:text-left text-gray-700 font-medium text-base sm:text-lg">
+                Interested in this Event?
+              </p>
+
+              <div className="flex gap-3 flex-col sm:flex-row sm:justify-start">
+                <Button
+                  variant="outline"
+                  className="sm:w-[180px] w-full border-gray-300 bg-transparent hover:bg-gray-50"
+                  onClick={handleVisitClick}
+                >
+                  Visit
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="sm:w-[180px] w-full border-blue-300 bg-transparent text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  onClick={handleExhibitClick}
+                >
+                  Exhibit
+                </Button>
+              </div>
+            </div>
           </div>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSaveEvent}
-            disabled={saving}
-            className={`flex items-center gap-2 ${isSaved ? "text-blue-600" : ""}`}
-          >
-            <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
-            {isSaved ? "Saved" : "Save"}
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex items-center gap-2"
-            onClick={() => {
-              if (navigator.share) {
-                navigator
-                  .share({
-                    title: event.title,
-                    text: "Check out this event!",
-                    url: window.location.href,
-                  })
-                  .catch((err) => console.error("Error sharing:", err))
-              } else {
-                alert("Sharing is not supported in this browser.")
-              }
-            }}
-          >
-            <Share2 className="w-4 h-4" />
-            Share
-          </Button>
         </div>
       </div>
-
-      {/* RIGHT SECTION - slightly shifted left */}
-      <div className="flex flex-col gap-4 lg:-ml-8">
-        <p className="text-center lg:text-left text-gray-700 font-medium text-base sm:text-lg">
-          Interested in this Event?
-        </p>
-
-        <div className="flex gap-3 flex-col sm:flex-row sm:justify-start">
-          <Button
-            variant="outline"
-            className="sm:w-[180px] w-full border-gray-300 bg-transparent hover:bg-gray-50"
-            onClick={handleVisitClick}
-          >
-            Visit
-          </Button>
-
-          <Button
-            variant="outline"
-            className="sm:w-[180px] w-full border-blue-300 bg-transparent text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-            onClick={handleExhibitClick}
-          >
-            Exhibit
-          </Button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 
       <div className="max-w-7xl mx-auto">
@@ -668,67 +668,67 @@ export default function EventPage({ params }: EventPageProps) {
                 </div>
 
 
-             <Card className="border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-  <Link href={`/organizer/${event.organizer?.id}`}>
-    <CardHeader className="border-b border-gray-100 pb-2">
-      <CardTitle className="text-gray-800 text-base font-semibold">Organizer</CardTitle>
-    </CardHeader>
+                <Card className="border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                  <Link href={`/organizer/${event.organizer?.id}`}>
+                    <CardHeader className="border-b border-gray-100 pb-2">
+                      <CardTitle className="text-gray-800 text-base font-semibold">Organizer</CardTitle>
+                    </CardHeader>
 
-    <CardContent className="flex flex-col md:flex-row justify-between items-center gap-4 py-4">
-      {/* Left Section: Organizer Info */}
-      <div className="flex items-center gap-4">
-        <div className="w-16 h-16 flex items-center justify-center border border-gray-100 rounded overflow-hidden bg-white">
-          <Image
-            src={event.organizer?.avatar || "/public/image/Ellipse_72.png"}
-            alt="Organizer"
-            width={64}
-            height={64}
-            className="object-contain"
-          />
-        </div>
+                    <CardContent className="flex flex-col md:flex-row justify-between items-center gap-4 py-4">
+                      {/* Left Section: Organizer Info */}
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 flex items-center justify-center border border-gray-100 rounded overflow-hidden bg-white">
+                          <Image
+                            src={event.organizer?.avatar || "/public/image/Ellipse_72.png"}
+                            alt="Organizer"
+                            width={64}
+                            height={64}
+                            className="object-contain"
+                          />
+                        </div>
 
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-gray-900 text-sm">
-              {event.organizer?.firstName || "Organizer Name"}
-            </h3>
-            <span className="bg-blue-100 text-blue-700 text-[11px] font-medium px-2 py-[2px] rounded">
-              Top Rated
-            </span>
-          </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-gray-900 text-sm">
+                              {event.organizer?.firstName || "Organizer Name"}
+                            </h3>
+                            <span className="bg-blue-100 text-blue-700 text-[11px] font-medium px-2 py-[2px] rounded">
+                              Top Rated
+                            </span>
+                          </div>
 
-          <p className="text-sm text-gray-600">
-            {event.organizer?.country || "USA"}
-          </p>
+                          <p className="text-sm text-gray-600">
+                            {event.organizer?.country || "USA"}
+                          </p>
 
-          <p className="text-xs text-gray-500 mt-1">
-            {event.organizer?.upcomingEvents
-              ? `${event.organizer.upcomingEvents} Upcoming Events`
-              : "1 Upcoming Event"}{" "}
-            ·{" "}
-            {event.organizer?.followers
-              ? `${event.organizer.followers} Followers`
-              : "302 Followers"}
-          </p>
-        </div>
-      </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {event.organizer?.upcomingEvents
+                              ? `${event.organizer.upcomingEvents} Upcoming Events`
+                              : "1 Upcoming Event"}{" "}
+                            ·{" "}
+                            {event.organizer?.followers
+                              ? `${event.organizer.followers} Followers`
+                              : "302 Followers"}
+                          </p>
+                        </div>
+                      </div>
 
-      {/* Right Section: Button */}
-      <div className="flex flex-col items-center text-center">
-        <button 
-          className="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-md shadow"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleVisitClick();
-          }}
-        >
-          Send Stall Book Request
-        </button>
-      </div>
-    </CardContent>
-  </Link>
-</Card>
+                      {/* Right Section: Button */}
+                      <div className="flex flex-col items-center text-center">
+                        <button
+                          className="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-md shadow"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleVisitClick();
+                          }}
+                        >
+                          Send Stall Book Request
+                        </button>
+                      </div>
+                    </CardContent>
+                  </Link>
+                </Card>
 
 
                 <Card className="border border-gray-200 rounded-lg shadow-sm">
@@ -824,64 +824,64 @@ export default function EventPage({ params }: EventPageProps) {
                 </Card>
               </TabsContent>
 
-              
-<TabsContent value="brochure">
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center justify-between">
-        <span>Brochure</span>
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="space-y-4">
-        {event?.brochure ? (
-          <>
-            {/* Brochure Display */}
-            <div className="bg-gray-100 rounded-lg border border-gray-300 min-h-[400px] flex flex-col">
-              <div className="flex justify-between items-center p-3 bg-white border-b">
-                <span className="text-sm font-medium">Event Brochure</span>
-                <div className="flex gap-2">
-                  <Button
+
+              <TabsContent value="brochure">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Brochure</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {event?.brochure ? (
+                        <>
+                          {/* Brochure Display */}
+                          <div className="bg-gray-100 rounded-lg border border-gray-300 min-h-[400px] flex flex-col">
+                            <div className="flex justify-between items-center p-3 bg-white border-b">
+                              <span className="text-sm font-medium">Event Brochure</span>
+                              <div className="flex gap-2">
+                                {/* <Button
                     size="sm"
                     variant="outline"
                     onClick={() => handleDownloadBrochure(event.id)}
                   >
                     Download PDF
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => window.open(event.brochure, '_blank')}
-                  >
-                    Open Full Screen
-                  </Button>
-                </div>
-              </div>
-              
-              {/* PDF Display using Google Docs Viewer */}
-              <div className="flex-1 p-4">
-                <iframe
-                  src={`https://docs.google.com/gview?url=${encodeURIComponent(event.brochure)}&embedded=true`}
-                  className="w-full h-96 border-0"
-                  title="PDF Brochure"
-                />
-                <div className="text-center mt-4">
-                  <p className="text-sm text-gray-600">
-                    If the PDF doesn't load, use the buttons above to download or open in a new tab.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="bg-gray-100 h-96 rounded-lg flex flex-col items-center justify-center">
-            <p className="text-gray-600 mb-4">No brochure available</p>
-          </div>
-        )}
-      </div>
-    </CardContent>
-  </Card>
-</TabsContent>
+                  </Button> */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => window.open(event.brochure, '_blank')}
+                                >
+                                  Open Full Screen
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* PDF Display using Google Docs Viewer */}
+                            <div className="flex-1 p-4">
+                              <iframe
+                                src={`https://docs.google.com/gview?url=${encodeURIComponent(event.brochure)}&embedded=true`}
+                                className="w-full h-96 border-0"
+                                title="PDF Brochure"
+                              />
+                              <div className="text-center mt-4">
+                                <p className="text-sm text-gray-600">
+                                  If the PDF doesn't load, use the buttons above to download or open in a new tab.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="bg-gray-100 h-96 rounded-lg flex flex-col items-center justify-center">
+                          <p className="text-gray-600 mb-4">No brochure available</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
               <TabsContent value="venue">
                 <Card className="border border-gray-200 rounded-lg shadow-sm">
                   <CardHeader className="border-b border-gray-100 py-4">
@@ -952,26 +952,26 @@ export default function EventPage({ params }: EventPageProps) {
                     <CardTitle>Event Organizer</CardTitle>
                   </CardHeader>
                   <Link href={`/organizer/${event.organizer.id}`}>
-                  <CardContent>
-                    <div className="flex items-start gap-4">
-                      <Avatar className="w-16 h-16">
-                        <AvatarImage src={event.organizer?.avatar || "/placeholder.svg"} />
-                        <AvatarFallback className="text-lg">
-                          {event.organizer?.firstName?.charAt(0) || "O"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-lg">{event.organizer?.firstName || "Event Organizer"}</h4>
-                        <p className="text-gray-600 mb-3">Professional event organizer and manager</p>
-                        <div className="flex flex-wrap items-center gap-4">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Mail className="w-4 h-4 text-green-600" />
-                            <span>{event.organizer?.email || "Contact via platform"}</span>
+                    <CardContent>
+                      <div className="flex items-start gap-4">
+                        <Avatar className="w-16 h-16">
+                          <AvatarImage src={event.organizer?.avatar || "/placeholder.svg"} />
+                          <AvatarFallback className="text-lg">
+                            {event.organizer?.firstName?.charAt(0) || "O"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-lg">{event.organizer?.firstName || "Event Organizer"}</h4>
+                          <p className="text-gray-600 mb-3">Professional event organizer and manager</p>
+                          <div className="flex flex-wrap items-center gap-4">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Mail className="w-4 h-4 text-green-600" />
+                              <span>{event.organizer?.email || "Contact via platform"}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
+                    </CardContent>
                   </Link>
                 </Card>
               </TabsContent>

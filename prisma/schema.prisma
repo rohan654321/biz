@@ -90,6 +90,7 @@ model User {
   venueEvents              Event[]              @relation("EventVenue")
   exhibitorReviews         Review[]             @relation("ExhibitorReviews")
   venueReviews             Review[]             @relation("VenueReviews")
+  organizerReviews         Review[]             @relation("OrganizerReviews")
   venueAnalytics           VenueAnalytics[]
   meetingSpaces            MeetingSpace[]
   leads                    EventLead[]
@@ -828,6 +829,8 @@ model Review {
   exhibitor   User?         @relation("ExhibitorReviews", fields: [exhibitorId], references: [id])
   venueId     String?       @db.ObjectId
   venue       User?         @relation("VenueReviews", fields: [venueId], references: [id])
+  organizerId String?       @db.ObjectId
+  organizer   User?         @relation("OrganizerReviews", fields: [organizerId], references: [id])
   replies     ReviewReply[]
 
   rating  Int

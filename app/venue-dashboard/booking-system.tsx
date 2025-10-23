@@ -136,41 +136,41 @@ export default function AppointmentScheduling({ venueId, onCountChange }: Appoin
     }
   }
 
-  const updateAppointment = async (appointmentId: string, updates: Partial<Appointment>) => {
-    try {
-      const response = await fetch(`/api/venue-appointments`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          appointmentId,
-          ...updates,
-        }),
-      })
+const updateAppointment = async (appointmentId: string, updates: Partial<Appointment>) => {
+  try {
+    const response = await fetch(`/api/venue-appointments`, {
+      method: "PATCH", // Change from PUT to PATCH
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: appointmentId, // Change from appointmentId to id
+        status: updates.status, // Only send status
+      }),
+    })
 
-      if (!response.ok) {
-        throw new Error("Failed to update appointment")
-      }
-
-      setAppointments(appointments.map((apt) => (apt.id === appointmentId ? { ...apt, ...updates } : apt)))
-
-      toast({
-        title: "Success",
-        description: "Appointment updated successfully!",
-      })
-
-      // Refresh appointments to get latest data
-      fetchAppointments()
-    } catch (err) {
-      console.error("Error updating appointment:", err)
-      toast({
-        title: "Error",
-        description: "Failed to update appointment. Please try again.",
-        variant: "destructive",
-      })
+    if (!response.ok) {
+      throw new Error("Failed to update appointment")
     }
+
+    setAppointments(appointments.map((apt) => (apt.id === appointmentId ? { ...apt, ...updates } : apt)))
+
+    toast({
+      title: "Success",
+      description: "Appointment updated successfully!",
+    })
+
+    // Refresh appointments to get latest data
+    fetchAppointments()
+  } catch (err) {
+    console.error("Error updating appointment:", err)
+    toast({
+      title: "Error",
+      description: "Failed to update appointment. Please try again.",
+      variant: "destructive",
+    })
   }
+}
 
   const getStatusColor = (status: string) => {
     switch (status) {
