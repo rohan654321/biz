@@ -240,7 +240,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       case "messages":
         return <MessagesSection organizerId={userId} />
       case "settings":
-        return <SettingsSection userData={userData} onUpdate={handleProfileUpdate} />
+        return <SettingsSection  />
       case "travel":
         return <TravelAccommodation />
       case "Help & Support":
