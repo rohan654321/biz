@@ -203,6 +203,13 @@ const ProductForm = ({
   )
 }
 
+const transformCloudinaryUrlForViewing = (url: string): string => {
+  if (url.includes("cloudinary.com")) {
+    return url.replace("/upload/", "/upload/fl_attachment:false/")
+  }
+  return url
+}
+
 export default function ProductListing({ exhibitorId }: ProductListingProps) {
   const { toast } = useToast()
   const [isAddProductOpen, setIsAddProductOpen] = useState(false)
@@ -511,7 +518,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
                   size="sm"
                   className="flex items-center gap-2 bg-transparent"
                   onClick={() => {
-                    setViewingBrochure(brochureUrl)
+                    setViewingBrochure(transformCloudinaryUrlForViewing(brochureUrl))
                     setIsBrochureDialogOpen(true)
                   }}
                 >
@@ -645,7 +652,11 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
           </DialogHeader>
           <div className="w-full h-[75vh] p-6 pt-4">
             {viewingBrochure && (
-              <iframe src={viewingBrochure} className="w-full h-full border rounded-lg" title="Brochure Viewer" />
+              <iframe
+                src={`https://docs.google.com/gview?url=${encodeURIComponent(viewingBrochure)}&embedded=true`}
+                className="w-full h-full border rounded-lg"
+                title="Brochure Viewer"
+              />
             )}
           </div>
         </DialogContent>
