@@ -1,640 +1,446 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Separator } from "@/components/ui/separator"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { useToast } from "@/hooks/use-toast"
-import {
-  Settings,
-  Lock,
-  Bell,
-  Shield,
-  Eye,
-  EyeOff,
-  Mail,
-  Phone,
-  Globe,
-  Trash2,
-  Save,
-  AlertTriangle,
-  Building,
-  Calendar,
-  DollarSign,
-  Globe as GlobeIcon,
-  Clock,
-} from "lucide-react"
+export function VenueSection() {
+  const { toast } = useToast();
 
-interface VenueData {
-  venueName: string
-  logo: string
-  contactPerson: string
-  email: string
-  mobile: string
-  address: string
-  website: string
-  description: string
-  maxCapacity: number
-  totalHalls: number
-  totalEvents: number
-  activeBookings: number
-  averageRating: number
-  totalReviews: number
-}
-
-interface VenueSettingsProps {
-  venueData: VenueData
-  onUpdate: (data: Partial<VenueData>) => void
-}
-
-export default function VenueSettings({ venueData, onUpdate }: VenueSettingsProps) {
-  const { toast } = useToast()
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  })
-
-  const [notificationSettings, setNotificationSettings] = useState({
+  const [settings, setSettings] = useState({
+    profileVisibility: "Public",
+    phoneNumber: "+1 (555) 123-4567",
+    email: "user@example.com",
+    introduceMe: true,
     emailNotifications: true,
-    pushNotifications: true,
-    smsNotifications: false,
-    bookingAlerts: true,
-    paymentNotifications: true,
-    reviewNotifications: true,
-    maintenanceReminders: true,
-    marketingEmails: false,
-  })
+    eventReminders: true,
+    newMessages: true,
+    connectionRequests: true,
+  });
 
-  const [privacySettings, setPrivacySettings] = useState({
-    venueVisibility: "public",
-    showContactInfo: true,
-    allowDirectBookings: true,
-    showInDirectory: true,
-    dataSharing: false,
-  })
+  const [editPhone, setEditPhone] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editingField, setEditingField] = useState<"phone" | "email" | "profile" | null>(null);
+  const [verificationType, setVerificationType] = useState<"email" | "phone" | null>(null);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  const [businessSettings, setBusinessSettings] = useState({
-    timezone: "asia/kolkata",
-    currency: "inr",
-    language: "english",
-    dateFormat: "dd/mm/yyyy",
-    businessHours: {
-      start: "09:00",
-      end: "22:00",
-    },
-  })
+  const handleToggle = (key: keyof typeof settings) => {
+    setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPasswordData({
-      ...passwordData,
-      [e.target.name]: e.target.value,
-    })
-  }
-
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
+  const handleSavePhone = () => {
+    if (editPhone.trim()) {
+      setSettings((prev) => ({ ...prev, phoneNumber: editPhone }));
+      setEditPhone("");
+      setEditingField(null);
       toast({
-        title: "Error",
-        description: "New passwords don't match!",
-        variant: "destructive",
-      })
-      return
+        title: "Phone number updated",
+        description: "Your phone number has been updated successfully.",
+      });
     }
-    if (passwordData.newPassword.length < 8) {
+  };
+
+  const handleSaveEmail = () => {
+    if (editEmail.trim()) {
+      setSettings((prev) => ({ ...prev, email: editEmail }));
+      setEditEmail("");
+      setEditingField(null);
       toast({
-        title: "Error",
-        description: "Password must be at least 8 characters long!",
-        variant: "destructive",
-      })
-      return
+        title: "Email updated",
+        description: "Your email has been updated successfully.",
+      });
     }
-    // Handle password update
-    console.log("Password update submitted")
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    })
+  };
+
+  const handleProfileVisibilityChange = (value: string) => {
+    setSettings((prev) => ({ ...prev, profileVisibility: value }));
     toast({
-      title: "Success",
-      description: "Password updated successfully!",
-    })
-  }
+      title: "Profile visibility updated",
+      description: `Your profile is now ${value.toLowerCase()}.`,
+    });
+  };
 
-  const handleNotificationChange = (key: string, value: boolean) => {
-    setNotificationSettings({
-      ...notificationSettings,
-      [key]: value,
-    })
-  }
-
-  const handlePrivacyChange = (key: string, value: boolean | string) => {
-    setPrivacySettings({
-      ...privacySettings,
-      [key]: value,
-    })
-  }
-
-  const handleBusinessChange = (key: string, value: string) => {
-    setBusinessSettings({
-      ...businessSettings,
-      [key]: value,
-    })
-  }
-
-  const handleBusinessHoursChange = (field: "start" | "end", value: string) => {
-    setBusinessSettings({
-      ...businessSettings,
-      businessHours: {
-        ...businessSettings.businessHours,
-        [field]: value,
-      },
-    })
-  }
-
-  const handleSaveSettings = (section: string) => {
-    // In a real app, this would save to the backend
+  const handleEmailNotificationsToggle = () => {
+    const newValue = !settings.emailNotifications;
+    setSettings((prev) => ({ ...prev, emailNotifications: newValue }));
     toast({
-      title: "Success",
-      description: `${section} settings updated successfully!`,
-    })
-  }
+      title: newValue ? "Email notifications enabled" : "Email notifications disabled",
+      description: newValue 
+        ? "You will receive event updates via email."
+        : "You will no longer receive email notifications.",
+    });
+  };
 
-  const handleDeleteAccount = () => {
-    // Handle account deletion
-    console.log("Account deletion requested")
-    toast({
-      title: "Request Submitted",
-      description: "Account deletion request submitted. You will receive a confirmation email.",
-    })
-  }
+  const cancelEdit = () => {
+    setEditPhone("");
+    setEditEmail("");
+    setEditingField(null);
+    setVerificationType(null);
+    setOtp(["", "", "", "", "", ""]);
+  };
+
+  const handleVerificationRequest = (type: "email" | "phone") => {
+    setVerificationType(type);
+    setIsVerifying(true);
+    
+    // Simulate sending OTP
+    setTimeout(() => {
+      setIsVerifying(false);
+      toast({
+        title: "Verification code sent",
+        description: `A 6-digit code has been sent to your ${type}.`,
+      });
+    }, 1500);
+  };
+
+  const handleOtpChange = (value: string, index: number) => {
+    if (!/^\d?$/.test(value)) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    // Auto-focus next input
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`otp-${index + 1}`);
+      if (nextInput) nextInput.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (e: React.KeyboardEvent, index: number) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-${index - 1}`);
+      if (prevInput) prevInput.focus();
+    }
+  };
+
+  const handleVerifyOtp = () => {
+    const enteredOtp = otp.join("");
+    if (enteredOtp.length !== 6) {
+      toast({
+        title: "Invalid OTP",
+        description: "Please enter the complete 6-digit code.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Simulate OTP verification
+    setIsVerifying(true);
+    setTimeout(() => {
+      setIsVerifying(false);
+      toast({
+        title: "Verification successful",
+        description: `Your ${verificationType} has been verified successfully.`,
+      });
+      setVerificationType(null);
+      setOtp(["", "", "", "", "", ""]);
+    }, 1500);
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Password & Security */}
-      {/* <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock className="w-5 h-5" />
-            Password & Security
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <form onSubmit={handlePasswordSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="current-password">Current Password</Label>
-                <div className="relative">
-                  <Input
-                    id="current-password"
-                    name="currentPassword"
-                    type={showCurrentPassword ? "text" : "password"}
-                    value={passwordData.currentPassword}
-                    onChange={handlePasswordChange}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
+    <div className="w-full px-6 py-6 space-y-10 bg-white">
+      {/* ---- Privacy Settings ---- */}
+      <section>
+        <h2 className="text-lg font-semibold mb-4">Privacy Settings</h2>
+        <div className="space-y-5 text-sm">
+          {/* Profile Visibility */}
+          <div className="border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <div className="font-medium">Profile Visibility</div>
+                <p className="text-gray-500">Who can see your profile</p>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="new-password">New Password</Label>
-                <div className="relative">
-                  <Input
-                    id="new-password"
-                    name="newPassword"
-                    type={showNewPassword ? "text" : "password"}
-                    value={passwordData.newPassword}
-                    onChange={handlePasswordChange}
-                    required
-                    minLength={8}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm New Password</Label>
-              <div className="relative">
-                <Input
-                  id="confirm-password"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={passwordData.confirmPassword}
-                  onChange={handlePasswordChange}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-600">{settings.profileVisibility}</span>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setEditingField(editingField === "profile" ? null : "profile")}
                 >
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+                  {editingField === "profile" ? "Cancel" : "Edit"}
+                </Button>
               </div>
             </div>
+            
+            {editingField === "profile" && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg space-y-3">
+                <div className="flex gap-2">
+                  {["Public", "Friends Only"].map((option) => (
+                    <Button
+                      key={option}
+                      variant={settings.profileVisibility === option ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleProfileVisibilityChange(option)}
+                    >
+                      {option}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
-            <div className="flex justify-end">
-              <Button type="submit" className="flex items-center gap-2">
-                <Save className="w-4 h-4" />
-                Update Password
+          {/* Phone Number */}
+          <div className="border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <div className="font-medium">Phone Number</div>
+                <p className="text-gray-500">{settings.phoneNumber}</p>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setEditingField(editingField === "phone" ? null : "phone")}
+              >
+                {editingField === "phone" ? "Cancel" : "Edit"}
               </Button>
             </div>
-          </form>
-        </CardContent>
-      </Card> */}
-
-      {/* Notification Preferences */}
-      {/* <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="w-5 h-5" />
-            Notification Preferences
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Email Notifications</div>
-                <div className="text-sm text-gray-600">Receive booking updates via email</div>
+            
+            {editingField === "phone" && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg space-y-3">
+                <div className="flex gap-2">
+                  <Select onValueChange={(value) => setEditPhone(value)}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select country code" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="+1">+1 (USA)</SelectItem>
+                      <SelectItem value="+44">+44 (UK)</SelectItem>
+                      <SelectItem value="+91">+91 (India)</SelectItem>
+                      <SelectItem value="+61">+61 (Australia)</SelectItem>
+                      <SelectItem value="+65">+65 (Singapore)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    placeholder="Enter phone number"
+                    value={editPhone.replace(/^\+\d+\s?/, "")}
+                    onChange={(e) => {
+                      const countryCode = editPhone.match(/^\+\d+/)?.[0] || "+1";
+                      setEditPhone(`${countryCode} ${e.target.value}`);
+                    }}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={() => handleVerificationRequest("phone")}
+                    disabled={isVerifying || !editPhone.trim()}
+                    className="whitespace-nowrap"
+                  >
+                    {isVerifying ? "Sending..." : "Verify"}
+                  </Button>
+                </div>
+                
+                {verificationType === "phone" && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 className="font-medium text-blue-900 mb-3">Verify Phone Number</h4>
+                    <p className="text-sm text-blue-700 mb-3">
+                      Enter the 6-digit verification code sent to {editPhone}
+                    </p>
+                    <div className="flex gap-2 mb-3">
+                      {otp.map((digit, index) => (
+                        <Input
+                          key={index}
+                          id={`otp-${index}`}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handleOtpChange(e.target.value, index)}
+                          onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                          className="w-12 h-12 text-center text-lg font-semibold"
+                        />
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={handleVerifyOtp} className="flex-1" disabled={isVerifying}>
+                        {isVerifying ? "Verifying..." : "Verify Code"}
+                      </Button>
+                      <Button variant="outline" onClick={cancelEdit} className="flex-1">
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-2">
+                  <Button onClick={handleSavePhone} className="flex-1" disabled={verificationType !== null}>
+                    Save
+                  </Button>
+                  <Button variant="outline" onClick={cancelEdit} className="flex-1">
+                    Cancel
+                  </Button>
+                </div>
               </div>
-              <Switch
-                checked={notificationSettings.emailNotifications}
-                onCheckedChange={(checked) => handleNotificationChange("emailNotifications", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Push Notifications</div>
-                <div className="text-sm text-gray-600">Receive push notifications for new bookings</div>
-              </div>
-              <Switch
-                checked={notificationSettings.pushNotifications}
-                onCheckedChange={(checked) => handleNotificationChange("pushNotifications", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">SMS Notifications</div>
-                <div className="text-sm text-gray-600">Receive SMS alerts for urgent matters</div>
-              </div>
-              <Switch
-                checked={notificationSettings.smsNotifications}
-                onCheckedChange={(checked) => handleNotificationChange("smsNotifications", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">New Booking Alerts</div>
-                <div className="text-sm text-gray-600">Get notified when new bookings are made</div>
-              </div>
-              <Switch
-                checked={notificationSettings.bookingAlerts}
-                onCheckedChange={(checked) => handleNotificationChange("bookingAlerts", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Payment Notifications</div>
-                <div className="text-sm text-gray-600">Receive updates about payments</div>
-              </div>
-              <Switch
-                checked={notificationSettings.paymentNotifications}
-                onCheckedChange={(checked) => handleNotificationChange("paymentNotifications", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Review Notifications</div>
-                <div className="text-sm text-gray-600">Get notified when you receive new reviews</div>
-              </div>
-              <Switch
-                checked={notificationSettings.reviewNotifications}
-                onCheckedChange={(checked) => handleNotificationChange("reviewNotifications", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Maintenance Reminders</div>
-                <div className="text-sm text-gray-600">Receive maintenance schedule reminders</div>
-              </div>
-              <Switch
-                checked={notificationSettings.maintenanceReminders}
-                onCheckedChange={(checked) => handleNotificationChange("maintenanceReminders", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Marketing Emails</div>
-                <div className="text-sm text-gray-600">Receive promotional content and tips</div>
-              </div>
-              <Switch
-                checked={notificationSettings.marketingEmails}
-                onCheckedChange={(checked) => handleNotificationChange("marketingEmails", checked)}
-              />
-            </div>
+            )}
           </div>
 
-          <Button onClick={() => handleSaveSettings("Notification")}>Save Preferences</Button>
-        </CardContent>
-      </Card> */}
-
-      {/* Privacy & Visibility */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5" />
-            Privacy & Visibility
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Venue Visibility</Label>
-              <Select
-                value={privacySettings.venueVisibility}
-                onValueChange={(value) => handlePrivacyChange("venueVisibility", value)}
+          {/* Email ID */}
+          <div className="border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <div className="font-medium">Email ID</div>
+                <p className="text-gray-500">{settings.email}</p>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setEditingField(editingField === "email" ? null : "email")}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="public">Public - Anyone can find your venue</SelectItem>
-                  <SelectItem value="registered">Registered Users Only</SelectItem>
-                  <SelectItem value="private">Private - By invitation only</SelectItem>
-                </SelectContent>
-              </Select>
+                {editingField === "email" ? "Cancel" : "Edit"}
+              </Button>
             </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Show Contact Information</div>
-                <div className="text-sm text-gray-600">Display your contact details publicly</div>
+            
+            {editingField === "email" && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    type="email"
+                    placeholder="Enter new email address"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={() => handleVerificationRequest("email")}
+                    disabled={isVerifying || !editEmail.trim()}
+                    className="whitespace-nowrap"
+                  >
+                    {isVerifying ? "Sending..." : "Verify"}
+                  </Button>
+                </div>
+                
+                {verificationType === "email" && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 className="font-medium text-blue-900 mb-3">Verify Email Address</h4>
+                    <p className="text-sm text-blue-700 mb-3">
+                      Enter the 6-digit verification code sent to {editEmail}
+                    </p>
+                    <div className="flex gap-2 mb-3">
+                      {otp.map((digit, index) => (
+                        <Input
+                          key={index}
+                          id={`otp-${index}`}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handleOtpChange(e.target.value, index)}
+                          onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                          className="w-12 h-12 text-center text-lg font-semibold"
+                        />
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={handleVerifyOtp} className="flex-1" disabled={isVerifying}>
+                        {isVerifying ? "Verifying..." : "Verify Code"}
+                      </Button>
+                      <Button variant="outline" onClick={cancelEdit} className="flex-1">
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-2">
+                  <Button onClick={handleSaveEmail} className="flex-1" disabled={verificationType !== null}>
+                    Save
+                  </Button>
+                  <Button variant="outline" onClick={cancelEdit} className="flex-1">
+                    Cancel
+                  </Button>
+                </div>
               </div>
-              <Switch
-                checked={privacySettings.showContactInfo}
-                onCheckedChange={(checked) => handlePrivacyChange("showContactInfo", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Allow Direct Bookings</div>
-                <div className="text-sm text-gray-600">Let customers book directly without approval</div>
-              </div>
-              <Switch
-                checked={privacySettings.allowDirectBookings}
-                onCheckedChange={(checked) => handlePrivacyChange("allowDirectBookings", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Show in Directory</div>
-                <div className="text-sm text-gray-600">Include your venue in public directories</div>
-              </div>
-              <Switch
-                checked={privacySettings.showInDirectory}
-                onCheckedChange={(checked) => handlePrivacyChange("showInDirectory", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Allow Data Sharing</div>
-                <div className="text-sm text-gray-600">Share analytics data to improve our services</div>
-              </div>
-              <Switch
-                checked={privacySettings.dataSharing}
-                onCheckedChange={(checked) => handlePrivacyChange("dataSharing", checked)}
-              />
-            </div>
+            )}
           </div>
 
-          <Button onClick={() => handleSaveSettings("Privacy")}>Save Privacy Settings</Button>
-        </CardContent>
-      </Card>
-
-      {/* Business Preferences */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building className="w-5 h-5" />
-            Business Preferences
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="timezone" className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  Timezone
-                </Label>
-                <Select
-                  value={businessSettings.timezone}
-                  onValueChange={(value) => handleBusinessChange("timezone", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="asia/kolkata">Asia/Kolkata (IST)</SelectItem>
-                    <SelectItem value="america/new_york">America/New_York (EST)</SelectItem>
-                    <SelectItem value="europe/london">Europe/London (GMT)</SelectItem>
-                    <SelectItem value="asia/tokyo">Asia/Tokyo (JST)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="currency" className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" />
-                  Currency
-                </Label>
-                <Select
-                  value={businessSettings.currency}
-                  onValueChange={(value) => handleBusinessChange("currency", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="inr">INR (₹)</SelectItem>
-                    <SelectItem value="usd">USD ($)</SelectItem>
-                    <SelectItem value="eur">EUR (€)</SelectItem>
-                    <SelectItem value="gbp">GBP (£)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="language" className="flex items-center gap-2">
-                  <GlobeIcon className="w-4 h-4" />
-                  Language
-                </Label>
-                <Select
-                  value={businessSettings.language}
-                  onValueChange={(value) => handleBusinessChange("language", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="english">English</SelectItem>
-                    <SelectItem value="hindi">Hindi</SelectItem>
-                    <SelectItem value="spanish">Spanish</SelectItem>
-                    <SelectItem value="french">French</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="date-format" className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Date Format
-                </Label>
-                <Select
-                  value={businessSettings.dateFormat}
-                  onValueChange={(value) => handleBusinessChange("dateFormat", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dd/mm/yyyy">DD/MM/YYYY</SelectItem>
-                    <SelectItem value="mm/dd/yyyy">MM/DD/YYYY</SelectItem>
-                    <SelectItem value="yyyy-mm-dd">YYYY-MM-DD</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Business Hours
-            </Label>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="start-time" className="text-sm">
-                  Start Time
-                </Label>
-                <Input
-                  id="start-time"
-                  type="time"
-                  value={businessSettings.businessHours.start}
-                  onChange={(e) => handleBusinessHoursChange("start", e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="end-time" className="text-sm">
-                  End Time
-                </Label>
-                <Input
-                  id="end-time"
-                  type="time"
-                  value={businessSettings.businessHours.end}
-                  onChange={(e) => handleBusinessHoursChange("end", e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          <Button onClick={() => handleSaveSettings("Business")}>Save Business Preferences</Button>
-        </CardContent>
-      </Card>
-
-      {/* Danger Zone */}
-      <Card className="border-red-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-red-600">
-            <AlertTriangle className="w-5 h-5" />
-            Danger Zone
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg border-red-200">
+          {/* Introduce Me */}
+          <div className="flex items-center justify-between border-b pb-4">
             <div>
-              <div className="font-medium text-red-600">Delete Venue Account</div>
-              <div className="text-sm text-gray-600">
-                Permanently delete your venue account and all associated data
-              </div>
+              <div className="font-medium">Introduce me</div>
+              <p className="text-gray-500">
+                We will introduce you to other users interested in similar events
+              </p>
             </div>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="flex items-center gap-2">
-                  <Trash2 className="w-4 h-4" />
-                  Delete Account
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete your venue account, all bookings,
-                    contracts, and remove all data from our servers.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteAccount} className="bg-red-600 hover:bg-red-700">
-                    Yes, delete my venue account
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <Switch
+              checked={settings.introduceMe}
+              onCheckedChange={() => handleToggle("introduceMe")}
+            />
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Email Notifications */}
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium">Email Notifications</div>
+              <p className="text-gray-500">
+                Receive event updates via email
+              </p>
+            </div>
+            <Switch
+              checked={settings.emailNotifications}
+              onCheckedChange={handleEmailNotificationsToggle}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ---- Notification Preferences ---- */}
+      <section>
+        <h2 className="text-lg font-semibold mb-4">Notification Preferences</h2>
+        <div className="space-y-5 text-sm">
+          <div className="flex items-center justify-between border-b pb-4">
+            <div>
+              <div className="font-medium">Event Reminders</div>
+              <p className="text-gray-500">Get notified about upcoming events</p>
+            </div>
+            <Switch
+              checked={settings.eventReminders}
+              onCheckedChange={() => handleToggle("eventReminders")}
+            />
+          </div>
+
+          <div className="flex items-center justify-between border-b pb-4">
+            <div>
+              <div className="font-medium">New Messages</div>
+              <p className="text-gray-500">Get notified about new messages</p>
+            </div>
+            <Switch
+              checked={settings.newMessages}
+              onCheckedChange={() => handleToggle("newMessages")}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium">Connection Requests</div>
+              <p className="text-gray-500">
+                Get notified about new connection requests
+              </p>
+            </div>
+            <Switch
+              checked={settings.connectionRequests}
+              onCheckedChange={() => handleToggle("connectionRequests")}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ---- Manage ---- */}
+      <section>
+        <h2 className="text-lg font-semibold mb-4">Manage</h2>
+        <div className="space-y-4 text-sm">
+          <div className="flex items-center justify-between text-red-600 border-b pb-4">
+            <div>
+              <p className="font-medium">Deactivate my account</p>
+              <p className="text-gray-500">Hide your profile from everywhere.</p>
+            </div>
+            <Button variant="ghost" className="text-gray-600">›</Button>
+          </div>
+        </div>
+      </section>
     </div>
-  )
+  );
 }

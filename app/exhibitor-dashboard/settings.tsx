@@ -1,668 +1,446 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { useToast } from "@/hooks/use-toast"
-import {
-  Lock,
-  Bell,
-  Shield,
-  Eye,
-  EyeOff,
-  User,
-  Mail,
-  Phone,
-  Globe,
-  Trash2,
-  Save,
-  AlertTriangle,
-  Calendar,
-  MessageSquare,
-  Users,
-  FileText,
-} from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface ExhibitorData {
-  id: string
-  firstName: string
-  lastName: string
-  email: string
-  phone?: string
-  company?: string
-  jobTitle?: string
-  bio?: string
-  website?: string
-  linkedin?: string
-  twitter?: string
-  avatar?: string
-}
+export function ExhibitorSettings() {
+  const { toast } = useToast();
 
-export default function ExhibitorSettings({ exhibitorId }: { exhibitorId: string }) {
-  const { toast } = useToast()
-  const [loading, setLoading] = useState(true)
-  const [exhibitorData, setExhibitorData] = useState<ExhibitorData | null>(null)
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  })
-
-  const [notificationSettings, setNotificationSettings] = useState({
+  const [settings, setSettings] = useState({
+    profileVisibility: "Public",
+    phoneNumber: "+1 (555) 123-4567",
+    email: "user@example.com",
+    introduceMe: true,
     emailNotifications: true,
-    pushNotifications: true,
-    smsNotifications: false,
     eventReminders: true,
-    leadNotifications: true,
-    appointmentReminders: true,
-    promotionalEmails: false,
-    weeklyReports: true,
-  })
+    newMessages: true,
+    connectionRequests: true,
+  });
 
-  const [privacySettings, setPrivacySettings] = useState({
-    profileVisibility: "public",
-    showContactInfo: true,
-    allowDirectMessages: true,
-    showInDirectory: true,
-    dataSharing: false,
-  })
+  const [editPhone, setEditPhone] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editingField, setEditingField] = useState<"phone" | "email" | "profile" | null>(null);
+  const [verificationType, setVerificationType] = useState<"email" | "phone" | null>(null);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  const [accountSettings, setAccountSettings] = useState({
-    language: "english",
-    timezone: "asia/kolkata",
-    currency: "inr",
-    dateFormat: "dd/mm/yyyy",
-  })
+  const handleToggle = (key: keyof typeof settings) => {
+    setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
-  // Fetch exhibitor data on component mount
-  useEffect(() => {
-    const fetchExhibitorData = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch(`/api/exhibitors/${exhibitorId}`)
-        if (!response.ok) throw new Error("Failed to fetch exhibitor data")
-
-        const data = await response.json()
-        if (data.success) {
-          setExhibitorData(data.exhibitor)
-        }
-      } catch (error) {
-        console.error("Error fetching exhibitor data:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load exhibitor data",
-          variant: "destructive",
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (exhibitorId) {
-      fetchExhibitorData()
-    }
-  }, [exhibitorId, toast])
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPasswordData({
-      ...passwordData,
-      [e.target.name]: e.target.value,
-    })
-  }
-
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
+  const handleSavePhone = () => {
+    if (editPhone.trim()) {
+      setSettings((prev) => ({ ...prev, phoneNumber: editPhone }));
+      setEditPhone("");
+      setEditingField(null);
       toast({
-        title: "Error",
-        description: "New passwords don't match!",
-        variant: "destructive",
-      })
-      return
+        title: "Phone number updated",
+        description: "Your phone number has been updated successfully.",
+      });
     }
-    if (passwordData.newPassword.length < 8) {
+  };
+
+  const handleSaveEmail = () => {
+    if (editEmail.trim()) {
+      setSettings((prev) => ({ ...prev, email: editEmail }));
+      setEditEmail("");
+      setEditingField(null);
       toast({
-        title: "Error",
-        description: "Password must be at least 8 characters long!",
-        variant: "destructive",
-      })
-      return
+        title: "Email updated",
+        description: "Your email has been updated successfully.",
+      });
     }
+  };
 
-    try {
-      const response = await fetch(`/api/exhibitors/${exhibitorId}/password`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword,
-        }),
-      })
-
-      if (!response.ok) throw new Error("Failed to update password")
-
-      setPasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      })
-
-      toast({
-        title: "Success",
-        description: "Password updated successfully!",
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update password",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleNotificationChange = (key: string, value: boolean) => {
-    setNotificationSettings({
-      ...notificationSettings,
-      [key]: value,
-    })
-  }
-
-  const handlePrivacyChange = (key: string, value: boolean | string) => {
-    setPrivacySettings({
-      ...privacySettings,
-      [key]: value,
-    })
-  }
-
-  const handleAccountChange = (key: string, value: string) => {
-    setAccountSettings({
-      ...accountSettings,
-      [key]: value,
-    })
-  }
-
-  const handleSaveSettings = (section: string) => {
-    // In a real app, this would save to the backend
+  const handleProfileVisibilityChange = (value: string) => {
+    setSettings((prev) => ({ ...prev, profileVisibility: value }));
     toast({
-      title: "Success",
-      description: `${section} settings updated successfully!`,
-    })
-  }
+      title: "Profile visibility updated",
+      description: `Your profile is now ${value.toLowerCase()}.`,
+    });
+  };
 
-  const handleDeleteAccount = async () => {
-    try {
-      const response = await fetch(`/api/exhibitors/${exhibitorId}`, {
-        method: "DELETE",
-      })
+  const handleEmailNotificationsToggle = () => {
+    const newValue = !settings.emailNotifications;
+    setSettings((prev) => ({ ...prev, emailNotifications: newValue }));
+    toast({
+      title: newValue ? "Email notifications enabled" : "Email notifications disabled",
+      description: newValue 
+        ? "You will receive event updates via email."
+        : "You will no longer receive email notifications.",
+    });
+  };
 
-      if (!response.ok) throw new Error("Failed to delete account")
+  const cancelEdit = () => {
+    setEditPhone("");
+    setEditEmail("");
+    setEditingField(null);
+    setVerificationType(null);
+    setOtp(["", "", "", "", "", ""]);
+  };
 
+  const handleVerificationRequest = (type: "email" | "phone") => {
+    setVerificationType(type);
+    setIsVerifying(true);
+    
+    // Simulate sending OTP
+    setTimeout(() => {
+      setIsVerifying(false);
       toast({
-        title: "Account Deletion",
-        description: "Account deletion request submitted. You will receive a confirmation email.",
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete account",
-        variant: "destructive",
-      })
+        title: "Verification code sent",
+        description: `A 6-digit code has been sent to your ${type}.`,
+      });
+    }, 1500);
+  };
+
+  const handleOtpChange = (value: string, index: number) => {
+    if (!/^\d?$/.test(value)) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    // Auto-focus next input
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`otp-${index + 1}`);
+      if (nextInput) nextInput.focus();
     }
-  }
+  };
 
-  // Add loading state
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
+  const handleOtpKeyDown = (e: React.KeyboardEvent, index: number) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-${index - 1}`);
+      if (prevInput) prevInput.focus();
+    }
+  };
 
-  if (!exhibitorData) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-gray-500">No exhibitor data found</p>
-      </div>
-    )
-  }
+  const handleVerifyOtp = () => {
+    const enteredOtp = otp.join("");
+    if (enteredOtp.length !== 6) {
+      toast({
+        title: "Invalid OTP",
+        description: "Please enter the complete 6-digit code.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Simulate OTP verification
+    setIsVerifying(true);
+    setTimeout(() => {
+      setIsVerifying(false);
+      toast({
+        title: "Verification successful",
+        description: `Your ${verificationType} has been verified successfully.`,
+      });
+      setVerificationType(null);
+      setOtp(["", "", "", "", "", ""]);
+    }, 1500);
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Password & Security */}
-      {/* <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock className="w-5 h-5" />
-            Password & Security
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handlePasswordSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="current-password">Current Password</Label>
-                <div className="relative">
-                  <Input
-                    id="current-password"
-                    name="currentPassword"
-                    type={showCurrentPassword ? "text" : "password"}
-                    value={passwordData.currentPassword}
-                    onChange={handlePasswordChange}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
+    <div className="w-full px-6 py-6 space-y-10 bg-white">
+      {/* ---- Privacy Settings ---- */}
+      <section>
+        <h2 className="text-lg font-semibold mb-4">Privacy Settings</h2>
+        <div className="space-y-5 text-sm">
+          {/* Profile Visibility */}
+          <div className="border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <div className="font-medium">Profile Visibility</div>
+                <p className="text-gray-500">Who can see your profile</p>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="new-password">New Password</Label>
-                <div className="relative">
-                  <Input
-                    id="new-password"
-                    name="newPassword"
-                    type={showNewPassword ? "text" : "password"}
-                    value={passwordData.newPassword}
-                    onChange={handlePasswordChange}
-                    required
-                    minLength={8}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm New Password</Label>
-              <div className="relative">
-                <Input
-                  id="confirm-password"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={passwordData.confirmPassword}
-                  onChange={handlePasswordChange}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-600">{settings.profileVisibility}</span>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setEditingField(editingField === "profile" ? null : "profile")}
                 >
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+                  {editingField === "profile" ? "Cancel" : "Edit"}
+                </Button>
               </div>
             </div>
+            
+            {editingField === "profile" && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg space-y-3">
+                <div className="flex gap-2">
+                  {["Public", "Friends Only"].map((option) => (
+                    <Button
+                      key={option}
+                      variant={settings.profileVisibility === option ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleProfileVisibilityChange(option)}
+                    >
+                      {option}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
-            <div className="flex justify-end">
-              <Button type="submit" className="flex items-center gap-2">
-                <Save className="w-4 h-4" />
-                Update Password
+          {/* Phone Number */}
+          <div className="border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <div className="font-medium">Phone Number</div>
+                <p className="text-gray-500">{settings.phoneNumber}</p>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setEditingField(editingField === "phone" ? null : "phone")}
+                >
+                {editingField === "phone" ? "Cancel" : "Edit"}
               </Button>
             </div>
-          </form>
-        </CardContent>
-      </Card> */}
-
-      {/* Notification Preferences */}
-      {/* <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="w-5 h-5" />
-            Notification Preferences
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Email Notifications</div>
-                <div className="text-sm text-gray-600">Receive updates and alerts via email</div>
+            
+            {editingField === "phone" && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg space-y-3">
+                <div className="flex gap-2">
+                  <Select onValueChange={(value) => setEditPhone(value)}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select country code" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="+1">+1 (USA)</SelectItem>
+                      <SelectItem value="+44">+44 (UK)</SelectItem>
+                      <SelectItem value="+91">+91 (India)</SelectItem>
+                      <SelectItem value="+61">+61 (Australia)</SelectItem>
+                      <SelectItem value="+65">+65 (Singapore)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    placeholder="Enter phone number"
+                    value={editPhone.replace(/^\+\d+\s?/, "")}
+                    onChange={(e) => {
+                      const countryCode = editPhone.match(/^\+\d+/)?.[0] || "+1";
+                      setEditPhone(`${countryCode} ${e.target.value}`);
+                    }}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={() => handleVerificationRequest("phone")}
+                    disabled={isVerifying || !editPhone.trim()}
+                    className="whitespace-nowrap"
+                  >
+                    {isVerifying ? "Sending..." : "Verify"}
+                  </Button>
+                </div>
+                
+                {verificationType === "phone" && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 className="font-medium text-blue-900 mb-3">Verify Phone Number</h4>
+                    <p className="text-sm text-blue-700 mb-3">
+                      Enter the 6-digit verification code sent to {editPhone}
+                    </p>
+                    <div className="flex gap-2 mb-3">
+                      {otp.map((digit, index) => (
+                        <Input
+                          key={index}
+                          id={`otp-${index}`}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handleOtpChange(e.target.value, index)}
+                          onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                          className="w-12 h-12 text-center text-lg font-semibold"
+                        />
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={handleVerifyOtp} className="flex-1" disabled={isVerifying}>
+                        {isVerifying ? "Verifying..." : "Verify Code"}
+                      </Button>
+                      <Button variant="outline" onClick={cancelEdit} className="flex-1">
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-2">
+                  <Button onClick={handleSavePhone} className="flex-1" disabled={verificationType !== null}>
+                    Save
+                  </Button>
+                  <Button variant="outline" onClick={cancelEdit} className="flex-1">
+                    Cancel
+                  </Button>
+                </div>
               </div>
-              <Switch
-                checked={notificationSettings.emailNotifications}
-                onCheckedChange={(checked) => handleNotificationChange("emailNotifications", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Push Notifications</div>
-                <div className="text-sm text-gray-600">Receive push notifications on your device</div>
-              </div>
-              <Switch
-                checked={notificationSettings.pushNotifications}
-                onCheckedChange={(checked) => handleNotificationChange("pushNotifications", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">SMS Notifications</div>
-                <div className="text-sm text-gray-600">Receive SMS alerts for urgent matters</div>
-              </div>
-              <Switch
-                checked={notificationSettings.smsNotifications}
-                onCheckedChange={(checked) => handleNotificationChange("smsNotifications", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Event Reminders</div>
-                <div className="text-sm text-gray-600">Get reminders for upcoming events</div>
-              </div>
-              <Switch
-                checked={notificationSettings.eventReminders}
-                onCheckedChange={(checked) => handleNotificationChange("eventReminders", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">New Lead Alerts</div>
-                <div className="text-sm text-gray-600">Get notified when you receive new leads</div>
-              </div>
-              <Switch
-                checked={notificationSettings.leadNotifications}
-                onCheckedChange={(checked) => handleNotificationChange("leadNotifications", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Appointment Reminders</div>
-                <div className="text-sm text-gray-600">Receive reminders for scheduled appointments</div>
-              </div>
-              <Switch
-                checked={notificationSettings.appointmentReminders}
-                onCheckedChange={(checked) => handleNotificationChange("appointmentReminders", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Promotional Emails</div>
-                <div className="text-sm text-gray-600">Receive promotional content and offers</div>
-              </div>
-              <Switch
-                checked={notificationSettings.promotionalEmails}
-                onCheckedChange={(checked) => handleNotificationChange("promotionalEmails", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Weekly Reports</div>
-                <div className="text-sm text-gray-600">Receive weekly performance reports</div>
-              </div>
-              <Switch
-                checked={notificationSettings.weeklyReports}
-                onCheckedChange={(checked) => handleNotificationChange("weeklyReports", checked)}
-              />
-            </div>
+            )}
           </div>
 
-          <Button onClick={() => handleSaveSettings("Notification")}>Save Preferences</Button>
-        </CardContent>
-      </Card> */}
-
-      {/* Privacy & Visibility */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5" />
-            Privacy & Visibility
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Profile Visibility
-              </Label>
-              <Select
-                value={privacySettings.profileVisibility}
-                onValueChange={(value) => handlePrivacyChange("profileVisibility", value)}
+          {/* Email ID */}
+          <div className="border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <div className="font-medium">Email ID</div>
+                <p className="text-gray-500">{settings.email}</p>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setEditingField(editingField === "email" ? null : "email")}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="public">Public - Anyone can view your profile</SelectItem>
-                  <SelectItem value="registered">Registered Users Only</SelectItem>
-                  <SelectItem value="private">Private - By invitation only</SelectItem>
-                </SelectContent>
-              </Select>
+                {editingField === "email" ? "Cancel" : "Edit"}
+              </Button>
             </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Show Contact Information</div>
-                <div className="text-sm text-gray-600">Display your contact details publicly</div>
+            
+            {editingField === "email" && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    type="email"
+                    placeholder="Enter new email address"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={() => handleVerificationRequest("email")}
+                    disabled={isVerifying || !editEmail.trim()}
+                    className="whitespace-nowrap"
+                  >
+                    {isVerifying ? "Sending..." : "Verify"}
+                  </Button>
+                </div>
+                
+                {verificationType === "email" && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 className="font-medium text-blue-900 mb-3">Verify Email Address</h4>
+                    <p className="text-sm text-blue-700 mb-3">
+                      Enter the 6-digit verification code sent to {editEmail}
+                    </p>
+                    <div className="flex gap-2 mb-3">
+                      {otp.map((digit, index) => (
+                        <Input
+                          key={index}
+                          id={`otp-${index}`}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handleOtpChange(e.target.value, index)}
+                          onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                          className="w-12 h-12 text-center text-lg font-semibold"
+                        />
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={handleVerifyOtp} className="flex-1" disabled={isVerifying}>
+                        {isVerifying ? "Verifying..." : "Verify Code"}
+                      </Button>
+                      <Button variant="outline" onClick={cancelEdit} className="flex-1">
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-2">
+                  <Button onClick={handleSaveEmail} className="flex-1" disabled={verificationType !== null}>
+                    Save
+                  </Button>
+                  <Button variant="outline" onClick={cancelEdit} className="flex-1">
+                    Cancel
+                  </Button>
+                </div>
               </div>
-              <Switch
-                checked={privacySettings.showContactInfo}
-                onCheckedChange={(checked) => handlePrivacyChange("showContactInfo", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Allow Direct Messages</div>
-                <div className="text-sm text-gray-600">Let other users send you direct messages</div>
-              </div>
-              <Switch
-                checked={privacySettings.allowDirectMessages}
-                onCheckedChange={(checked) => handlePrivacyChange("allowDirectMessages", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Show in Directory</div>
-                <div className="text-sm text-gray-600">Include your profile in public directories</div>
-              </div>
-              <Switch
-                checked={privacySettings.showInDirectory}
-                onCheckedChange={(checked) => handlePrivacyChange("showInDirectory", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Allow Data Sharing</div>
-                <div className="text-sm text-gray-600">Share analytics data to improve our services</div>
-              </div>
-              <Switch
-                checked={privacySettings.dataSharing}
-                onCheckedChange={(checked) => handlePrivacyChange("dataSharing", checked)}
-              />
-            </div>
+            )}
           </div>
 
-          <Button onClick={() => handleSaveSettings("Privacy")}>Save Privacy Settings</Button>
-        </CardContent>
-      </Card>
-
-      {/* Account Preferences */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="w-5 h-5" />
-            Account Preferences
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Globe className="w-4 h-4" />
-                  Language
-                </Label>
-                <Select
-                  value={accountSettings.language}
-                  onValueChange={(value) => handleAccountChange("language", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="english">English</SelectItem>
-                    <SelectItem value="hindi">Hindi</SelectItem>
-                    <SelectItem value="spanish">Spanish</SelectItem>
-                    <SelectItem value="french">French</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Timezone
-                </Label>
-                <Select
-                  value={accountSettings.timezone}
-                  onValueChange={(value) => handleAccountChange("timezone", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="asia/kolkata">Asia/Kolkata (IST)</SelectItem>
-                    <SelectItem value="america/new_york">America/New_York (EST)</SelectItem>
-                    <SelectItem value="europe/london">Europe/London (GMT)</SelectItem>
-                    <SelectItem value="asia/tokyo">Asia/Tokyo (JST)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  Currency
-                </Label>
-                <Select
-                  value={accountSettings.currency}
-                  onValueChange={(value) => handleAccountChange("currency", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="inr">INR (₹)</SelectItem>
-                    <SelectItem value="usd">USD ($)</SelectItem>
-                    <SelectItem value="eur">EUR (€)</SelectItem>
-                    <SelectItem value="gbp">GBP (£)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Date Format
-                </Label>
-                <Select
-                  value={accountSettings.dateFormat}
-                  onValueChange={(value) => handleAccountChange("dateFormat", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dd/mm/yyyy">DD/MM/YYYY</SelectItem>
-                    <SelectItem value="mm/dd/yyyy">MM/DD/YYYY</SelectItem>
-                    <SelectItem value="yyyy-mm-dd">YYYY-MM-DD</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <Button onClick={() => handleSaveSettings("Account")}>Save Preferences</Button>
-        </CardContent>
-      </Card>
-
-      {/* Danger Zone */}
-      <Card className="border-red-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-red-600">
-            <AlertTriangle className="w-5 h-5" />
-            Danger Zone
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg border-red-200">
+          {/* Introduce Me */}
+          <div className="flex items-center justify-between border-b pb-4">
             <div>
-              <div className="font-medium text-red-600">Delete Account</div>
-              <div className="text-sm text-gray-600">
-                Permanently delete your account and all associated data
-              </div>
+              <div className="font-medium">Introduce me</div>
+              <p className="text-gray-500">
+                We will introduce you to other users interested in similar events
+              </p>
             </div>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="flex items-center gap-2">
-                  <Trash2 className="w-4 h-4" />
-                  Delete Account
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete your account and remove your data
-                    from our servers.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteAccount} className="bg-red-600 hover:bg-red-700">
-                    Yes, delete my account
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <Switch
+              checked={settings.introduceMe}
+              onCheckedChange={() => handleToggle("introduceMe")}
+            />
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Email Notifications */}
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium">Email Notifications</div>
+              <p className="text-gray-500">
+                Receive event updates via email
+              </p>
+            </div>
+            <Switch
+              checked={settings.emailNotifications}
+              onCheckedChange={handleEmailNotificationsToggle}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ---- Notification Preferences ---- */}
+      <section>
+        <h2 className="text-lg font-semibold mb-4">Notification Preferences</h2>
+        <div className="space-y-5 text-sm">
+          <div className="flex items-center justify-between border-b pb-4">
+            <div>
+              <div className="font-medium">Event Reminders</div>
+              <p className="text-gray-500">Get notified about upcoming events</p>
+            </div>
+            <Switch
+              checked={settings.eventReminders}
+              onCheckedChange={() => handleToggle("eventReminders")}
+            />
+          </div>
+
+          <div className="flex items-center justify-between border-b pb-4">
+            <div>
+              <div className="font-medium">New Messages</div>
+              <p className="text-gray-500">Get notified about new messages</p>
+            </div>
+            <Switch
+              checked={settings.newMessages}
+              onCheckedChange={() => handleToggle("newMessages")}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium">Connection Requests</div>
+              <p className="text-gray-500">
+                Get notified about new connection requests
+              </p>
+            </div>
+            <Switch
+              checked={settings.connectionRequests}
+              onCheckedChange={() => handleToggle("connectionRequests")}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ---- Manage ---- */}
+      <section>
+        <h2 className="text-lg font-semibold mb-4">Manage</h2>
+        <div className="space-y-4 text-sm">
+          <div className="flex items-center justify-between text-red-600 border-b pb-4">
+            <div>
+              <p className="font-medium">Deactivate my account</p>
+              <p className="text-gray-500">Hide your profile from everywhere.</p>
+            </div>
+            <Button variant="ghost" className="text-gray-600">›</Button>
+          </div>
+        </div>
+      </section>
     </div>
-  )
+  );
 }
