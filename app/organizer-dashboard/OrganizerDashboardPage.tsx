@@ -460,25 +460,12 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
           <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
-          {/* <h1 className="text-lg font-semibold text-gray-900 truncate flex-1 text-center px-4">
-            {getCurrentSectionTitle()}
-          </h1> */}
           <div className="w-9" />
         </div>
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto">
-            {/* Content Header */}
-            <div className="mb-6">
-              {/* <h1 className="text-2xl font-bold text-gray-900">
-                {getCurrentSectionTitle()}
-              </h1> */}
-              {/* <p className="text-gray-600 mt-1">
-                Manage your organizer account and events
-              </p> */}
-            </div>
-
             {/* Dynamic Content */}
             <div className="">
               {renderContent()}
