@@ -25,7 +25,7 @@ import { signOut } from "next-auth/react"
 import DashboardOverview from "./dashboard-overview"
 import MyEvents from "./my-events"
 import CreateEvent from "./create-event"
-import SettingsPanel from "./settings-panel"
+import { OrganizerSettings } from "./settings-panel"
 import OrganizerInfo from "./organizer-info"
 import { HelpSupport } from "@/components/HelpSupport"
 import MessagesCenter from "./messages-center"
@@ -33,6 +33,7 @@ import { ConnectionsSection } from "../dashboard/connections-section"
 import { MyAppointments } from "./my-appointments"
 import { useDashboard } from "@/contexts/dashboard-context"
 import { FeedbackSection } from "./FeedbackSection"
+import { OrganizerHelpSupport } from "./help-support"
 
 interface OrganizerDashboardPageProps {
   organizerId: string
@@ -321,11 +322,9 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
       case "create-event":
         return <CreateEvent organizerId={organizerId} />
       case "settings":
-        return <SettingsPanel organizerData={organizerData} onUpdate={function (data: Partial<OrganizerData>): void {
-          throw new Error("Function not implemented.")
-        }} />
+        return <OrganizerSettings/>
       case "help-support":
-        return <HelpSupport />
+        return <OrganizerHelpSupport />
       case "connect":
         return <ConnectionsSection userId={organizerData.id} />
       case "messages":

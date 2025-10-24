@@ -40,7 +40,7 @@ import LeadManagement from "./lead-management"
 import AppointmentScheduling from "./appointment-scheduling"
 import AnalyticsReports from "./analytics-reports"
 import PromotionsMarketing from "./promotions-marketing"
-import ExhibitorSettings from "./settings"
+import { ExhibitorSettings } from "./settings"
 import { ConnectionsSection } from "@/app/dashboard/connections-section"
 import { HelpSupport } from "@/components/HelpSupport"
 import { FollowManagement } from "./follow-management"
@@ -48,6 +48,7 @@ import { ActiveEventsCard } from "./TotalExhibitorEvent"
 import { FollowersCountCard } from "./FollowersCountCard"
 import { AppointmentsCountCard } from "./AppointmentsCountCard"
 import ActivePromotions from "./active-promotion"
+import { ExhibitorHelpSupport } from "./help-support"
 
 interface ExhibitorData {
   id: string
@@ -389,9 +390,9 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
       case "active-promotions":
         return <ActivePromotions exhibitorId={exhibitor.id} />
       case "help":
-        return <HelpSupport />
+        return <ExhibitorHelpSupport />
       case "settings":
-        return <ExhibitorSettings exhibitorId={exhibitor.id} />
+        return <ExhibitorSettings />
       default:
         return <CompanyInfo exhibitorId={exhibitor.id} onUpdate={handleUpdate} exhibitorData={exhibitor} />
     }
