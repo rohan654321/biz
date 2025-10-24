@@ -23,6 +23,7 @@ import {
   ExternalLink,
   Package,
   TrendingUp,
+  Link,
 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { format } from "date-fns"
@@ -706,175 +707,153 @@ export default function ExhibitorPage() {
             <TabsTrigger value="reviews">Reviews ({stats.totalReviews})</TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Company Highlights */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* About Section */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                      <Building className="w-5 h-5" />
-                      About {exhibitorName}
-                    </h3>
-                    <p className="text-gray-600 leading-relaxed">{exhibitorDescription}</p>
-                  </CardContent>
-                </Card>
+{/* Overview Tab */}
+<TabsContent value="overview" className="space-y-6">
+  <div className="w-full space-y-6">
+    {/* About Section */}
+    <Card className="border-0 shadow-sm w-full">
+      <CardContent className="p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+            <Building className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-gray-900">About {exhibitorName}</h3>
+            <p className="text-sm text-gray-500 mt-1">Company overview and background</p>
+          </div>
+        </div>
+        <p className="text-gray-700 leading-relaxed text-[15px] w-full">{exhibitorDescription}</p>
+      </CardContent>
+    </Card>
 
-                {/* Recent Events */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold mb-6">Recent Event Participation</h3>
-                    {eventsLoading ? (
-                      <div className="text-center py-8">Loading events...</div>
-                    ) : booths.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        No events found for this exhibitor.
-                      </div>
-                    ) : (
-                      <>
-                        <div className="space-y-4">
-                          {booths.slice(0, 3).map((booth) => {
-                            const event = booth.event;
-                            const isUpcoming = new Date(event.endDate) > new Date();
-
-                            return (
-                              <div
-                                key={booth.id}
-                                className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                                onClick={() => {
-                                  // Navigate to event details page or open modal
-                                  console.log('Event clicked:', event.id);
-                                }}
-                              >
-                                {/* Event Image */}
-                                <div className="relative w-16 h-16 flex-shrink-0">
-                                  <Image
-                                    alt={event.title || "Event"}
-                                    src={event.bannerImage || event.thumbnailImage || "/images/signupimg.png"}
-                                    fill
-                                    className="object-cover rounded-md"
-                                  />
-                                </div>
-
-                                {/* Event Details */}
-                                <div className="flex-1 min-w-0">
-                                  {/* Event Title with Rating */}
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <h4 className="font-semibold text-gray-900 truncate">
-                                      {event.title || "Untitled Event"}
-                                    </h4>
-                                    <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded">
-                                      <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                                      <span className="text-xs font-medium text-yellow-800">
-                                        {event.averageRating || "4.5"}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  {/* Event Date */}
-                                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                                    <Calendar className="w-4 h-4" />
-                                    <span>{formatDateRange(event.startDate, event.endDate)}</span>
-                                  </div>
-
-                                  {/* Event Location */}
-                                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                                    <MapPin className="w-4 h-4" />
-                                    <span className="truncate">{getLocationString(event.venue)}</span>
-                                  </div>
-
-                                  {/* Booth Information */}
-                                  <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                                    <Building className="w-4 h-4" />
-                                    <span>Booth: {booth.boothNumber}</span>
-                                  </div>
-                                </div>
-
-                                {/* Status Badge */}
-                                <div className="flex-shrink-0">
-                                  <Badge
-                                    variant={isUpcoming ? "default" : "secondary"}
-                                    className="ml-2"
-                                  >
-                                    {isUpcoming ? "Upcoming" : "Completed"}
-                                  </Badge>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        {/* View All Button - Only show if there are more than 3 events */}
-                        {booths.length > 3 && (
-                          <div className="mt-6 text-center">
-                            <Button
-                              variant="outline"
-                              onClick={() => setActiveTab("events")}
-                              className="border-gray-300 text-gray-700 hover:bg-gray-50"
-                            >
-                              View All Events ({booths.length})
-                            </Button>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Sidebar */}
-              <div className="space-y-6">
-                {/* Specialties */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4">Specialties</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {exhibitorSpecialties.map((specialty, index) => (
-                        <Badge key={index} variant="secondary">
-                          {specialty}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Achievements */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Award className="w-5 h-5" />
-                      Achievements
-                    </h3>
-                    <div className="space-y-2">
-                      {mockDetails.achievements.map((achievement, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm text-gray-600">{achievement}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Certifications */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4">Certifications</h3>
-                    <div className="space-y-2">
-                      {exhibitorCertifications.map((cert, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-blue-500" />
-                          <span className="text-sm text-gray-600">{cert}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+    {/* Recent Events */}
+    <Card className="border-0 shadow-sm w-full">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between mb-6 w-full">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-green-600" />
             </div>
-          </TabsContent>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">Recent Event Participation</h3>
+              <p className="text-sm text-gray-500 mt-1">Latest events and exhibitions</p>
+            </div>
+          </div>
+          {booths.length > 0 && (
+            <Badge variant="secondary" className="px-3 py-1">
+              {booths.length} events
+            </Badge>
+          )}
+        </div>
+
+        {eventsLoading ? (
+          <div className="text-center py-8 w-full">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-500 mt-2">Loading events...</p>
+          </div>
+        ) : booths.length === 0 ? (
+          <div className="text-center py-8 w-full">
+            <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <h4 className="text-lg font-semibold text-gray-600 mb-2">No Events Found</h4>
+            <p className="text-gray-500">This exhibitor hasn't participated in any events yet.</p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-3 w-full">
+              {booths.slice(0, 3).map((booth) => {
+                const event = booth.event;
+                const isUpcoming = new Date(event.endDate) > new Date();
+
+                return (
+                  <div
+                    key={booth.id}
+                    className="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all duration-200 cursor-pointer group w-full"
+                    onClick={() => {
+                      router.push(`/event/${event.id}`);
+                    }}
+                  >
+                    {/* Event Image */}
+                    <div className="relative w-20 h-20 flex-shrink-0">
+                      <Image
+                        alt={event.title || "Event"}
+                        src={event.bannerImage || event.thumbnailImage || "/images/signupimg.png"}
+                        fill
+                        className="object-cover rounded-lg group-hover:scale-105 transition-transform duration-200"
+                      />
+                      {event.isFeatured && (
+                        <Badge className="absolute -top-2 -right-2 bg-yellow-500 text-yellow-900 text-xs">
+                          Featured
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Event Details */}
+                    <div className="flex-1 min-w-0 w-full">
+                      <div className="flex items-start justify-between mb-2 w-full">
+                        <h4 className="font-semibold text-gray-900 text-lg leading-tight group-hover:text-blue-600 transition-colors flex-1">
+                          {event.title || "Untitled Event"}
+                        </h4>
+                        <Badge
+                          variant={isUpcoming ? "default" : "secondary"}
+                          className="ml-2 flex-shrink-0"
+                        >
+                          {isUpcoming ? "Upcoming" : "Completed"}
+                        </Badge>
+                      </div>
+
+                      {/* Rating */}
+                      <div className="flex items-center gap-2 mb-3 w-full">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                          <span className="text-sm font-medium text-gray-700">
+                            {event.averageRating || "4.5"}
+                          </span>
+                        </div>
+                        <span className="text-sm text-gray-500">•</span>
+                        <span className="text-sm text-gray-500">{event.totalReviews || 0} reviews</span>
+                      </div>
+
+                      {/* Event Details */}
+                      <div className="space-y-2 w-full">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          <span>{formatDateRange(event.startDate, event.endDate)}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <MapPin className="w-4 h-4 text-gray-400" />
+                          <span className="truncate">{getLocationString(event.venue)}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Building className="w-4 h-4 text-gray-400" />
+                          <span>Booth: {booth.boothNumber}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* View All Button */}
+            {booths.length > 3 && (
+              <div className="mt-6 text-center w-full">
+                <Button
+                  variant="outline"
+                  onClick={() => setActiveTab("events")}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 px-6 w-full sm:w-auto"
+                >
+                  View All Events ({booths.length})
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  </div>
+</TabsContent>
 
           {/* Events Tab */}
           <TabsContent value="events" className="space-y-6">
@@ -914,7 +893,11 @@ export default function ExhibitorPage() {
                         const event = booth.event;
 
                         return (
-                          <Card key={booth.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                          <Card 
+                            key={booth.id} 
+                            className="hover:shadow-lg transition-shadow cursor-pointer"
+                            onClick={() => router.push(`/event/${event.id}`)}
+                          >
                             <CardContent className="p-0">
                               <div className="relative">
                                 <Image
@@ -1016,7 +999,11 @@ export default function ExhibitorPage() {
                         const event = booth.event;
 
                         return (
-                          <Card key={booth.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                          <Card 
+                            key={booth.id} 
+                            className="hover:shadow-lg transition-shadow cursor-pointer"
+                            onClick={() => router.push(`/event/${event.id}`)}
+                          >
                             <CardContent className="p-0">
                               <div className="relative">
                                 <Image
@@ -1103,90 +1090,67 @@ export default function ExhibitorPage() {
             </Tabs>
           </TabsContent>
 
-          {/* About Tab */}
-          <TabsContent value="about" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4">Company Information</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Founded</label>
-                      <p className="text-gray-900">{exhibitor.foundedYear || "2015"}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Headquarters</label>
-                      <p className="text-gray-900">{exhibitor.headquarters || "Bangalore, India"}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Industry</label>
-                      <p className="text-gray-900">{exhibitor.industry || "Technology"}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Company Size</label>
-                      <p className="text-gray-900">{exhibitor.companySize || "201-500 employees"}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Website</label>
-                      <a
-                        href={exhibitor.website || "#"}
-                        className="text-blue-600 hover:underline flex items-center gap-1"
-                      >
-                        {exhibitor.website || "https://techcorp.com"}
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Contact</label>
-                      <div className="space-y-1">
-                        <p className="text-gray-900">{exhibitor.phone || "+91 98765 43210"}</p>
-                        <p className="text-gray-900">{exhibitor.email}</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+{/* About Tab */}
+<TabsContent value="about" className="space-y-6">
+  {/* Company Information - Full Width */}
+  <Card>
+    <CardContent className="p-8">
+      <h3 className="text-2xl font-bold text-gray-900 mb-6">Company Information</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-500">Founded</label>
+            <p className="text-lg font-semibold text-gray-900">{exhibitor.foundedYear || "2015"}</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">Headquarters</label>
+            <p className="text-lg font-semibold text-gray-900">{exhibitor.headquarters || "Bangalore, India"}</p>
+          </div>
+        </div>
 
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4">Business Statistics</h3>
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Events Participated</span>
-                      <span className="font-semibold">{stats.totalEvents}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Clients Served</span>
-                      <span className="font-semibold">{mockDetails.socialProof.clientsServed}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Projects Completed</span>
-                      <span className="font-semibold">{mockDetails.socialProof.projectsCompleted}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Years of Experience</span>
-                      <span className="font-semibold">{mockDetails.socialProof.yearsExperience}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Average Rating</span>
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="font-semibold">{stats.reviewAvgRating}</span>
-                        <span className="text-sm text-gray-500">({stats.totalReviews})</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-500">Industry</label>
+            <p className="text-lg font-semibold text-gray-900">{exhibitor.industry || "Technology"}</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">Company Size</label>
+            <p className="text-lg font-semibold text-gray-900">{exhibitor.companySize || "201-500 employees"}</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-500">Website</label>
+            <a
+              href={exhibitor.website || "#"}
+              className="text-lg font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
+            >
+              {exhibitor.website || "https://techcorp.com"}
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">Contact</label>
+            <div className="space-y-1">
+              <p className="text-lg font-semibold text-gray-900">{exhibitor.phone || "+91 98765 43210"}</p>
+              <p className="text-sm text-gray-600">{exhibitor.email}</p>
             </div>
+          </div>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-4">Full Description</h3>
-                <p className="text-gray-600 leading-relaxed">{exhibitorDescription}</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+  {/* Company Description */}
+  <Card>
+    <CardContent className="p-8">
+      <h3 className="text-2xl font-bold text-gray-900 mb-6">Company Description</h3>
+      <p className="text-gray-700 leading-relaxed text-lg">{exhibitorDescription}</p>
+    </CardContent>
+  </Card>
+</TabsContent>
 
           {/* Reviews Tab */}
           <TabsContent value="reviews" className="space-y-6">
