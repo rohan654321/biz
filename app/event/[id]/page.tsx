@@ -761,7 +761,9 @@ export default function EventPage({ params }: EventPageProps) {
 
                         {/* Venue Info */}
                         <div>
+                          <Link href={`/venue/${event?.venue?.id}`}>
                           <h3 className="font-semibold text-blue-700 text-base">{event?.venue?.venueName || "Venue Name Unavailable"}</h3>
+                          </Link>
                           <p className="text-gray-600 text-sm mt-1">{event?.venue?.venueAddress || "Address not provided"}</p>
                           <p className="text-gray-600 text-sm">{event?.venue?.venueZipCode || "Zip code not provided"}</p>
                           <p className="text-gray-600 text-sm">{event?.venue?.venueCountry || "Country not provided"}</p>
