@@ -337,16 +337,16 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
     }
   }
 
-  const getCurrentSectionTitle = () => {
-    for (const group of sidebarGroups) {
-      const item = group.items.find((item) => item.id === activeSection)
-      if (item) return item.title
-    }
-    const individualItem = individualSidebarItems.find((item) => item.id === activeSection)
-    if (individualItem) return individualItem.title
+  // const getCurrentSectionTitle = () => {
+  //   for (const group of sidebarGroups) {
+  //     const item = group.items.find((item) => item.id === activeSection)
+  //     if (item) return item.title
+  //   }
+  //   const individualItem = individualSidebarItems.find((item) => item.id === activeSection)
+  //   if (individualItem) return individualItem.title
 
-    return "Dashboard"
-  }
+  //   return "Dashboard"
+  // }
 
   return (
     <div className="flex min-h-screen w-full bg-gray-50">
@@ -460,9 +460,9 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
           <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold text-gray-900 truncate flex-1 text-center px-4">
+          {/* <h1 className="text-lg font-semibold text-gray-900 truncate flex-1 text-center px-4">
             {getCurrentSectionTitle()}
-          </h1>
+          </h1> */}
           <div className="w-9" />
         </div>
 
@@ -471,12 +471,12 @@ export default function OrganizerDashboardSimplified({ organizerId }: OrganizerD
           <div className="max-w-7xl mx-auto">
             {/* Content Header */}
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">
+              {/* <h1 className="text-2xl font-bold text-gray-900">
                 {getCurrentSectionTitle()}
-              </h1>
-              <p className="text-gray-600 mt-1">
+              </h1> */}
+              {/* <p className="text-gray-600 mt-1">
                 Manage your organizer account and events
-              </p>
+              </p> */}
             </div>
 
             {/* Dynamic Content */}
