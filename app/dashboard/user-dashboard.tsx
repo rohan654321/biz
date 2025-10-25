@@ -26,7 +26,7 @@ import { ProfileSection } from "./profile-section"
 import { EventsSection } from "./events-section"
 import { ConnectionsSection } from "./connections-section"
 import MessagesSection from "@/app/organizer-dashboard/messages-center"
-import { SettingsSection } from "./settings-section"
+import { VisitorSettings } from "./settings-section"
 import type { UserData } from "@/types/user"
 import TravelAccommodation from "./TravelAccommodation"
 import { PastEvents } from "./PastEvents"
@@ -240,7 +240,7 @@ export function UserDashboard({ userId }: UserDashboardProps) {
       case "messages":
         return <MessagesSection organizerId={userId} />
       case "settings":
-        return <SettingsSection  />
+        return <VisitorSettings  />
       case "travel":
         return <TravelAccommodation />
       case "Help & Support":

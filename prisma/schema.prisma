@@ -103,6 +103,8 @@ model User {
   // Add these lines to the User model's relationships section:
   venueAppointments        VenueAppointment[]   @relation("VenueAppointments")
   venueAppointmentRequests VenueAppointment[]   @relation("VenueAppointmentRequests")
+  //verification of otps
+  verificationCodes        VerificationCode[]
 
   // Relations for organizer-speaker
   organizerId String? @db.ObjectId
@@ -1356,6 +1358,21 @@ enum VenueAppointmentType {
   TECHNICAL_DISCUSSION
   CONTRACT_DISCUSSION
   FOLLOW_UP
+}
+// Add to your existing Prisma schema
+
+model VerificationCode {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // EMAIL, PHONE
+  code      String
+  verified  Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([userId, type])
+  @@map("verification_codes")
 }
 
 model BadgeSent {
