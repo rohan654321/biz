@@ -23,6 +23,7 @@ import {
   ExternalLink,
   Package,
   TrendingUp,
+  Link,
 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { format } from "date-fns"
@@ -51,51 +52,79 @@ interface Exhibitor {
   createdAt: string
 }
 
-// Define types for event data based on your MongoDB structure
-interface Event {
-  id:string
-  rating: any
-  images: any
-  _id: string
-  title: string
+// Define types for booth data based on your API response
+interface Booth {
+  id: string
+  eventId: string
+  exhibitorId: string
+  spaceId: string
+  spaceReference: string
+  boothNumber: string
+  companyName: string
   description: string
-  shortDescription?: string
-  slug: string
-  status: "DRAFT" | "PUBLISHED" | "CANCELLED" | "upcoming" | "completed" | "cancelled"
-  category: string
-  tags: string[]
-  isFeatured: boolean
-  isVIP: boolean
-  startDate: string | { $date: string }
-  endDate: string | { $date: string }
-  registrationStart: string | { $date: string }
-  registrationEnd: string | { $date: string }
-  timezone: string
-  venueId: string | null
-  isVirtual: boolean
-  virtualLink: string | null
-  address: string
-  location: string | { city?: string; venue?: string }
-  city: string
-  state: string | null
-  country: string
-  zipCode: string | null
-  maxAttendees: number | null
-  currentAttendees: number | { $numberLong: string }
+  additionalPower: number
+  compressedAir: number
+  setupRequirements: {
+    requirements: string
+  }
+  specialRequests: string
+  totalCost: number
   currency: string
-  bannerImage: string | null
-  thumbnailImage: string | null
-  isPublic: boolean
-  requiresApproval: boolean
-  allowWaitlist: boolean
-  refundPolicy: string | null
-  metaTitle: string | null
-  metaDescription: string | null
-  organizerId: string | { $oid: string }
-  createdAt: string | { $date: string }
-  updatedAt: string | { $date: string }
-  averageRating: number
-  totalReviews: number | { $numberLong: string }
+  status: string
+  createdAt: string
+  updatedAt: string
+  exhibitor: any
+  event: {
+    id: string
+    title: string
+    description: string
+    shortDescription?: string
+    slug: string
+    status: "DRAFT" | "PUBLISHED" | "CANCELLED"
+    category: string
+    tags: string[]
+    isFeatured: boolean
+    isVIP: boolean
+    startDate: string
+    endDate: string
+    registrationStart: string
+    registrationEnd: string
+    timezone: string
+    venueId: string | null
+    isVirtual: boolean
+    virtualLink: string | null
+    maxAttendees: number | null
+    currentAttendees: number
+    currency: string
+    bannerImage: string | null
+    thumbnailImage: string | null
+    isPublic: boolean
+    requiresApproval: boolean
+    allowWaitlist: boolean
+    refundPolicy: string | null
+    metaTitle: string | null
+    metaDescription: string | null
+    organizerId: string
+    createdAt: string
+    updatedAt: string
+    averageRating: number
+    totalReviews: number
+    organizer: {
+      id: string
+      firstName: string
+      lastName: string
+      company: string
+    }
+    venue: {
+      id: string
+      venueName: string
+      venueDescription: string
+      venueAddress: string
+      venueCity: string
+      venueState: string
+      venueCountry: string
+    }
+  }
 }
 
 // Review interface
@@ -290,14 +319,11 @@ function AddReview({ exhibitorId, onReviewAdded }: { exhibitorId: string; onRevi
 }
 
 // Helper function to safely extract date
-const safeFormatDate = (dateInput: string | { $date: string } | null | undefined): string => {
+const safeFormatDate = (dateInput: string | null | undefined): string => {
   if (!dateInput) return "Date TBD";
 
   try {
-    const dateString = typeof dateInput === 'string' ? dateInput : dateInput?.$date;
-    if (!dateString) return "Date TBD";
-
-    return new Date(dateString).toLocaleDateString("en-US", {
+    return new Date(dateInput).toLocaleDateString("en-US", {
       weekday: "short",
       day: "2-digit",
       month: "short",
@@ -309,40 +335,20 @@ const safeFormatDate = (dateInput: string | { $date: string } | null | undefined
   }
 };
 
-// Helper function to safely access location
-const getLocationString = (location: string | { city?: string; venue?: string }): string => {
-  if (typeof location === 'string') {
-    return location || "Location TBD";
-  }
-
-  const city = location?.city || "";
-  const venue = location?.venue || "";
-
-  if (city && venue) {
-    return `${city}, ${venue}`;
-  } else if (city) {
-    return city;
-  } else if (venue) {
-    return venue;
-  }
-
-  return "Location TBD";
-};
-
-// Helper function to extract date from MongoDB format
-const extractDate = (dateObj: any): string => {
-  if (!dateObj) return "";
-  if (typeof dateObj === 'string') return dateObj;
-  if (dateObj.$date) return dateObj.$date;
-  return "";
-};
-
-// Helper function to extract number from MongoDB format
-const extractNumber = (numObj: any): number => {
-  if (!numObj) return 0;
-  if (typeof numObj === 'number') return numObj;
-  if (numObj.$numberLong) return parseInt(numObj.$numberLong, 10);
-  return 0;
+// Helper function to get location string
+const getLocationString = (venue: any): string => {
+  if (!venue) return "Location TBD";
+  
+  const { venueName, venueAddress, venueCity, venueState, venueCountry } = venue;
+  
+  const parts = [];
+  if (venueName) parts.push(venueName);
+  if (venueAddress) parts.push(venueAddress);
+  if (venueCity) parts.push(venueCity);
+  if (venueState) parts.push(venueState);
+  if (venueCountry) parts.push(venueCountry);
+  
+  return parts.length > 0 ? parts.join(", ") : "Location TBD";
 };
 
 // Main Exhibitor Page Component
@@ -351,13 +357,13 @@ export default function ExhibitorPage() {
   const router = useRouter()
   const exhibitorId = params.id as string
 
-    const { data: session } = useSession()
+  const { data: session } = useSession()
 
   const [activeTab, setActiveTab] = useState("overview")
   const [eventsTab, setEventsTab] = useState("upcoming")
   const [currentPage, setCurrentPage] = useState(1)
   const [exhibitor, setExhibitor] = useState<Exhibitor | null>(null)
-  const [exhibitorEvents, setExhibitorEvents] = useState<Event[]>([])
+  const [booths, setBooths] = useState<Booth[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [eventsLoading, setEventsLoading] = useState(false)
@@ -388,57 +394,33 @@ export default function ExhibitorPage() {
     }
   }, [exhibitorId])
 
-  // Fetch exhibitor events data
+  // Fetch exhibitor booths data
   useEffect(() => {
-    async function fetchExhibitorEvents() {
+    async function fetchExhibitorBooths() {
       if (!exhibitorId) return;
 
       setEventsLoading(true);
       try {
         const response = await fetch(`/api/events/exhibitors/${exhibitorId}`);
         const data = await response.json();
-        console.log("Events API Response:", data);
+        console.log("Booths API Response:", data);
 
-        if (data.success) {
-          const events = data.data?.events || data.events || data.data || [];
-          console.log("Processed events:", events);
-
-          const transformedEvents = events.map((item: any) => {
-            const event = item.event || item;
-            return {
-              ...event,
-              startDate: extractDate(event.startDate),
-              endDate: extractDate(event.endDate),
-              status: determineEventStatus(event.startDate, event.endDate),
-              rating: {
-                average: event.averageRating || 0,
-                count: extractNumber(event.totalReviews) || 0
-              },
-              location: {
-                city: event.city || "Unknown City",
-                venue: event.location || event.address || "Unknown Venue"
-              },
-              images: event.bannerImage || event.thumbnailImage ?
-                [{ url: event.bannerImage || event.thumbnailImage }] :
-                []
-            };
-          });
-
-          setExhibitorEvents(transformedEvents);
+        if (data.success && data.booths) {
+          setBooths(data.booths);
         } else {
-          console.error("Failed to fetch exhibitor events:", data.message);
-          setExhibitorEvents([]);
+          console.error("Failed to fetch exhibitor booths:", data.message);
+          setBooths([]);
         }
       } catch (error) {
-        console.error("Error fetching exhibitor events:", error);
-        setExhibitorEvents([]);
+        console.error("Error fetching exhibitor booths:", error);
+        setBooths([]);
       } finally {
         setEventsLoading(false);
       }
     }
 
     if (exhibitorId) {
-      fetchExhibitorEvents();
+      fetchExhibitorBooths();
     }
   }, [exhibitorId]);
 
@@ -473,61 +455,24 @@ export default function ExhibitorPage() {
     setReviews(prevReviews => [newReview, ...prevReviews])
   }
 
-  // Determine event status based on dates
-  const determineEventStatus = (startDate: any, endDate: any): "upcoming" | "completed" | "cancelled" => {
-    const start = extractDate(startDate);
-    const end = extractDate(endDate);
-
-    if (!start) return "upcoming";
-
-    const now = new Date();
-    const eventStart = new Date(start);
-    const eventEnd = new Date(end || start);
-
-    if (now > eventEnd) return "completed";
-    if (now < eventStart) return "upcoming";
-    return "upcoming";
-  };
-
-  // Mock data for achievements and social proof
-  const mockDetails = {
-    achievements: [
-      "Best Tech Innovation Award 2023",
-      "Top 50 Startups in India 2022",
-      "Excellence in Customer Service",
-      "Sustainability Leader Recognition",
-    ],
-    socialProof: {
-      clientsServed: "500+",
-      projectsCompleted: "1,200+",
-      yearsExperience: "8+",
-      teamSize: "150+",
-    },
-  }
-
   // Calculate exhibitor statistics
   const stats = useMemo(() => {
-    const totalEvents = exhibitorEvents.length;
+    const totalEvents = booths.length;
 
-    const upcomingEvents = exhibitorEvents.filter(
-      (event) => event.status === "upcoming"
-    ).length;
+    // Get current date for comparison
+    const currentDate = new Date();
 
-    const completedEvents = exhibitorEvents.filter(
-      (event) => event.status === "completed"
-    ).length;
+    // Upcoming events: events that haven't ended yet
+    const upcomingEvents = booths.filter(booth => {
+      const eventEndDate = new Date(booth.event.endDate);
+      return eventEndDate > currentDate;
+    }).length;
 
-    const cancelledEvents = exhibitorEvents.filter(
-      (event) => event.status === "cancelled"
-    ).length;
-
-    const avgRating =
-      exhibitorEvents.length > 0
-        ? exhibitorEvents.reduce((sum, event) => {
-          const rating = event.rating?.average || 0;
-          return sum + rating;
-        }, 0) / exhibitorEvents.length
-        : 4.8;
+    // Past events: events that have ended
+    const pastEvents = booths.filter(booth => {
+      const eventEndDate = new Date(booth.event.endDate);
+      return eventEndDate <= currentDate;
+    }).length;
 
     // Calculate average review rating
     const reviewAvgRating = reviews.length > 0
@@ -537,26 +482,29 @@ export default function ExhibitorPage() {
     return {
       totalEvents,
       upcomingEvents,
-      completedEvents,
-      cancelledEvents,
-      pastEvents: completedEvents + cancelledEvents,
-      avgRating: Math.round(avgRating * 10) / 10,
+      pastEvents,
       reviewAvgRating: Math.round(reviewAvgRating * 10) / 10,
       totalReviews: reviews.length,
-      clientsServed: mockDetails.socialProof.clientsServed,
+      clientsServed: "500+", // Mock data
     };
-  }, [exhibitorEvents, reviews]);
+  }, [booths, reviews]);
 
   // Filter events based on active events tab
   const filteredEvents = useMemo(() => {
+    const currentDate = new Date();
+    
     if (eventsTab === "upcoming") {
-      return exhibitorEvents.filter(event => event.status === "upcoming");
+      return booths.filter(booth => {
+        const eventEndDate = new Date(booth.event.endDate);
+        return eventEndDate > currentDate;
+      });
     } else {
-      return exhibitorEvents.filter(event =>
-        event.status === "completed" || event.status === "cancelled"
-      );
+      return booths.filter(booth => {
+        const eventEndDate = new Date(booth.event.endDate);
+        return eventEndDate <= currentDate;
+      });
     }
-  }, [exhibitorEvents, eventsTab]);
+  }, [booths, eventsTab]);
 
   // Pagination for events
   const totalPages = Math.ceil(filteredEvents.length / eventsPerPage)
@@ -567,7 +515,7 @@ export default function ExhibitorPage() {
     setCurrentPage(1);
   }, [eventsTab]);
 
-  const formatDateRange = (startDate: string | { $date: string }, endDate: string | { $date: string }) => {
+  const formatDateRange = (startDate: string, endDate: string) => {
     const start = safeFormatDate(startDate);
     const end = safeFormatDate(endDate);
 
@@ -600,6 +548,22 @@ export default function ExhibitorPage() {
   const exhibitorDescription = exhibitor.bio || "No description available."
   const exhibitorSpecialties = exhibitor.specialties || ["Enterprise Software", "AI/ML Solutions", "Cloud Computing"]
   const exhibitorCertifications = exhibitor.certifications || ["ISO 27001:2013", "SOC 2 Type II", "GDPR Compliant"]
+
+  // Mock data for achievements and social proof
+  const mockDetails = {
+    achievements: [
+      "Best Tech Innovation Award 2023",
+      "Top 50 Startups in India 2022",
+      "Excellence in Customer Service",
+      "Sustainability Leader Recognition",
+    ],
+    socialProof: {
+      clientsServed: "500+",
+      projectsCompleted: "1,200+",
+      yearsExperience: "8+",
+      teamSize: "150+",
+    },
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -671,41 +635,32 @@ export default function ExhibitorPage() {
               <div className="space-x-3">
                 <Button className="bg-white text-blue-600 hover:bg-blue-50">
                   <Heart className="w-4 h-4 mr-2" />
-                 <FollowButton userId={exhibitor.id} currentUserId={session?.user.id} variant="default" size="default" />
+                  <FollowButton userId={exhibitor.id} currentUserId={session?.user.id} variant="default" size="default" />
                 </Button>
                 <Button
                   variant="outline"
                   className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent"
-                    size="sm"
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({
-                          title: exhibitor.firstName,
-                          text: "Check out this event!",
-                          url: window.location.href,
-                        })
-                          .catch((err) => console.error("Error sharing:", err));
-                      } else {
-                        alert("Sharing is not supported in this browser.");
-                      }
-                    }}
-                  
+                  size="sm"
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: exhibitor.firstName,
+                        text: "Check out this event!",
+                        url: window.location.href,
+                      })
+                        .catch((err) => console.error("Error sharing:", err));
+                    } else {
+                      alert("Sharing is not supported in this browser.");
+                    }
+                  }}
                 >
                   <Share2 className="w-4 h-4 mr-2" />
                   Share
                 </Button>
               </div>
               <button>
-                <ScheduleMeetingButton exhibitor={exhibitor} eventId={exhibitorEvents[0]?.id} />
+                <ScheduleMeetingButton exhibitor={exhibitor} eventId={booths[0]?.event.id} />
               </button>
-
-              {/* <Button
-                variant="outline"
-                className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent"
-              >
-                <Mail className="w-4 h-4 mr-2" />
-                Contact
-              </Button> */}
             </div>
           </div>
         </div>
@@ -723,18 +678,10 @@ export default function ExhibitorPage() {
               <div className="text-2xl font-bold text-gray-900">{stats.clientsServed}</div>
               <div className="text-sm text-gray-600">Clients Served</div>
             </div>
-            {/* <div className="text-center">
-              <div className="flex items-center justify-center gap-1">
-                <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                <span className="text-2xl font-bold text-gray-900">{stats.avgRating}</span>
-              </div>
-              <div className="text-sm text-gray-600">Event Rating</div>
-            </div> */}
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <Star className="w-5 h-5 text-yellow-400 fill-current" />
                 <span className="text-2xl font-bold text-gray-900">{stats.reviewAvgRating}</span>
-                {/* <span className="text-sm text-gray-500">({stats.totalReviews})</span> */}
               </div>
               <div className="text-sm text-gray-600">Event Rating</div>
             </div>
@@ -760,205 +707,153 @@ export default function ExhibitorPage() {
             <TabsTrigger value="reviews">Reviews ({stats.totalReviews})</TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Company Highlights */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* About Section */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                      <Building className="w-5 h-5" />
-                      About {exhibitorName}
-                    </h3>
-                    <p className="text-gray-600 leading-relaxed">{exhibitorDescription}</p>
-                  </CardContent>
-                </Card>
+{/* Overview Tab */}
+<TabsContent value="overview" className="space-y-6">
+  <div className="w-full space-y-6">
+    {/* About Section */}
+    <Card className="border-0 shadow-sm w-full">
+      <CardContent className="p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+            <Building className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-gray-900">About {exhibitorName}</h3>
+            <p className="text-sm text-gray-500 mt-1">Company overview and background</p>
+          </div>
+        </div>
+        <p className="text-gray-700 leading-relaxed text-[15px] w-full">{exhibitorDescription}</p>
+      </CardContent>
+    </Card>
 
-                {/* Recent Events */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold mb-6">Recent Event Participation</h3>
-                    {eventsLoading ? (
-                      <div className="text-center py-8">Loading events...</div>
-                    ) : exhibitorEvents.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        No events found for this exhibitor.
-                      </div>
-                    ) : (
-                      <>
-                        <div className="space-y-4">
-                          {exhibitorEvents.slice(0, 3).map((event) => {
-                            if (!event) return null;
-
-                            return (
-                              <div
-                                key={event._id}
-                                className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                                onClick={() => {
-                                  // Navigate to event details page or open modal
-                                  console.log('Event clicked:', event._id);
-                                }}
-                              >
-                                {/* Event Image */}
-                                <div className="relative w-16 h-16 flex-shrink-0">
-                                  <Image
-                                    alt={event.title || "Event"}
-                                    src={event.images?.[0]?.url || "/images/signupimg.png"}
-                                    fill
-                                    className="object-cover rounded-md"
-                                  />
-                                </div>
-
-                                {/* Event Details */}
-                                <div className="flex-1 min-w-0">
-                                  {/* Event Title with Rating */}
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <h4 className="font-semibold text-gray-900 truncate">
-                                      {event.title || "Untitled Event"}
-                                    </h4>
-                                    <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded">
-                                      <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                                      <span className="text-xs font-medium text-yellow-800">
-                                        {event.rating?.average || "4.5"}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  {/* Event Date */}
-                                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                                    <Calendar className="w-4 h-4" />
-                                    <span>{formatDateRange(event.startDate, event.endDate)}</span>
-                                  </div>
-
-                                  {/* Event Location */}
-                                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                                    <MapPin className="w-4 h-4" />
-                                    <span className="truncate">{getLocationString(event.location)}</span>
-                                  </div>
-                                </div>
-
-                                {/* Status Badge */}
-                                <div className="flex-shrink-0">
-                                  <Badge
-                                    variant={
-                                      event.status === "upcoming" ? "default" :
-                                        event.status === "completed" ? "secondary" : "destructive"
-                                    }
-                                    className="ml-2"
-                                  >
-                                    {event.status === "upcoming" ? "Upcoming" :
-                                      event.status === "completed" ? "Completed" :
-                                        event.status === "cancelled" ? "Cancelled" : "Unknown"}
-                                  </Badge>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        {/* View All Button - Only show if there are more than 3 events */}
-                        {exhibitorEvents.length > 3 && (
-                          <div className="mt-6 text-center">
-                            <Button
-                              variant="outline"
-                              onClick={() => setActiveTab("events")}
-                              className="border-gray-300 text-gray-700 hover:bg-gray-50"
-                            >
-                              View All Events ({exhibitorEvents.length})
-                            </Button>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Sidebar */}
-              <div className="space-y-6">
-                {/* Key Metrics */}
-                {/* <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5" />
-                      Key Metrics
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Clients Served</span>
-                        <span className="font-semibold">{mockDetails.socialProof.clientsServed}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Projects Completed</span>
-                        <span className="font-semibold">{mockDetails.socialProof.projectsCompleted}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Team Size</span>
-                        <span className="font-semibold">{mockDetails.socialProof.teamSize}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Company Size</span>
-                        <span className="font-semibold">{exhibitor.companySize || "201-500 employees"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Total Reviews</span>
-                        <span className="font-semibold">{stats.totalReviews}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card> */}
-
-                {/* Specialties */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4">Specialties</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {exhibitorSpecialties.map((specialty, index) => (
-                        <Badge key={index} variant="secondary">
-                          {specialty}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Achievements */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Award className="w-5 h-5" />
-                      Achievements
-                    </h3>
-                    <div className="space-y-2">
-                      {mockDetails.achievements.map((achievement, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm text-gray-600">{achievement}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Certifications */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4">Certifications</h3>
-                    <div className="space-y-2">
-                      {exhibitorCertifications.map((cert, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-blue-500" />
-                          <span className="text-sm text-gray-600">{cert}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+    {/* Recent Events */}
+    <Card className="border-0 shadow-sm w-full">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between mb-6 w-full">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-green-600" />
             </div>
-          </TabsContent>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">Recent Event Participation</h3>
+              <p className="text-sm text-gray-500 mt-1">Latest events and exhibitions</p>
+            </div>
+          </div>
+          {booths.length > 0 && (
+            <Badge variant="secondary" className="px-3 py-1">
+              {booths.length} events
+            </Badge>
+          )}
+        </div>
+
+        {eventsLoading ? (
+          <div className="text-center py-8 w-full">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-500 mt-2">Loading events...</p>
+          </div>
+        ) : booths.length === 0 ? (
+          <div className="text-center py-8 w-full">
+            <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <h4 className="text-lg font-semibold text-gray-600 mb-2">No Events Found</h4>
+            <p className="text-gray-500">This exhibitor hasn't participated in any events yet.</p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-3 w-full">
+              {booths.slice(0, 3).map((booth) => {
+                const event = booth.event;
+                const isUpcoming = new Date(event.endDate) > new Date();
+
+                return (
+                  <div
+                    key={booth.id}
+                    className="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all duration-200 cursor-pointer group w-full"
+                    onClick={() => {
+                      router.push(`/event/${event.id}`);
+                    }}
+                  >
+                    {/* Event Image */}
+                    <div className="relative w-20 h-20 flex-shrink-0">
+                      <Image
+                        alt={event.title || "Event"}
+                        src={event.bannerImage || event.thumbnailImage || "/images/signupimg.png"}
+                        fill
+                        className="object-cover rounded-lg group-hover:scale-105 transition-transform duration-200"
+                      />
+                      {event.isFeatured && (
+                        <Badge className="absolute -top-2 -right-2 bg-yellow-500 text-yellow-900 text-xs">
+                          Featured
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Event Details */}
+                    <div className="flex-1 min-w-0 w-full">
+                      <div className="flex items-start justify-between mb-2 w-full">
+                        <h4 className="font-semibold text-gray-900 text-lg leading-tight group-hover:text-blue-600 transition-colors flex-1">
+                          {event.title || "Untitled Event"}
+                        </h4>
+                        <Badge
+                          variant={isUpcoming ? "default" : "secondary"}
+                          className="ml-2 flex-shrink-0"
+                        >
+                          {isUpcoming ? "Upcoming" : "Completed"}
+                        </Badge>
+                      </div>
+
+                      {/* Rating */}
+                      <div className="flex items-center gap-2 mb-3 w-full">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                          <span className="text-sm font-medium text-gray-700">
+                            {event.averageRating || "4.5"}
+                          </span>
+                        </div>
+                        <span className="text-sm text-gray-500">•</span>
+                        <span className="text-sm text-gray-500">{event.totalReviews || 0} reviews</span>
+                      </div>
+
+                      {/* Event Details */}
+                      <div className="space-y-2 w-full">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          <span>{formatDateRange(event.startDate, event.endDate)}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <MapPin className="w-4 h-4 text-gray-400" />
+                          <span className="truncate">{getLocationString(event.venue)}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Building className="w-4 h-4 text-gray-400" />
+                          <span>Booth: {booth.boothNumber}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* View All Button */}
+            {booths.length > 3 && (
+              <div className="mt-6 text-center w-full">
+                <Button
+                  variant="outline"
+                  onClick={() => setActiveTab("events")}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 px-6 w-full sm:w-auto"
+                >
+                  View All Events ({booths.length})
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  </div>
+</TabsContent>
 
           {/* Events Tab */}
           <TabsContent value="events" className="space-y-6">
@@ -994,15 +889,19 @@ export default function ExhibitorPage() {
                 ) : (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {paginatedEvents.map((event) => {
-                        if (!event) return null;
+                      {paginatedEvents.map((booth) => {
+                        const event = booth.event;
 
                         return (
-                          <Card key={event._id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                          <Card 
+                            key={booth.id} 
+                            className="hover:shadow-lg transition-shadow cursor-pointer"
+                            onClick={() => router.push(`/event/${event.id}`)}
+                          >
                             <CardContent className="p-0">
                               <div className="relative">
                                 <Image
-                                  src={event.images?.[0]?.url || "/herosection-images/weld.jpg"}
+                                  src={event.bannerImage || event.thumbnailImage || "/herosection-images/weld.jpg"}
                                   alt={event.title || "Event"}
                                   width={400}
                                   height={200}
@@ -1021,17 +920,21 @@ export default function ExhibitorPage() {
                                   </div>
                                   <div className="flex items-center text-sm text-gray-600">
                                     <MapPin className="w-4 h-4 mr-2" />
-                                    {getLocationString(event.location)}
+                                    {getLocationString(event.venue)}
+                                  </div>
+                                  <div className="flex items-center text-sm text-gray-600">
+                                    <Building className="w-4 h-4 mr-2" />
+                                    Booth: {booth.boothNumber}
                                   </div>
                                 </div>
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-1">
                                     <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                    <span className="text-sm font-medium">{event.rating?.average || "N/A"}</span>
-                                    <span className="text-sm text-gray-500">({event.rating?.count || 0})</span>
+                                    <span className="text-sm font-medium">{event.averageRating || "N/A"}</span>
+                                    <span className="text-sm text-gray-500">({event.totalReviews || 0})</span>
                                   </div>
                                   <Badge variant="default">
-                                    {event.status || "upcoming"}
+                                    Upcoming
                                   </Badge>
                                 </div>
                               </div>
@@ -1092,15 +995,19 @@ export default function ExhibitorPage() {
                 ) : (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {paginatedEvents.map((event) => {
-                        if (!event) return null;
+                      {paginatedEvents.map((booth) => {
+                        const event = booth.event;
 
                         return (
-                          <Card key={event._id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                          <Card 
+                            key={booth.id} 
+                            className="hover:shadow-lg transition-shadow cursor-pointer"
+                            onClick={() => router.push(`/event/${event.id}`)}
+                          >
                             <CardContent className="p-0">
                               <div className="relative">
                                 <Image
-                                  src={event.images?.[0]?.url || "/herosection-images/weld.jpg"}
+                                  src={event.bannerImage || event.thumbnailImage || "/herosection-images/weld.jpg"}
                                   alt={event.title || "Event"}
                                   width={400}
                                   height={200}
@@ -1119,17 +1026,21 @@ export default function ExhibitorPage() {
                                   </div>
                                   <div className="flex items-center text-sm text-gray-600">
                                     <MapPin className="w-4 h-4 mr-2" />
-                                    {getLocationString(event.location)}
+                                    {getLocationString(event.venue)}
+                                  </div>
+                                  <div className="flex items-center text-sm text-gray-600">
+                                    <Building className="w-4 h-4 mr-2" />
+                                    Booth: {booth.boothNumber}
                                   </div>
                                 </div>
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-1">
                                     <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                    <span className="text-sm font-medium">{event.rating?.average || "4.5"}</span>
-                                    {/* <span className="text-sm text-gray-500">({event.rating?.count ||})</span> */}
+                                    <span className="text-sm font-medium">{event.averageRating || "4.5"}</span>
+                                    <span className="text-sm text-gray-500">({event.totalReviews || 0})</span>
                                   </div>
-                                  <Badge variant={event.status === "completed" ? "secondary" : "destructive"}>
-                                    {event.status || "completed"}
+                                  <Badge variant="secondary">
+                                    Completed
                                   </Badge>
                                 </div>
                               </div>
@@ -1179,92 +1090,68 @@ export default function ExhibitorPage() {
             </Tabs>
           </TabsContent>
 
-          {/* About Tab */}
-          <TabsContent value="about" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4">Company Information</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Founded</label>
-                      <p className="text-gray-900">{exhibitor.foundedYear || "2015"}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Headquarters</label>
-                      <p className="text-gray-900">{exhibitor.headquarters || "Bangalore, India"}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Industry</label>
-                      <p className="text-gray-900">{exhibitor.industry || "Technology"}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Company Size</label>
-                      <p className="text-gray-900">{exhibitor.companySize || "201-500 employees"}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Website</label>
-                      <a
-                        href={exhibitor.website || "#"}
-                        className="text-blue-600 hover:underline flex items-center gap-1"
-                      >
-                        {exhibitor.website || "https://techcorp.com"}
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Contact</label>
-                      <div className="space-y-1">
-                        <p className="text-gray-900">{exhibitor.phone || "+91 98765 43210"}</p>
-                        <p className="text-gray-900">{exhibitor.email}</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+{/* About Tab */}
+<TabsContent value="about" className="space-y-6">
+  {/* Company Information - Full Width */}
+  <Card>
+    <CardContent className="p-8">
+      <h3 className="text-2xl font-bold text-gray-900 mb-6">Company Information</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-500">Founded</label>
+            <p className="text-lg font-semibold text-gray-900">{exhibitor.foundedYear || "2015"}</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">Headquarters</label>
+            <p className="text-lg font-semibold text-gray-900">{exhibitor.headquarters || "Bangalore, India"}</p>
+          </div>
+        </div>
 
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4">Business Statistics</h3>
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Events Participated</span>
-                      <span className="font-semibold">{stats.totalEvents}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Clients Served</span>
-                      <span className="font-semibold">{mockDetails.socialProof.clientsServed}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Projects Completed</span>
-                      <span className="font-semibold">{mockDetails.socialProof.projectsCompleted}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Years of Experience</span>
-                      <span className="font-semibold">{mockDetails.socialProof.yearsExperience}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Average Rating</span>
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="font-semibold">{stats.reviewAvgRating}</span>
-                        <span className="text-sm text-gray-500">({stats.totalReviews})</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-500">Industry</label>
+            <p className="text-lg font-semibold text-gray-900">{exhibitor.industry || "Technology"}</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">Company Size</label>
+            <p className="text-lg font-semibold text-gray-900">{exhibitor.companySize || "201-500 employees"}</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-500">Website</label>
+            <a
+              href={exhibitor.website || "#"}
+              className="text-lg font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
+            >
+              {exhibitor.website || "https://techcorp.com"}
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">Contact</label>
+            <div className="space-y-1">
+              <p className="text-lg font-semibold text-gray-900">{exhibitor.phone || "+91 98765 43210"}</p>
+              <p className="text-sm text-gray-600">{exhibitor.email}</p>
             </div>
+          </div>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-4">Full Description</h3>
-                <p className="text-gray-600 leading-relaxed">{exhibitorDescription}</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+  {/* Company Description */}
+  <Card>
+    <CardContent className="p-8">
+      <h3 className="text-2xl font-bold text-gray-900 mb-6">Company Description</h3>
+      <p className="text-gray-700 leading-relaxed text-lg">{exhibitorDescription}</p>
+    </CardContent>
+  </Card>
+</TabsContent>
 
-          {/* Reviews Tab */}
           {/* Reviews Tab */}
           <TabsContent value="reviews" className="space-y-6">
             <div className="max-w-4xl mx-auto">

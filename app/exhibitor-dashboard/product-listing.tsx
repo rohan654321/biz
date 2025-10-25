@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
-import { Package, Plus, Upload, FileText, Edit, Trash2, ExternalLink, X, Youtube } from "lucide-react"
+import { Package, Plus, Upload, FileText, Edit, Trash2, ExternalLink, Youtube } from "lucide-react"
 
 interface ProductListingProps {
   exhibitorId: string
@@ -29,14 +29,13 @@ interface Product {
   currency?: string
 }
 
-// Move ProductForm to a separate component to prevent unnecessary re-renders
-const ProductForm = ({ 
-  isEdit = false, 
-  onSubmit, 
+const ProductForm = ({
+  isEdit = false,
+  onSubmit,
   onCancel,
   initialData,
-  uploading 
-}: { 
+  uploading,
+}: {
   isEdit?: boolean
   onSubmit: (data: any) => void
   onCancel: () => void
@@ -54,7 +53,6 @@ const ProductForm = ({
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [brochureFiles, setBrochureFiles] = useState<File[]>([])
 
-  // Initialize form when initialData changes
   useEffect(() => {
     if (initialData) {
       setFormData({
@@ -95,7 +93,7 @@ const ProductForm = ({
     onSubmit({
       ...formData,
       imageFiles,
-      brochureFiles
+      brochureFiles,
     })
   }
 
@@ -108,7 +106,7 @@ const ProductForm = ({
             id="product-name"
             placeholder="Enter product name"
             value={formData.name}
-            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
           />
         </div>
         <div className="space-y-2">
@@ -117,7 +115,7 @@ const ProductForm = ({
             id="category"
             placeholder="Enter category"
             value={formData.category}
-            onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+            onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
           />
         </div>
       </div>
@@ -129,7 +127,7 @@ const ProductForm = ({
           rows={4}
           placeholder="Describe your product or service..."
           value={formData.description}
-          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+          onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
         />
       </div>
 
@@ -139,7 +137,7 @@ const ProductForm = ({
           id="youtube"
           placeholder="Enter YouTube link..."
           value={formData.youtube}
-          onChange={(e) => setFormData(prev => ({ ...prev, youtube: e.target.value }))}
+          onChange={(e) => setFormData((prev) => ({ ...prev, youtube: e.target.value }))}
         />
       </div>
 
@@ -151,7 +149,7 @@ const ProductForm = ({
             type="number"
             placeholder="0.00"
             value={formData.price}
-            onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+            onChange={(e) => setFormData((prev) => ({ ...prev, price: e.target.value }))}
           />
         </div>
         <div className="space-y-2">
@@ -160,7 +158,7 @@ const ProductForm = ({
             id="currency"
             placeholder="USD"
             value={formData.currency}
-            onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
+            onChange={(e) => setFormData((prev) => ({ ...prev, currency: e.target.value }))}
           />
         </div>
       </div>
@@ -168,14 +166,7 @@ const ProductForm = ({
       <div className="space-y-2">
         <Label htmlFor="images">Product Images {isEdit && "(Add More)"}</Label>
         <div className="border-2 border-dashed border-input rounded-lg p-6 text-center">
-          <input 
-            id="images" 
-            type="file" 
-            accept="image/*" 
-            multiple 
-            onChange={handleImageChange} 
-            className="hidden" 
-          />
+          <input id="images" type="file" accept="image/*" multiple onChange={handleImageChange} className="hidden" />
           <label htmlFor="images" className="cursor-pointer">
             <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
             <p className="text-muted-foreground">Click to upload images or drag and drop</p>
@@ -188,14 +179,7 @@ const ProductForm = ({
       <div className="space-y-2">
         <Label htmlFor="brochures">Brochures/Catalogues {isEdit && "(Add More)"}</Label>
         <div className="border-2 border-dashed border-input rounded-lg p-6 text-center">
-          <input 
-            id="brochures" 
-            type="file" 
-            accept=".pdf" 
-            multiple 
-            onChange={handleBrochureChange} 
-            className="hidden" 
-          />
+          <input id="brochures" type="file" accept=".pdf" multiple onChange={handleBrochureChange} className="hidden" />
           <label htmlFor="brochures" className="cursor-pointer">
             <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
             <p className="text-muted-foreground">Upload PDF brochures and catalogues</p>
@@ -219,6 +203,13 @@ const ProductForm = ({
   )
 }
 
+const transformCloudinaryUrlForViewing = (url: string): string => {
+  if (url.includes("cloudinary.com")) {
+    return url.replace("/upload/", "/upload/fl_attachment:false/")
+  }
+  return url
+}
+
 export default function ProductListing({ exhibitorId }: ProductListingProps) {
   const { toast } = useToast()
   const [isAddProductOpen, setIsAddProductOpen] = useState(false)
@@ -228,6 +219,8 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
   const [error, setError] = useState<string | null>(null)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [viewingBrochure, setViewingBrochure] = useState<string | null>(null)
+  const [isBrochureDialogOpen, setIsBrochureDialogOpen] = useState(false)
 
   useEffect(() => {
     if (exhibitorId && exhibitorId !== "undefined") {
@@ -274,7 +267,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
       formData.append("file", file)
       formData.append("type", type)
 
-      const response = await fetch("/api/upload/cloudinary", {
+      const response = await fetch("/api/exhibitorBrochure", {
         method: "POST",
         body: formData,
       })
@@ -294,7 +287,6 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
     try {
       setUploading(true)
 
-      // Upload images and brochures first
       const imageUrls = formData.imageFiles.length > 0 ? await uploadFiles(formData.imageFiles, "image") : []
       const brochureUrls = formData.brochureFiles.length > 0 ? await uploadFiles(formData.brochureFiles, "pdf") : []
 
@@ -320,7 +312,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
       }
 
       const data = await response.json()
-      setProducts(prev => [data.product, ...prev])
+      setProducts((prev) => [data.product, ...prev])
       setIsAddProductOpen(false)
 
       toast({
@@ -345,7 +337,6 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
     try {
       setUploading(true)
 
-      // Upload new images and brochures if any
       const newImageUrls = formData.imageFiles.length > 0 ? await uploadFiles(formData.imageFiles, "image") : []
       const newBrochureUrls = formData.brochureFiles.length > 0 ? await uploadFiles(formData.brochureFiles, "pdf") : []
 
@@ -371,7 +362,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
       }
 
       const data = await response.json()
-      setProducts(prev => prev.map((p) => (p.id === editingProduct.id ? data.product : p)))
+      setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? data.product : p)))
       setIsEditProductOpen(false)
       setEditingProduct(null)
 
@@ -403,7 +394,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
         throw new Error("Failed to delete product")
       }
 
-      setProducts(prev => prev.filter((p) => p.id !== productId))
+      setProducts((prev) => prev.filter((p) => p.id !== productId))
 
       toast({
         title: "Success",
@@ -445,7 +436,6 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
         throw new Error("Failed to remove image")
       }
 
-      // Delete from Cloudinary
       await fetch("/api/upload/cloudinary", {
         method: "DELETE",
         headers: {
@@ -455,7 +445,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
       })
 
       const data = await response.json()
-      setProducts(prev => prev.map((p) => (p.id === productId ? data.product : p)))
+      setProducts((prev) => prev.map((p) => (p.id === productId ? data.product : p)))
 
       toast({
         title: "Success",
@@ -527,45 +517,47 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
                   variant="outline"
                   size="sm"
                   className="flex items-center gap-2 bg-transparent"
-                  onClick={() => window.open(brochureUrl, "_blank")}
+                  onClick={() => {
+                    setViewingBrochure(transformCloudinaryUrlForViewing(brochureUrl))
+                    setIsBrochureDialogOpen(true)
+                  }}
                 >
                   <FileText className="w-4 h-4" />
-                  Brochure {index + 1}
-                  <ExternalLink className="w-3 h-3" />
+                  View Brochure {index + 1}
                 </Button>
               ))}
             </div>
-            
+
             {product.youtube && product.youtube.length > 0 && (
               <div className="mt-4">
                 <Label className="text-sm font-semibold mb-2 block">YouTube Links</Label>
                 <div className="flex flex-wrap gap-2">
-                  {Array.isArray(product.youtube)
-                    ? product.youtube.map((link, index) => (
-                        <Button
-                          key={index}
-                          variant="outline"
-                          size="sm"
-                          className="flex items-center gap-2 bg-transparent"
-                          onClick={() => window.open(link, "_blank")}
-                        >
-                          <Youtube className="w-4 h-4 text-red-600" />
-                          Video {index + 1}
-                          <ExternalLink className="w-3 h-3" />
-                        </Button>
-                      ))
-                    : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex items-center gap-2 bg-transparent"
-                          onClick={() => window.open(product.youtube, "_blank")}
-                        >
-                          <Youtube className="w-4 h-4 text-red-600" />
-                          Watch Video
-                          <ExternalLink className="w-3 h-3" />
-                        </Button>
-                      )}
+                  {Array.isArray(product.youtube) ? (
+                    product.youtube.map((link, index) => (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2 bg-transparent"
+                        onClick={() => window.open(link, "_blank")}
+                      >
+                        <Youtube className="w-4 h-4 text-red-600" />
+                        Video {index + 1}
+                        <ExternalLink className="w-3 h-3" />
+                      </Button>
+                    ))
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2 bg-transparent"
+                      onClick={() => window.open(product.youtube, "_blank")}
+                    >
+                      <Youtube className="w-4 h-4 text-red-600" />
+                      Watch Video
+                      <ExternalLink className="w-3 h-3" />
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
@@ -613,7 +605,7 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
             <DialogHeader>
               <DialogTitle>Add New Product/Service</DialogTitle>
             </DialogHeader>
-            <ProductForm 
+            <ProductForm
               onSubmit={handleAddProduct}
               onCancel={() => setIsAddProductOpen(false)}
               uploading={uploading}
@@ -627,8 +619,8 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
           <DialogHeader>
             <DialogTitle>Edit Product/Service</DialogTitle>
           </DialogHeader>
-          <ProductForm 
-            isEdit 
+          <ProductForm
+            isEdit
             onSubmit={handleEditProduct}
             onCancel={() => {
               setIsEditProductOpen(false)
@@ -637,6 +629,36 @@ export default function ProductListing({ exhibitorId }: ProductListingProps) {
             initialData={editingProduct}
             uploading={uploading}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isBrochureDialogOpen} onOpenChange={setIsBrochureDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] p-0">
+          <DialogHeader className="p-6 pb-0">
+            <DialogTitle className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Brochure Viewer
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => viewingBrochure && window.open(viewingBrochure, "_blank")}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Open in New Tab
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="w-full h-[75vh] p-6 pt-4">
+            {viewingBrochure && (
+              <iframe
+                src={`https://docs.google.com/gview?url=${encodeURIComponent(viewingBrochure)}&embedded=true`}
+                className="w-full h-full border rounded-lg"
+                title="Brochure Viewer"
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 

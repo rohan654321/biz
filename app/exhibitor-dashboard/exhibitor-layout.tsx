@@ -125,25 +125,58 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     }
   }, [activeSection, setActiveSection])
 
+  // Function to fetch product count
+  const fetchProductCount = async (exhibitorId: string): Promise<number> => {
+    try {
+      const response = await fetch(`/api/exhibitors/${exhibitorId}/products`)
+      if (response.ok) {
+        const data = await response.json()
+        // This will return the actual count from products array length
+        return data.products?.length || 0
+      }
+      return 0
+    } catch (error) {
+      console.error("Error fetching product count:", error)
+      return 0
+    }
+  }
+
   const fetchExhibitorData = async () => {
     try {
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/users/${userId}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      })
+      // Fetch user data and product count in parallel
+      const [userResponse, productCount] = await Promise.all([
+        fetch(`/api/users/${userId}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        }),
+        fetchProductCount(userId)
+      ])
 
-      if (!response.ok) {
-        if (response.status === 404) throw new Error("User not found")
-        if (response.status === 403) throw new Error("Access denied")
+      if (!userResponse.ok) {
+        if (userResponse.status === 404) throw new Error("User not found")
+        if (userResponse.status === 403) throw new Error("Access denied")
         throw new Error("Failed to fetch user data")
       }
 
-      const data = await response.json()
-      setExhibitor(data.user)
-      setAppointmentCount(Number(data.user.upcomingAppointments) || 0)
+      const userData = await userResponse.json()
+      
+      // Combine user data with product count
+      setExhibitor({
+        ...userData.user,
+        totalProducts: productCount, // This will now show the actual count (3)
+        // Set default values for other fields if not provided
+        totalEvents: userData.user.totalEvents || 0,
+        activeEvents: userData.user.activeEvents || 0,
+        totalLeads: userData.user.totalLeads || 0,
+        pendingLeads: userData.user.pendingLeads || 0,
+        profileViews: userData.user.profileViews || 0,
+        upcomingAppointments: userData.user.upcomingAppointments || 0
+      })
+      
+      setAppointmentCount(Number(userData.user.upcomingAppointments) || 0)
     } catch (err) {
       console.error("Error fetching user data:", err)
       setError(err instanceof Error ? err.message : "An error occurred")
@@ -215,47 +248,54 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     </div>
   ), [error])
 
-  // Memoized no data state
-  const noDataContent = useMemo(() => (
-    <div className="flex items-center justify-center min-h-screen">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>No Data</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600">No exhibitor data found.</p>
-        </CardContent>
-      </Card>
-    </div>
-  ), [])
-
-  // Memoized stats cards - FIXED: Check for exhibitor existence
-  const statsCards = useMemo(() => {
-    if (!exhibitor) return null;
-    
+  if (!exhibitor) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Events</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>No Data</CardTitle>
           </CardHeader>
           <CardContent>
-            <ActiveEventsCard exhibitorId={exhibitor.id} />
-            <p className="text-xs text-muted-foreground">Active Events</p>
+            <p className="text-gray-600">No exhibitor data found.</p>
           </CardContent>
         </Card>
+      </div>
+    )
+  }
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Products</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{exhibitor.totalProducts || 25}</div>
-            <p className="text-xs text-muted-foreground">{exhibitor.profileViews || 30} total views</p>
-          </CardContent>
-        </Card>
+  const renderContent = () => {
+    switch (activeSection) {
+      case "overview":
+        return (
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Exhibitor Dashboard</h1>
+              <p className="text-gray-600">Welcome back, {exhibitor.firstName}!</p>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Events</CardTitle>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <ActiveEventsCard exhibitorId={exhibitor.id} />
+                  <p className="text-xs text-muted-foreground">Active Events</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Products</CardTitle>
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{exhibitor.totalProducts || 25}</div>
+                  <p className="text-xs text-muted-foreground">{exhibitor.profileViews || 30} total views</p>
+                </CardContent>
+              </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -561,39 +601,67 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
           )}
         </div>
 
-        {/* Marketing Campaigns Dropdown */}
-        <div className="mb-4">
-          <button
-            className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
-            onClick={() => toggleMenu("marketingCampaigns")}
-          >
-            <span className="flex items-center gap-2">
-              <Star size={16} />
-              Marketing Campaigns
-            </span>
-            {openMenus.includes("marketingCampaigns") ? (
-              <ChevronDown size={16} />
-            ) : (
-              <ChevronRight size={16} />
+          {/* Marketing Campaigns Dropdown */}
+          <div className="mb-4">
+            <button
+              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
+              onClick={() => toggleMenu("marketingCampaigns")}
+            >
+              <span className="flex items-center gap-2">
+                <Star size={16} />
+                Marketing Campaigns
+              </span>
+              {openMenus.includes("marketingCampaigns") ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+            </button>
+            {openMenus.includes("marketingCampaigns") && (
+              <div className="ml-2 mt-2 space-y-1">
+                <button
+                  onClick={() => setActiveSection("promotions")}
+                  className={menuItemClass("promotions")}
+                >
+                  Promotion
+                </button>
+                <button
+                  onClick={() => setActiveSection("active-promotions")}
+                  className={menuItemClass("active-promotions")}
+                >
+                  Active Promotion
+                </button>
+              </div>
             )}
-          </button>
-          {openMenus.includes("marketingCampaigns") && (
-            <div className="ml-2 mt-2 space-y-1">
-              <button
-                onClick={() => setActiveSection("promotions")}
-                className={menuItemClass("promotions")}
-              >
-                Promotion
-              </button>
-              <button
-                onClick={() => setActiveSection("active-promotions")}
-                className={menuItemClass("active-promotions")}
-              >
-                Active Promotion
-              </button>
-            </div>
-          )}
-        </div>
+          </div>
+
+          {/* Analytics Dropdown */}
+          {/* <div className="mb-4">
+            <button
+              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
+              onClick={() => toggleMenu("analytics")}
+            >
+              <span className="flex items-center gap-2">
+                <TrendingUp size={16} />
+                Analytics
+              </span>
+              {openMenus.includes("analytics") ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+            </button>
+            {openMenus.includes("analytics") && (
+              <div className="ml-2 mt-2 space-y-1">
+                <button
+                  onClick={() => setActiveSection("analytics")}
+                  className={menuItemClass("analytics")}
+                >
+                  Analytics
+                </button>
+              </div>
+            )}
+          </div> */}
 
         {/* Network Dropdown */}
         <div className="mb-4">

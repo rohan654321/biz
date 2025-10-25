@@ -48,6 +48,7 @@ import RecommendedEvents from "./recommended-events"
 import Schedule from "./Schedule"
 import { HelpSupport } from "@/components/HelpSupport"
 import { useDashboard } from "@/contexts/dashboard-context"
+import { SettingsSection } from "@/components/settings-section"
 
 interface UserDashboardProps {
   userId: string
@@ -383,33 +384,229 @@ const menuConfig = useMemo(() => [
       )
     }
 
-    // Render content based on active section
-    const contentMap = {
-      "profile": <ProfileSection userData={userData} onUpdate={handleProfileUpdate} organizerId={userId} />,
-      "events": <EventsSection userId={userId} />,
-      "past-events": <PastEvents userId={userId} />,
-      "wishlist": <SavedEvents userId={userId} />,
-      "upcoming-events": <UpcomingEvents events={interestedEvents} userId={userId} />,
-      "my-appointments": <MyAppointments userId={userId} />,
-      "exhibitor-schedule": <ExhibitorSchedule userId={userId} />,
-      "schedule": <Schedule userId={userId} />,
-      "favourites": <Favourites />,
-      "recommended-events": <RecommendedEvents userId={userId} interests={userInterests} />,
-      "Suggested": <Recommendations />,
-      "connections": <ConnectionsSection userId={userId} />,
-      "messages": <MessagesSection organizerId={userId} />,
-      "settings": <VisitorSettings />,
-      "travel": <TravelAccommodation />,
-      "Help & Support": <HelpSupport />
+    switch (activeSection) {
+      case "profile":
+        return <ProfileSection userData={userData} onUpdate={handleProfileUpdate} organizerId={""} />
+      case "events":
+        return <EventsSection userId={userId} />
+      case "past-events":
+        return <PastEvents userId={userId} />
+      case "wishlist":
+        return <SavedEvents userId={userId} />
+      case "upcoming-events":
+        return <UpcomingEvents events={interestedEvents} userId={userId} />
+      case "my-appointments":
+        return <MyAppointments userId={userId} />
+      case "exhibitor-schedule":
+        return <ExhibitorSchedule userId={userId} />
+      case "schedule":
+        return <Schedule userId={userId} />
+      case "favourites":
+        return <Favourites />
+      case "recommended-events":
+        return <RecommendedEvents userId={userId} interests={userInterests} />
+      case "Suggested":
+        return <Recommendations />
+      case "connections":
+        return <ConnectionsSection userId={userId} />
+      case "messages":
+        return <MessagesSection organizerId={userId} />
+      case "settings":
+        return <SettingsSection userData={userData} onUpdate={handleProfileUpdate} />
+      case "travel":
+        return <TravelAccommodation />
+      case "Help & Support":
+        return <HelpSupport />
+      default:
+        return <ProfileSection userData={userData} onUpdate={handleProfileUpdate} organizerId={""} />
     }
+  }
 
-    return contentMap[activeSection as keyof typeof contentMap] || contentMap.profile
-  }, [loading, error, userData, activeSection, userId, userInterests, interestedEvents, handleProfileUpdate, fetchUserData])
+  const renderSidebar = () => {
+    const sidebarContent = (
+      <div className={`${isSidebarCollapsed ? "w-16" : "w-64"} bg-white border-r flex flex-col justify-between transition-all duration-300 h-full`}>
+        <div>
+          <nav className="p-4 text-sm space-y-2">
+            {/* Dashboard */}
+            <div>
+              <button 
+                className="flex items-center justify-between w-full py-2 font-medium hover:text-blue-600 transition-colors" 
+                onClick={() => toggleMenu("dashboard")}
+              >
+                <span className="flex items-center gap-2">
+                  <LayoutDashboard size={16} />
+                  {!isSidebarCollapsed && "Dashboard"}
+                </span>
+                {!isSidebarCollapsed &&
+                  (openMenus.includes("dashboard") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
+              </button>
+              {openMenus.includes("dashboard") && !isSidebarCollapsed && (
+                <ul className="ml-2 mt-2 space-y-2 border-l border-transparent">
+                  <li
+                    onClick={() => setActiveSection("profile")}
+                    className={`cursor-pointer pl-3 py-1 border-l-4 transition-colors ${
+                      activeSection === "profile"
+                        ? "border-blue-500 text-blue-600 font-medium"
+                        : "border-transparent hover:text-blue-600"
+                    }`}
+                  >
+                    Profile
+                  </li>
+                </ul>
+              )}
+            </div>
 
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            {/* Event */}
+            <div>
+              <button 
+                className="flex items-center justify-between w-full py-2 font-medium hover:text-blue-600 transition-colors" 
+                onClick={() => toggleMenu("event")}
+              >
+                <span className="flex items-center gap-2">
+                  <Calendar size={16} />
+                  {!isSidebarCollapsed && "My Events"}
+                </span>
+                {!isSidebarCollapsed &&
+                  (openMenus.includes("event") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
+              </button>
+              {openMenus.includes("event") && !isSidebarCollapsed && (
+                <ul className="ml-2 mt-2 space-y-2 border-l">
+                  <li onClick={() => setActiveSection("events")} className={menuItemClass(activeSection, "events")}>
+                    Interested Events
+                  </li>
+                  <li onClick={() => setActiveSection("past-events")} className={menuItemClass(activeSection, "past-events")}>
+                    Past Events
+                  </li>
+                  <li onClick={() => setActiveSection("wishlist")} className={menuItemClass(activeSection, "wishlist")}>
+                    Wishlist
+                  </li>
+                </ul>
+              )}
+            </div>
+
+            {/* Networking */}
+            <div>
+              <button 
+                className="flex items-center justify-between w-full py-2 font-medium hover:text-blue-600 transition-colors" 
+                onClick={() => toggleMenu("networking")}
+              >
+                <span className="flex items-center gap-2">
+                  <Network size={16} />
+                  {!isSidebarCollapsed && "Networking"}
+                </span>
+                {!isSidebarCollapsed &&
+                  (openMenus.includes("networking") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
+              </button>
+              {openMenus.includes("networking") && !isSidebarCollapsed && (
+                <ul className="ml-2 mt-2 space-y-2 border-l">
+                  <li onClick={() => setActiveSection("connections")} className={menuItemClass(activeSection, "connections")}>
+                    My Connections
+                  </li>
+                  <li onClick={() => setActiveSection("messages")} className={menuItemClass(activeSection, "messages")}>
+                    Messages
+                  </li>
+                </ul>
+              )}
+            </div>
+
+            {/* Exhibitor */}
+            <div>
+              <button 
+                className="flex items-center justify-between w-full py-2 font-medium hover:text-blue-600 transition-colors" 
+                onClick={() => toggleMenu("exhibitor")}
+              >
+                <span className="flex items-center gap-2">
+                  <Store size={16} />
+                  {!isSidebarCollapsed && "My Exhibitors"}
+                </span>
+                {!isSidebarCollapsed &&
+                  (openMenus.includes("exhibitor") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
+              </button>
+              {openMenus.includes("exhibitor") && !isSidebarCollapsed && (
+                <ul className="ml-2 mt-2 space-y-2 border-l">
+                  <li onClick={() => setActiveSection("my-appointments")} className={menuItemClass(activeSection, "my-appointments")}>
+                    Exhibitor Appointments
+                  </li>
+                  <li onClick={() => setActiveSection("Suggested")} className={menuItemClass(activeSection, "Suggested")}>
+                    Suggested
+                  </li>
+                </ul>
+              )}
+            </div>
+
+            {/* Event Planning Tools */}
+            <div>
+              <button 
+                className="flex items-center justify-between w-full py-2 font-medium hover:text-blue-600 transition-colors" 
+                onClick={() => toggleMenu("tools")}
+              >
+                <span className="flex items-center gap-2">
+                  <List size={16} />
+                  {!isSidebarCollapsed && "Event Planning Tools"}
+                </span>
+                {!isSidebarCollapsed &&
+                  (openMenus.includes("tools") ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
+              </button>
+              {openMenus.includes("tools") && !isSidebarCollapsed && (
+                <ul className="ml-2 mt-2 space-y-2 border-l">
+                  <li onClick={() => setActiveSection("travel")} className={menuItemClass(activeSection, "travel")}>
+                    Travel & Stay
+                  </li>
+                  <li onClick={() => setActiveSection("schedule")} className={menuItemClass(activeSection, "schedule")}>
+                    Schedule
+                  </li>
+                </ul>
+              )}
+            </div>
+
+            {/* Help & Support */}
+            <div>
+              <button
+                onClick={() => setActiveSection("Help & Support")}
+                className={`flex items-center gap-2 w-full py-2 font-medium transition-colors ${
+                  activeSection === "Help & Support" ? "text-blue-600 font-medium" : "hover:text-blue-600"
+                }`}
+              >
+                <HelpCircle size={16} />
+                {!isSidebarCollapsed && "Help & Support"}
+              </button>
+            </div>
+
+            {/* Settings */}
+            <div>
+              <button
+                onClick={() => setActiveSection("settings")}
+                className={`flex items-center gap-2 w-full py-2 font-medium transition-colors ${
+                  activeSection === "settings" ? "text-blue-600 font-medium" : "hover:text-blue-600"
+                }`}
+              >
+                <Settings size={16} />
+                {!isSidebarCollapsed && "Settings"}
+              </button>
+            </div>
+          </nav>
+        </div>
+
+        {/* Collapse & Logout */}
+        <div className="p-4 space-y-2 border-t">
+          <Button 
+            onClick={toggleSidebar} 
+            className="w-full flex items-center gap-2 mb-2" 
+            variant="outline"
+            size="sm"
+          >
+            <SidebarIcon size={16} />
+            {!isSidebarCollapsed && (isSidebarCollapsed ? "Expand" : "Collapse")}
+          </Button>
+          <Button 
+            onClick={handleSignOut} 
+            className="w-full flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white"
+            size="sm"
+          >
+            <LogOut size={16} />
+            {!isSidebarCollapsed && "Logout"}
+          </Button>
+        </div>
       </div>
     )
   }
