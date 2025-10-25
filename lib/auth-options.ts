@@ -6,7 +6,7 @@ import LinkedInProvider from "next-auth/providers/linkedin";
 // import bcrypt from "bcryptjs"
 
 declare module "next-auth" {
-  interface Session {
+interface Session {
     user: {
       id: string
       name?: string | null
@@ -15,13 +15,12 @@ declare module "next-auth" {
       role?: string
       firstName?: string
       lastName?: string
-      avatar?: string | null   // 👈 Add this
+      avatar?: string | null
     }
   }
-
   interface User {
     id: string
-    role?: string
+    role: string
     firstName?: string
     lastName?: string
   }
@@ -30,9 +29,10 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     id: string
-    role?: string
+    role: string
     firstName?: string
     lastName?: string
+    avatar?: string | null
   }
 }
 
