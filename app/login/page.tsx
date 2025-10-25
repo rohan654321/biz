@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { signIn, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -25,7 +24,6 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
-      // Redirect based on user role
       if (session.user.role === "ATTENDEE") {
         router.push(`/dashboard/${session.user.id}`)
       } else if (session.user.role === "ORGANIZER") {
@@ -39,7 +37,6 @@ export default function LoginPage() {
       } else if (session.user.role === "VENUE_MANAGER") {
         router.push(`/venue-dashboard/${session.user.id}`)
       } else {
-        // Default user dashboard
         router.push(`/login`)
       }
     }
@@ -60,17 +57,24 @@ export default function LoginPage() {
       if (res?.error) {
         setError("Invalid email or password. Please try again.")
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleSocialLogin = (provider: string) => {
-    console.log(`Login with ${provider}`)
-    // TODO: Implement social login
-    setError(`${provider} login is not implemented yet.`)
+  // ✅ Updated Social Login Function
+  const handleSocialLogin = async (provider: "google" | "linkedin") => {
+    setIsLoading(true)
+    try {
+      await signIn(provider, { callbackUrl: "/" }) // Redirect to home after success
+    } catch (err) {
+      console.error(`Error during ${provider} login:`, err)
+      setError(`Failed to login with ${provider}.`)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (status === "loading") {
@@ -103,8 +107,8 @@ export default function LoginPage() {
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {/* Credentials Login */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email Field */}
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
@@ -119,7 +123,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password Field */}
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
@@ -142,21 +145,18 @@ export default function LoginPage() {
               </button>
             </div>
 
-            {/* Forgot Password Link */}
             <div className="text-right">
               <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-800">
                 Forgot password?
               </Link>
             </div>
 
-            {/* Error Message */}
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
-            {/* Submit Button */}
             <Button
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5"
@@ -173,22 +173,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-blue-900 mb-2">Demo Credentials:</h3>
-            <div className="text-xs text-blue-800 space-y-1">
-              <div>
-                <strong>Admin:</strong> admin@example.com / admin123
-              </div>
-              <div>
-                <strong>Organizer:</strong> organizer@example.com / organizer123
-              </div>
-              <div>
-                <strong>Super Admin:</strong> mainadmin@example.com / superadmin123
-              </div>
-            </div>
-          </div>
-
           {/* Divider */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -199,13 +183,13 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Social Login Buttons */}
+          {/* ✅ Working Social Login Buttons */}
           <div className="space-y-3">
             <Button
               type="button"
               variant="outline"
-              className="w-full flex items-center justify-center space-x-2 py-2.5 bg-transparent"
-              onClick={() => handleSocialLogin("Google")}
+              className="w-full flex items-center justify-center space-x-2 py-2.5"
+              onClick={() => handleSocialLogin("google")}
               disabled={isLoading}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -226,31 +210,21 @@ export default function LoginPage() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              <span>Google</span>
+              <span>Sign in with Google</span>
             </Button>
 
             <Button
               type="button"
               variant="outline"
-              className="w-full flex items-center justify-center space-x-2 py-2.5 bg-transparent"
-              onClick={() => handleSocialLogin("LinkedIn")}
+              className="w-full flex items-center justify-center space-x-2 py-2.5"
+              onClick={() => handleSocialLogin("linkedin")}
               disabled={isLoading}
             >
               <svg className="w-5 h-5" fill="#0077B5" viewBox="0 0 24 24">
                 <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
               </svg>
-              <span>LinkedIn</span>
+              <span>Sign in with LinkedIn</span>
             </Button>
-          </div>
-
-          {/* Registration Link */}
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
-              <Link href="/signup" className="text-blue-600 hover:text-blue-800 font-medium">
-                Sign up here
-              </Link>
-            </p>
           </div>
         </CardContent>
       </Card>
