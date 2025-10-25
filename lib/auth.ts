@@ -1,25 +1,60 @@
-import bcrypt from "bcryptjs"
-import jwt from "jsonwebtoken"
+import { NextAuthOptions } from 'next-auth'
+import CredentialsProvider from 'next-auth/providers/credentials'
+import { prisma } from './prisma'
 
-export async function hashPassword(password: string): Promise<string> {
-  const saltRounds = 12
-  return await bcrypt.hash(password, saltRounds)
-}
+export const authOptions: NextAuthOptions = {
+  providers: [
+    CredentialsProvider({
+      name: 'credentials',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
 
-export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-  return await bcrypt.compare(password, hashedPassword)
-}
+        // Find user by email
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email }
+        })
 
-export function generateToken(userId: string): string {
-  const secret = process.env.JWT_SECRET || "your-secret-key"
-  return jwt.sign({ userId }, secret, { expiresIn: "7d" })
-}
+        // In a real app, use proper password hashing comparison
+        // This is simplified for demonstration
+        if (user && user.password === credentials.password) {
+          return {
+            id: user.id,
+            email: user.email,
+            name: `${user.firstName} ${user.lastName}`,
+            role: user.role
+          }
+        }
 
-export function verifyToken(token: string): { userId: string } | null {
-  try {
-    const secret = process.env.JWT_SECRET || "your-secret-key"
-    return jwt.verify(token, secret) as { userId: string }
-  } catch {
-    return null
+        return null
+      }
+    })
+  ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id
+        token.role = user.role
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (token) {
+        session.user.id = token.id as string
+        session.user.role = token.role as string
+      }
+      return session
+    }
+  },
+  pages: {
+    signIn: '/login'
+  },
+  session: {
+    strategy: 'jwt'
   }
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -88,6 +88,15 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
   const router = useRouter()
   const { toast } = useToast()
 
+  // Memoized authentication effect dependencies
+  const authDependencies = useMemo(() => ({
+    status,
+    session,
+    userId,
+    router,
+    toast
+  }), [status, session, userId, router, toast])
+
   useEffect(() => {
     if (status === "loading") return
 
@@ -107,7 +116,7 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     }
 
     fetchExhibitorData()
-  }, [userId, status, session, router, toast])
+  }, [authDependencies])
 
   useEffect(() => {
     // Set company info as default active section when component mounts
@@ -152,11 +161,11 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     }
   }
 
-  const toggleMenu = (menu: string) => {
+  const toggleMenu = useCallback((menu: string) => {
     setOpenMenus((prev) => (prev.includes(menu) ? prev.filter((m) => m !== menu) : [...prev, menu]))
-  }
+  }, [])
 
-  const handleUpdate = async (updates: Partial<any>) => {
+  const handleUpdate = useCallback(async (updates: Partial<any>) => {
     try {
       const res = await fetch(`/api/exhibitors/${userId}`, {
         method: "PUT",
@@ -171,29 +180,242 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
     } catch (error) {
       console.error("Error updating exhibitor:", error)
     }
-  }
+  }, [userId])
 
-  // Helper function for menu item styling
-  const menuItemClass = (sectionId: string) => {
+  // Memoized menu item styling function
+  const menuItemClass = useCallback((sectionId: string) => {
     return `cursor-pointer pl-3 py-2 text-sm rounded-md transition-colors w-full text-left ${
       activeSection === sectionId 
         ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700 font-medium" 
         : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 border-l-4 border-transparent"
     }`
-  }
+  }, [activeSection])
 
-  if (loading) {
+  // Memoized loading state
+  const loadingContent = useMemo(() => (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+    </div>
+  ), [])
+
+  // Memoized error state
+  const errorContent = useMemo(() => (
+    <div className="flex items-center justify-center min-h-screen">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-red-600">Error</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Button onClick={fetchExhibitorData} className="w-full">
+            Try Again
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  ), [error])
+
+  // Memoized no data state
+  const noDataContent = useMemo(() => (
+    <div className="flex items-center justify-center min-h-screen">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>No Data</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-600">No exhibitor data found.</p>
+        </CardContent>
+      </Card>
+    </div>
+  ), [])
+
+  // Memoized stats cards - FIXED: Check for exhibitor existence
+  const statsCards = useMemo(() => {
+    if (!exhibitor) return null;
+    
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Events</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <ActiveEventsCard exhibitorId={exhibitor.id} />
+            <p className="text-xs text-muted-foreground">Active Events</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Products</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{exhibitor.totalProducts || 25}</div>
+            <p className="text-xs text-muted-foreground">{exhibitor.profileViews || 30} total views</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Leads</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <FollowersCountCard exhibitorId={exhibitor.id} />
+            <p className="text-xs text-muted-foreground">Total Leads</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Appointments</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <AppointmentsCountCard exhibitorId={exhibitor.id} />
+            <p className="text-xs text-muted-foreground">Total Appointments</p>
+          </CardContent>
+        </Card>
       </div>
     )
-  }
+  }, [exhibitor])
 
-  if (error) {
+  // Memoized profile summary - FIXED: Check for exhibitor existence
+  const profileSummary = useMemo(() => {
+    if (!exhibitor) return null;
+    
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-full max-w-md">
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile Summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-start space-x-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={exhibitor.avatar || "/placeholder.svg"} />
+              <AvatarFallback className="text-lg">
+                {exhibitor.firstName[0]}
+                {exhibitor.lastName[0]}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <h3 className="text-xl font-semibold">
+                {exhibitor.firstName} {exhibitor.lastName}
+              </h3>
+              {exhibitor.jobTitle && (
+                <p className="text-gray-600 flex items-center mt-1">
+                  <Briefcase className="h-4 w-4 mr-2" />
+                  {exhibitor.jobTitle}
+                </p>
+              )}
+              {exhibitor.location && (
+                <p className="text-gray-600 flex items-center mt-1">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  {exhibitor.location}
+                </p>
+              )}
+              <div className="flex items-center space-x-4 mt-2">
+                {exhibitor.email && (
+                  <a
+                    href={`mailto:${exhibitor.email}`}
+                    className="text-blue-600 hover:underline flex items-center"
+                  >
+                    <Mail className="h-4 w-4 mr-1" />
+                    Email
+                  </a>
+                )}
+                {exhibitor.phone && (
+                  <a
+                    href={`tel:${exhibitor.phone}`}
+                    className="text-blue-600 hover:underline flex items-center"
+                  >
+                    <Phone className="h-4 w-4 mr-1" />
+                    Call
+                  </a>
+                )}
+                {exhibitor.website && (
+                  <a
+                    href={exhibitor.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline flex items-center"
+                  >
+                    <Globe className="h-4 w-4 mr-1" />
+                    Website
+                  </a>
+                )}
+                {exhibitor.twitter && (
+                  <a
+                    href={`https://twitter.com/${exhibitor.twitter}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline flex items-center"
+                  >
+                    <Twitter className="h-4 w-4 mr-1" />
+                    Twitter
+                  </a>
+                )}
+              </div>
+              {exhibitor.bio && <p className="text-gray-700 mt-3">{exhibitor.bio}</p>}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }, [exhibitor])
+
+  // Memoized overview content - FIXED: Check for exhibitor existence
+  const overviewContent = useMemo(() => {
+    if (!exhibitor) return null;
+    
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Exhibitor Dashboard</h1>
+          <p className="text-gray-600">Welcome back, {exhibitor.firstName}!</p>
+        </div>
+
+        {/* Stats Cards */}
+        {statsCards}
+
+        {/* Profile Summary */}
+        {profileSummary}
+      </div>
+    )
+  }, [exhibitor, statsCards, profileSummary])
+
+  // Memoized appointments content - FIXED: Check for exhibitor existence
+  const appointmentsContent = useMemo(() => {
+    if (!exhibitor) return null;
+    
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Add any appointment stats cards here if needed */}
+        </div>
+        <AppointmentScheduling
+          exhibitorId={exhibitor.id}
+          onCountChange={setAppointmentCount}
+        />
+      </div>
+    )
+  }, [exhibitor])
+
+  // Memoized main content renderer - FIXED: Added loading and error states
+  const renderContent = useMemo(() => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center min-h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      )
+    }
+
+    if (error) {
+      return (
+        <Card className="w-full max-w-md mx-auto">
           <CardHeader>
             <CardTitle className="text-red-600">Error</CardTitle>
           </CardHeader>
@@ -204,14 +426,12 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
             </Button>
           </CardContent>
         </Card>
-      </div>
-    )
-  }
+      )
+    }
 
-  if (!exhibitor) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-full max-w-md">
+    if (!exhibitor) {
+      return (
+        <Card className="w-full max-w-md mx-auto">
           <CardHeader>
             <CardTitle>No Data</CardTitle>
           </CardHeader>
@@ -219,146 +439,12 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
             <p className="text-gray-600">No exhibitor data found.</p>
           </CardContent>
         </Card>
-      </div>
-    )
-  }
+      )
+    }
 
-  const renderContent = () => {
     switch (activeSection) {
       case "overview":
-        return (
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Exhibitor Dashboard</h1>
-              <p className="text-gray-600">Welcome back, {exhibitor.firstName}!</p>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Events</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <ActiveEventsCard exhibitorId={exhibitor.id} />
-                  <p className="text-xs text-muted-foreground">Active Events</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Products</CardTitle>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{exhibitor.totalProducts || 25}</div>
-                  <p className="text-xs text-muted-foreground">{exhibitor.profileViews || 30} total views</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Leads</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <FollowersCountCard exhibitorId={exhibitor.id} />
-                  <p className="text-xs text-muted-foreground">Total Leads</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Appointments</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <AppointmentsCountCard exhibitorId={exhibitor.id} />
-                  <p className="text-xs text-muted-foreground">Total Appointments</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Profile Summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-start space-x-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={exhibitor.avatar || "/placeholder.svg"} />
-                    <AvatarFallback className="text-lg">
-                      {exhibitor.firstName[0]}
-                      {exhibitor.lastName[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold">
-                      {exhibitor.firstName} {exhibitor.lastName}
-                    </h3>
-                    {exhibitor.jobTitle && (
-                      <p className="text-gray-600 flex items-center mt-1">
-                        <Briefcase className="h-4 w-4 mr-2" />
-                        {exhibitor.jobTitle}
-                      </p>
-                    )}
-                    {exhibitor.location && (
-                      <p className="text-gray-600 flex items-center mt-1">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        {exhibitor.location}
-                      </p>
-                    )}
-                    <div className="flex items-center space-x-4 mt-2">
-                      {exhibitor.email && (
-                        <a
-                          href={`mailto:${exhibitor.email}`}
-                          className="text-blue-600 hover:underline flex items-center"
-                        >
-                          <Mail className="h-4 w-4 mr-1" />
-                          Email
-                        </a>
-                      )}
-                      {exhibitor.phone && (
-                        <a
-                          href={`tel:${exhibitor.phone}`}
-                          className="text-blue-600 hover:underline flex items-center"
-                        >
-                          <Phone className="h-4 w-4 mr-1" />
-                          Call
-                        </a>
-                      )}
-                      {exhibitor.website && (
-                        <a
-                          href={exhibitor.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline flex items-center"
-                        >
-                          <Globe className="h-4 w-4 mr-1" />
-                          Website
-                        </a>
-                      )}
-                      {exhibitor.twitter && (
-                        <a
-                          href={`https://twitter.com/${exhibitor.twitter}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline flex items-center"
-                        >
-                          <Twitter className="h-4 w-4 mr-1" />
-                          Twitter
-                        </a>
-                      )}
-                    </div>
-                    {exhibitor.bio && <p className="text-gray-700 mt-3">{exhibitor.bio}</p>}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )
+        return overviewContent
       case "company":
         return <CompanyInfo exhibitorId={exhibitor.id} onUpdate={handleUpdate} exhibitorData={exhibitor} />
       case "events":
@@ -372,17 +458,7 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
       case "follow":
         return <FollowManagement userId={exhibitor.id} />
       case "appointments":
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {/* Add any appointment stats cards here if needed */}
-            </div>
-            <AppointmentScheduling
-              exhibitorId={exhibitor.id}
-              onCountChange={setAppointmentCount}
-            />
-          </div>
-        )
+        return appointmentsContent
       case "analytics":
         return <AnalyticsReports exhibitorId={exhibitor.id} />
       case "promotions":
@@ -396,261 +472,248 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
       default:
         return <CompanyInfo exhibitorId={exhibitor.id} onUpdate={handleUpdate} exhibitorData={exhibitor} />
     }
-  }
+  }, [activeSection, exhibitor, overviewContent, appointmentsContent, handleUpdate, loading, error])
+
+  // Memoized sidebar content
+  const sidebarContent = useMemo(() => (
+    <aside className={`
+      fixed md:relative
+      w-64 min-h-screen bg-white border-r border-gray-200 z-50
+      transform transition-transform duration-300 ease-in-out
+      ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+      md:translate-x-0
+      flex flex-col shadow-sm
+    `}>
+      {/* Mobile Header */}
+      <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200">
+        <h2 className="text-lg font-semibold text-gray-900">Exhibitor Menu</h2>
+        <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className="flex-1 p-4 overflow-y-auto">
+        {/* Main Dropdown */}
+        <div className="mb-4">
+          <button
+            className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
+            onClick={() => toggleMenu("main")}
+          >
+            <span className="flex items-center gap-2">
+              <BarChart3 size={16} />
+              Main
+            </span>
+            {openMenus.includes("main") ? (
+              <ChevronDown size={16} />
+            ) : (
+              <ChevronRight size={16} />
+            )}
+          </button>
+          {openMenus.includes("main") && (
+            <div className="ml-2 mt-2 space-y-1">
+              <button
+                onClick={() => setActiveSection("overview")}
+                className={menuItemClass("overview")}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveSection("company")}
+                className={menuItemClass("company")}
+              >
+                Company
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Lead Management Dropdown */}
+        <div className="mb-4">
+          <button
+            className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
+            onClick={() => toggleMenu("leadManagement")}
+          >
+            <span className="flex items-center gap-2">
+              <Users size={16} />
+              Event & Products
+            </span>
+            {openMenus.includes("leadManagement") ? (
+              <ChevronDown size={16} />
+            ) : (
+              <ChevronRight size={16} />
+            )}
+          </button>
+          {openMenus.includes("leadManagement") && (
+            <div className="ml-2 mt-2 space-y-1">
+              <button
+                onClick={() => setActiveSection("events")}
+                className={menuItemClass("events")}
+              >
+                Events
+              </button>
+              <button
+                onClick={() => setActiveSection("products")}
+                className={menuItemClass("products")}
+              >
+                Products
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Marketing Campaigns Dropdown */}
+        <div className="mb-4">
+          <button
+            className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
+            onClick={() => toggleMenu("marketingCampaigns")}
+          >
+            <span className="flex items-center gap-2">
+              <Star size={16} />
+              Marketing Campaigns
+            </span>
+            {openMenus.includes("marketingCampaigns") ? (
+              <ChevronDown size={16} />
+            ) : (
+              <ChevronRight size={16} />
+            )}
+          </button>
+          {openMenus.includes("marketingCampaigns") && (
+            <div className="ml-2 mt-2 space-y-1">
+              <button
+                onClick={() => setActiveSection("promotions")}
+                className={menuItemClass("promotions")}
+              >
+                Promotion
+              </button>
+              <button
+                onClick={() => setActiveSection("active-promotions")}
+                className={menuItemClass("active-promotions")}
+              >
+                Active Promotion
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Network Dropdown */}
+        <div className="mb-4">
+          <button
+            className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
+            onClick={() => toggleMenu("network")}
+          >
+            <span className="flex items-center gap-2">
+              <Users size={16} />
+              Network
+            </span>
+            {openMenus.includes("network") ? (
+              <ChevronDown size={16} />
+            ) : (
+              <ChevronRight size={16} />
+            )}
+          </button>
+          {openMenus.includes("network") && (
+            <div className="ml-2 mt-2 space-y-1">
+              <button
+                onClick={() => setActiveSection("follow")}
+                className={menuItemClass("follow")}
+              >
+                Follow
+              </button>
+              <button
+                onClick={() => setActiveSection("messages")}
+                className={menuItemClass("messages")}
+              >
+                Messages
+              </button>
+              <button
+                onClick={() => setActiveSection("connection")}
+                className={menuItemClass("connection")}
+              >
+                Connection
+              </button>
+              <button
+                onClick={() => setActiveSection("appointments")}
+                className={menuItemClass("appointments")}
+              >
+                Appointments
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Help & Support */}
+        <button
+          onClick={() => setActiveSection("help")}
+          className={`flex items-center w-full py-2 gap-2 font-medium text-sm rounded-md transition-colors ${
+            activeSection === "help" 
+              ? "bg-blue-50 text-blue-700" 
+              : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+          }`}
+        >
+          <HelpCircle size={16} />
+          Help & Support
+        </button>
+
+        {/* Settings */}
+        <button
+          onClick={() => setActiveSection("settings")}
+          className={`flex items-center w-full py-2 gap-2 font-medium text-sm rounded-md transition-colors mt-1 ${
+            activeSection === "settings" 
+              ? "bg-blue-50 text-blue-700" 
+              : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+          }`}
+        >
+          <Settings size={16} />
+          Settings
+        </button>
+
+        {/* Logout */}
+        <Button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="w-full bg-red-500 hover:bg-red-600 text-white mt-8"
+        >
+          Logout
+        </Button>
+      </div>
+    </aside>
+  ), [sidebarOpen, toggleMenu, openMenus, menuItemClass, activeSection, setActiveSection])
+
+  // Memoized mobile overlay
+  const mobileOverlay = useMemo(() => (
+    sidebarOpen ? (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
+    ) : null
+  ), [sidebarOpen])
+
+  // Memoized mobile top bar
+  const mobileTopBar = useMemo(() => (
+    <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
+      <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
+        <Menu className="h-5 w-5" />
+      </Button>
+      <div className="w-9" />
+    </div>
+  ), [])
 
   return (
     <div className="flex min-h-screen w-full bg-gray-50">
       {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
+      {mobileOverlay}
 
       {/* Sidebar */}
-      <aside className={`
-        fixed md:relative
-        w-64 min-h-screen bg-white border-r border-gray-200 z-50
-        transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        md:translate-x-0
-        flex flex-col shadow-sm
-      `}>
-        {/* Mobile Header */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Exhibitor Menu</h2>
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <div className="flex-1 p-4 overflow-y-auto">
-          {/* Main Dropdown */}
-          <div className="mb-4">
-            <button
-              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
-              onClick={() => toggleMenu("main")}
-            >
-              <span className="flex items-center gap-2">
-                <BarChart3 size={16} />
-                Main
-              </span>
-              {openMenus.includes("main") ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
-            </button>
-            {openMenus.includes("main") && (
-              <div className="ml-2 mt-2 space-y-1">
-                <button
-                  onClick={() => setActiveSection("overview")}
-                  className={menuItemClass("overview")}
-                >
-                  Overview
-                </button>
-                <button
-                  onClick={() => setActiveSection("company")}
-                  className={menuItemClass("company")}
-                >
-                  Company
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Lead Management Dropdown */}
-          <div className="mb-4">
-            <button
-              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
-              onClick={() => toggleMenu("leadManagement")}
-            >
-              <span className="flex items-center gap-2">
-                <Users size={16} />
-                Event & Products
-              </span>
-              {openMenus.includes("leadManagement") ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
-            </button>
-            {openMenus.includes("leadManagement") && (
-              <div className="ml-2 mt-2 space-y-1">
-                <button
-                  onClick={() => setActiveSection("events")}
-                  className={menuItemClass("events")}
-                >
-                  Events
-                </button>
-                <button
-                  onClick={() => setActiveSection("products")}
-                  className={menuItemClass("products")}
-                >
-                  Products
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Marketing Campaigns Dropdown */}
-          <div className="mb-4">
-            <button
-              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
-              onClick={() => toggleMenu("marketingCampaigns")}
-            >
-              <span className="flex items-center gap-2">
-                <Star size={16} />
-                Marketing Campaigns
-              </span>
-              {openMenus.includes("marketingCampaigns") ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
-            </button>
-            {openMenus.includes("marketingCampaigns") && (
-              <div className="ml-2 mt-2 space-y-1">
-                <button
-                  onClick={() => setActiveSection("promotions")}
-                  className={menuItemClass("promotions")}
-                >
-                  Promotion
-                </button>
-                <button
-                  onClick={() => setActiveSection("active-promotions")}
-                  className={menuItemClass("active-promotions")}
-                >
-                  Active Promotion
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Analytics Dropdown */}
-          {/* <div className="mb-4">
-            <button
-              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
-              onClick={() => toggleMenu("analytics")}
-            >
-              <span className="flex items-center gap-2">
-                <TrendingUp size={16} />
-                Analytics
-              </span>
-              {openMenus.includes("analytics") ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
-            </button>
-            {openMenus.includes("analytics") && (
-              <div className="ml-2 mt-2 space-y-1">
-                <button
-                  onClick={() => setActiveSection("analytics")}
-                  className={menuItemClass("analytics")}
-                >
-                  Analytics
-                </button>
-              </div>
-            )}
-          </div> */}
-
-          {/* Network Dropdown */}
-          <div className="mb-4">
-            <button
-              className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
-              onClick={() => toggleMenu("network")}
-            >
-              <span className="flex items-center gap-2">
-                <Users size={16} />
-                Network
-              </span>
-              {openMenus.includes("network") ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
-            </button>
-            {openMenus.includes("network") && (
-              <div className="ml-2 mt-2 space-y-1">
-                <button
-                  onClick={() => setActiveSection("follow")}
-                  className={menuItemClass("follow")}
-                >
-                  Follow
-                </button>
-                <button
-                  onClick={() => setActiveSection("messages")}
-                  className={menuItemClass("messages")}
-                >
-                  Messages
-                </button>
-                <button
-                  onClick={() => setActiveSection("connection")}
-                  className={menuItemClass("connection")}
-                >
-                  Connection
-                </button>
-                <button
-                  onClick={() => setActiveSection("appointments")}
-                  className={menuItemClass("appointments")}
-                >
-                  Appointments
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Help & Support */}
-          <button
-            onClick={() => setActiveSection("help")}
-            className={`flex items-center w-full py-2 gap-2 font-medium text-sm rounded-md transition-colors ${
-              activeSection === "help" 
-                ? "bg-blue-50 text-blue-700" 
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-            }`}
-          >
-            <HelpCircle size={16} />
-            Help & Support
-          </button>
-
-          {/* Settings */}
-          <button
-            onClick={() => setActiveSection("settings")}
-            className={`flex items-center w-full py-2 gap-2 font-medium text-sm rounded-md transition-colors mt-1 ${
-              activeSection === "settings" 
-                ? "bg-blue-50 text-blue-700" 
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-            }`}
-          >
-            <Settings size={16} />
-            Settings
-          </button>
-
-          {/* Logout */}
-          <Button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="w-full bg-red-500 hover:bg-red-600 text-white mt-8"
-          >
-            Logout
-          </Button>
-        </div>
-      </aside>
+      {sidebarContent}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Mobile Top Bar */}
-        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
-            <Menu className="h-5 w-5" />
-          </Button>
-          <div className="w-9" />
-        </div>
+        {mobileTopBar}
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto">
             {/* Dynamic Content */}
             <div className="">
-              {renderContent()}
+              {renderContent}
             </div>
           </div>
         </main>

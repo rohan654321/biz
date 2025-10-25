@@ -23,7 +23,7 @@ import MyProfile from "./my-profile"
 import MySessions from "./my-sessions"
 import { PresentationMaterials } from "./presentation-materials"
 import MessagesCenter from "@/app/organizer-dashboard/messages-center"
-import { SpeakerSection } from "./speaker-settings"
+import { SpeakerSettings } from "./speaker-settings"
 import { HelpSupport } from "@/components/HelpSupport"
 import { useDashboard } from "@/contexts/dashboard-context"
 import { SpeakerHelpSupport } from "./help-support"
@@ -198,7 +198,7 @@ export function SpeakerDashboard({ userId }: UserDashboardProps) {
       case "help":
         return <SpeakerHelpSupport />
       case "settings":
-        return <SpeakerSection />
+        return <SpeakerSettings />
       default:
         return <MyProfile speakerId={speaker.id} /> // 👈 Default fallback
     }

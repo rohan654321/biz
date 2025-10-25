@@ -25,7 +25,7 @@ import EventManagement from "./event-management"
 import BookingSystem from "./booking-system"
 import CommunicationCenter from "./communication-center"
 import LegalDocumentation from "./legal-documentation"
-import { VenueSection } from "./venue-settings"
+import { VenueSettings } from "./venue-settings"
 import { MeetingSpace } from "@prisma/client"
 import { ConnectionsSection } from "../dashboard/connections-section"
 import { HelpSupport } from "@/components/HelpSupport"
@@ -221,7 +221,7 @@ export default function VenueDashboardPage({ userId }: UserDashboardProps) {
         return <HelpSupport />
       case "settings":
         return (
-          <VenueSection
+          <VenueSettings
           />
         )
       default:
