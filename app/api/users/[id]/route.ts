@@ -163,9 +163,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = await params
+    const { id } = params
     const session = await getServerSession(authOptions)
 
     if (!session) {
@@ -180,20 +180,21 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const body = await request.json()
-    const { 
-      firstName, 
-      lastName, 
-      phone, 
-      bio, 
-      website, 
-      linkedin, 
-      twitter, 
-      instagram, // Add this
-      company, 
-      companyIndustry, // Add this
-      jobTitle, 
-      location, 
-      interests 
+    const {
+      firstName,
+      lastName,
+      phone,
+      avatar, // Added avatar field
+      bio,
+      website,
+      linkedin,
+      twitter,
+      instagram,
+      company,
+      companyIndustry,
+      jobTitle,
+      location,
+      interests,
     } = body
 
     // For hardcoded users, return success but don't actually update
@@ -204,6 +205,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           firstName,
           lastName,
           phone,
+          avatar, // Include avatar in response
           bio,
           website,
           linkedin,
@@ -218,38 +220,44 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       })
     }
 
+    const updateData: any = {
+      firstName,
+      lastName,
+      phone,
+      bio,
+      website,
+      linkedin,
+      twitter,
+      instagram,
+      company,
+      companyIndustry,
+      jobTitle,
+      location,
+      interests,
+    }
+
+    if (avatar !== undefined) {
+      updateData.avatar = avatar
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: {
-        firstName,
-        lastName,
-        phone,
-        bio,
-        website,
-        linkedin,
-        twitter,
-        instagram, // Add this
-        company,
-        companyIndustry, // Add this
-        jobTitle,
-        location,
-        interests,
-      },
+      data: updateData,
       select: {
         id: true,
         email: true,
         firstName: true,
         lastName: true,
         phone: true,
-        avatar: true,
+        avatar: true, // Include avatar in select
         role: true,
         bio: true,
         website: true,
         linkedin: true,
         twitter: true,
-        instagram: true, // Add this
+        instagram: true,
         company: true,
-        companyIndustry: true, // Add this
+        companyIndustry: true,
         jobTitle: true,
         location: true,
         interests: true,

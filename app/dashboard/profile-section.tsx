@@ -1,6 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal } from "react"
+import type React from "react"
+
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -26,6 +28,7 @@ import {
   BriefcaseBusiness,
   Building2,
   Filter,
+  Camera,
 } from "lucide-react"
 import { DynamicCalendar } from "./DynamicCalander"
 import type { UserData } from "@/types/user"
@@ -67,20 +70,20 @@ const INTEREST_OPTIONS = [
   "Baby, Kids & Maternity",
   "Hospitality",
   "Packing & Packaging",
-  "Miscellaneous"
+  "Miscellaneous",
 ]
 
 interface FormData {
   email: string
   firstName: string
   lastName: string
-  avatar:string
+  avatar: string
   phone: string
   bio: string
   website: string
   company: string
   jobTitle: string
-  companyIndustry: string // 👈 NEW
+  companyIndustry: string
   linkedin: string
   twitter: string
   instagram: string
@@ -126,8 +129,72 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
   const [selectedEventFilter, setSelectedEventFilter] = useState<string>("all")
   const [connectionsCount, setConnectionsCount] = useState<number>(0)
   const [interestedEventsCount, setInterestedEventsCount] = useState<number>(0)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
-  // Filter events based on interests
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("[v0] Avatar upload triggered")
+    const file = e.target.files?.[0]
+    if (!file) {
+      console.log("[v0] No file selected")
+      return
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file")
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size should be less than 5MB")
+      return
+    }
+
+    try {
+      setUploadingAvatar(true)
+      console.log("[v0] Uploading avatar to Cloudinary...")
+
+      const uploadFormData = new FormData()
+      uploadFormData.append("file", file)
+      uploadFormData.append("type", "image")
+
+      const uploadResponse = await fetch("/api/upload/cloudinary", {
+        method: "POST",
+        body: uploadFormData,
+      })
+
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload image")
+      }
+
+      const uploadData = await uploadResponse.json()
+      const avatarUrl = uploadData.url
+      console.log("[v0] Avatar uploaded successfully:", avatarUrl)
+
+      console.log("[v0] Updating user profile with new avatar...")
+      const updateResponse = await fetch(`/api/users/${localUserData.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatar: avatarUrl }),
+      })
+
+      if (!updateResponse.ok) {
+        throw new Error("Failed to update avatar")
+      }
+
+      const { user: updatedUser } = await updateResponse.json()
+      console.log("[v0] Avatar updated successfully in database")
+
+      setLocalUserData((prev) => ({ ...prev, avatar: avatarUrl }))
+      setFormData((prev) => ({ ...prev, avatar: avatarUrl }))
+      onUpdate({ avatar: avatarUrl })
+    } catch (error) {
+      console.error("[v0] Error uploading avatar:", error)
+      alert("Failed to upload avatar. Please try again.")
+    } finally {
+      setUploadingAvatar(false)
+    }
+  }
+
   const filteredEvents =
     selectedInterests.length > 0
       ? events.filter((event) => event.tags?.some((tag: string) => selectedInterests.includes(tag)))
@@ -140,29 +207,24 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
 
   const uniqueEventTitles = Array.from(new Set(events.map((event) => event.title)))
 
-  // Shuffle function - updated to use titleFilteredEvents
   const shuffleEvents = useCallback(() => {
     if (titleFilteredEvents.length <= 10) {
-      // If less than or equal to 10 events, show them all
       setDisplayedEvents(titleFilteredEvents)
     } else {
-      // Shuffle and take 10 random events
       const shuffled = [...titleFilteredEvents].sort(() => Math.random() - 0.5)
       setDisplayedEvents(shuffled.slice(0, 10))
     }
   }, [titleFilteredEvents])
 
-  // Run on mount & when titleFilteredEvents changes
   useEffect(() => {
     shuffleEvents()
   }, [titleFilteredEvents.length, selectedEventFilter])
 
-  // Auto shuffle every 3 minutes
   useEffect(() => {
     if (titleFilteredEvents.length > 10) {
       const interval = setInterval(() => {
         shuffleEvents()
-      }, 180000) // 3 minutes
+      }, 180000)
 
       return () => clearInterval(interval)
     }
@@ -227,7 +289,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
       firstName: localUserData?.firstName || "",
       lastName: localUserData?.lastName || "",
       phone: localUserData?.phone || "",
-      avatar:localUserData?.avatar || "",
+      avatar: localUserData?.avatar || "",
       bio: localUserData?.bio || "",
       website: localUserData?.website || "",
       company: localUserData?.company || "",
@@ -242,7 +304,6 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
     setSaveError(null)
   }, [localUserData])
 
-  // Fetch events
   useEffect(() => {
     async function fetchEvents() {
       try {
@@ -292,7 +353,6 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
 
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
         {!isEditing ? (
@@ -326,19 +386,45 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
 
       {saveError && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">{saveError}</div>}
 
-      {/* Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Card */}
         <Card className="lg:col-span-1">
           <CardContent className="p-6">
             <div className="flex items-center gap-4 mb-6">
-              <Avatar className="w-20 h-20">
-                <AvatarImage src={localUserData.avatar || "/image/Ellipse 72.png"} />
-                <AvatarFallback className="text-2xl">
-                  {localUserData.firstName?.[0]}
-                  {localUserData.lastName?.[0]}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="w-20 h-20">
+                  <AvatarImage src={localUserData.avatar || "/image/Ellipse 72.png"} />
+                  <AvatarFallback className="text-2xl">
+                    {localUserData.firstName?.[0]}
+                    {localUserData.lastName?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                {isEditing && (
+                  <>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                      id="avatar-upload"
+                      disabled={uploadingAvatar}
+                    />
+                    <label
+                      htmlFor="avatar-upload"
+                      className="absolute bottom-0 right-0 w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors z-10 shadow-lg"
+                      onClick={(e) => {
+                        console.log("[v0] Camera button clicked")
+                        // Ensure the click propagates to trigger the file input
+                      }}
+                    >
+                      {uploadingAvatar ? (
+                        <Loader2 className="w-4 h-4 text-white animate-spin" />
+                      ) : (
+                        <Camera className="w-4 h-4 text-white" />
+                      )}
+                    </label>
+                  </>
+                )}
+              </div>
               <div>
                 <h2 className="text-xl font-semibold">
                   {localUserData.firstName} {localUserData.lastName}
@@ -354,7 +440,6 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
               </div>
             </div>
 
-            {/* Social links */}
             {!isEditing ? (
               <div className="flex justify-center gap-3 mb-6">
                 <a
@@ -422,12 +507,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                 </div>
               </div>
             )}
-          </CardContent>
 
-          <CardHeader className="pb-3">
-            <CardTitle>Detailed Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
             {isEditing ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -448,7 +528,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   </div>
 
                   <div>
-                    <Label>Email</Label> {/* ✅ Added Email field */}
+                    <Label>Email</Label>
                     <Input
                       type="email"
                       value={formData.email}
@@ -481,18 +561,16 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   </div>
 
                   <div>
-                    <Label>Company Field</Label> {/* ✅ Moved outside Interests */}
+                    <Label>Company Field</Label>
                     <Input
                       value={formData.companyIndustry}
-                      onChange={(e) =>
-                        setFormData({ ...formData, companyIndustry: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, companyIndustry: e.target.value })}
                       placeholder="e.g. Fintech, Education, Healthcare"
                     />
                   </div>
 
                   <div>
-                    <Label>Interests</Label> {/* ✅ Separate Interests */}
+                    <Label>Interests</Label>
                     <Select
                       onValueChange={(value) => {
                         if (!formData.interests.includes(value)) {
@@ -516,7 +594,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                     </Select>
 
                     <div className="flex gap-2 flex-wrap mt-2">
-                      {formData.interests.map((int: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined, idx: Key | null | undefined) => (
+                      {formData.interests.map((int, idx) => (
                         <Badge
                           key={idx}
                           variant="secondary"
@@ -544,9 +622,8 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   />
                 </div>
               </>
-
             ) : (
-              <>
+              <div className="">
                 <div className="flex items-center gap-2">
                   <Mail size={16} className="text-gray-500" />
                   <span className="font-medium">Email Address</span>
@@ -578,9 +655,12 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                   <div className="ml-auto flex gap-2 flex-wrap">
                     {(localUserData.interests && localUserData.interests.length > 0
                       ? localUserData.interests
-                      : ["All Interests"]).map((int, idx) => (
-                        <Badge key={idx} variant="secondary">{int}</Badge>
-                      ))}
+                      : ["All Interests"]
+                    ).map((int, idx) => (
+                      <Badge key={idx} variant="secondary">
+                        {int}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
                 <div className="flex items-start gap-2 mt-4">
@@ -593,14 +673,12 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                     </p>
                   </div>
                 </div>
-              </>
+              </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Right Side */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card className="bg-yellow-200 h-32 flex items-center justify-center">
               <div className="text-center p-4">
@@ -625,17 +703,11 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
             </Card>
           </div>
 
-          {/* Calendar + Events */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Calendar */}
             <div className="h-[500px]">
               <DynamicCalendar userId={userData.id} className="h-full w-full" />
-
-
-
             </div>
 
-            {/* Interested Events */}
             <Card className="h-[500px] flex flex-col">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
