@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { ClientLayout } from "./client-layout"
 import ConditionalLayout from "./conditional-layout"
+import { ReactQueryProvider } from "@/components/react-query-provider"
 
 export const metadata: Metadata = {
   title: "Biz Trade Fairs",
@@ -19,7 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ClientLayout>
-          <ConditionalLayout>{children}</ConditionalLayout>
+          <ConditionalLayout><ReactQueryProvider>{children}</ReactQueryProvider></ConditionalLayout>
         </ClientLayout>
       </body>
     </html>
