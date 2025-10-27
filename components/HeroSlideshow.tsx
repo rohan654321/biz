@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma"
 import HorizontalScroller from "@/components/HorizontalScroller"
 
 // ✅ Fetch VIP Events with Venue Data
+
+export const revalidate = 300;
 export async function getVipEvents() {
   const events = await prisma.event.findMany({
     where: { isVIP: true },
