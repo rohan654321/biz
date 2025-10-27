@@ -24,6 +24,8 @@ import {
   Package,
   TrendingUp,
   Link,
+  MessageSquare,
+  Reply,
 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { format } from "date-fns"
@@ -127,7 +129,21 @@ interface Booth {
   }
 }
 
-// Review interface
+// Review Reply interface
+interface ReviewReply {
+  id: string
+  content: string
+  createdAt: string
+  isOrganizerReply: boolean
+  user: {
+    id: string
+    firstName: string
+    lastName: string
+    avatar?: string
+  }
+}
+
+// Review interface with replies
 interface Review {
   id: string
   rating: number
@@ -140,10 +156,52 @@ interface Review {
     lastName: string
     avatar?: string
   }
+  replies: ReviewReply[]
 }
 
-// Review Card Component
-function ReviewCard({ review }: { review: Review }) {
+// Review Card Component with Replies
+function ReviewCard({ review, exhibitorId, onReplyAdded }: { 
+  review: Review 
+  exhibitorId: string
+  onReplyAdded: (reviewId: string, reply: ReviewReply) => void 
+}) {
+  const [showReplyForm, setShowReplyForm] = useState(false)
+  const [replyContent, setReplyContent] = useState("")
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false)
+  const { data: session } = useSession()
+
+  const handleSubmitReply = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!replyContent.trim()) return
+
+    setIsSubmittingReply(true)
+    try {
+      const res = await fetch(`/api/exhibitors/${exhibitorId}/reviews`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          reviewId: review.id, 
+          content: replyContent 
+        }),
+      })
+
+      if (res.ok) {
+        const newReply = await res.json()
+        onReplyAdded(review.id, newReply)
+        setReplyContent("")
+        setShowReplyForm(false)
+      } else {
+        const error = await res.json()
+        alert(`❌ ${error.error || "Failed to add reply"}`)
+      }
+    } catch (err) {
+      console.error(err)
+      alert("⚠️ Something went wrong")
+    } finally {
+      setIsSubmittingReply(false)
+    }
+  }
+
   return (
     <Card>
       <CardContent className="p-6">
@@ -192,7 +250,97 @@ function ReviewCard({ review }: { review: Review }) {
           <h5 className="font-semibold text-lg mb-2">{review.title}</h5>
         )}
 
-        <p className="text-gray-700">{review.comment}</p>
+        <p className="text-gray-700 mb-4">{review.comment}</p>
+
+        {/* Replies Section */}
+        {review.replies && review.replies.length > 0 && (
+          <div className="ml-4 pl-4 border-l-2 border-gray-200 space-y-4">
+            {review.replies.map((reply) => (
+              <div key={reply.id} className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  {reply.user?.avatar ? (
+                    <img
+                      src={reply.user.avatar}
+                      alt={`${reply.user.firstName} ${reply.user.lastName}`}
+                      className="w-8 h-8 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-xs font-medium">
+                        {reply.user.firstName?.[0]}{reply.user.lastName?.[0]}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium text-sm">
+                      {reply.user.firstName} {reply.user.lastName}
+                    </span>
+                    {reply.isOrganizerReply && (
+                      <Badge variant="secondary" className="text-xs">
+                        Exhibitor
+                      </Badge>
+                    )}
+                    <span className="text-xs text-gray-500">
+                      {format(new Date(reply.createdAt), 'MMM dd, yyyy')}
+                    </span>
+                  </div>
+                  <p className="text-gray-600 text-sm">{reply.content}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Reply Button and Form */}
+        {session?.user && (
+          <div className="mt-4">
+            {!showReplyForm ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowReplyForm(true)}
+                className="text-sm flex items-center gap-2"
+              >
+                <Reply className="w-4 h-4" />
+                Reply {review.replies && review.replies.length > 0 && `(${review.replies.length})`}
+              </Button>
+            ) : (
+              <form onSubmit={handleSubmitReply} className="space-y-2">
+                <textarea
+                  placeholder="Write a reply..."
+                  value={replyContent}
+                  onChange={(e) => setReplyContent(e.target.value)}
+                  className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  rows={3}
+                  required
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="submit"
+                    disabled={isSubmittingReply || !replyContent.trim()}
+                    size="sm"
+                    className="bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    {isSubmittingReply ? "Posting..." : "Post Reply"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowReplyForm(false)
+                      setReplyContent("")
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   )
@@ -424,7 +572,7 @@ export default function ExhibitorPage() {
     }
   }, [exhibitorId]);
 
-  // Fetch reviews data
+  // Fetch reviews data with replies
   useEffect(() => {
     async function fetchReviews() {
       if (!exhibitorId) return;
@@ -455,6 +603,17 @@ export default function ExhibitorPage() {
     setReviews(prevReviews => [newReview, ...prevReviews])
   }
 
+  // Handle new reply submission
+  const handleReplyAdded = (reviewId: string, newReply: ReviewReply) => {
+    setReviews(prevReviews => 
+      prevReviews.map(review => 
+        review.id === reviewId 
+          ? { ...review, replies: [...(review.replies || []), newReply] }
+          : review
+      )
+    )
+  }
+
   // Calculate exhibitor statistics
   const stats = useMemo(() => {
     const totalEvents = booths.length;
@@ -479,12 +638,16 @@ export default function ExhibitorPage() {
       ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
       : 0;
 
+    // Calculate total replies
+    const totalReplies = reviews.reduce((sum, review) => sum + (review.replies?.length || 0), 0);
+
     return {
       totalEvents,
       upcomingEvents,
       pastEvents,
       reviewAvgRating: Math.round(reviewAvgRating * 10) / 10,
       totalReviews: reviews.length,
+      totalReplies,
       clientsServed: "500+", // Mock data
     };
   }, [booths, reviews]);
@@ -686,8 +849,8 @@ export default function ExhibitorPage() {
               <div className="text-sm text-gray-600">Event Rating</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{mockDetails.socialProof.yearsExperience}</div>
-              <div className="text-sm text-gray-600">Years Experience</div>
+              <div className="text-2xl font-bold text-gray-900">{stats.totalReplies}</div>
+              <div className="text-sm text-gray-600">Total Replies</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">{exhibitor.foundedYear || "2015"}</div>
@@ -707,153 +870,153 @@ export default function ExhibitorPage() {
             <TabsTrigger value="reviews">Reviews ({stats.totalReviews})</TabsTrigger>
           </TabsList>
 
-{/* Overview Tab */}
-<TabsContent value="overview" className="space-y-6">
-  <div className="w-full space-y-6">
-    {/* About Section */}
-    <Card className="border-0 shadow-sm w-full">
-      <CardContent className="p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-            <Building className="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-gray-900">About {exhibitorName}</h3>
-            <p className="text-sm text-gray-500 mt-1">Company overview and background</p>
-          </div>
-        </div>
-        <p className="text-gray-700 leading-relaxed text-[15px] w-full">{exhibitorDescription}</p>
-      </CardContent>
-    </Card>
-
-    {/* Recent Events */}
-    <Card className="border-0 shadow-sm w-full">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-6 w-full">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900">Recent Event Participation</h3>
-              <p className="text-sm text-gray-500 mt-1">Latest events and exhibitions</p>
-            </div>
-          </div>
-          {booths.length > 0 && (
-            <Badge variant="secondary" className="px-3 py-1">
-              {booths.length} events
-            </Badge>
-          )}
-        </div>
-
-        {eventsLoading ? (
-          <div className="text-center py-8 w-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-gray-500 mt-2">Loading events...</p>
-          </div>
-        ) : booths.length === 0 ? (
-          <div className="text-center py-8 w-full">
-            <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <h4 className="text-lg font-semibold text-gray-600 mb-2">No Events Found</h4>
-            <p className="text-gray-500">This exhibitor hasn't participated in any events yet.</p>
-          </div>
-        ) : (
-          <>
-            <div className="space-y-3 w-full">
-              {booths.slice(0, 3).map((booth) => {
-                const event = booth.event;
-                const isUpcoming = new Date(event.endDate) > new Date();
-
-                return (
-                  <div
-                    key={booth.id}
-                    className="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all duration-200 cursor-pointer group w-full"
-                    onClick={() => {
-                      router.push(`/event/${event.id}`);
-                    }}
-                  >
-                    {/* Event Image */}
-                    <div className="relative w-20 h-20 flex-shrink-0">
-                      <Image
-                        alt={event.title || "Event"}
-                        src={event.bannerImage || event.thumbnailImage || "/images/signupimg.png"}
-                        fill
-                        className="object-cover rounded-lg group-hover:scale-105 transition-transform duration-200"
-                      />
-                      {event.isFeatured && (
-                        <Badge className="absolute -top-2 -right-2 bg-yellow-500 text-yellow-900 text-xs">
-                          Featured
-                        </Badge>
-                      )}
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            <div className="w-full space-y-6">
+              {/* About Section */}
+              <Card className="border-0 shadow-sm w-full">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <Building className="w-5 h-5 text-blue-600" />
                     </div>
-
-                    {/* Event Details */}
-                    <div className="flex-1 min-w-0 w-full">
-                      <div className="flex items-start justify-between mb-2 w-full">
-                        <h4 className="font-semibold text-gray-900 text-lg leading-tight group-hover:text-blue-600 transition-colors flex-1">
-                          {event.title || "Untitled Event"}
-                        </h4>
-                        <Badge
-                          variant={isUpcoming ? "default" : "secondary"}
-                          className="ml-2 flex-shrink-0"
-                        >
-                          {isUpcoming ? "Upcoming" : "Completed"}
-                        </Badge>
-                      </div>
-
-                      {/* Rating */}
-                      <div className="flex items-center gap-2 mb-3 w-full">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="text-sm font-medium text-gray-700">
-                            {event.averageRating || "4.5"}
-                          </span>
-                        </div>
-                        <span className="text-sm text-gray-500">•</span>
-                        <span className="text-sm text-gray-500">{event.totalReviews || 0} reviews</span>
-                      </div>
-
-                      {/* Event Details */}
-                      <div className="space-y-2 w-full">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          <span>{formatDateRange(event.startDate, event.endDate)}</span>
-                        </div>
-
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <MapPin className="w-4 h-4 text-gray-400" />
-                          <span className="truncate">{getLocationString(event.venue)}</span>
-                        </div>
-
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Building className="w-4 h-4 text-gray-400" />
-                          <span>Booth: {booth.boothNumber}</span>
-                        </div>
-                      </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">About {exhibitorName}</h3>
+                      <p className="text-sm text-gray-500 mt-1">Company overview and background</p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  <p className="text-gray-700 leading-relaxed text-[15px] w-full">{exhibitorDescription}</p>
+                </CardContent>
+              </Card>
 
-            {/* View All Button */}
-            {booths.length > 3 && (
-              <div className="mt-6 text-center w-full">
-                <Button
-                  variant="outline"
-                  onClick={() => setActiveTab("events")}
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 px-6 w-full sm:w-auto"
-                >
-                  View All Events ({booths.length})
-                </Button>
-              </div>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
-  </div>
-</TabsContent>
+              {/* Recent Events */}
+              <Card className="border-0 shadow-sm w-full">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-6 w-full">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                        <Calendar className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">Recent Event Participation</h3>
+                        <p className="text-sm text-gray-500 mt-1">Latest events and exhibitions</p>
+                      </div>
+                    </div>
+                    {booths.length > 0 && (
+                      <Badge variant="secondary" className="px-3 py-1">
+                        {booths.length} events
+                      </Badge>
+                    )}
+                  </div>
+
+                  {eventsLoading ? (
+                    <div className="text-center py-8 w-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                      <p className="text-gray-500 mt-2">Loading events...</p>
+                    </div>
+                  ) : booths.length === 0 ? (
+                    <div className="text-center py-8 w-full">
+                      <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <h4 className="text-lg font-semibold text-gray-600 mb-2">No Events Found</h4>
+                      <p className="text-gray-500">This exhibitor hasn't participated in any events yet.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-3 w-full">
+                        {booths.slice(0, 3).map((booth) => {
+                          const event = booth.event;
+                          const isUpcoming = new Date(event.endDate) > new Date();
+
+                          return (
+                            <div
+                              key={booth.id}
+                              className="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all duration-200 cursor-pointer group w-full"
+                              onClick={() => {
+                                router.push(`/event/${event.id}`);
+                              }}
+                            >
+                              {/* Event Image */}
+                              <div className="relative w-20 h-20 flex-shrink-0">
+                                <Image
+                                  alt={event.title || "Event"}
+                                  src={event.bannerImage || event.thumbnailImage || "/images/signupimg.png"}
+                                  fill
+                                  className="object-cover rounded-lg group-hover:scale-105 transition-transform duration-200"
+                                />
+                                {event.isFeatured && (
+                                  <Badge className="absolute -top-2 -right-2 bg-yellow-500 text-yellow-900 text-xs">
+                                    Featured
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {/* Event Details */}
+                              <div className="flex-1 min-w-0 w-full">
+                                <div className="flex items-start justify-between mb-2 w-full">
+                                  <h4 className="font-semibold text-gray-900 text-lg leading-tight group-hover:text-blue-600 transition-colors flex-1">
+                                    {event.title || "Untitled Event"}
+                                  </h4>
+                                  <Badge
+                                    variant={isUpcoming ? "default" : "secondary"}
+                                    className="ml-2 flex-shrink-0"
+                                  >
+                                    {isUpcoming ? "Upcoming" : "Completed"}
+                                  </Badge>
+                                </div>
+
+                                {/* Rating */}
+                                <div className="flex items-center gap-2 mb-3 w-full">
+                                  <div className="flex items-center gap-1">
+                                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                                    <span className="text-sm font-medium text-gray-700">
+                                      {event.averageRating || "4.5"}
+                                    </span>
+                                  </div>
+                                  <span className="text-sm text-gray-500">•</span>
+                                  <span className="text-sm text-gray-500">{event.totalReviews || 0} reviews</span>
+                                </div>
+
+                                {/* Event Details */}
+                                <div className="space-y-2 w-full">
+                                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <Calendar className="w-4 h-4 text-gray-400" />
+                                    <span>{formatDateRange(event.startDate, event.endDate)}</span>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <MapPin className="w-4 h-4 text-gray-400" />
+                                    <span className="truncate">{getLocationString(event.venue)}</span>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <Building className="w-4 h-4 text-gray-400" />
+                                    <span>Booth: {booth.boothNumber}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* View All Button */}
+                      {booths.length > 3 && (
+                        <div className="mt-6 text-center w-full">
+                          <Button
+                            variant="outline"
+                            onClick={() => setActiveTab("events")}
+                            className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 px-6 w-full sm:w-auto"
+                          >
+                            View All Events ({booths.length})
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
           {/* Events Tab */}
           <TabsContent value="events" className="space-y-6">
@@ -1090,67 +1253,67 @@ export default function ExhibitorPage() {
             </Tabs>
           </TabsContent>
 
-{/* About Tab */}
-<TabsContent value="about" className="space-y-6">
-  {/* Company Information - Full Width */}
-  <Card>
-    <CardContent className="p-8">
-      <h3 className="text-2xl font-bold text-gray-900 mb-6">Company Information</h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-500">Founded</label>
-            <p className="text-lg font-semibold text-gray-900">{exhibitor.foundedYear || "2015"}</p>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-500">Headquarters</label>
-            <p className="text-lg font-semibold text-gray-900">{exhibitor.headquarters || "Bangalore, India"}</p>
-          </div>
-        </div>
+          {/* About Tab */}
+          <TabsContent value="about" className="space-y-6">
+            {/* Company Information - Full Width */}
+            <Card>
+              <CardContent className="p-8">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">Company Information</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Founded</label>
+                      <p className="text-lg font-semibold text-gray-900">{exhibitor.foundedYear || "2015"}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Headquarters</label>
+                      <p className="text-lg font-semibold text-gray-900">{exhibitor.headquarters || "Bangalore, India"}</p>
+                    </div>
+                  </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-500">Industry</label>
-            <p className="text-lg font-semibold text-gray-900">{exhibitor.industry || "Technology"}</p>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-500">Company Size</label>
-            <p className="text-lg font-semibold text-gray-900">{exhibitor.companySize || "201-500 employees"}</p>
-          </div>
-        </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Industry</label>
+                      <p className="text-lg font-semibold text-gray-900">{exhibitor.industry || "Technology"}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Company Size</label>
+                      <p className="text-lg font-semibold text-gray-900">{exhibitor.companySize || "201-500 employees"}</p>
+                    </div>
+                  </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-500">Website</label>
-            <a
-              href={exhibitor.website || "#"}
-              className="text-lg font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
-            >
-              {exhibitor.website || "https://techcorp.com"}
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-500">Contact</label>
-            <div className="space-y-1">
-              <p className="text-lg font-semibold text-gray-900">{exhibitor.phone || "+91 98765 43210"}</p>
-              <p className="text-sm text-gray-600">{exhibitor.email}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Website</label>
+                      <a
+                        href={exhibitor.website || "#"}
+                        className="text-lg font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
+                      >
+                        {exhibitor.website || "https://techcorp.com"}
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Contact</label>
+                      <div className="space-y-1">
+                        <p className="text-lg font-semibold text-gray-900">{exhibitor.phone || "+91 98765 43210"}</p>
+                        <p className="text-sm text-gray-600">{exhibitor.email}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-  {/* Company Description */}
-  <Card>
-    <CardContent className="p-8">
-      <h3 className="text-2xl font-bold text-gray-900 mb-6">Company Description</h3>
-      <p className="text-gray-700 leading-relaxed text-lg">{exhibitorDescription}</p>
-    </CardContent>
-  </Card>
-</TabsContent>
+            {/* Company Description */}
+            <Card>
+              <CardContent className="p-8">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">Company Description</h3>
+                <p className="text-gray-700 leading-relaxed text-lg">{exhibitorDescription}</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Reviews Tab */}
           <TabsContent value="reviews" className="space-y-6">
@@ -1166,6 +1329,11 @@ export default function ExhibitorPage() {
                       <CardTitle className="flex items-center gap-2">
                         <Star className="w-5 h-5 text-yellow-400" />
                         All Reviews ({reviews.length})
+                        {stats.totalReplies > 0 && (
+                          <Badge variant="secondary" className="ml-2">
+                            {stats.totalReplies} {stats.totalReplies === 1 ? 'reply' : 'replies'}
+                          </Badge>
+                        )}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
@@ -1184,7 +1352,11 @@ export default function ExhibitorPage() {
                         >
                           {reviews.map((review) => (
                             <div key={review.id} className="pb-4 border-b last:border-b-0 last:pb-0">
-                              <ReviewCard review={review} />
+                              <ReviewCard 
+                                review={review} 
+                                exhibitorId={exhibitorId}
+                                onReplyAdded={handleReplyAdded}
+                              />
                             </div>
                           ))}
                         </div>

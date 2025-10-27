@@ -147,9 +147,9 @@ export default async function FeaturedEvents() {
                   <div className="flex flex-wrap items-center text-gray-700 text-sm font-medium gap-3 mt-1">
                     <span className="flex items-center">
                       <MapPin className="w-4 h-4 mr-1 text-gray-700" />
-                       {venueDisplay ? venueDisplay.slice(0, 5) : ""}...
+                       {venueDisplay ? venueDisplay.slice(0, 15) : ""}...
                     </span>
-                    <span className="flex items-center">
+                    <span className="flex items-center ml-13">
                       <Layers className="w-4 h-4 mr-1 text-gray-700" />
                       {event.edition || "2nd Edition"}
                     </span>
