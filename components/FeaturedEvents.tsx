@@ -5,6 +5,8 @@ import { BookmarkButton } from "./bookmark-button";
 import { ShareButton } from "./share-button";
 
 // 🧩 Fetch data including venue details AND rating
+export const revalidate = 300; // 5 minutes
+
 export async function getFeaturedEvents() {
   const events = await prisma.event.findMany({
     where: { isFeatured: true },

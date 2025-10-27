@@ -1070,10 +1070,10 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
           <p className="text-gray-600">Fill in the details to create your event</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={handleSaveDraft} disabled={isSubmitting}>
+          {/* <Button variant="outline" onClick={handleSaveDraft} disabled={isSubmitting}>
             <Save className="w-4 h-4 mr-2" />
             {isSubmitting ? "Saving..." : "Save Draft"}
-          </Button>
+          </Button> */}
           {/* Fixed publish button to use isPublishing state */}
           <Button onClick={handlePublishEvent} disabled={isPublishing || completionPercentage < 80}>
             <Send className="w-4 h-4 mr-2" />
@@ -2002,10 +2002,10 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         </Button>
         
         <div className="flex gap-3">
-          <Button variant="outline" onClick={handleSaveDraft} disabled={isSubmitting}>
+          {/* <Button variant="outline" onClick={handleSaveDraft} disabled={isSubmitting}>
             <Save className="w-4 h-4 mr-2" />
             {isSubmitting ? "Saving..." : "Save Draft"}
-          </Button>
+          </Button> */}
           
           {activeTab === "preview" ? (
             <Button onClick={handlePublishEvent} disabled={isPublishing || completionPercentage < 80}>
