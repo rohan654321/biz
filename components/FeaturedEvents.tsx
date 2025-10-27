@@ -151,7 +151,7 @@ export default async function FeaturedEvents() {
                     </span>
                     <span className="flex items-center ml-13">
                       <Layers className="w-4 h-4 mr-1 text-gray-700" />
-                      {event.edition || "2nd Edition"}
+                      {event.edition || "2nd"} Edition
                     </span>
                   </div>
 
