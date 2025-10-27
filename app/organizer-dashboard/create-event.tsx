@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Progress } from "@/components/ui/progress"
-import { Calendar, MapPin, Clock, IndianRupee, Upload, X, Plus, Eye, Save, Send, Loader2 } from "lucide-react"
+import { Calendar, MapPin, Clock, IndianRupee, Upload, X, Plus, Eye, Save, Send, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
 import { useToast } from "@/hooks/use-toast"
 import AddVenue from "./add-venue"
@@ -37,6 +37,7 @@ interface TicketType {
 interface EventFormData {
   // Basic Info
   title: string
+  slug: string
   description: string
   eventType: string
   categories: string[]
@@ -117,6 +118,7 @@ interface EventFormData {
 
 interface ValidationErrors {
   title?: string
+  slug?: string
   description?: string
   eventType?: string
   startDate?: string
@@ -139,6 +141,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
 
   const [formData, setFormData] = useState<EventFormData>({
     title: "",
+    slug: "",
     description: "",
     eventType: "",
     categories: [],
@@ -272,6 +275,14 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
   const brochureInputRef = useRef<HTMLInputElement>(null)
   const layoutPlanInputRef = useRef<HTMLInputElement>(null)
 
+  const tabs = [
+    { id: "basic", label: "Basic Info" },
+    { id: "details", label: "Event Details" },
+    { id: "pricing", label: "Pricing & Space" },
+    { id: "media", label: "Media & Content" },
+    { id: "preview", label: "Preview" },
+  ]
+
   const handleVenueChange = (venueData: {
     venueId?: string
     venueName: string
@@ -301,17 +312,36 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
   ]
 
   const eventCategories = [
-    "Technology",
-    "Healthcare",
-    "Finance",
-    "Education",
-    "Manufacturing",
-    "Automotive",
-    "Fashion",
-    "Food & Beverage",
-    "Real Estate",
-    "Energy",
-  ]
+    "Education & Training",
+    "Medical & Pharma",
+    "IT & Technology",
+    "Banking & Finance",
+    "Business Services",
+    "Industrial Engineering",
+    "Building & Construction",
+    "Power & Energy",
+    "Entertainment & Media",
+    "Wellness, Health & Fitness",
+    "Science & Research",
+    "Environment & Waste",
+    "Agriculture & Forestry",
+    "Food & Beverages",
+    "Logistics & Transportation",
+    "Electric & Electronics",
+    "Arts & Crafts",
+    "Auto & Automotive",
+    "Home & Office",
+    "Security & Defense",
+    "Fashion & Beauty",
+    "Travel & Tourism",
+    "Telecommunication",
+    "Apparel & Clothing",
+    "Animals & Pets",
+    "Baby, Kids & Maternity",
+    "Hospitality",
+    "Packing & Packaging",
+    "Miscellaneous"
+  ];
 
   const currencies = ["₹", "$", "€", "£", "¥"]
 
@@ -391,6 +421,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
   const calculateCompletionPercentage = () => {
     const requiredFields = [
       formData.title,
+      formData.slug,
       formData.description,
       formData.eventType,
       formData.startDate,
@@ -421,6 +452,20 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
   useEffect(() => {
     setCompletionPercentage(calculateCompletionPercentage())
   }, [formData])
+
+  const handleNextTab = () => {
+    const currentIndex = tabs.findIndex(tab => tab.id === activeTab)
+    if (currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1].id)
+    }
+  }
+
+  const handlePreviousTab = () => {
+    const currentIndex = tabs.findIndex(tab => tab.id === activeTab)
+    if (currentIndex > 0) {
+      setActiveTab(tabs[currentIndex - 1].id)
+    }
+  }
 
   const handleSaveDraft = async () => {
     setIsSubmitting(true)
@@ -481,6 +526,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
 
     // Basic Info - all fields required
     if (!formData.title.trim()) newValidationErrors.title = "Title is required for publishing"
+    if(!formData.slug.trim()) newValidationErrors.slug = "Slug is required for publishing"
     if (!formData.description.trim()) newValidationErrors.description = "Description is required for publishing"
     if (!formData.eventType.trim()) newValidationErrors.eventType = "Event type is required for publishing"
     if (!formData.startDate.trim()) newValidationErrors.startDate = "Start date is required for publishing"
@@ -552,6 +598,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       // Transform form data to match backend expectations
       const eventData = {
         title: formData.title,
+        slug: formData.slug,
         description: formData.description,
         shortDescription: formData.description.substring(0, 200),
         category: formData.eventType,
@@ -639,6 +686,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
       // Reset form after successful submission
       setFormData({
         title: "",
+        slug: "",
         description: "",
         eventType: "",
         categories: [],
@@ -1036,11 +1084,11 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="basic">Basic Info</TabsTrigger>
-          <TabsTrigger value="details">Event Details</TabsTrigger>
-          <TabsTrigger value="pricing">Pricing & Space</TabsTrigger>
-          <TabsTrigger value="media">Media & Content</TabsTrigger>
-          <TabsTrigger value="preview">Preview</TabsTrigger>
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab.id} value={tab.id}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         {/* Basic Info Tab */}
@@ -1063,6 +1111,18 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
                     placeholder="Enter event title"
                   />
                   {showValidationErrors && (!formData.title || formData.title.trim() === "") && (
+                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                  )}
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="slug">Event Sub Title *</Label>
+                  <Input
+                    id="slug"
+                    value={formData.slug}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
+                    placeholder="Enter event sub title"
+                  />
+                  {showValidationErrors && (!formData.slug || formData.slug.trim() === "") && (
                     <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
                   )}
                 </div>
@@ -1107,18 +1167,25 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
                   )}
                 </div>
 
-                <div>
+                <div className="md:col-span-2">
                   <Label>Event Categories</Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
                     {eventCategories.map((category) => (
-                      <Badge
-                        key={category}
-                        variant={formData.categories.includes(category) ? "default" : "outline"}
-                        className="cursor-pointer"
-                        onClick={() => handleCategoryToggle(category)}
-                      >
-                        {category}
-                      </Badge>
+                      <div key={category} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`category-${category}`}
+                          checked={formData.categories.includes(category)}
+                          onChange={() => handleCategoryToggle(category)}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <label
+                          htmlFor={`category-${category}`}
+                          className="text-sm font-medium text-gray-700 cursor-pointer"
+                        >
+                          {category}
+                        </label>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -1140,81 +1207,107 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="w-5 h-5" />
-                Event Timing
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="startDate">Start Date *</Label>
-                  <Input
-                    id="startDate"
-                    type="datetime-local"
-                    value={formData.startDate}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, startDate: e.target.value }))}
-                  />
-                  {showValidationErrors && (!formData.startDate || formData.startDate.trim() === "") && (
-                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
-                  )}
-                </div>
+ <Card>
+  <CardHeader>
+    <CardTitle className="flex items-center gap-2">
+      <Clock className="w-5 h-5" />
+      Event Timing
+    </CardTitle>
+  </CardHeader>
+  <CardContent className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <Label htmlFor="startDate">Start Date *</Label>
+        <Input
+          id="startDate"
+          type="date"
+          value={formData.startDate ? formData.startDate.split('T')[0] : ''}
+          onChange={(e) => {
+            const dateValue = e.target.value;
+            const timeValue = formData.startDate.includes('T') ? formData.startDate.split('T')[1] : '00:00:00.000+00:00';
+            // Combine with existing time or default to midnight UTC
+            const newStartDate = dateValue ? `${dateValue}T${timeValue.split(':00.000+')[0]}:00.000+00:00` : '';
+            setFormData((prev) => ({ ...prev, startDate: newStartDate }));
+          }}
+        />
+        {showValidationErrors && (!formData.startDate || formData.startDate.trim() === '') && (
+          <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+        )}
+      </div>
 
-                <div>
-                  <Label htmlFor="endDate">End Date *</Label>
-                  <Input
-                    id="endDate"
-                    type="datetime-local"
-                    value={formData.endDate}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, endDate: e.target.value }))}
-                  />
-                  {showValidationErrors && (!formData.endDate || formData.endDate.trim() === "") && (
-                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
-                  )}
-                </div>
+      <div>
+        <Label htmlFor="startTime">Start Time</Label>
+        <Input
+          id="startTime"
+          type="time"
+          value={formData.startDate && formData.startDate.includes('T') ? formData.startDate.split('T')[1].slice(0, 5) : '09:00'}
+          onChange={(e) => {
+            const timeValue = e.target.value;
+            const dateValue = formData.startDate ? formData.startDate.split('T')[0] : new Date().toISOString().split('T')[0];
+            // Combine with existing date
+            const newStartDate = timeValue ? `${dateValue}T${timeValue}:00.000+00:00` : formData.startDate;
+            setFormData((prev) => ({ ...prev, startDate: newStartDate }));
+          }}
+        />
+        <p className="text-xs text-muted-foreground mt-1">Time when the event starts each day</p>
+      </div>
 
-                <div>
-                  <Label htmlFor="dailyStart">Daily Start Time</Label>
-                  <Input
-                    id="dailyStart"
-                    type="time"
-                    value={formData.dailyStart}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, dailyStart: e.target.value }))}
-                  />
-                </div>
+      <div>
+        <Label htmlFor="endDate">End Date *</Label>
+        <Input
+          id="endDate"
+          type="date"
+          value={formData.endDate ? formData.endDate.split('T')[0] : ''}
+          onChange={(e) => {
+            const dateValue = e.target.value;
+            const timeValue = formData.endDate.includes('T') ? formData.endDate.split('T')[1] : '00:00:00.000+00:00';
+            // Combine with existing time or default to midnight UTC
+            const newEndDate = dateValue ? `${dateValue}T${timeValue.split(':00.000+')[0]}:00.000+00:00` : '';
+            setFormData((prev) => ({ ...prev, endDate: newEndDate }));
+          }}
+        />
+        {showValidationErrors && (!formData.endDate || formData.endDate.trim() === '') && (
+          <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+        )}
+      </div>
 
-                <div>
-                  <Label htmlFor="dailyEnd">Daily End Time</Label>
-                  <Input
-                    id="dailyEnd"
-                    type="time"
-                    value={formData.dailyEnd}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, dailyEnd: e.target.value }))}
-                  />
-                </div>
+      <div>
+        <Label htmlFor="endTime">End Time</Label>
+        <Input
+          id="endTime"
+          type="time"
+          value={formData.endDate && formData.endDate.includes('T') ? formData.endDate.split('T')[1].slice(0, 5) : '18:00'}
+          onChange={(e) => {
+            const timeValue = e.target.value;
+            const dateValue = formData.endDate ? formData.endDate.split('T')[0] : new Date().toISOString().split('T')[0];
+            // Combine with existing date
+            const newEndDate = timeValue ? `${dateValue}T${timeValue}:00.000+00:00` : formData.endDate;
+            setFormData((prev) => ({ ...prev, endDate: newEndDate }));
+          }}
+        />
+        <p className="text-xs text-muted-foreground mt-1">Time when the event ends each day</p>
+      </div>
 
-                <div>
-                  <Label htmlFor="timezone">Timezone</Label>
-                  <Select
-                    value={formData.timezone}
-                    onValueChange={(value) => setFormData((prev) => ({ ...prev, timezone: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Asia/Kolkata">Asia/Kolkata (IST)</SelectItem>
-                      <SelectItem value="America/New_York">America/New_York (EST)</SelectItem>
-                      <SelectItem value="Europe/London">Europe/London (GMT)</SelectItem>
-                      <SelectItem value="Asia/Tokyo">Asia/Tokyo (JST)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      <div>
+        <Label htmlFor="timezone">Timezone</Label>
+        <Select
+          value={formData.timezone}
+          onValueChange={(value) => setFormData((prev) => ({ ...prev, timezone: value }))}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Asia/Kolkata">Asia/Kolkata (IST)</SelectItem>
+            <SelectItem value="America/New_York">America/New_York (EST)</SelectItem>
+            <SelectItem value="Europe/London">Europe/London (GMT)</SelectItem>
+            <SelectItem value="Asia/Tokyo">Asia/Tokyo (JST)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  </CardContent>
+</Card>
 
           <Card>
             <AddVenue organizerId={organizerId} onVenueChange={handleVenueChange} />
@@ -1895,6 +1988,41 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between pt-6 border-t">
+        <Button
+          variant="outline"
+          onClick={handlePreviousTab}
+          disabled={activeTab === "basic"}
+          className="flex items-center gap-2"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Previous
+        </Button>
+        
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={handleSaveDraft} disabled={isSubmitting}>
+            <Save className="w-4 h-4 mr-2" />
+            {isSubmitting ? "Saving..." : "Save Draft"}
+          </Button>
+          
+          {activeTab === "preview" ? (
+            <Button onClick={handlePublishEvent} disabled={isPublishing || completionPercentage < 80}>
+              <Send className="w-4 h-4 mr-2" />
+              {isPublishing ? "Publishing..." : "Publish Event"}
+            </Button>
+          ) : (
+            <Button
+              onClick={handleNextTab}
+              className="flex items-center gap-2"
+            >
+              Next
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+      </div>
 
       {showHotelModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

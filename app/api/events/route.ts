@@ -80,9 +80,9 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         title: true,
+        slug: true,
         description: true,
         shortDescription: true,
-        slug: true,
         status: true,
         category: true,
         tags: true,
