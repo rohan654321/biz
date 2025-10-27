@@ -49,6 +49,7 @@ import { FollowersCountCard } from "./FollowersCountCard"
 import { AppointmentsCountCard } from "./AppointmentsCountCard"
 import ActivePromotions from "./active-promotion"
 import { ExhibitorHelpSupport } from "./help-support"
+import ViewFeedback from "./view-feedback"
 
 interface ExhibitorData {
   id: string
@@ -81,7 +82,10 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
   const [error, setError] = useState<string | null>(null)
   const { activeSection, setActiveSection } = useDashboard()
   const [appointmentCount, setAppointmentCount] = useState<number>(0)
-  const [openMenus, setOpenMenus] = useState<string[]>(["main", "leadManagement", "marketingCampaigns", "analytics", "network"])
+  const [openMenus, setOpenMenus] = useState<string[]>([
+  "main", "leadManagement", "marketingCampaigns", "analytics", "network", "feedback"
+])
+
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const { data: session, status } = useSession()
@@ -420,6 +424,12 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
             />
           </div>
         )
+  //       case "submit-feedback":
+  // return <SubmitFeedback exhibitorId={exhibitor.id} />
+case "view-feedback":
+  return <ViewFeedback exhibitorId={exhibitor.id} />
+
+
       case "analytics":
         return <AnalyticsReports exhibitorId={exhibitor.id} />
       case "promotions":
@@ -493,6 +503,35 @@ export function ExhibitorLayout({ userId }: UserDashboardProps) {
               </div>
             )}
           </div>
+
+{/* Feedback Dropdown */}
+<div className="mb-4">
+  <button
+    className="flex items-center justify-between w-full py-2 font-medium text-sm text-gray-700 hover:text-gray-900"
+    onClick={() => toggleMenu("feedback")}
+  >
+    <span className="flex items-center gap-2">
+      <Star size={16} />
+      Feedback
+    </span>
+    {openMenus.includes("feedback") ? (
+      <ChevronDown size={16} />
+    ) : (
+      <ChevronRight size={16} />
+    )}
+  </button>
+  {openMenus.includes("feedback") && (
+    <div className="ml-2 mt-2 space-y-1">
+      <button
+        onClick={() => setActiveSection("view-feedback")}
+        className={menuItemClass("view-feedback")}
+      >
+        View Feedback
+      </button>
+    </div>
+  )}
+</div>
+
 
           {/* Lead Management Dropdown */}
           <div className="mb-4">
