@@ -24,6 +24,7 @@ import Image from "next/image"
 import { useParams, useRouter } from "next/navigation"
 import { AddOrganizerReview } from "@/components/AddOrganizerReview"
 import { ReviewCard } from "@/components/ReviewCard"
+import Link from "next/link"
 
 interface Organizer {
   id: string
@@ -213,7 +214,7 @@ export default function OrganizerPage() {
       }
 
     const totalEvents = events.length
-    const avgRating = organizer.averageRating || 4.5
+    const avgRating = organizer.averageRating || 0
     const totalReviews = organizer.totalReviews || reviews.length
     const upcomingEvents = events.filter((event) => event.status === "Active").length
     const completedEvents = events.filter((event) => event.status === "Completed").length
@@ -418,9 +419,9 @@ export default function OrganizerPage() {
             {/* Organizer Avatar */}
             <div className="relative">
               <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                <AvatarImage src={organizer.avatar || "/placeholder.svg"} alt={organizer.name} />
+                <AvatarImage src={organizer.avatar || "/placeholder.svg"} alt={organizer.company} />
                 <AvatarFallback className="text-2xl font-bold bg-white text-blue-600">
-                  {organizer.name
+                  {organizer.company
                     .split(" ")
                     .map((n) => n[0])
                     .join("")}
@@ -434,7 +435,7 @@ export default function OrganizerPage() {
             {/* Organizer Info */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-4xl font-bold">{organizer.name}</h1>
+                <h1 className="text-4xl font-bold">{organizer.company}</h1>
                 <Badge className="bg-yellow-500 text-yellow-900">Verified</Badge>
               </div>
               <p className="text-xl text-blue-100 mb-4">{organizer.description}</p>
@@ -445,12 +446,7 @@ export default function OrganizerPage() {
                   <MapPin className="w-4 h-4" />
                   <span>{organizer.headquarters}</span>
                 </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-3">
-              <Button
+                 <Button
                 variant="outline"
                 className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent"
                 onClick={() => setIsShareModalOpen(true)}
@@ -458,14 +454,20 @@ export default function OrganizerPage() {
                 <Share2 className="w-4 h-4 mr-2" />
                 Share
               </Button>
-              <Button
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-3">
+             
+              {/* <Button
                 variant="outline"
                 className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent"
                 onClick={handleContactClick}
               >
                 <Mail className="w-4 h-4 mr-2" />
                 Contact
-              </Button>
+              </Button> */}
             </div>
           </div>
         </div>
@@ -530,6 +532,7 @@ export default function OrganizerPage() {
                     <h3 className="text-xl font-semibold mb-4">Recent Events</h3>
                     <div className="space-y-4">
                       {events.slice(0, 3).map((event) => (
+                        <Link href={`/event/${event.id}`}>
                         <div
                           key={event.id}
                           className="flex gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
@@ -539,7 +542,7 @@ export default function OrganizerPage() {
                             alt={event.title}
                             width={80}
                             height={60}
-                            className="w-20 h-15 object-cover rounded"
+                            className="w-20 h-15 rounded"
                           />
                           <div className="flex-1">
                             <h4 className="font-medium text-gray-900 mb-1">{event.title}</h4>
@@ -552,14 +555,15 @@ export default function OrganizerPage() {
                               {event.location}
                             </div>
                           </div>
-                          <div className="text-right">
+                          {/* <div className="text-right">
                             <div className="flex items-center gap-1 mb-1">
                               <Star className="w-4 h-4 text-yellow-400 fill-current" />
                               <span className="text-sm font-medium">4.5</span>
                             </div>
                             <Badge variant={event.status === "Active" ? "default" : "secondary"}>{event.status}</Badge>
-                          </div>
+                          </div> */}
                         </div>
+                        </Link>
                       ))}
                     </div>
                     <div className="mt-4 text-center">
@@ -637,8 +641,9 @@ export default function OrganizerPage() {
             {/* Events Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {paginatedEvents.map((event) => (
-                <Card key={event.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardContent className="p-0">
+                <div key={event.id} className="hover:shadow-lg transition-shadow cursor-pointer border-2 rounded-xl">
+                  <Link href={`/event/${event.id}`}>
+                  <div className="p-0">
                     <div className="relative">
                       <Image
                         src={event.bannerImage || "/placeholder.svg?height=200&width=400"}
@@ -647,7 +652,7 @@ export default function OrganizerPage() {
                         height={200}
                         className="w-full h-48 object-cover rounded-t-lg"
                       />
-                      <Badge className="absolute top-3 right-3 bg-blue-500 text-white">{event.type}</Badge>
+                      {/* <Badge className="absolute top-3 right-3 bg-blue-500 text-white">{event.type}</Badge> */}
                     </div>
                     <div className="p-4">
                       <h4 className="font-semibold text-lg mb-2 line-clamp-1">{event.title}</h4>
@@ -662,23 +667,24 @@ export default function OrganizerPage() {
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1">
+                        {/* <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="text-sm font-medium">4.5</span>
+                          <span className="text-sm font-medium">{}</span>
                           <span className="text-sm text-gray-500">(12)</span>
-                        </div>
-                        <div className="text-right">
+                        </div> */}
+                        {/* <div className="text-right">
                           <div className="text-sm text-gray-600">{event.attendees} attendees</div>
-                        </div>
+                        </div> */}
                       </div>
-                      <div className="mt-3">
+                      {/* <div className="mt-3">
                         <Badge variant="outline" className="text-xs">
                           {event.status}
                         </Badge>
-                      </div>
+                      </div> */}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  </Link>
+                </div>
               ))}
             </div>
 

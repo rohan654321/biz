@@ -182,7 +182,6 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
 
   const handleImageDelete = async (imageUrl: string, type: "venue" | "floorplan") => {
     try {
-      // Extract public ID from Cloudinary URL
       const urlParts = imageUrl.split("/")
       const publicIdWithExt = urlParts.slice(-3).join("/")
       const publicId = publicIdWithExt.split(".")[0]
@@ -437,7 +436,7 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                       )}
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 md:col-span-2">
                       <Label htmlFor="website">Website</Label>
                       {isEditing ? (
                         <Input
@@ -457,30 +456,127 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                         <div className="p-2 bg-muted rounded">{profileData?.website}</div>
                       )}
                     </div>
+                  </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="address">Address</Label>
-                      {isEditing ? (
-                        <Input
-                          id="address"
-                          value={profileData?.address}
-                          onChange={(e) =>
-                            setProfileData(
-                              (prev) =>
-                                ({
-                                  ...(prev ?? {}),
-                                  address: e.target.value,
-                                }) as VenueData,
-                            )
-                          }
-                        />
-                      ) : (
-                        <div className="p-2 bg-muted rounded">{profileData?.address}</div>
-                      )}
+                  {/* Address Section */}
+                  <div className="pt-4 border-t">
+                    <h3 className="text-lg font-semibold mb-4">Address Details</h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="address">Street Address</Label>
+                        {isEditing ? (
+                          <Input
+                            id="address"
+                            value={profileData?.address}
+                            onChange={(e) =>
+                              setProfileData(
+                                (prev) =>
+                                  ({
+                                    ...(prev ?? {}),
+                                    address: e.target.value,
+                                  }) as VenueData,
+                              )
+                            }
+                            placeholder="Enter street address"
+                          />
+                        ) : (
+                          <div className="p-2 bg-muted rounded">{profileData?.address || "Not specified"}</div>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="city">City</Label>
+                          {isEditing ? (
+                            <Input
+                              id="city"
+                              value={profileData?.city}
+                              onChange={(e) =>
+                                setProfileData(
+                                  (prev) =>
+                                    ({
+                                      ...(prev ?? {}),
+                                      city: e.target.value,
+                                    }) as VenueData,
+                                )
+                              }
+                              placeholder="Enter city"
+                            />
+                          ) : (
+                            <div className="p-2 bg-muted rounded">{profileData?.city || "Not specified"}</div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="state">State/Province</Label>
+                          {isEditing ? (
+                            <Input
+                              id="state"
+                              value={profileData?.state}
+                              onChange={(e) =>
+                                setProfileData(
+                                  (prev) =>
+                                    ({
+                                      ...(prev ?? {}),
+                                      state: e.target.value,
+                                    }) as VenueData,
+                                )
+                              }
+                              placeholder="Enter state"
+                            />
+                          ) : (
+                            <div className="p-2 bg-muted rounded">{profileData?.state || "Not specified"}</div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="country">Country</Label>
+                          {isEditing ? (
+                            <Input
+                              id="country"
+                              value={profileData?.country}
+                              onChange={(e) =>
+                                setProfileData(
+                                  (prev) =>
+                                    ({
+                                      ...(prev ?? {}),
+                                      country: e.target.value,
+                                    }) as VenueData,
+                                )
+                              }
+                              placeholder="Enter country"
+                            />
+                          ) : (
+                            <div className="p-2 bg-muted rounded">{profileData?.country || "Not specified"}</div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="zipCode">Postal Code</Label>
+                          {isEditing ? (
+                            <Input
+                              id="zipCode"
+                              value={profileData?.zipCode}
+                              onChange={(e) =>
+                                setProfileData(
+                                  (prev) =>
+                                    ({
+                                      ...(prev ?? {}),
+                                      zipCode: e.target.value,
+                                    }) as VenueData,
+                                )
+                              }
+                              placeholder="Enter postal code"
+                            />
+                          ) : (
+                            <div className="p-2 bg-muted rounded">{profileData?.zipCode || "Not specified"}</div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2 pt-4 border-t">
                     <Label htmlFor="description">Description</Label>
                     {isEditing ? (
                       <Textarea
@@ -598,31 +694,6 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   <p className="text-muted-foreground">{profileData?.totalReviews} reviews</p>
                 </CardContent>
               </Card>
-
-              {/* Verification Status */}
-              {/* <Card>
-                <CardHeader>
-                  <CardTitle>Verification Status</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    <span className="text-sm">Identity Verified</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    <span className="text-sm">Business License</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    <span className="text-sm">Safety Compliance</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    <span className="text-sm">Insurance Coverage</span>
-                  </div>
-                </CardContent>
-              </Card> */}
             </div>
           </div>
         </TabsContent>
@@ -767,13 +838,6 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                         <span className="text-muted-foreground">Area:</span>
                         <span className="font-medium">{space.area} sq ft</span>
                       </div>
-                      {/* <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Hourly Rate:</span>
-                        <span className="font-medium text-blue-600 dark:text-blue-400">
-                          {profileData?.currency}
-                          {space.hourlyRate.toLocaleString()}
-                        </span>
-                      </div> */}
                     </div>
 
                     {space.features && space.features.length > 0 && (
@@ -792,7 +856,6 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                 ))}
               </div>
 
-              {/* Add New Space Form */}
               {isEditing && (
                 <div className="border-2 border-dashed border-border rounded-lg p-6">
                   <h3 className="font-semibold mb-4">Add New Meeting Space</h3>
@@ -814,12 +877,6 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                       value={newSpace.area}
                       onChange={(e) => setNewSpace({ ...newSpace, area: e.target.value })}
                     />
-                    {/* <Input
-                      placeholder={`Hourly rate (${profileData?.currency})`}
-                      type="number"
-                      value={newSpace.hourlyRate}
-                      onChange={(e) => setNewSpace({ ...newSpace, hourlyRate: e.target.value })}
-                    /> */}
                   </div>
                   <Input
                     placeholder="Features (comma separated)"
@@ -876,7 +933,6 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                 ))}
               </div>
 
-              {/* Add New Floor Plan */}
               {isEditing && (
                 <div className="mt-6 border-2 border-dashed border-border rounded-lg p-6 text-center">
                   <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />

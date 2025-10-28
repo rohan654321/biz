@@ -109,47 +109,47 @@ export default function EventPage({ params }: EventPageProps) {
       console.error("Error checking saved status:", error)
     }
   }
-// const handleDownloadBrochure = async (eventId: string) => {
-//   try {
-//     // Get the download URL from the API
-//     const response = await fetch(`/api/events/${eventId}/brochure?action=download`);
-    
-//     if (!response.ok) {
-//       throw new Error(`HTTP error! status: ${response.status}`);
-//     }
+  // const handleDownloadBrochure = async (eventId: string) => {
+  //   try {
+  //     // Get the download URL from the API
+  //     const response = await fetch(`/api/events/${eventId}/brochure?action=download`);
 
-//     const data = await response.json();
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //     }
 
-//     if (data.success && data.brochure) {
-//       // Create a temporary anchor element to trigger download
-//       const link = document.createElement('a');
-//       link.href = data.brochure;
-      
-//       // Set the download attribute with a proper filename
-//       const filename = `brochure-${data.eventTitle || eventId}.pdf`;
-//       link.download = filename;
-      
-//       // Append to body, click, and remove
-//       document.body.appendChild(link);
-//       link.click();
-//       document.body.removeChild(link);
+  //     const data = await response.json();
 
-//       toast({
-//         title: "Download Started",
-//         description: "Brochure download has started",
-//       });
-//     } else {
-//       throw new Error(data.error || 'Failed to get download URL');
-//     }
-//   } catch (error) {
-//     console.error('Error downloading brochure:', error);
-//     toast({
-//       title: "Download Failed",
-//       description: error instanceof Error ? error.message : "Failed to download brochure. Please try again.",
-//       variant: "destructive",
-//     });
-//   }
-// };
+  //     if (data.success && data.brochure) {
+  //       // Create a temporary anchor element to trigger download
+  //       const link = document.createElement('a');
+  //       link.href = data.brochure;
+
+  //       // Set the download attribute with a proper filename
+  //       const filename = `brochure-${data.eventTitle || eventId}.pdf`;
+  //       link.download = filename;
+
+  //       // Append to body, click, and remove
+  //       document.body.appendChild(link);
+  //       link.click();
+  //       document.body.removeChild(link);
+
+  //       toast({
+  //         title: "Download Started",
+  //         description: "Brochure download has started",
+  //       });
+  //     } else {
+  //       throw new Error(data.error || 'Failed to get download URL');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error downloading brochure:', error);
+  //     toast({
+  //       title: "Download Failed",
+  //       description: error instanceof Error ? error.message : "Failed to download brochure. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
   const handleDeleteBrochure = async () => {
     if (!confirm("Are you sure you want to delete the brochure?")) return
 
@@ -879,97 +879,97 @@ export default function EventPage({ params }: EventPageProps) {
                 </Card>
               </TabsContent>
 
-            <TabsContent value="brochure">
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center justify-between">
-        <span>Brochure</span>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => document.getElementById('brochure-upload')?.click()}
-            disabled={updatingBrochure}
-          >
-            {updatingBrochure ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2" />
-            ) : (
-              <Edit2 className="w-4 h-4 mr-2" />
-            )}
-            {updatingBrochure ? "Updating..." : "Update"}
-          </Button>
-          <input
-            id="brochure-upload"
-            type="file"
-            accept=".pdf,image/*"
-            className="hidden"
-            onChange={handleBrochureUpdate}
-          />
-          {event?.brochure && (
-            <Button variant="destructive" size="sm" onClick={handleDeleteBrochure}>
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete
-            </Button>
-          )}
-        </div>
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="space-y-4">
-        {event?.brochure ? (
-          <>
-            {/* Simple PDF Viewer */}
-            <div className="bg-gray-100 rounded-lg border border-gray-300 min-h-[400px] flex flex-col">
-              <div className="flex justify-between items-center p-3 bg-white border-b">
-                <span className="text-sm font-medium">Event Brochure</span>
-                <div className="flex gap-2">
-                  {/* <Button
+              <TabsContent value="brochure">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Brochure</span>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => document.getElementById('brochure-upload')?.click()}
+                          disabled={updatingBrochure}
+                        >
+                          {updatingBrochure ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2" />
+                          ) : (
+                            <Edit2 className="w-4 h-4 mr-2" />
+                          )}
+                          {updatingBrochure ? "Updating..." : "Update"}
+                        </Button>
+                        <input
+                          id="brochure-upload"
+                          type="file"
+                          accept=".pdf,image/*"
+                          className="hidden"
+                          onChange={handleBrochureUpdate}
+                        />
+                        {event?.brochure && (
+                          <Button variant="destructive" size="sm" onClick={handleDeleteBrochure}>
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </Button>
+                        )}
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {event?.brochure ? (
+                        <>
+                          {/* Simple PDF Viewer */}
+                          <div className="bg-gray-100 rounded-lg border border-gray-300 min-h-[400px] flex flex-col">
+                            <div className="flex justify-between items-center p-3 bg-white border-b">
+                              <span className="text-sm font-medium">Event Brochure</span>
+                              <div className="flex gap-2">
+                                {/* <Button
                     size="sm"
                     variant="outline"
                     onClick={() => handleDownloadBrochure(event.id)}
                   >
                     Download PDF
                   </Button> */}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => window.open(event.brochure, '_blank')}
-                  >
-                    Open Full Screen
-                  </Button>
-                </div>
-              </div>
-              
-              {/* PDF Display */}
-              <div className="flex-1 p-4">
-                <iframe
-                  src={`https://docs.google.com/gview?url=${encodeURIComponent(event.brochure)}&embedded=true`}
-                  className="w-full h-96 border-0"
-                  title="PDF Brochure"
-                />
-                <div className="text-center mt-4">
-                  <p className="text-sm text-gray-600">
-                    If the PDF doesn't load, use the buttons above to download or open in a new tab.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="bg-gray-100 h-96 rounded-lg flex flex-col items-center justify-center">
-            <p className="text-gray-600 mb-4">No brochure available</p>
-            <Button
-              onClick={() => document.getElementById('brochure-upload')?.click()}
-              disabled={updatingBrochure}
-            >
-              {updatingBrochure ? "Uploading..." : "Upload Brochure"}
-            </Button>
-          </div>
-        )}
-      </div>
-    </CardContent>
-  </Card>
-</TabsContent>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => window.open(event.brochure, '_blank')}
+                                >
+                                  Open Full Screen
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* PDF Display */}
+                            <div className="flex-1 p-4">
+                              <iframe
+                                src={`https://docs.google.com/gview?url=${encodeURIComponent(event.brochure)}&embedded=true`}
+                                className="w-full h-96 border-0"
+                                title="PDF Brochure"
+                              />
+                              <div className="text-center mt-4">
+                                <p className="text-sm text-gray-600">
+                                  If the PDF doesn't load, use the buttons above to download or open in a new tab.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="bg-gray-100 h-96 rounded-lg flex flex-col items-center justify-center">
+                          <p className="text-gray-600 mb-4">No brochure available</p>
+                          <Button
+                            onClick={() => document.getElementById('brochure-upload')?.click()}
+                            disabled={updatingBrochure}
+                          >
+                            {updatingBrochure ? "Uploading..." : "Upload Brochure"}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
 
               <TabsContent value="venue">
@@ -1084,12 +1084,13 @@ export default function EventPage({ params }: EventPageProps) {
                       <Avatar className="w-16 h-16">
                         <AvatarImage src={event.organizer?.avatar || "/placeholder.svg"} />
                         <AvatarFallback className="text-lg">
-                          {event.organizer?.firstName?.charAt(0) || "O"}
+                          {event.organizer?.company}
+                          {/* {event.organizer?.firstName?.charAt(0) || "O"} */}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <h4 className="font-semibold text-lg hover:text-blue-600 transition-colors">
-                          {event.organizer?.firstName || "Event Organizer"}
+                          {event.organizer?.company || event.organizer?.firstName}
                         </h4>
                         <p className="text-gray-600 mb-3">Professional event organizer and manager</p>
                         <div className="flex flex-wrap items-center gap-4">

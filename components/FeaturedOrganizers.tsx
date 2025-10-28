@@ -102,7 +102,7 @@ export default function FeaturedOrganizers() {
                          transition duration-200 cursor-pointer"
             >
               <img
-                src={organizer.avatar || "/Organizers/maxx.png"}
+                src={organizer.image}
                 alt={organizer.name}
                 className="max-h-full max-w-full object-contain"
               />
