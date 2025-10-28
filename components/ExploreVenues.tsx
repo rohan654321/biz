@@ -18,6 +18,14 @@ export default function ExploreVenues() {
         const res = await fetch("api/organizers/venues")
         if (!res.ok) throw new Error("Failed to get data")
         const data = await res.json()
+        
+        // DEBUG: Check what data we're getting
+        console.log("API Response:", data)
+        if (data.length > 0) {
+          console.log("First venue:", data[0])
+          console.log("First venue images:", data[0]?.images)
+        }
+        
         setOrganizers(data)
       } catch (err) {
         console.error("Error fetching organizer: ", err)
@@ -32,6 +40,11 @@ export default function ExploreVenues() {
 
   const handleVenueClick = (venue: (typeof venues)[number]) => {
     router.push(`/venue/${venue.id}`)
+  }
+
+  // ✅ CORRECT: Use images array from API response
+  const getVenueImage = (venue: any) => {
+    return venue.images?.[0] || "/city/c1.jpg"
   }
 
   return (
@@ -53,56 +66,55 @@ export default function ExploreVenues() {
                   className="group rounded-md p-3 bg-white transition-all duration-200 
                              hover:scale-105 shadow hover:shadow-lg text-left"
                 >
-            <div className="space-y-2">
-  {/* Image */}
-  <div className="h-[160px] rounded-md overflow-hidden">
-    <img
-      src={
-        venue.images?.length && venue.images[0] !== "/placeholder.svg"
-          ? venue.images[0]
-          : "/city/c1.jpg"
-      }
-      alt={venue.name}
-      className="w-full h-full object-cover opacity-90 
-                 group-hover:opacity-100 transition-opacity duration-200"
-    />
-  </div>
+                  <div className="space-y-2">
+                    {/* Image */}
+                    <div className="h-[160px] rounded-md overflow-hidden">
+                      <img
+                        src={getVenueImage(venue)}
+                        alt={venue.name}
+                        className="w-full h-full object-cover opacity-90 
+                                 group-hover:opacity-100 transition-opacity duration-200"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = "/city/c1.jpg"
+                        }}
+                      />
+                    </div>
 
-  {/* Venue Info */}
-  <div>
-    <div className="flex items-center justify-between mb-1">
-      <h3 className="font-bold text-sm text-black line-clamp-1">
-        {venue.name}
-      </h3>
-      <div className="flex items-center">
-        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-1" />
-        <span className="text-xs text-black font-medium">
-          {venue.rating ?? "—"}
-        </span>
-        <span className="text-xs text-gray-600 ml-1">
-          ({venue.reviewCount ?? 0})
-        </span>
-      </div>
-    </div>
+                    {/* Venue Info */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="font-bold text-sm text-black line-clamp-1">
+                          {venue.name}
+                        </h3>
+                        <div className="flex items-center">
+                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-1" />
+                          <span className="text-xs text-black font-medium">
+                            {venue.rating ?? "—"}
+                          </span>
+                          <span className="text-xs text-gray-600 ml-1">
+                            ({venue.reviewCount ?? 0})
+                          </span>
+                        </div>
+                      </div>
 
-    <p className="text-xs text-gray-700 mb-1 line-clamp-1">
-      {venue.description || "No description available"}
-    </p>
+                      <p className="text-xs text-gray-700 mb-1 line-clamp-1">
+                        {venue.description || "No description available"}
+                      </p>
 
-    <div className="flex items-center mb-1">
-      <MapPin className="w-3 h-3 mr-1 text-black" />
-      <span className="text-xs text-black line-clamp-1">
-        {venue.location?.address || "No address"}
-      </span>
-    </div>
+                      <div className="flex items-center mb-1">
+                        <MapPin className="w-3 h-3 mr-1 text-black" />
+                        <span className="text-xs text-black line-clamp-1">
+                          {venue.location?.address || "No address"}
+                        </span>
+                      </div>
 
-    <div className="text-xs text-gray-800 flex justify-between">
-      <span>Halls: {venue.totalHalls ?? 0}</span>
-      <span>Capacity: {venue.capacity ?? 0}</span>
-    </div>
-  </div>
-</div>
-
+                      <div className="text-xs text-gray-800 flex justify-between">
+                        <span>Halls: {venue.totalHalls ?? 0}</span>
+                        <span>Capacity: {venue.capacity ?? 0}</span>
+                      </div>
+                    </div>
+                  </div>
                 </button>
               ))}
           </div>
