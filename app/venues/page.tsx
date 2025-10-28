@@ -23,25 +23,27 @@ import {
 
 interface Venue {
   id: string
+  venueName: string
   logo: string
   contactPerson: string
   email: string
   mobile: string
   address: string
+  city: string
+  state: string
+  country: string
   website: string
   description: string
+  maxCapacity: number
+  totalHalls: number
   totalEvents: number
   activeBookings: number
+  averageRating: number
+  totalReviews: number
   amenities: string[]
   meetingSpaces: any[]
   isVerified: boolean
-  venueName: string
-  venueDescription?: string
-  venueAddress?: string
-  maxCapacity: number | null
-  totalHalls: number | null
-  averageRating: number
-  totalReviews: number
+  venueImages: string[]
 }
 
 export default function VenuesPage() {
@@ -68,6 +70,8 @@ export default function VenuesPage() {
       }
 
       const data = await response.json()
+      console.log("API Response:", data) // Debug log
+      
       if (data.success && Array.isArray(data.venues)) {
         setVenues(data.venues)
       } else {
@@ -83,7 +87,7 @@ export default function VenuesPage() {
     }
   }
 
-  const popularCities = ["Bangalore", "Hyderabad", "Chennai", "Pune", "Gurgaon", "Noida", "Mumbai"]
+  const popularCities = ["Bangalore", "Hyderabad", "Chennai", "Pune", "Gurgaon", "Noida", "Mumbai", "Delhi", "Kolkata"]
 
   const popularCountries = [
     { name: "United States", flag: "🇺🇸" },
@@ -108,25 +112,6 @@ export default function VenuesPage() {
     { name: "Sports Complexes", icon: Trophy },
     { name: "Auditoriums", icon: Music },
   ]
-
-  // Helper function to extract city from address
-  const extractCityFromAddress = (address: string): string => {
-    if (!address) return ""
-    
-    // Convert to lowercase for case-insensitive matching
-    const lowerAddress = address.toLowerCase()
-    
-    // Check for each popular city in the address
-    for (const city of popularCities) {
-      if (lowerAddress.includes(city.toLowerCase())) {
-        return city
-      }
-    }
-    
-    // If no popular city found, try to extract city using common patterns
-    const cityMatch = address.match(/(?:^|,\s*)([A-Za-z\s]+)(?:,|$)/)
-    return cityMatch ? cityMatch[1].trim() : ""
-  }
 
   const getAmenityIcon = (amenity: string) => {
     switch (amenity) {
@@ -179,44 +164,54 @@ export default function VenuesPage() {
   const displayName = (v: Venue) => (v.venueName && v.venueName.trim() ? v.venueName : "Unnamed Venue")
 
   const displayDesc = (v: Venue) => {
-    const d = (v.venueDescription && v.venueDescription.trim()) || (v.description && v.description.trim())
-    return d || "No description available"
+    return v.description && v.description.trim() ? v.description : "No description available"
   }
 
+  // Updated displayAddress to use the separate address fields from API
   const displayAddress = (v: Venue) => {
-    const a = (v.venueAddress && v.venueAddress.trim()) || (v.address && v.address.trim())
-    return a || "Address not provided"
+    const parts = []
+    if (v.address && v.address.trim()) parts.push(v.address.trim())
+    if (v.city && v.city.trim()) parts.push(v.city.trim())
+    if (v.state && v.state.trim()) parts.push(v.state.trim())
+    if (v.country && v.country.trim()) parts.push(v.country.trim())
+    
+    return parts.length > 0 ? parts.join(", ") : "Address not provided"
   }
 
   const displayCapacity = (v: Venue) => (v.maxCapacity && v.maxCapacity > 0 ? v.maxCapacity : "N/A")
 
   const displayHalls = (v: Venue) => (v.totalHalls && v.totalHalls > 0 ? v.totalHalls : "N/A")
 
-  // Improved filtering logic - now only filters locally without API calls
+  // Improved filtering logic that uses the separate address fields from API
   const filteredVenues = Array.isArray(venues)
     ? venues.filter((venue) => {
         const name = displayName(venue)
-        const addr = displayAddress(venue)
-        const extractedCity = extractCityFromAddress(addr)
+        const address = displayAddress(venue)
+        const city = venue.city || ""
+        const country = venue.country || ""
         
+        // Search filter
         const matchesSearch =
           searchQuery === "" ||
           name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          addr.toLowerCase().includes(searchQuery.toLowerCase())
+          address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          country.toLowerCase().includes(searchQuery.toLowerCase())
 
-        // Improved city matching - check if extracted city matches selected cities
+        // City filter - use city field directly from API
         const matchesCity =
           selectedCities.length === 0 || 
           selectedCities.some((selectedCity) => 
-            extractedCity.toLowerCase() === selectedCity.toLowerCase() ||
-            addr.toLowerCase().includes(selectedCity.toLowerCase())
+            city.toLowerCase().includes(selectedCity.toLowerCase()) ||
+            address.toLowerCase().includes(selectedCity.toLowerCase())
           )
 
-        // Country matching
+        // Country filter - use country field directly from API
         const matchesCountry =
           selectedCountries.length === 0 ||
-          selectedCountries.some((country) => 
-            addr.toLowerCase().includes(country.toLowerCase())
+          selectedCountries.some((selectedCountry) => 
+            country.toLowerCase().includes(selectedCountry.toLowerCase()) ||
+            address.toLowerCase().includes(selectedCountry.toLowerCase())
           )
 
         return matchesSearch && matchesCity && matchesCountry
@@ -282,6 +277,34 @@ export default function VenuesPage() {
                 />
               </div>
 
+              {/* Active Filters Display */}
+              {(selectedCities.length > 0 || selectedCountries.length > 0) && (
+                <div className="mb-4 p-3 bg-blue-50 rounded-md">
+                  <h4 className="text-sm font-medium text-blue-800 mb-2">Active Filters:</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedCities.map(city => (
+                      <Badge key={city} variant="secondary" className="bg-blue-100 text-blue-700">
+                        {city} ×
+                      </Badge>
+                    ))}
+                    {selectedCountries.map(country => (
+                      <Badge key={country} variant="secondary" className="bg-blue-100 text-blue-700">
+                        {country} ×
+                      </Badge>
+                    ))}
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setSelectedCities([])
+                      setSelectedCountries([])
+                    }}
+                    className="text-xs text-blue-600 hover:text-blue-800 mt-1"
+                  >
+                    Clear all
+                  </button>
+                </div>
+              )}
+
               {/* Popular Cities */}
               <div className="mb-8">
                 <h3 className="text-sm font-medium text-gray-700 mb-4">Popular cities</h3>
@@ -291,7 +314,7 @@ export default function VenuesPage() {
                       key={index}
                       onClick={() => toggleCityFilter(city)}
                       className={`text-left text-sm py-2 px-3 rounded-md transition-colors ${
-                        selectedCities.includes(city) ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-100"
+                        selectedCities.includes(city) ? "bg-blue-100 text-blue-700 font-medium" : "text-gray-600 hover:bg-gray-100"
                       }`}
                     >
                       {city}
@@ -310,7 +333,7 @@ export default function VenuesPage() {
                       onClick={() => toggleCountryFilter(country.name)}
                       className={`flex items-center text-left text-sm py-2 px-3 rounded-md transition-colors ${
                         selectedCountries.includes(country.name)
-                          ? "bg-blue-100 text-blue-700"
+                          ? "bg-blue-100 text-blue-700 font-medium"
                           : "text-gray-600 hover:bg-gray-100"
                       }`}
                     >
@@ -319,13 +342,13 @@ export default function VenuesPage() {
                     </button>
                   ))}
                 </div>
-                <Button variant="outline" className="w-full text-sm bg-transparent">
+                {/* <Button variant="outline" className="w-full text-sm bg-transparent">
                   Browse All Countries
-                </Button>
+                </Button> */}
               </div>
 
               {/* Collections */}
-              <div>
+              {/* <div>
                 <h3 className="text-sm font-medium text-gray-700 mb-4">Collections</h3>
                 <div className="space-y-2 mb-4">
                   {collections.map((collection) => {
@@ -336,7 +359,7 @@ export default function VenuesPage() {
                         onClick={() => toggleCollectionFilter(collection.name)}
                         className={`flex items-center w-full text-left text-sm py-3 px-3 rounded-md transition-colors ${
                           selectedCollections.includes(collection.name)
-                            ? "bg-blue-100 text-blue-700"
+                            ? "bg-blue-100 text-blue-700 font-medium"
                             : "text-gray-600 hover:bg-gray-100"
                         }`}
                       >
@@ -349,7 +372,7 @@ export default function VenuesPage() {
                 <Button variant="outline" className="w-full text-sm bg-transparent">
                   All Category
                 </Button>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -358,43 +381,43 @@ export default function VenuesPage() {
             {/* Results Header */}
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">{filteredVenues.length} venues found</h2>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {filteredVenues.length} venue{filteredVenues.length !== 1 ? 's' : ''} found
+                  {(selectedCities.length > 0 || selectedCountries.length > 0) && (
+                    <span className="text-sm font-normal text-gray-600 ml-2">
+                      {selectedCities.length > 0 && `in ${selectedCities.join(', ')}`}
+                      {selectedCountries.length > 0 && ` from ${selectedCountries.join(', ')}`}
+                    </span>
+                  )}
+                </h2>
                 <p className="text-gray-600">Best venues for your events</p>
               </div>
-              {/* <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">Sort by:</span>
-                <select className="border border-gray-300 rounded-md px-3 py-1 text-sm">
-                  <option>Recommended</option>
-                  <option>Price: Low to High</option>
-                  <option>Price: High to Low</option>
-                  <option>Rating</option>
-                  <option>Capacity</option>
-                </select>
-              </div> */}
             </div>
 
             {/* Venues Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredVenues.map((venue, index) => (
                 <div
-                  key={index}
-                  className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group rounded-sm border cursor-pointer"
+                  key={venue.id || index}
+                  className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group rounded-sm border cursor-pointer bg-white"
                   onClick={() => handleVenueClick(venue.id)}
                 >
                   {/* Image */}
                   <div className="relative">
                     <img
-                      src={venue.logo && venue.logo.trim() !== "" ? venue.logo : "/city/c2.jpg"}
+                      src={venue.venueImages?.[0] || "/city/c2.jpg"}
                       alt={venue.venueName || "Venue"}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => (e.currentTarget.src = "/city/c2.jpg")}
                     />
 
-                    {venue.isVerified && (
+                    {/* {venue.isVerified && (
                       <div className="absolute top-3 left-3">
-                        {/* <Badge className="bg-orange-500 text-white">Featured</Badge> */}
+                        <Badge className="bg-green-500 text-white text-xs">
+                          Verified
+                        </Badge>
                       </div>
-                    )}
+                    )} */}
                   </div>
 
                   {/* Card Content */}
@@ -413,17 +436,40 @@ export default function VenuesPage() {
                     {/* Description */}
                     <p className="text-sm text-gray-600 mb-2 line-clamp-2">{displayDesc(venue)}</p>
 
-                    {/* Address */}
-                    <div className="flex items-center text-gray-600 mb-2">
-                      <MapPin className="w-4 h-4 mr-1" />
+                    {/* Address - Now shows formatted address with all components */}
+                    <div className="flex items-start text-gray-600 mb-2">
+                      <MapPin className="w-4 h-4 mr-1 mt-0.5 flex-shrink-0" />
                       <span className="text-sm">{displayAddress(venue)}</span>
                     </div>
 
                     {/* Capacity & Halls */}
-                    <div className="text-sm text-gray-500 space-y-1">
-                      <p>Capacity: {displayCapacity(venue)}</p>
-                      <p>Total Halls: {displayHalls(venue)}</p>
+                    <div className="flex justify-between text-sm text-gray-500">
+                      <div>
+                        {/* <span className="font-medium">Capacity:</span> {displayCapacity(venue)} */}
+                         <span className="font-medium">Capacity:</span> {venue.maxCapacity}
+                      </div>
+                      <div>
+                        {/* <span className="font-medium">Halls:</span> {displayHalls(venue)} */}
+                         <span className="font-medium">Halls:</span> {venue.totalHalls}
+                      </div>
                     </div>
+
+                    {/* Amenities */}
+                    {/* {venue.amenities && venue.amenities.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-1">
+                        {venue.amenities.slice(0, 3).map((amenity, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {getAmenityIcon(amenity)}
+                            <span className="ml-1">{getAmenityLabel(amenity)}</span>
+                          </Badge>
+                        ))}
+                        {venue.amenities.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{venue.amenities.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
+                    )} */}
                   </CardContent>
                 </div>
               ))}
@@ -449,7 +495,7 @@ export default function VenuesPage() {
                     }}
                     className="bg-blue-600 hover:bg-blue-700"
                   >
-                    Clear Filters
+                    {searchQuery || selectedCities.length > 0 || selectedCountries.length > 0 ? "Clear Filters" : "Refresh"}
                   </Button>
                 </div>
               </div>

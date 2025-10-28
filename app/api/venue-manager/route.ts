@@ -16,6 +16,10 @@ export async function GET(req: NextRequest) {
       email: manager.email,
       mobile: manager.phone || "",
       address: manager.location || manager.venueAddress || "",
+      city:  manager.venueCity || "",
+      state:  manager.venueState || "",
+      country:  manager.venueCountry || "",
+      // zipCode: manager.location || manager.venuePostalCode || "",
       website: manager.website || "",
       description: manager.bio || "",
       maxCapacity: manager.maxCapacity || 0,
@@ -27,6 +31,7 @@ export async function GET(req: NextRequest) {
       amenities: manager.amenities || [],
       meetingSpaces: manager.meetingSpaces || [],
       isVerified: true,
+      venueImages: manager.venueImages || [],
     }));
 
     return NextResponse.json({ success: true, venues });

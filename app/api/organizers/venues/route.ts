@@ -8,73 +8,82 @@ export async function GET(request: NextRequest) {
     const country = searchParams.get("country")
     const search = searchParams.get("search")
 
-const venues = await prisma.user.findMany({
-  where: {
-    AND: [
-      { role: "VENUE_MANAGER" },
-      { isActive: true },
-      city ? { location: { contains: city, mode: "insensitive" } } : {},
-      search
-        ? {
-            OR: [
-              { company: { contains: search, mode: "insensitive" } },
-              { location: { contains: search, mode: "insensitive" } },
-              { bio: { contains: search, mode: "insensitive" } },
-            ],
-          }
-        : {},
-    ],
-  },
-  select: {
-    id: true,
-    firstName: true,
-    lastName: true,
-    phone: true,
-    email: true,
-    isVerified: true,
-    avatar: true,
-    venueName: true,
-    venueDescription: true,
-    venueAddress: true,
-    maxCapacity: true,
-    totalHalls: true,
-    averageRating: true,
-    totalReviews: true,
-    amenities: true,
-    venueCurrency: true,
-    createdAt: true,
-  },
-  orderBy: { createdAt: "desc" },
-})
+    const venues = await prisma.user.findMany({
+      where: {
+        AND: [
+          { role: "VENUE_MANAGER" },
+          { isActive: true },
+          city ? { location: { contains: city, mode: "insensitive" } } : {},
+          search
+            ? {
+                OR: [
+                  { company: { contains: search, mode: "insensitive" } },
+                  { location: { contains: search, mode: "insensitive" } },
+                  { bio: { contains: search, mode: "insensitive" } },
+                ],
+              }
+            : {},
+        ],
+      },
+      select: {
+        id: true,
+        firstName: true,
+        venueImages: true, // This is selected from database
+        lastName: true,
+        phone: true,
+        email: true,
+        isVerified: true,
+        avatar: true,
+        venueName: true,
+        venueDescription: true,
+        venueAddress: true,
+        maxCapacity: true,
+        totalHalls: true,
+        averageRating: true,
+        totalReviews: true,
+        amenities: true,
+        venueCurrency: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    })
 
-const venuesWithRating = venues.map((venue) => ({
-  id: venue.id,
-  name: venue.venueName || "Unnamed Venue",
-  description: venue.venueDescription || "",
-  location: {
-    address: venue.venueAddress || "Address not available",
-    city: "",
-    state: "",
-    country: "",
-  },
-  capacity: venue.maxCapacity ?? 0,
-  totalHalls: venue.totalHalls ?? 0,
-  rating: venue.averageRating ?? 0,
-  reviewCount: venue.totalReviews ?? 0,
-  images: venue.avatar ? [venue.avatar] : [],
-  amenities: venue.amenities || [],
-  currency: venue.venueCurrency || "USD",
-  isVerified: venue.isVerified || false,
-  manager: {
-    name: `${venue.firstName} ${venue.lastName}`.trim(),
-    phone: venue.phone || "",
-    email: venue.email,
-  },
-  createdAt: venue.createdAt,
-}))
-
+    const venuesWithRating = venues.map((venue) => ({
+      id: venue.id,
+      name: venue.venueName || "Unnamed Venue",
+      description: venue.venueDescription || "",
+      location: {
+        address: venue.venueAddress || "Address not available",
+        city: "",
+        state: "",
+        country: "",
+      },
+      capacity: venue.maxCapacity ?? 0,
+      totalHalls: venue.totalHalls ?? 0,
+      rating: venue.averageRating ?? 0,
+      reviewCount: venue.totalReviews ?? 0,
+      // ✅ Use venueImages from database, fallback to avatar, then default
+      images: venue.venueImages?.length > 0 
+        ? venue.venueImages 
+        : venue.avatar 
+          ? [venue.avatar] 
+          : ["/city/c1.jpg"],
+      venueImages: venue.venueImages, // Keep original for reference
+      avatar: venue.avatar, // Keep original for reference
+      amenities: venue.amenities || [],
+      currency: venue.venueCurrency || "USD",
+      isVerified: venue.isVerified || false,
+      manager: {
+        name: `${venue.firstName} ${venue.lastName}`.trim(),
+        phone: venue.phone || "",
+        email: venue.email,
+      },
+      createdAt: venue.createdAt,
+    }))
 
     console.log("[v0] Found venues:", venuesWithRating.length)
+    console.log("[v0] Sample venue:", venuesWithRating[0]) // Debug full object
+    console.log("[v0] Sample venue images:", venuesWithRating[0]?.images) // Debug images
     return NextResponse.json(venuesWithRating)
   } catch (error) {
     console.error("[v0] Error fetching venues:", error)
