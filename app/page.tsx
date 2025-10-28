@@ -8,11 +8,11 @@ import ExploreVenues from "../components/ExploreVenues";
 import FeaturedEvents from "../components/FeaturedEvents";
 import FeaturedOrganizers from "../components/FeaturedOrganizers";
 import HeroSlideshow from "../components/HeroSlideshow";
-import GetAppSection from "@/components/GetAppSection";
-import ScrollBanner from "@/components/BannerCarousel";
-import BannerCarousel from "@/components/BannerCarousel";
+// import GetAppSection from "@/components/GetAppSection";
+// import ScrollBanner from "@/components/BannerCarousel";
+// import BannerCarousel from "@/components/BannerCarousel";
 import ImageBannerCarousel from "@/components/BannerCarousel";
-import Navbar from "@/components/navbar";
+// import Navbar from "@/components/navbar";
   const bannerImages = [
     "/banners/banner1.jpg",
     "/banners/banner2.png",
@@ -23,7 +23,6 @@ import Navbar from "@/components/navbar";
 export default function Home() {
   return (
     <div>
-      
     <div className="bg-white min-h-screen">
        <HeroSlideshow />
        <CategoryBrowse />

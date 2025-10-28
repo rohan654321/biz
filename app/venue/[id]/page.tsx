@@ -37,6 +37,8 @@ interface Venue {
   id: string
   name: string
   description: string
+  venueDescription: string
+  venueAddress: string
   manager: {
     id: string
     name: string
@@ -53,7 +55,7 @@ interface Venue {
     state: string
     country: string
     zipCode: string
-    coordinates: {
+    coordinates?: {
       lat: number
       lng: number
     }
@@ -63,11 +65,11 @@ interface Venue {
     email: string
     website?: string
   }
-  capacity: {
+  capacity?: {
     total: number
     halls: number
   }
-  pricing: {
+  pricing?: {
     basePrice: number
     currency: string
   }
@@ -78,10 +80,11 @@ interface Venue {
   }
   amenities: string[]
   images: string[]
+  venueImages: string[]
   videos?: string[]
   floorPlans?: string[]
   virtualTour?: string
-  meetingSpaces: Array<{
+  meetingSpaces?: Array<{
     id: string
     name: string
     capacity: number
@@ -364,8 +367,8 @@ export default function VenueDetailPage() {
         duration: 30,
         meetingType: "IN_PERSON",
         purpose: "Venue Inquiry and Tour",
-        location: venue.location.address,
-        meetingSpacesInterested: venue.meetingSpaces.map((space) => space.name),
+        location: venue.location.address || venue.venueAddress,
+        meetingSpacesInterested: venue.meetingSpaces?.map((space) => space.name) || [],
       }
 
       const res = await fetch(`/api/venue-appointments`, {
@@ -395,20 +398,39 @@ export default function VenueDetailPage() {
       setSchedulingMeeting(false)
     }
   }
+
   // Add this function to calculate past events
   const getPastEventsCount = () => {
     const currentDate = new Date();
     return events.filter(event => new Date(event.endDate) < currentDate).length;
-  };
+  }
+
+  // Calculate total capacity from meeting spaces
+  const getTotalCapacity = () => {
+    if (venue?.capacity?.total) return venue.capacity.total
+    if (venue?.meetingSpaces) {
+      return venue.meetingSpaces.reduce((sum, space) => sum + (space.capacity || 0), 0)
+    }
+    return 0
+  }
+
+  // Get number of halls
+  const getHallsCount = () => {
+    if (venue?.capacity?.halls) return venue.capacity.halls
+    return venue?.meetingSpaces?.length || 0
+  }
+
   const nextImage = () => {
-    if (venue && venue.images && venue.images.length > 1) {
-      setCurrentImageIndex((prev) => (prev + 1) % venue.images.length)
+    const images = venue?.images || venue?.venueImages || []
+    if (images.length > 1) {
+      setCurrentImageIndex((prev) => (prev + 1) % images.length)
     }
   }
 
   const prevImage = () => {
-    if (venue && venue.images && venue.images.length > 1) {
-      setCurrentImageIndex((prev) => (prev - 1 + venue.images.length) % venue.images.length)
+    const images = venue?.images || venue?.venueImages || []
+    if (images.length > 1) {
+      setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length)
     }
   }
 
@@ -432,15 +454,24 @@ export default function VenueDetailPage() {
   }
 
   const getCurrentImage = () => {
-    if (!venue || !venue.images || venue.images.length === 0) {
+    const images = venue?.images || venue?.venueImages || []
+    if (images.length === 0) {
       return "/logo/Logo-1.png?height=400&width=800&text=No+Image+Available"
     }
-    const currentImage = venue.images[currentImageIndex]
-    return currentImage || "//logo/Logo-1.png?height=400&width=800&text=No+Image+Available"
+    const currentImage = images[currentImageIndex]
+    return currentImage || "/logo/Logo-1.png?height=400&width=800&text=No+Image+Available"
   }
 
   const getEventImage = (event: Event) => {
-    return event.images?.[0] || event.bannerImage || "/placeholder.svg?height=200&width=300&text=Event"
+    return event.images?.[0] || event.bannerImage || "/images/gpex.jpg"
+  }
+
+  // Get address for map
+  const getMapAddress = () => {
+    if (venue?.location?.coordinates?.lat && venue?.location?.coordinates?.lng) {
+      return `${venue.location.coordinates.lat},${venue.location.coordinates.lng}`
+    }
+    return encodeURIComponent(venue?.location?.address || venue?.venueAddress || "")
   }
 
   // Safely calculate review statistics
@@ -481,6 +512,8 @@ export default function VenueDetailPage() {
     )
   }
 
+  const venueImages = venue.images || venue.venueImages || []
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Back Button */}
@@ -499,7 +532,7 @@ export default function VenueDetailPage() {
         <div className="absolute inset-0 bg-black/40" />
 
         {/* Image Navigation */}
-        {venue.images && venue.images.length > 1 && (
+        {venueImages.length > 1 && (
           <>
             <button
               onClick={prevImage}
@@ -522,7 +555,7 @@ export default function VenueDetailPage() {
             <div className="flex items-end justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-4xl font-bold text-white">{venue.name}</h1>
+                  <h1 className="text-4xl font-bold text-white">{venue.name || venue.venueName}</h1>
                   {venue.manager.isVerified && (
                     <Badge className="bg-green-500 text-white">
                       <CheckCircle className="w-4 h-4 mr-1" />
@@ -533,8 +566,8 @@ export default function VenueDetailPage() {
                 <div className="flex items-center text-white/90 mb-2">
                   <MapPin className="w-5 h-5 mr-2" />
                   <span>
-                    {venue.location.address}
-                    {venue.location.city && `, ${venue.location.city}`}
+                    {venue.location?.address || venue.venueAddress}
+                    {venue.location?.city && `, ${venue.location.city}`}
                   </span>
                 </div>
                 <div className="flex items-center gap-4 text-white/90">
@@ -543,20 +576,16 @@ export default function VenueDetailPage() {
                     <span className="font-medium">{venue.stats.averageRating.toFixed(1)}</span>
                     <span className="ml-1">({venue.stats.totalReviews} reviews)</span>
                   </div>
-                  {/* <div className="flex items-center">
-                    <Users className="w-5 h-5 mr-1" />
-                    <span>Up to {venue.capacity.total.toLocaleString()} guests</span>
-                  </div> */}
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                {/* <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
                   <Heart className="w-4 h-4 mr-2" />
                   Save
-                </Button>
+                </Button> */}
                 <ShareButton
                   id={venueId}
-                  title={venue.name}
+                  title={venue.name || venue.venueName}
                   type="venue"
                 />
 
@@ -586,9 +615,9 @@ export default function VenueDetailPage() {
         </div>
 
         {/* Image Indicators */}
-        {venue.images && venue.images.length > 1 && (
+        {venueImages.length > 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
-            {venue.images.map((_, index) => (
+            {venueImages.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentImageIndex(index)}
@@ -606,7 +635,7 @@ export default function VenueDetailPage() {
           {/* Tabs List */}
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="spaces">Halls</TabsTrigger>
+            <TabsTrigger value="spaces">Halls ({getHallsCount()})</TabsTrigger>
             <TabsTrigger value="location">Location</TabsTrigger>
             <TabsTrigger value="events">Events ({events.length})</TabsTrigger>
             <TabsTrigger value="reviews">Reviews ({reviews.length})</TabsTrigger>
@@ -616,16 +645,15 @@ export default function VenueDetailPage() {
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
               {/* Suitability Section */}
-              {/* Suitability Section */}
               <Card>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <div className="text-2xl font-bold text-gray-900">{venue.capacity.total}</div>
+                      <div className="text-2xl font-bold text-gray-900">{getTotalCapacity()}</div>
                       <div className="text-sm text-gray-600">Max Capacity</div>
                     </div>
                     <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <div className="text-2xl font-bold text-gray-900">{venue.capacity.halls}</div>
+                      <div className="text-2xl font-bold text-gray-900">{getHallsCount()}</div>
                       <div className="text-sm text-gray-600">Halls</div>
                     </div>
                     <div className="text-center p-4 bg-gray-50 rounded-lg">
@@ -647,7 +675,7 @@ export default function VenueDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-600 leading-relaxed">
-                    {venue.description || "No description available for this venue."}
+                    {venue.description || venue.venueDescription || "No description available for this venue."}
                   </p>
                 </CardContent>
               </Card>
@@ -704,7 +732,7 @@ export default function VenueDetailPage() {
                 <CardHeader>
                   <CardTitle>Events At This Venue</CardTitle>
                   <p className="text-sm text-gray-500">
-                    {events.length} events scheduled at {venue.name}
+                    {events.length} events scheduled at {venue.name || venue.venueName}
                   </p>
                 </CardHeader>
 
@@ -713,12 +741,13 @@ export default function VenueDetailPage() {
                     {events.slice(0, 2).map((event) => (
                       <div
                         key={event.id}
-                        className="flex flex-col sm:flex-row w-full sm:w-[48%] border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition"
+                        className="flex flex-col sm:flex-row w-full sm:w-[48%] border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer hover:border-blue-300"
+                        onClick={() => router.push(`/events/${event.id}`)}
                       >
                         {/* Event Image */}
                         <div className="sm:w-2/5 relative h-44 sm:h-auto">
                           <Image
-                            src={event.thumbnailImage || "/images/gpex.jpg"}
+                            src={getEventImage(event)}
                             alt={event.title}
                             fill
                             className="object-cover m-2 rounded-sm"
@@ -730,7 +759,13 @@ export default function VenueDetailPage() {
                           {/* Header */}
                           <div>
                             <div className="flex items-center justify-between mb-1">
-                              <h3 className="font-semibold text-blue-800 text-sm hover:underline cursor-pointer">
+                              <h3
+                                className="font-semibold text-blue-800 text-sm hover:underline cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/events/${event.id}`)
+                                }}
+                              >
                                 {event.title}
                               </h3>
                               <Badge className="bg-gray-100 text-gray-700 text-xs px-2 py-0.5">
@@ -782,8 +817,6 @@ export default function VenueDetailPage() {
                                 ? event.ticketTypes.map((ticket) => `${ticket.name}: ₹${ticket.price}`).join(" | ")
                                 : "Free Entry"}
                             </div>
-
-
                           </div>
                         </div>
                       </div>
@@ -797,134 +830,131 @@ export default function VenueDetailPage() {
           {/* Meeting Spaces Tab - Redesigned as Halls */}
           <TabsContent value="spaces" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {venue.meetingSpaces.map((space) => (
-                <Card key={space.id} className="hover:shadow-lg transition-shadow duration-300">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{space.name}</CardTitle>
-                      <Badge variant={space.isAvailable ? "default" : "secondary"}>
-                        {space.isAvailable ? "Available" : "Booked"}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-3">
+              {venue.meetingSpaces && venue.meetingSpaces.length > 0 ? (
+                venue.meetingSpaces.map((space) => (
+                  <Card key={space.id} className="hover:shadow-lg transition-shadow duration-300">
+                    <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Capacity</span>
-                        <span className="font-medium">{space.capacity} people</span>
+                        <CardTitle className="text-lg">{space.name}</CardTitle>
+                        <Badge variant={space.isAvailable ? "default" : "secondary"}>
+                          {space.isAvailable ? "Available" : "Booked"}
+                        </Badge>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Area</span>
-                        <span className="font-medium">{space.area} sq ft</span>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Capacity</span>
+                          <span className="font-medium">{space.capacity} people</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Area</span>
+                          <span className="font-medium">{space.area} sq ft</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Hourly Rate</span>
+                          <span className="font-medium text-blue-600">
+                            {venue.pricing?.currency || "₹"}
+                            {space.hourlyRate.toLocaleString()}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Hourly Rate</span>
-                        <span className="font-medium text-blue-600">
-                          {venue.pricing.currency}
-                          {space.hourlyRate.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
 
-                    {showScheduleMeeting && (
-                      <div className="flex gap-2">
-                        <Button
-                          className="flex-1"
-                          disabled={!space.isAvailable}
-                          onClick={() => {
-                            // Handle booking logic here
-                            toast({
-                              title: "Booking Request",
-                              description: `Booking request sent for ${space.name}`,
-                            })
-                          }}
-                        >
-                          {space.isAvailable ? "Book Now" : "Not Available"}
-                        </Button>
-                        <Button variant="outline" size="icon">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+                      {showScheduleMeeting && (
+                        <div className="flex gap-2">
+                          <Button
+                            className="flex-1"
+                            disabled={!space.isAvailable}
+                            onClick={() => {
+                              toast({
+                                title: "Booking Request",
+                                description: `Booking request sent for ${space.name}`,
+                              })
+                            }}
+                          >
+                            {space.isAvailable ? "Book Now" : "Not Available"}
+                          </Button>
+                          <Button variant="outline" size="icon">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <Building className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No meeting spaces available</h3>
+                  <p className="text-gray-600">This venue doesn't have any meeting spaces configured.</p>
+                </div>
+              )}
             </div>
-
-            {venue.meetingSpaces.length === 0 && (
-              <div className="text-center py-12">
-                <Building className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No meeting spaces available</h3>
-                <p className="text-gray-600">This venue doesn't have any meeting spaces configured.</p>
-              </div>
-            )}
           </TabsContent>
 
-          {/* Location Tab - Keep existing design */}
+          {/* Location Tab */}
           <TabsContent value="location" className="space-y-6">
-            {/* Left Column: Info Cards */}
-            <div className="space-y-4">
-              {/* Address & Directions */}
-
-
-              {/* Transportation */}
-
-
-              {/* Nearby Landmarks */}
-
-
-              {/* Right Column: Map */}
-              <Card className="flex flex-col">
-                <CardHeader>
-                  <CardTitle>Map View</CardTitle>
+            <Card className="flex flex-col">
+              <CardHeader>
+                <CardTitle>Map View</CardTitle>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col justify-between">
+                <div className="w-full h-80 bg-gray-200 rounded-md mb-4 overflow-hidden">
+                  <iframe
+                    src={`https://www.google.com/maps?q=${getMapAddress()}&z=15&output=embed`}
+                    width="100%"
+                    height="100%"
+                    className="border-0"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  ></iframe>
+                </div>
+                
+                <CardHeader className="px-0">
+                  <CardTitle>Address & Directions</CardTitle>
                 </CardHeader>
-                <CardContent className="flex-1 flex flex-col justify-between">
-                  <div className="w-full h-80 bg-gray-200 rounded-md mb-4 overflow-hidden">
-                    <iframe
-                      src={`https://www.google.com/maps?q=${venue.location.coordinates.lat},${venue.location.coordinates.lng}&z=15&output=embed`}
-                      width="100%"
-                      height="100%"
-                      className="border-0"
-                    ></iframe>
-                  </div>
-                  <CardHeader>
-                    <CardTitle>Address & Directions</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p>{venue.location.address}</p>
-                    <p>
-                      {venue.location.city}, {venue.location.state} {venue.location.zipCode}
+                <CardContent className="px-0">
+                  <p className="text-gray-700">{venue.location?.address || venue.venueAddress}</p>
+                  {venue.location?.city && (
+                    <p className="text-gray-600">
+                      {venue.location.city}
+                      {venue.location.state && `, ${venue.location.state}`}
+                      {venue.location.zipCode && ` ${venue.location.zipCode}`}
                     </p>
-                    <p>{venue.location.country}</p>
-                  </CardContent>
-                  <div className="flex gap-2 mt-5">
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        window.open(
-                          `https://www.google.com/maps/dir/?api=1&destination=${venue.location.coordinates.lat},${venue.location.coordinates.lng}`,
-                          "_blank",
-                        )
-                      }
-                    >
-                      Get Directions
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        window.open(
-                          `https://www.google.com/maps/search/?api=1&query=${venue.location.coordinates.lat},${venue.location.coordinates.lng}`,
-                          "_blank",
-                        )
-                      }
-                    >
-                      View in Maps
-                    </Button>
-                  </div>
+                  )}
+                  {venue.location?.country && (
+                    <p className="text-gray-600">{venue.location.country}</p>
+                  )}
                 </CardContent>
-
-              </Card>
-            </div>
+                
+                <div className="flex gap-2 mt-5">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const address = getMapAddress()
+                      window.open(
+                        `https://www.google.com/maps/dir/?api=1&destination=${address}`,
+                        "_blank",
+                      )
+                    }}
+                  >
+                    Get Directions
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const address = getMapAddress()
+                      window.open(
+                        `https://www.google.com/maps/search/?api=1&query=${address}`,
+                        "_blank",
+                      )
+                    }}
+                  >
+                    View in Maps
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Events Tab - Keep existing design */}
@@ -944,7 +974,7 @@ export default function VenueDetailPage() {
                   >
                     <div className="relative h-48 overflow-hidden rounded-t-lg">
                       <Image
-                        src={getEventImage(event) || "/placeholder.svg"}
+                        src={getEventImage(event)}
                         alt={event.title}
                         fill
                         className="object-cover hover:scale-105 transition-transform duration-300"
@@ -1008,7 +1038,7 @@ export default function VenueDetailPage() {
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation()
-                            router.push(`/events/${event.id}`)
+                            router.push(`/event/${event.id}`)
                           }}
                         >
                           View Details

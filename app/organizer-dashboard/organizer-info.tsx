@@ -397,21 +397,21 @@ export default function OrganizerInfo({ organizerData: initialData }: OrganizerI
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="email">Email Address</Label>
+                  {/* <Label htmlFor="email">Email Address</Label>
                   <Input
                     id="email"
                     type="email"
                     value={organizerData.email}
                     onChange={(e) => setOrganizerData((prev) => ({ ...prev, email: e.target.value }))}
-                  />
+                  /> */}
                 </div>
                 <div>
-                  <Label htmlFor="phone">Phone Number</Label>
+                  {/* <Label htmlFor="phone">Phone Number</Label>
                   <Input
                     id="phone"
                     value={organizerData.phone}
                     onChange={(e) => setOrganizerData((prev) => ({ ...prev, phone: e.target.value }))}
-                  />
+                  /> */}
                 </div>
                 <div>
                   <Label htmlFor="website">Website</Label>
