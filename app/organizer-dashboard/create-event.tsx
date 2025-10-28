@@ -13,7 +13,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Progress } from "@/components/ui/progress"
-import { Calendar, MapPin, Clock, IndianRupee, Upload, X, Plus, Eye, Save, Send, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
+import {
+  Calendar,
+  MapPin,
+  Clock,
+  IndianRupee,
+  Upload,
+  X,
+  Plus,
+  Eye,
+  Send,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react"
 import Image from "next/image"
 import { useToast } from "@/hooks/use-toast"
 import AddVenue from "./add-venue"
@@ -340,8 +353,8 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     "Baby, Kids & Maternity",
     "Hospitality",
     "Packing & Packaging",
-    "Miscellaneous"
-  ];
+    "Miscellaneous",
+  ]
 
   const currencies = ["₹", "$", "€", "£", "¥"]
 
@@ -454,14 +467,14 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
   }, [formData])
 
   const handleNextTab = () => {
-    const currentIndex = tabs.findIndex(tab => tab.id === activeTab)
+    const currentIndex = tabs.findIndex((tab) => tab.id === activeTab)
     if (currentIndex < tabs.length - 1) {
       setActiveTab(tabs[currentIndex + 1].id)
     }
   }
 
   const handlePreviousTab = () => {
-    const currentIndex = tabs.findIndex(tab => tab.id === activeTab)
+    const currentIndex = tabs.findIndex((tab) => tab.id === activeTab)
     if (currentIndex > 0) {
       setActiveTab(tabs[currentIndex - 1].id)
     }
@@ -526,7 +539,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
 
     // Basic Info - all fields required
     if (!formData.title.trim()) newValidationErrors.title = "Title is required for publishing"
-    if(!formData.slug.trim()) newValidationErrors.slug = "Slug is required for publishing"
+    if (!formData.slug.trim()) newValidationErrors.slug = "Slug is required for publishing"
     if (!formData.description.trim()) newValidationErrors.description = "Description is required for publishing"
     if (!formData.eventType.trim()) newValidationErrors.eventType = "Event type is required for publishing"
     if (!formData.startDate.trim()) newValidationErrors.startDate = "Start date is required for publishing"
@@ -601,7 +614,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
         slug: formData.slug,
         description: formData.description,
         shortDescription: formData.description.substring(0, 200),
-        category: formData.eventType,
+        category: formData.categories.length > 0 ? formData.categories.join(", ") : formData.eventType || null,
         edition: formData.edition || null, // Keep as null if 0 to match backend expectation
         tags: formData.tags,
         startDate: formData.startDate,
@@ -1207,111 +1220,129 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
             </CardContent>
           </Card>
 
- <Card>
-  <CardHeader>
-    <CardTitle className="flex items-center gap-2">
-      <Clock className="w-5 h-5" />
-      Event Timing
-    </CardTitle>
-  </CardHeader>
-  <CardContent className="space-y-4">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <Label htmlFor="startDate">Start Date *</Label>
-        <Input
-          id="startDate"
-          type="date"
-          value={formData.startDate ? formData.startDate.split('T')[0] : ''}
-          onChange={(e) => {
-            const dateValue = e.target.value;
-            const timeValue = formData.startDate.includes('T') ? formData.startDate.split('T')[1] : '00:00:00.000+00:00';
-            // Combine with existing time or default to midnight UTC
-            const newStartDate = dateValue ? `${dateValue}T${timeValue.split(':00.000+')[0]}:00.000+00:00` : '';
-            setFormData((prev) => ({ ...prev, startDate: newStartDate }));
-          }}
-        />
-        {showValidationErrors && (!formData.startDate || formData.startDate.trim() === '') && (
-          <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
-        )}
-      </div>
-
-      <div>
-        <Label htmlFor="startTime">Start Time</Label>
-        <Input
-          id="startTime"
-          type="time"
-          value={formData.startDate && formData.startDate.includes('T') ? formData.startDate.split('T')[1].slice(0, 5) : '09:00'}
-          onChange={(e) => {
-            const timeValue = e.target.value;
-            const dateValue = formData.startDate ? formData.startDate.split('T')[0] : new Date().toISOString().split('T')[0];
-            // Combine with existing date
-            const newStartDate = timeValue ? `${dateValue}T${timeValue}:00.000+00:00` : formData.startDate;
-            setFormData((prev) => ({ ...prev, startDate: newStartDate }));
-          }}
-        />
-        <p className="text-xs text-muted-foreground mt-1">Time when the event starts each day</p>
-      </div>
-
-      <div>
-        <Label htmlFor="endDate">End Date *</Label>
-        <Input
-          id="endDate"
-          type="date"
-          value={formData.endDate ? formData.endDate.split('T')[0] : ''}
-          onChange={(e) => {
-            const dateValue = e.target.value;
-            const timeValue = formData.endDate.includes('T') ? formData.endDate.split('T')[1] : '00:00:00.000+00:00';
-            // Combine with existing time or default to midnight UTC
-            const newEndDate = dateValue ? `${dateValue}T${timeValue.split(':00.000+')[0]}:00.000+00:00` : '';
-            setFormData((prev) => ({ ...prev, endDate: newEndDate }));
-          }}
-        />
-        {showValidationErrors && (!formData.endDate || formData.endDate.trim() === '') && (
-          <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
-        )}
-      </div>
-
-      <div>
-        <Label htmlFor="endTime">End Time</Label>
-        <Input
-          id="endTime"
-          type="time"
-          value={formData.endDate && formData.endDate.includes('T') ? formData.endDate.split('T')[1].slice(0, 5) : '18:00'}
-          onChange={(e) => {
-            const timeValue = e.target.value;
-            const dateValue = formData.endDate ? formData.endDate.split('T')[0] : new Date().toISOString().split('T')[0];
-            // Combine with existing date
-            const newEndDate = timeValue ? `${dateValue}T${timeValue}:00.000+00:00` : formData.endDate;
-            setFormData((prev) => ({ ...prev, endDate: newEndDate }));
-          }}
-        />
-        <p className="text-xs text-muted-foreground mt-1">Time when the event ends each day</p>
-      </div>
-
-      <div>
-        <Label htmlFor="timezone">Timezone</Label>
-        <Select
-          value={formData.timezone}
-          onValueChange={(value) => setFormData((prev) => ({ ...prev, timezone: value }))}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Asia/Kolkata">Asia/Kolkata (IST)</SelectItem>
-            <SelectItem value="America/New_York">America/New_York (EST)</SelectItem>
-            <SelectItem value="Europe/London">Europe/London (GMT)</SelectItem>
-            <SelectItem value="Asia/Tokyo">Asia/Tokyo (JST)</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-    </div>
-  </CardContent>
-</Card>
-
           <Card>
-            <AddVenue organizerId={organizerId} onVenueChange={handleVenueChange} />
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                Event Timing
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="startDate">Start Date *</Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={formData.startDate ? formData.startDate.split("T")[0] : ""}
+                    onChange={(e) => {
+                      const dateValue = e.target.value
+                      const timeValue = formData.startDate.includes("T")
+                        ? formData.startDate.split("T")[1]
+                        : "00:00:00.000+00:00"
+                      // Combine with existing time or default to midnight UTC
+                      const newStartDate = dateValue
+                        ? `${dateValue}T${timeValue.split(":00.000+")[0]}:00.000+00:00`
+                        : ""
+                      setFormData((prev) => ({ ...prev, startDate: newStartDate }))
+                    }}
+                  />
+                  {showValidationErrors && (!formData.startDate || formData.startDate.trim() === "") && (
+                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="startTime">Start Time</Label>
+                  <Input
+                    id="startTime"
+                    type="time"
+                    value={
+                      formData.startDate && formData.startDate.includes("T")
+                        ? formData.startDate.split("T")[1].slice(0, 5)
+                        : "09:00"
+                    }
+                    onChange={(e) => {
+                      const timeValue = e.target.value
+                      const dateValue = formData.startDate
+                        ? formData.startDate.split("T")[0]
+                        : new Date().toISOString().split("T")[0]
+                      // Combine with existing date
+                      const newStartDate = timeValue ? `${dateValue}T${timeValue}:00.000+00:00` : formData.startDate
+                      setFormData((prev) => ({ ...prev, startDate: newStartDate }))
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Time when the event starts each day</p>
+                </div>
+
+                <div>
+                  <Label htmlFor="endDate">End Date *</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={formData.endDate ? formData.endDate.split("T")[0] : ""}
+                    onChange={(e) => {
+                      const dateValue = e.target.value
+                      const timeValue = formData.endDate.includes("T")
+                        ? formData.endDate.split("T")[1]
+                        : "00:00:00.000+00:00"
+                      // Combine with existing time or default to midnight UTC
+                      const newEndDate = dateValue ? `${dateValue}T${timeValue.split(":00.000+")[0]}:00.000+00:00` : ""
+                      setFormData((prev) => ({ ...prev, endDate: newEndDate }))
+                    }}
+                  />
+                  {showValidationErrors && (!formData.endDate || formData.endDate.trim() === "") && (
+                    <p className="text-sm text-red-500 mt-1">This field is required for publishing</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="endTime">End Time</Label>
+                  <Input
+                    id="endTime"
+                    type="time"
+                    value={
+                      formData.endDate && formData.endDate.includes("T")
+                        ? formData.endDate.split("T")[1].slice(0, 5)
+                        : "18:00"
+                    }
+                    onChange={(e) => {
+                      const timeValue = e.target.value
+                      const dateValue = formData.endDate
+                        ? formData.endDate.split("T")[0]
+                        : new Date().toISOString().split("T")[0]
+                      // Combine with existing date
+                      const newEndDate = timeValue ? `${dateValue}T${timeValue}:00.000+00:00` : formData.endDate
+                      setFormData((prev) => ({ ...prev, endDate: newEndDate }))
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Time when the event ends each day</p>
+                </div>
+
+                <div>
+                  <Label htmlFor="timezone">Timezone</Label>
+                  <Select
+                    value={formData.timezone}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, timezone: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Asia/Kolkata">Asia/Kolkata (IST)</SelectItem>
+                      <SelectItem value="America/New_York">America/New_York (EST)</SelectItem>
+                      <SelectItem value="Europe/London">Europe/London (GMT)</SelectItem>
+                      <SelectItem value="Asia/Tokyo">Asia/Tokyo (JST)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
           </Card>
+
+          <div>
+            <AddVenue organizerId={organizerId} onVenueChange={handleVenueChange} />
+          </div>
         </TabsContent>
 
         {/* Event Details Tab */}
@@ -1995,28 +2026,25 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
           variant="outline"
           onClick={handlePreviousTab}
           disabled={activeTab === "basic"}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-transparent"
         >
           <ChevronLeft className="w-4 h-4" />
           Previous
         </Button>
-        
+
         <div className="flex gap-3">
           {/* <Button variant="outline" onClick={handleSaveDraft} disabled={isSubmitting}>
             <Save className="w-4 h-4 mr-2" />
             {isSubmitting ? "Saving..." : "Save Draft"}
           </Button> */}
-          
+
           {activeTab === "preview" ? (
             <Button onClick={handlePublishEvent} disabled={isPublishing || completionPercentage < 80}>
               <Send className="w-4 h-4 mr-2" />
               {isPublishing ? "Publishing..." : "Publish Event"}
             </Button>
           ) : (
-            <Button
-              onClick={handleNextTab}
-              className="flex items-center gap-2"
-            >
+            <Button onClick={handleNextTab} className="flex items-center gap-2">
               Next
               <ChevronRight className="w-4 h-4" />
             </Button>

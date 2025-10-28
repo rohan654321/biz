@@ -22,6 +22,9 @@ interface Venue {
   venueName?: string
   venueDescription?: string
   venueAddress?: string
+  venueCity?: string
+  venueCountry?: string
+  venueState?: string
   city?: string
   state?: string
   country?: string
@@ -181,11 +184,11 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
       prev.map((space, i) =>
         i === spaceIndex
           ? {
-              ...space,
-              features: space.features.includes(feature)
-                ? space.features.filter((f) => f !== feature)
-                : [...space.features, feature],
-            }
+            ...space,
+            features: space.features.includes(feature)
+              ? space.features.filter((f) => f !== feature)
+              : [...space.features, feature],
+          }
           : space,
       ),
     )
@@ -340,11 +343,10 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                 {filteredVenues.map((venue) => (
                   <Card
                     key={venue.id}
-                    className={`cursor-pointer transition-all ${
-                      selectedVenueId === venue.id
+                    className={`cursor-pointer transition-all ${selectedVenueId === venue.id
                         ? "ring-2 ring-green-500 bg-green-50 shadow-md"
                         : "hover:bg-gray-50 hover:shadow-sm"
-                    }`}
+                      }`}
                     onClick={() => handleVenueSelect(venue.id!)}
                   >
                     <CardContent className="p-4">
@@ -383,7 +385,9 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                             )}
                             <div className="flex items-center gap-1">
                               <MapPin className="w-3 h-3" />
-                              {venue.city}, {venue.state}
+                              {/* <MapPin className="w-3 h-3" /> */}
+                              {venue.venueAddress}, {venue.venueCity}, {venue.venueState}, {venue.venueCountry}
+
                             </div>
                           </div>
 

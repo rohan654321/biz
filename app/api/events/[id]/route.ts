@@ -19,6 +19,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             lastName: true,
             email: true,
             avatar: true,
+            company:true,
             organizationName: true,
             description: true,
           },

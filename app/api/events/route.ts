@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
               id: true,
               firstName: true,
               email: true,
+              company:true,
               avatar: true,
             },
           },
@@ -140,6 +141,7 @@ export async function GET(request: NextRequest) {
             id: true,
             firstName: true,
             avatar: true,
+            company:true,
           },
         },
       // In your GET function, update the venue selection:

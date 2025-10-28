@@ -269,10 +269,10 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
       {!loading && !error && filteredEvents.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredEvents.map((event: any) => (
-            <Card
+            <div
               key={event.id}
               onClick={() => router.push(`/event-dashboard/${event.id}`)}
-              className="overflow-hidden hover:shadow-lg transition-shadow w-full cursor-pointer hover:scale-[1.01] duration-200"
+              className="overflow-hidden hover:shadow-lg transition-shadow w-full cursor-pointer hover:scale-[1.01] duration-200 border-2 rounded-xl"
             >
               <div className="flex flex-col md:flex-row">
                 {/* Image on left */}
@@ -283,7 +283,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                     }
                     alt={event.title}
                     fill
-                    className="object-cover"
+                    className="m-2 rounded-xl"
                   />
                   <div className="absolute top-4 right-4 flex flex-col gap-2">
                     <Badge variant={getTimelineStatusColor(event.timelineStatus)}>
@@ -346,7 +346,7 @@ export default function MyEvents({ organizerId }: MyEventsProps) {
                   </div>
                 </CardContent>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       )}

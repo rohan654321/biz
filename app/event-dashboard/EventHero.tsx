@@ -71,7 +71,7 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
     if (!slider) return
     const interval = setInterval(() => {
       slider.next()
-    }, 3000)
+    }, 5000)
     return () => clearInterval(interval)
   }, [instanceRef])
 
@@ -241,7 +241,7 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
       </div>
 
       {/* Content */}
-      <div className="relative w-full max-w-6xl mx-auto bg-white rounded-lg overflow-hidden shadow-md flex flex-col md:flex-row mt-[-100px] sm:mt-[-120px] md:mt-[-150px] z-10 left-1/2 -translate-x-1/2">
+      <div className="relative w-full max-w-6xl mx-auto  rounded-lg overflow-hidden shadow-md flex flex-col md:flex-row mt-[-100px] sm:mt-[-120px] md:mt-[-150px] z-10 left-1/2 -translate-x-1/2">
         {/* Slider */}
         <div className="md:w-2/3 w-full h-[220px] sm:h-[280px] md:h-[320px] lg:h-[400px] relative">
           <div ref={sliderRef} className="keen-slider h-full w-full">
@@ -253,7 +253,7 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
                       src={img || "/placeholder.svg"}
                       alt={`${event.title} Image ${index + 1}`}
                       fill
-                      className="p-4"
+                      className=""
                     />
                   </div>
                 ))}
@@ -284,12 +284,12 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
           )}
 
           {/* Toggle edit mode button */}
-          <div className="absolute bottom-4 right-4 z-20">
+          <div className="absolute bottom-4 right-4 z-20 pl-2">
             <Button
               size="sm"
               variant={isEditingImages ? "default" : "secondary"}
               onClick={() => setIsEditingImages(!isEditingImages)}
-              className="shadow-lg"
+              className="shadow-lg mx-4"
             >
               <Upload className="w-4 h-4 mr-2" />
               {isEditingImages ? "Done" : "Edit Images"}
@@ -334,7 +334,7 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
         </div>
 
         {/* Info */}
-        <div className="md:w-1/3 w-full bg-blue-50 p-4 sm:p-6 lg:p-8 flex flex-col justify-center space-y-3">
+        <div className="md:w-1/3 w-full bg-blue-50 p-4 sm:p-6  flex flex-col justify-center space-y-3">
           {/* Title with edit option */}
           <div className="flex items-center justify-between">
             {isEditing ? (
@@ -370,18 +370,21 @@ export default function EventHero({ event, onImagesUpdate }: EventHeroProps) {
             <div className="flex items-center gap-2 sm:gap-3">
               <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
               <span>
-                {new Date(event.startDate || "").toLocaleTimeString("en-IN", {
+                {new Date(event.startDate || "9:00 am").toLocaleTimeString("en-IN", {
                   hour: "2-digit",
                   minute: "2-digit",
                   hour12: true,
+                  timeZone: "UTC",
                 })}{" "}
                 –{" "}
-                {new Date(event.endDate || "").toLocaleTimeString("en-IN", {
+                {new Date(event.endDate || "6:00 pm").toLocaleTimeString("en-IN", {
                   hour: "2-digit",
                   minute: "2-digit",
                   hour12: true,
+                  timeZone: "UTC",
                 })}
               </span>
+
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <Ticket className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
