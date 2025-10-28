@@ -10,6 +10,7 @@ export async function GET() {
       select: {
         id: true,
         firstName: true,
+        company: true,
         lastName: true,
         email: true,
         phone: true,
@@ -20,6 +21,8 @@ export async function GET() {
         organizationName: true,
         description: true,
         headquarters: true,
+        totalReviews: true,
+        averageRating: true,
         founded: true,
         teamSize: true,
         specialties: true,
@@ -53,8 +56,10 @@ export async function GET() {
         return {
           id: organizer.id,
           name: organizer.organizationName || `${organizer.firstName} ${organizer.lastName}`,
+          company: organizer.company || "",
           image: organizer.avatar || "/Organizers/maxx.png",
-          rating: 4.5, // placeholder
+          avgRating: organizer.averageRating, // placeholder
+          totalReviews: organizer.totalReviews,
           reviewCount: 0,
           location: organizer.location || "Not specified",
           country: "India",
