@@ -20,6 +20,7 @@ interface Organizer {
   country: string
   category: string
   eventsOrganized: number
+  headquarters:string
   yearsOfExperience: number
   specialties: string[]
   description: string
@@ -386,7 +387,7 @@ export default function OrganizersPage() {
 
             <div className="flex items-center gap-1 text-gray-600 mb-2">
               <MapPin className="h-4 w-4" />
-              <span className="text-sm">{organizer.location}</span>
+              <span className="text-sm">{organizer.headquarters || "not specified"}</span>
             </div>
 
             <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
