@@ -20,6 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             email: true,
             avatar: true,
             organizationName: true,
+            company:true,
             description: true,
             phone: true,
             totalEvents: true,

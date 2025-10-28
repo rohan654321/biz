@@ -710,7 +710,7 @@ const getPlacesToVisit = (city: string): PlaceToVisit[] => {
                       <h3 className="font-semibold text-gray-800 mb-1">Event Type</h3>
                       <div className="flex items-center gap-2 text-gray-700">
                         <span className="text-green-600 font-semibold">✓</span> 
-                        {event.category || "Seminar"}
+                        {/* {event.category || "Seminar"} */}
                         {event.eventType?.map((type: string, index: number) => (
                           <Badge key={index} variant="secondary" className="ml-2">
                             {type}
@@ -788,7 +788,7 @@ const getPlacesToVisit = (city: string): PlaceToVisit[] => {
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="font-semibold text-gray-900 text-lg">
-                              {event.organizer?.company || event.organizer?.organization || "Event Organizer"}
+                              {event.organizer?.company}
                             </h3>
                             <span className="bg-blue-100 text-blue-700 text-[11px] font-medium px-2 py-[2px] rounded">
                               Top Rated

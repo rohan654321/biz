@@ -125,25 +125,28 @@ export default function EventHero({ event }: EventHeroProps) {
   }
 
   // Format time range
-  const formatTimeRange = () => {
-    if (!event.startDate || !event.endDate) {
-      return "Time to be announced"
-    }
-
-    const startTime = new Date(event.startDate).toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    })
-    
-    const endTime = new Date(event.endDate).toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    })
-
-    return `${startTime} – ${endTime}`
+ const formatTimeRange = () => {
+  if (!event.startDate || !event.endDate) {
+    return "Time to be announced"
   }
+
+  const startTime = new Date(event.startDate).toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata", // Force Indian time zone
+  })
+
+  const endTime = new Date(event.endDate).toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata", // Force Indian time zone
+  })
+
+  return `${startTime} – ${endTime}`
+}
+
 
   const followersCount = getFollowersCount()
 
