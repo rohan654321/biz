@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
       amenities: manager.amenities || [],
       meetingSpaces: manager.meetingSpaces || [],
       isVerified: true,
+      venueImages: manager.venueImages || [],
     }));
 
     return NextResponse.json({ success: true, venues });

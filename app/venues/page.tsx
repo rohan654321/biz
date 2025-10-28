@@ -42,6 +42,10 @@ interface Venue {
   totalHalls: number | null
   averageRating: number
   totalReviews: number
+  venueImages: string[]
+  venueVideos: string[]
+  floorPlans: string[]
+  virtualTour: string
 }
 
 export default function VenuesPage() {
@@ -384,7 +388,8 @@ export default function VenuesPage() {
                   {/* Image */}
                   <div className="relative">
                     <img
-                      src={venue.logo && venue.logo.trim() !== "" ? venue.logo : "/city/c2.jpg"}
+                      src={venue.venueImages[0] || "/city/c2.jpg"}
+                      // {venue.logo && venue.logo.trim() !== "" ? venue.logo : "/city/c2.jpg"}
                       alt={venue.venueName || "Venue"}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => (e.currentTarget.src = "/city/c2.jpg")}

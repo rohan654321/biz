@@ -142,71 +142,72 @@ export default function EventsPageContent() {
 
   const DEFAULT_EVENT_IMAGE = "/city/c4.jpg"
 
-  const getEventImage = (event: any) => {
-    return event.images?.[0]?.url || event.image || DEFAULT_EVENT_IMAGE
-  }
+ const getEventImage = (event: any) => {
+  return event.images?.[0] || event.image || DEFAULT_EVENT_IMAGE
+}
 
-  const fetchEvents = async () => {
-    try {
-      setLoading(true)
-      setError(null)
+ const fetchEvents = async () => {
+  try {
+    setLoading(true)
+    setError(null)
 
-      const response = await fetch("/api/events")
+    const response = await fetch("/api/events")
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch events")
-      }
-
-      const data: ApiResponse = await response.json()
-
-      const transformedEvents = data.events.map((event: any) => {
-        const resolvedId =
-          event.id ||
-          event._id ||
-          (typeof event._id === "object" && event._id.$oid) ||
-          (typeof event._id === "string" ? event._id : undefined)
-
-        const avg =
-          typeof event?.averageRating === "number" && event.averageRating > 0
-            ? event.averageRating
-            : typeof event?.rating?.average === "number"
-              ? event.rating.average
-              : 4.5
-
-        return {
-          ...event,
-          id: String(resolvedId || ""),
-          eventType: event.eventType || event.categories?.[0] || "Other",
-          timings: {
-            startDate: event.startDate,
-            endDate: event.endDate,
-          },
-          location: {
-            address: event.venue?.venueAddress || "Not Added",
-          },
-          featured: event.tags?.includes("featured") || false,
-          categories: event.categories || [],
-          tags: event.tags || [],
-          images: event.images || [{ url: "/images/gpex.jpg?height=200&width=300" }],
-          pricing: event.pricing || { general: 0 },
-          rating: { average: avg },
-          totalReviews: typeof event?.totalReviews === "number" ? event.totalReviews : undefined,
-        }
-      })
-
-      setEvents(transformedEvents)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
-      console.error("[v0] Error fetching events:", err)
-      toast({
-        title: "Error",
-        description: "Failed to load events",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
+    if (!response.ok) {
+      throw new Error("Failed to fetch events")
     }
+
+    const data: ApiResponse = await response.json()
+
+    const transformedEvents = data.events.map((event: any) => {
+      const resolvedId =
+        event.id ||
+        event._id ||
+        (typeof event._id === "object" && event._id.$oid) ||
+        (typeof event._id === "string" ? event._id : undefined)
+
+      const avg =
+        typeof event?.averageRating === "number" && event.averageRating > 0
+          ? event.averageRating
+          : typeof event?.rating?.average === "number"
+            ? event.rating.average
+            : 4.5
+
+      return {
+        ...event,
+        id: String(resolvedId || ""),
+        eventType: event.eventType || event.categories?.[0] || "Other",
+        timings: {
+          startDate: event.startDate,
+          endDate: event.endDate,
+        },
+        location: {
+          address: event.venue?.venueAddress || "Not Added",
+        },
+        featured: event.tags?.includes("featured") || false,
+        categories: event.categories || [],
+        tags: event.tags || [],
+        // ✅ FIX: Use images array directly, no need for .url property
+        images: event.images || ["/images/gpex.jpg"],
+        pricing: event.pricing || { general: 0 },
+        rating: { average: avg },
+        totalReviews: typeof event?.totalReviews === "number" ? event.totalReviews : undefined,
+      }
+    })
+
+    setEvents(transformedEvents)
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "An error occurred")
+    console.error("[v0] Error fetching events:", err)
+    toast({
+      title: "Error",
+      description: "Failed to load events",
+      variant: "destructive",
+    })
+  } finally {
+    setLoading(false)
   }
+}
 
   useEffect(() => {
     fetchEvents()
@@ -1247,15 +1248,15 @@ export default function EventsPageContent() {
                     <Link href={`/event/${event.id}`} key={event.id} className="block">
                       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all w-full">
                         <CardContent className="p-0 flex">
-                          {/* Left Image Section */}
-                          <div className="relative w-[80px] h-[100px] sm:w-[100px] sm:h-[120px] md:w-[120px] md:h-[140px] lg:w-[140px] lg:h-[160px] flex-shrink-0">
-                            <Image
-                              src={event.image || "/images/gpex.jpg"}
-                              alt={event.title}
-                              fill
-                              className="object-cover m-2 rounded-sm"
-                            />
-                          </div>
+                     {/* Left Image Section */}
+<div className="relative w-[80px] h-[100px] sm:w-[100px] sm:h-[120px] md:w-[120px] md:h-[140px] lg:w-[140px] lg:h-[160px] flex-shrink-0">
+  <Image
+    src={getEventImage(event)} // ✅ This will now work correctly
+    alt={event.title}
+    fill
+    className="object-cover m-2 rounded-sm"
+  />
+</div>
 
                           {/* Right Section */}
                           <div className="flex-1 flex flex-col px-10 py-1 min-w-0">
