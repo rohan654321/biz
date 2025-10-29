@@ -19,30 +19,100 @@ const cities = [
   { id: 12, name: "Munich", icon: "/icon/munich.png", color: "text-purple-600" },
 ]
 
+interface CityCount {
+  city: string
+  count: number
+}
+
 export default function BrowseByCity() {
   const router = useRouter()
   const [counts, setCounts] = useState<Record<string, number>>({})
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchCityCounts = async () => {
       try {
+        setLoading(true)
         const res = await fetch("/api/events?stats=true&group=city")
+        if (!res.ok) throw new Error("Failed to fetch city stats")
+        
         const data = await res.json()
-        const map: Record<string, number> = {}
-        data.cities.forEach((c: any) => {
-          map[c.city] = c.count
-        })
-        setCounts(map)
+        console.log("City API Response:", data) // Debug log
+        
+        if (data.cities && Array.isArray(data.cities)) {
+          const map: Record<string, number> = {}
+          data.cities.forEach((c: CityCount) => {
+            // Normalize city names to match frontend list
+            const normalizedCity = normalizeCityName(c.city)
+            if (normalizedCity) {
+              map[normalizedCity] = (map[normalizedCity] || 0) + c.count
+            }
+          })
+          setCounts(map)
+        } else {
+          console.log("No cities data found in response")
+        }
       } catch (error) {
         console.error("Error fetching city stats:", error)
+      } finally {
+        setLoading(false)
       }
     }
 
     fetchCityCounts()
   }, [])
 
+  // Helper function to normalize city names
+  const normalizeCityName = (cityName: string): string => {
+    if (!cityName) return ''
+    
+    const normalized = cityName.trim().toLowerCase()
+    
+    // Map database city names to frontend city names
+    const cityMap: Record<string, string> = {
+      'chennai': 'Chennai',
+      'mumbai': 'Mumbai',
+      'london': 'London',
+      'dubai': 'Dubai',
+      'berlin': 'Berlin',
+      'amsterdam': 'Amsterdam',
+      'paris': 'Paris',
+      'washington dc': 'Washington DC',
+      'washington': 'Washington DC',
+      'new york': 'New York',
+      'barcelona': 'Barcelona',
+      'kuala lumpur': 'Kuala Lumpur',
+      'orlando': 'Orlando',
+      'chicago': 'Chicago',
+      'munich': 'Munich'
+    }
+
+    return cityMap[normalized] || cityName.charAt(0).toUpperCase() + cityName.slice(1).toLowerCase()
+  }
+
   const handleCityClick = (city: (typeof cities)[0]) => {
     router.push(`/event?location=${encodeURIComponent(city.name)}`)
+  }
+
+  // Helper function to get count for a city
+  const getCityCount = (cityName: string): number => {
+    // Try exact match first, then normalized match
+    return counts[cityName] || 0
+  }
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-6xl mx-auto mb-12">
+        <div className="px-6 py-6 border-b border-gray-200 text-left">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-1">
+            Browse Event By City
+          </h2>
+        </div>
+        <div className="p-6 text-center">
+          <p className="text-gray-500">Loading cities...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -59,9 +129,8 @@ export default function BrowseByCity() {
         <div className="p-2">
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4">
             {cities.map((city) => {
-              const count = counts[city.name] || 0
-              const formatted =
-                count >= 1000 ? `${(count / 1000).toFixed(1)}k` : count
+              const count = getCityCount(city.name)
+              const formatted = count >= 1000 ? `${(count / 1000).toFixed(1)}k` : count
 
               return (
                 <button
@@ -71,7 +140,7 @@ export default function BrowseByCity() {
                 >
                   <div className="mb-3 p-3 rounded-full bg-gray-50 group-hover:bg-gray-100 transition-colors duration-200">
                     <Image
-                      src={city.icon}
+                      src={city.icon || "/placeholder.svg"}
                       alt={city.name}
                       width={40}
                       height={40}

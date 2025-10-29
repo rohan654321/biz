@@ -11,40 +11,46 @@ import {
   Package, Puzzle,
 } from "lucide-react"
 
+// Updated categories to match actual category names in database
 const primaryCategories = [
-  { id: "education", title: "Education Training", icon: GraduationCap, filterValue: "Education" },
-  { id: "medical", title: "Medical & Pharma", icon: Cross, filterValue: "Medical" },
-  { id: "technology", title: "IT & Technology", icon: TrendingUp, filterValue: "Technology" },
-  { id: "finance", title: "Banking & Finance", icon: DollarSign, filterValue: "Finance" },
-  { id: "business", title: "Business Services", icon: Briefcase, filterValue: "Business" },
+  { id: "education", title: "Education & Training", icon: GraduationCap, filterValue: "Education & Training" },
+  { id: "medical", title: "Medical & Pharma", icon: Cross, filterValue: "Medical & Pharma" },
+  { id: "technology", title: "IT & Technology", icon: TrendingUp, filterValue: "IT & Technology" },
+  { id: "finance", title: "Banking & Finance", icon: DollarSign, filterValue: "Banking & Finance" },
+  { id: "business", title: "Business Services", icon: Briefcase, filterValue: "Business Services" },
 ]
 
 const extraCategories = [
-  { title: "Industrial Engineering", icon: Factory },
-  { title: "Building & Construction", icon: Building2 },
-  { title: "Power & Energy", icon: Zap },
-  { title: "Entertainment & Media", icon: Clapperboard },
-  { title: "Wellness, Health & Fitness", icon: HeartPulse },
-  { title: "Science & Research", icon: FlaskConical },
-  { title: "Environment & Waste", icon: Leaf },
-  { title: "Agriculture & Forestry", icon: Trees },
-  { title: "Food & Beverages", icon: Utensils },
-  { title: "Logistics & Transportation", icon: Truck },
-  { title: "Electric & Electronics", icon: Cpu },
-  { title: "Arts & Crafts", icon: Palette },
-  { title: "Auto & Automotive", icon: Car },
-  { title: "Home & Office", icon: Home },
-  { title: "Security & Defense", icon: Shield },
-  { title: "Fashion & Beauty", icon: Sparkles },
-  { title: "Travel & Tourism", icon: Plane },
-  { title: "Telecommunication", icon: Phone },
-  { title: "Apparel & Clothing", icon: Shirt },
-  { title: "Animals & Pets", icon: Dog },
-  { title: "Baby, Kids & Maternity", icon: Baby },
-  { title: "Hospitality", icon: Hotel },
-  { title: "Packing & Packaging", icon: Package },
-  { title: "Miscellaneous", icon: Puzzle },
+  { title: "Industrial Engineering", icon: Factory, filterValue: "Industrial Engineering" },
+  { title: "Building & Construction", icon: Building2, filterValue: "Building & Construction" },
+  { title: "Power & Energy", icon: Zap, filterValue: "Power & Energy" },
+  { title: "Entertainment & Media", icon: Clapperboard, filterValue: "Entertainment & Media" },
+  { title: "Wellness, Health & Fitness", icon: HeartPulse, filterValue: "Wellness, Health & Fitness" },
+  { title: "Science & Research", icon: FlaskConical, filterValue: "Science & Research" },
+  { title: "Environment & Waste", icon: Leaf, filterValue: "Environment & Waste" },
+  { title: "Agriculture & Forestry", icon: Trees, filterValue: "Agriculture & Forestry" },
+  { title: "Food & Beverages", icon: Utensils, filterValue: "Food & Beverages" },
+  { title: "Logistics & Transportation", icon: Truck, filterValue: "Logistics & Transportation" },
+  { title: "Electric & Electronics", icon: Cpu, filterValue: "Electric & Electronics" },
+  { title: "Arts & Crafts", icon: Palette, filterValue: "Arts & Crafts" },
+  { title: "Auto & Automotive", icon: Car, filterValue: "Auto & Automotive" },
+  { title: "Home & Office", icon: Home, filterValue: "Home & Office" },
+  { title: "Security & Defense", icon: Shield, filterValue: "Security & Defense" },
+  { title: "Fashion & Beauty", icon: Sparkles, filterValue: "Fashion & Beauty" },
+  { title: "Travel & Tourism", icon: Plane, filterValue: "Travel & Tourism" },
+  { title: "Telecommunication", icon: Phone, filterValue: "Telecommunication" },
+  { title: "Apparel & Clothing", icon: Shirt, filterValue: "Apparel & Clothing" },
+  { title: "Animals & Pets", icon: Dog, filterValue: "Animals & Pets" },
+  { title: "Baby, Kids & Maternity", icon: Baby, filterValue: "Baby, Kids & Maternity" },
+  { title: "Hospitality", icon: Hotel, filterValue: "Hospitality" },
+  { title: "Packing & Packaging", icon: Package, filterValue: "Packing & Packaging" },
+  { title: "Miscellaneous", icon: Puzzle, filterValue: "Miscellaneous" },
 ]
+
+interface CategoryCount {
+  category: string
+  count: number
+}
 
 export default function CategoryBrowser() {
   const router = useRouter()
@@ -56,11 +62,14 @@ export default function CategoryBrowser() {
       try {
         const res = await fetch("/api/events?stats=true")
         const data = await res.json()
-        const map: Record<string, number> = {}
-        data.categories.forEach((cat: any) => {
-          map[cat.category] = cat.count
-        })
-        setCounts(map)
+        
+        if (data.categories && Array.isArray(data.categories)) {
+          const map: Record<string, number> = {}
+          data.categories.forEach((cat: CategoryCount) => {
+            map[cat.category] = cat.count
+          })
+          setCounts(map)
+        }
       } catch (error) {
         console.error("Failed to fetch category stats:", error)
       }
@@ -73,6 +82,11 @@ export default function CategoryBrowser() {
     if (filterValue) {
       router.push(`/event?category=${encodeURIComponent(filterValue)}`)
     }
+  }
+
+  // Helper function to get count for a category
+  const getCategoryCount = (categoryName: string): number => {
+    return counts[categoryName] || 0
   }
 
   return (
@@ -91,7 +105,8 @@ export default function CategoryBrowser() {
           <div className="mt-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {primaryCategories.map((category) => {
               const IconComponent = category.icon
-              const eventCount = counts[category.filterValue] || 0
+              const eventCount = getCategoryCount(category.filterValue)
+              
               return (
                 <button
                   key={category.id}
@@ -132,11 +147,12 @@ export default function CategoryBrowser() {
             <div className="mt-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {extraCategories.map((cat, idx) => {
                 const IconComponent = cat.icon
-                const eventCount = counts[cat.title] || 0
+                const eventCount = getCategoryCount(cat.filterValue)
+                
                 return (
                   <button
                     key={idx}
-                    onClick={() => handleCategoryClick(cat.title)}
+                    onClick={() => handleCategoryClick(cat.filterValue)}
                     className="cursor-pointer bg-white rounded-sm p-4 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 hover:scale-105 group"
                   >
                     <div className="flex flex-col items-center space-y-2">
