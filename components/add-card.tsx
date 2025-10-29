@@ -4,7 +4,7 @@ import Image from "next/image"
 
 export default function AdCard() {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+    <div className="bg-white border border-gray-250 rounded-lg shadow-sm overflow-hidden">
       {/* Top Image */}
       <div className="relative w-full h-48">
         <Image
