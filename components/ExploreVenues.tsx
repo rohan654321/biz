@@ -99,7 +99,7 @@ export default function ExploreVenues() {
                       </div>
 
                       <p className="text-xs text-gray-700 mb-1 line-clamp-1">
-                        {venue.description || "No description available"}
+                        {/* {venue.description || "No description available"} */}
                       </p>
 
                       <div className="flex items-center mb-1">
@@ -109,10 +109,10 @@ export default function ExploreVenues() {
                         </span>
                       </div>
 
-                      <div className="text-xs text-gray-800 flex justify-between">
+                      {/* <div className="text-xs text-gray-800 flex justify-between">
                         <span>Halls: {venue.totalHalls ?? 0}</span>
                         <span>Capacity: {venue.capacity ?? 0}</span>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 </button>

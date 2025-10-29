@@ -12,12 +12,12 @@ async function getFeaturedEvents() {
       id: true,
       title: true,
       startDate: true,
-      tags:true,
+      tags: true,
       edition: true,
       endDate: true,
       bannerImage: true,
-      category: true,
-      eventType:true,
+      // category: true,
+      eventType: true,
       averageRating: true,
       totalReviews: true,
       venue: {
@@ -41,7 +41,7 @@ interface Event {
   startDate: Date;
   endDate: Date;
   bannerImage?: string;
-  category?: string;
+  // category?: string[];
   edition?: string;
   averageRating?: number;
   totalReviews?: number;
@@ -130,16 +130,20 @@ export default async function FeaturedEvents() {
                   </div>
 
                   {/* Venue + Edition */}
-                  <div className="flex flex-wrap items-center text-gray-700 text-sm font-medium gap-3 mt-1">
+                  <div className="flex flex-wrap items-center justify-between text-gray-700 text-sm font-medium mt-1">
+                    {/* Left side */}
                     <span className="flex items-center">
                       <MapPin className="w-4 h-4 mr-1 text-gray-700" />
-                      {venueDisplay ? venueDisplay.slice(0, 5) : ""}...
+                      {venueDisplay ? venueDisplay.slice(0, 15) : ""}...
                     </span>
+
+                    {/* Right side */}
                     <span className="flex items-center">
                       <Layers className="w-4 h-4 mr-1 text-gray-700" />
-                      {event.edition || "2nd Edition"}
+                      {event.edition || "1"} edition
                     </span>
                   </div>
+
 
                   {/* Date */}
                   <div className="flex items-center text-gray-800 text-sm mt-1">
@@ -151,9 +155,9 @@ export default async function FeaturedEvents() {
                   <div className="flex flex-wrap gap-2 mt-2">
                     <div className="px-2 py-0.5 text-xs font-medium rounded-full 
                                      border border-gray-300 bg-gray-50 text-gray-700">
-                                      {event.eventType}
-                                     </div>
-                    
+                      {event.eventType}
+                    </div>
+
                   </div>
                 </div>
               </div>

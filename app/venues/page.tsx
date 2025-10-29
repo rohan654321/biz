@@ -434,7 +434,7 @@ export default function VenuesPage() {
                     </div>
 
                     {/* Description */}
-                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">{displayDesc(venue)}</p>
+                    {/* <p className="text-sm text-gray-600 mb-2 line-clamp-2">{displayDesc(venue)}</p>  */}
 
                     {/* Address - Now shows formatted address with all components */}
                     <div className="flex items-start text-gray-600 mb-2">
@@ -443,16 +443,16 @@ export default function VenuesPage() {
                     </div>
 
                     {/* Capacity & Halls */}
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <div>
+                    {/* <div className="flex justify-between text-sm text-gray-500"> */}
+                      {/* <div> */}
                         {/* <span className="font-medium">Capacity:</span> {displayCapacity(venue)} */}
-                         <span className="font-medium">Capacity:</span> {venue.maxCapacity}
-                      </div>
-                      <div>
+                         {/* <span className="font-medium">Capacity:</span> {venue.maxCapacity} */}
+                      {/* </div> */}
+                      {/* <div> */}
                         {/* <span className="font-medium">Halls:</span> {displayHalls(venue)} */}
-                         <span className="font-medium">Halls:</span> {venue.totalHalls}
-                      </div>
-                    </div>
+                         {/* <span className="font-medium">Halls:</span> {venue.totalHalls} */}
+                      {/* </div> */}
+                    {/* </div> */}
 
                     {/* Amenities */}
                     {/* {venue.amenities && venue.amenities.length > 0 && (
