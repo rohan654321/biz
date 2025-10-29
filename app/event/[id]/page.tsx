@@ -1,4 +1,3 @@
-
 "use client"
 
 import Image from "next/image"
@@ -64,6 +63,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [hotelsLoading, setHotelsLoading] = useState(true)
   const [userRole, setUserRole] = useState<string | null>(null)
   const [spaceCosts, setSpaceCosts] = useState<SpaceCost[]>([])
+  const [isOrganizer, setIsOrganizer] = useState(false)
 
   const { data: session } = useSession()
   const router = useRouter()
@@ -95,7 +95,7 @@ export default function EventPage({ params }: EventPageProps) {
         setEvent(data)
         setAverageRating(data.averageRating || 0)
         setTotalReviews(data.reviewCount || 0)
-        
+
         // Fetch space costs if available
         if (data.id) {
           fetchSpaceCosts(data.id)
@@ -111,46 +111,46 @@ export default function EventPage({ params }: EventPageProps) {
     fetchEvent()
   }, [params])
 
-const getPlacesToVisit = (city: string): PlaceToVisit[] => {
-  const placesByCity: Record<string, PlaceToVisit[]> = {
-    "Paris": [
-      { name: "Eiffel Tower", category: "Historical places", image: "/places/ifal.jpeg" },
-      { name: "Louvre Museum", category: "Museum", image: "/places/ifal.jpeg" },
-      { name: "Notre-Dame Cathedral", category: "Historical places", image: "/places/ifal.jpeg" }
-    ],
-    "Delhi": [
-      { name: "Taj Mahal", category: "Historical places", image: "/places/ifal.jpeg" },
-      { name: "Red Fort", category: "Historical places", image: "/places/ifal.jpeg" },
-      { name: "Qutub Minar", category: "Historical places", image: "/places/ifal.jpeg" }
-    ],
-    "Sydney": [
-      { name: "Sydney Opera House", category: "Beach", image: "/places/ifal.jpeg" },
-      { name: "Bondi Beach", category: "Beach", image: "/places/ifal.jpeg" },
-      { name: "Harbour Bridge", category: "Landmark", image: "/places/ifal.jpeg" }
-    ],
-    "New York": [
-      { name: "Statue of Liberty", category: "Historical places", image: "/places/ifal.jpeg" },
-      { name: "Central Park", category: "Park", image: "/places/ifal.jpeg" },
-      { name: "Times Square", category: "Entertainment", image: "/places/ifal.jpeg" }
-    ],
-    "Tokyo": [
-      { name: "Tokyo Tower", category: "Landmark", image: "/places/ifal.jpeg" },
-      { name: "Senso-ji Temple", category: "Temple", image: "/places/ifal.jpeg" },
-      { name: "Shibuya Crossing", category: "Landmark", image: "/places/ifal.jpeg" }
-    ],
-    "London": [
-      { name: "Big Ben", category: "Historical places", image: "/places/ifal.jpeg" },
-      { name: "London Eye", category: "Entertainment", image: "/places/ifal.jpeg" },
-      { name: "Tower Bridge", category: "Historical places", image: "/places/ifal.jpeg" }
-    ]
-  };
+  const getPlacesToVisit = (city: string): PlaceToVisit[] => {
+    const placesByCity: Record<string, PlaceToVisit[]> = {
+      "Paris": [
+        { name: "Eiffel Tower", category: "Historical places", image: "/places/ifal.jpeg" },
+        { name: "Louvre Museum", category: "Museum", image: "/places/ifal.jpeg" },
+        { name: "Notre-Dame Cathedral", category: "Historical places", image: "/places/ifal.jpeg" }
+      ],
+      "Delhi": [
+        { name: "Taj Mahal", category: "Historical places", image: "/places/ifal.jpeg" },
+        { name: "Red Fort", category: "Historical places", image: "/places/ifal.jpeg" },
+        { name: "Qutub Minar", category: "Historical places", image: "/places/ifal.jpeg" }
+      ],
+      "Sydney": [
+        { name: "Sydney Opera House", category: "Beach", image: "/places/ifal.jpeg" },
+        { name: "Bondi Beach", category: "Beach", image: "/places/ifal.jpeg" },
+        { name: "Harbour Bridge", category: "Landmark", image: "/places/ifal.jpeg" }
+      ],
+      "New York": [
+        { name: "Statue of Liberty", category: "Historical places", image: "/places/ifal.jpeg" },
+        { name: "Central Park", category: "Park", image: "/places/ifal.jpeg" },
+        { name: "Times Square", category: "Entertainment", image: "/places/ifal.jpeg" }
+      ],
+      "Tokyo": [
+        { name: "Tokyo Tower", category: "Landmark", image: "/places/ifal.jpeg" },
+        { name: "Senso-ji Temple", category: "Temple", image: "/places/ifal.jpeg" },
+        { name: "Shibuya Crossing", category: "Landmark", image: "/places/ifal.jpeg" }
+      ],
+      "London": [
+        { name: "Big Ben", category: "Historical places", image: "/places/ifal.jpeg" },
+        { name: "London Eye", category: "Entertainment", image: "/places/ifal.jpeg" },
+        { name: "Tower Bridge", category: "Historical places", image: "/places/ifal.jpeg" }
+      ]
+    };
 
-  return placesByCity[city] || [
-    { name: "Eiffel Tower", category: "Historical places", image: "/places/ifal.jpeg" },
-    { name: "Taj Mahal", category: "Historical places", image: "/places/OIP.jpeg" },
-    { name: "Sydney Opera House", category: "Beach", image: "/places/th.jpeg" }
-  ];
-};
+    return placesByCity[city] || [
+      { name: "Eiffel Tower", category: "Historical places", image: "/places/ifal.jpeg" },
+      { name: "Taj Mahal", category: "Historical places", image: "/places/OIP.jpeg" },
+      { name: "Sydney Opera House", category: "Beach", image: "/places/th.jpeg" }
+    ];
+  };
 
   const fetchSpaceCosts = async (eventId: string) => {
     try {
@@ -184,6 +184,7 @@ const getPlacesToVisit = (city: string): PlaceToVisit[] => {
     if (event?.id && session?.user?.id) {
       checkIfSaved()
       checkUserRole()
+      checkIfOrganizer()
     }
   }, [event?.id, session?.user?.id])
 
@@ -204,6 +205,22 @@ const getPlacesToVisit = (city: string): PlaceToVisit[] => {
     if (session?.user) {
       const userWithRole = session.user as any
       setUserRole(userWithRole.role || null)
+    }
+  }
+
+  const checkIfOrganizer = () => {
+    if (session?.user && event?.organizer) {
+      const userId = session.user.id
+      const organizerId = event.organizer.id || event.organizer._id
+
+      // Check if the logged-in user is the organizer of this event
+      if (userId === organizerId) {
+        setIsOrganizer(true)
+      } else {
+        setIsOrganizer(false)
+      }
+    } else {
+      setIsOrganizer(false)
     }
   }
 
@@ -399,9 +416,9 @@ const getPlacesToVisit = (city: string): PlaceToVisit[] => {
   const formatDateTimeRange = (startDate: string, endDate: string) => {
     const start = new Date(startDate)
     const end = new Date(endDate)
-    
+
     const isSameDay = start.toDateString() === end.toDateString()
-    
+
     if (isSameDay) {
       return `${formatDate(startDate)}, ${formatTime(startDate)} - ${formatTime(endDate)}`
     } else {
@@ -414,15 +431,18 @@ const getPlacesToVisit = (city: string): PlaceToVisit[] => {
     if (!event.ticketTypes || event.ticketTypes.length === 0) {
       return "Free Entry"
     }
-    
+
     const ticketTypes = event.ticketTypes as TicketType[]
-    return ticketTypes.map(ticket => 
+    return ticketTypes.map(ticket =>
       `${ticket.name}: ${ticket.currency || '₹'}${ticket.price}`
     ).join(" | ")
   }
 
   // Determine if Exhibit button should be shown - ONLY for EXHIBITOR role
-  const showExhibitButton = userRole === 'EXHIBITOR'
+  // const showExhibitButton = userRole === 'EXHIBITOR'
+
+  // Don't show Visit and Exhibit buttons if the user is the organizer
+  const showActionButtons = !isOrganizer
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -505,31 +525,33 @@ const getPlacesToVisit = (city: string): PlaceToVisit[] => {
             </div>
 
             {/* RIGHT SECTION - slightly shifted left */}
-            <div className="flex flex-col gap-4 lg:-ml-8">
-              <p className="text-center lg:text-left text-gray-700 font-medium text-base sm:text-lg">
-                Interested in this Event?
-              </p>
+            {showActionButtons && (
+              <div className="flex flex-col gap-4 lg:-ml-8">
+                <p className="text-center lg:text-left text-gray-700 font-medium text-base sm:text-lg">
+                  Interested in this Event?
+                </p>
 
-              <div className="flex gap-3 flex-col sm:flex-row sm:justify-start">
-                <Button
-                  variant="outline"
-                  className="sm:w-[180px] w-full border-gray-300 bg-transparent hover:bg-gray-50"
-                  onClick={handleVisitClick}
-                >
-                  Visit
-                </Button>
-
-                
+                <div className="flex gap-3 flex-col sm:flex-row sm:justify-start">
                   <Button
                     variant="outline"
-                    className="sm:w-[180px] w-full border-blue-300 bg-transparent text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                    onClick={handleExhibitClick}
+                    className="sm:w-[180px] w-full border-gray-300 bg-transparent hover:bg-gray-50"
+                    onClick={handleVisitClick}
                   >
-                    Exhibit
+                    Visit
                   </Button>
-                         
+
+                  {/* {showExhibitButton && ( */}
+                    <Button
+                      variant="outline"
+                      className="sm:w-[180px] w-full border-blue-300 bg-transparent text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      onClick={handleExhibitClick}
+                    >
+                      Exhibit
+                    </Button>
+                  {/* )} */}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -661,14 +683,14 @@ const getPlacesToVisit = (city: string): PlaceToVisit[] => {
                         <p className="font-medium text-gray-900">Event Dates:</p>
                         <p className="text-gray-700">{formatDateTimeRange(event.startDate, event.endDate)}</p>
                       </div>
-                      
+
                       {event.registrationStart && event.registrationEnd && (
                         <div>
                           <p className="font-medium text-gray-900">Category:</p>
                           <p className="text-gray-700">{event.category}</p>
                         </div>
                       )}
-                      
+
                       <div>
                         <p className="font-medium text-gray-900">Timezone:</p>
                         <p className="text-blue-600 font-medium">{event.timezone || "Asia/Kolkata"}</p>
@@ -700,16 +722,16 @@ const getPlacesToVisit = (city: string): PlaceToVisit[] => {
                         <IndianRupee className="w-4 h-4" />
                         Entry Fees
                       </h3>
-                    <p className="text-gray-700 text-sm ml-5">
-  {getTicketPriceDisplay()}
-</p>
+                      <p className="text-gray-700 text-sm ml-5">
+                        {getTicketPriceDisplay()}
+                      </p>
 
                     </div>
 
                     <div className="mb-4">
                       <h3 className="font-semibold text-gray-800 mb-1">Event Type</h3>
                       <div className="flex items-center gap-2 text-gray-700">
-                        <span className="text-green-600 font-semibold">✓</span> 
+                        <span className="text-green-600 font-semibold">✓</span>
                         {/* {event.category || "Seminar"} */}
                         {event.eventType?.map((type: string, index: number) => (
                           <Badge key={index} variant="secondary" className="ml-2">
@@ -719,27 +741,7 @@ const getPlacesToVisit = (city: string): PlaceToVisit[] => {
                       </div>
                     </div>
 
-                    <div className="mb-4">
-                      <h3 className="font-semibold text-gray-800 mb-1">Event Status</h3>
-                      <div className="flex items-center gap-2">
-                        <Badge 
-                          variant={event.status === "PUBLISHED" ? "default" : "secondary"}
-                          className={event.status === "PUBLISHED" ? "bg-green-500" : ""}
-                        >
-                          {event.status || "PUBLISHED"}
-                        </Badge>
-                        {event.isFeatured && (
-                          <Badge variant="default" className="bg-blue-500">
-                            Featured
-                          </Badge>
-                        )}
-                        {event.isVIP && (
-                          <Badge variant="default" className="bg-purple-500">
-                            VIP
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
+                    
 
                     <div className="mb-4">
                       <h3 className="font-semibold text-gray-800 mb-1">Official Links</h3>
@@ -795,36 +797,35 @@ const getPlacesToVisit = (city: string): PlaceToVisit[] => {
                             </span>
                           </div>
 
-                          <p className="text-sm text-gray-600">
+                          {/* <p className="text-sm text-gray-600">
                             {event.organizer?.firstName && `${event.organizer.firstName} ${event.organizer.lastName || ''}`}
                             {event.organizer?.country && ` • ${event.organizer.country}`}
-                          </p>
+                          </p> */}
 
                           <p className="text-xs text-gray-500 mt-1">
                             {event.organizer?.upcomingEvents
                               ? `${event.organizer.upcomingEvents} Upcoming Events`
                               : "1 Upcoming Event"}{" "}
-                            ·{" "}
-                            {event.organizer?.followers
-                              ? `${event.organizer.followers} Followers`
-                              : "302 Followers"}
+                            
                           </p>
                         </div>
                       </div>
 
                       {/* Right Section: Button */}
-                      <div className="flex flex-col items-center text-center">
-                        <button
-                          className="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-md shadow"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleVisitClick();
-                          }}
-                        >
-                          Send Stall Book Request
-                        </button>
-                      </div>
+                      {showActionButtons && (
+                        <div className="flex flex-col items-center text-center">
+                          <button
+                            className="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-md shadow"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleVisitClick();
+                            }}
+                          >
+                            Send Stall Book Request
+                          </button>
+                        </div>
+                      )}
                     </CardContent>
                   </Link>
                 </Card>
@@ -904,42 +905,42 @@ const getPlacesToVisit = (city: string): PlaceToVisit[] => {
               </TabsContent>
 
               {/* UPDATED SPACE COST TAB */}
-<TabsContent value="space-cost">
-  <Card>
-    <CardHeader>
-      <CardTitle>Exhibition Space Pricing</CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      {spaceCosts.length > 0 ? (
-        spaceCosts.map((space, index) => (
-          <div key={index} className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border">
-            <div className="flex justify-between items-center">
-              <div>
-                <span className="font-medium">{space.type}</span>
-                <p className="text-sm text-gray-600">{space.description}</p>
-                <p className="text-xs text-gray-500">
-                  Minimum area: {space.minArea || "Not specified"} {space.unit || "sqm"}
-                </p>
-              </div>
-              <div className="text-right">
-                <span className="font-bold text-lg text-blue-600">
-                  {space.currency} {space.price.toLocaleString()}
-                </span>
-                {space.pricePerSqm && space.pricePerSqm > 0 && (
-                  <p className="text-sm text-gray-600">
-                    + {space.currency} {space.pricePerSqm}/{space.unit || "sqm"}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        ))
-      ) : (
-        <p className="text-gray-600">No exhibition space information available.</p>
-      )}
-    </CardContent>
-  </Card>
-</TabsContent>
+              <TabsContent value="space-cost">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Exhibition Space Pricing</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {spaceCosts.length > 0 ? (
+                      spaceCosts.map((space, index) => (
+                        <div key={index} className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <span className="font-medium">{space.type}</span>
+                              <p className="text-sm text-gray-600">{space.description}</p>
+                              <p className="text-xs text-gray-500">
+                                Minimum area: {space.minArea || "Not specified"} {space.unit || "sqm"}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <span className="font-bold text-lg text-blue-600">
+                                {space.currency} {space.price.toLocaleString()}
+                              </span>
+                              {space.pricePerSqm && space.pricePerSqm > 0 && (
+                                <p className="text-sm text-gray-600">
+                                  + {space.currency} {space.pricePerSqm}/{space.unit || "sqm"}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-600">No exhibition space information available.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
               <TabsContent value="layout">
                 <Card>
@@ -1057,7 +1058,7 @@ const getPlacesToVisit = (city: string): PlaceToVisit[] => {
                           <p className="text-gray-600 text-sm mt-1">{event?.venue?.venueAddress || "Address not provided"}</p>
                           <p className="text-gray-600 text-sm">{event?.venue?.venueZipCode || "Zip code not provided"}</p>
                           <p className="text-gray-600 text-sm">{event?.venue?.venueCountry || "Country not provided"}</p>
-                          
+
                           {/* Additional venue details if available */}
                           {event?.venue?.capacity && (
                             <div className="mt-3">
@@ -1110,56 +1111,44 @@ const getPlacesToVisit = (city: string): PlaceToVisit[] => {
               </TabsContent>
 
               <TabsContent value="organizer">
-  <Card>
-    <CardHeader>
-      <CardTitle>Event Organizer</CardTitle>
-    </CardHeader>
-    <Link href={`/organizer/${event.organizer?.id || event.organizer?._id}`}>
-      <CardContent>
-        <div className="flex items-start gap-4">
-          <Avatar className="w-16 h-16">
-            <AvatarImage 
-              src={event.organizer?.avatar || "/api/placeholder/64/64?text=Org"} 
-            />
-            <AvatarFallback className="text-lg">
-              {event.organizer?.company?.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <h4 className="font-semibold text-lg">
-              {event.organizer?.company}
-            </h4>
-            <p className="text-gray-600 mb-3">
-              Professional event organizer
-            </p>
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2 text-sm">
-                <Mail className="w-4 h-4 text-green-600" />
-                <span>{event.organizer?.email }</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-600">📞</span>
-                <span>{event.organizer?.phone}</span>
-              </div>
-            </div>
-            
-            {/* Organizer Stats */}
-            <div className="mt-3 flex gap-4 text-sm text-gray-500">
-              <span>{event.organizer?.totalEvents || 7} Total Events</span>
-              <span>{event.organizer?.averageRating || 4.5} ★ Rating</span>
-              <span>{event.organizer?.totalReviews || 2} Reviews</span>
-            </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Event Organizer</CardTitle>
+                  </CardHeader>
+                  <Link href={`/organizer/${event.organizer?.id || event.organizer?._id}`}>
+                    <CardContent>
+                      <div className="flex items-start gap-4">
+                        <Avatar className="w-16 h-16">
+                          <AvatarImage
+                            src={event.organizer?.avatar || "/api/placeholder/64/64?text=Org"}
+                          />
+                          <AvatarFallback className="text-lg">
+                            {event.organizer?.company?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-lg">
+                            {event.organizer?.company}
+                          </h4>
+                          <p className="text-gray-600 mb-3">
+                            Professional event organizer
+                          </p>
 
-            {/* Additional Info */}
-            <div className="mt-2 text-xs text-gray-500">
-              <p>Organizer since: {event.organizer?.createdAt ? new Date(event.organizer.createdAt).toLocaleDateString() : "Sep 2024"}</p>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Link>
-  </Card>
-</TabsContent>
+                          {/* Organizer Stats */}
+                          <div className="mt-3 flex gap-4 text-sm text-gray-500">
+                            <span>{event.organizer?.totalEvents || 7} Total Events</span>
+                            <span>{event.organizer?.averageRating || 4.5} ★ Rating</span>
+                            <span>{event.organizer?.totalReviews || 2} Reviews</span>
+                          </div>
+
+                          {/* Additional Info */}
+                      
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Link>
+                </Card>
+              </TabsContent>
 
               <TabsContent value="reviews">
                 <Card>
@@ -1175,128 +1164,128 @@ const getPlacesToVisit = (city: string): PlaceToVisit[] => {
           </div>
 
           {/* Sidebar - Right Side */}
-<div className="w-full lg:w-80 xl:w-96 space-y-6 flex-shrink-0">
-  <Card className="hover:shadow-md transition-shadow border border-gray-200 rounded-lg h-60">
-    <CardHeader className="pb-3"></CardHeader>
-    <CardContent className="space-y-4"></CardContent>
-  </Card>
+          <div className="w-full lg:w-80 xl:w-96 space-y-6 flex-shrink-0">
+            <Card className="hover:shadow-md transition-shadow border border-gray-200 rounded-lg h-60">
+              <CardHeader className="pb-3"></CardHeader>
+              <CardContent className="space-y-4"></CardContent>
+            </Card>
 
-  {/* Featured Hotels Card */}
-<div className="hover:shadow-md transition-shadow border border-gray-200 rounded-lg">
-  <CardHeader className="pb-2">
-    <CardTitle className="text-lg font-semibold">Featured Hotels</CardTitle>
-  </CardHeader>
+            {/* Featured Hotels Card */}
+            <div className="hover:shadow-md transition-shadow border border-gray-200 rounded-lg">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-semibold">Featured Hotels</CardTitle>
+              </CardHeader>
 
-  <CardContent className="space-y-4">
-    {hotelsLoading ? (
-      <div className="text-center py-4">
-        <p className="text-gray-600 text-sm">Loading featured hotels…</p>
-      </div>
-    ) : featuredHotels.length === 0 ? (
-      <div className="text-center py-4">
-        <p className="text-gray-600 text-sm">No featured hotels available.</p>
-      </div>
-    ) : (
-      // ✅ Use space-y-4 for vertical spacing between cards
-      <div className="space-y-4 mb-4">
-        {featuredHotels.map((h: any) => (
-          <div
-            key={h.id}
-            className="w-full bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"
-          >
-            <div className="flex flex-col sm:flex-row">
-              {/* Image Section */}
-              <div className="sm:w-1/3 relative h-40 sm:h-32">
-                <Image
-                  src={h.image || "/api/placeholder/200/128?text=Hotel"}
-                  alt={h.name || "Featured Hotel"}
-                  fill
-                  className="object-cover m-2"
-                  sizes="(max-width: 640px) 100vw, 33vw"
-                />
-                {h.badgeText && (
-                  <span className="absolute bottom-2 left-2 rounded-full bg-green-500 px-2 py-1 text-xs font-semibold text-white">
-                    {h.badgeText}
-                  </span>
+              <CardContent className="space-y-4">
+                {hotelsLoading ? (
+                  <div className="text-center py-4">
+                    <p className="text-gray-600 text-sm">Loading featured hotels…</p>
+                  </div>
+                ) : featuredHotels.length === 0 ? (
+                  <div className="text-center py-4">
+                    <p className="text-gray-600 text-sm">No featured hotels available.</p>
+                  </div>
+                ) : (
+                  // ✅ Use space-y-4 for vertical spacing between cards
+                  <div className="space-y-4 mb-4">
+                    {featuredHotels.map((h: any) => (
+                      <div
+                        key={h.id}
+                        className="w-full bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"
+                      >
+                        <div className="flex flex-col sm:flex-row">
+                          {/* Image Section */}
+                          <div className="sm:w-1/3 relative h-40 sm:h-32">
+                            <Image
+                              src={h.image || "/api/placeholder/200/128?text=Hotel"}
+                              alt={h.name || "Featured Hotel"}
+                              fill
+                              className="object-cover m-2"
+                              sizes="(max-width: 640px) 100vw, 33vw"
+                            />
+                            {h.badgeText && (
+                              <span className="absolute bottom-2 left-2 rounded-full bg-green-500 px-2 py-1 text-xs font-semibold text-white">
+                                {h.badgeText}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Content Section */}
+                          <div className="sm:w-2/3 p-3">
+                            <div className="flex flex-col h-full">
+                              {/* Header */}
+                              <div className="flex justify-between items-start gap-2 mb-2">
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-1">
+                                    {h.name}
+                                  </h3>
+
+                                  {/* Rating and Location */}
+                                  <div className="flex items-center gap-1 text-xs text-gray-600 mb-2">
+                                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                    <span className="font-medium">{(h.rating ?? 0).toFixed(1)}</span>
+                                    <span>({(h.reviews || 0).toLocaleString()})</span>
+                                    <span className="mx-1">•</span>
+                                    <span className="truncate">{h.locationNote || "Excellent Location"}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Amenities */}
+                              <div className="flex flex-wrap gap-1 mb-3">
+                                {h.amenities?.includes("Free Wifi") || h.amenities?.includes("wifi") ? (
+                                  <span className="inline-flex items-center gap-1 bg-gray-50 px-2 py-1 rounded text-xs text-gray-600">
+                                    <Wifi className="h-3 w-3" />
+                                    WiFi
+                                  </span>
+                                ) : null}
+                                {h.amenities?.includes("Food") || h.amenities?.includes("food") ? (
+                                  <span className="inline-flex items-center gap-1 bg-gray-50 px-2 py-1 rounded text-xs text-gray-600">
+                                    <Utensils className="h-3 w-3" />
+                                    Food
+                                  </span>
+                                ) : null}
+                                {h.amenities?.includes("Parking") || h.amenities?.includes("parking") ? (
+                                  <span className="inline-flex items-center gap-1 bg-gray-50 px-2 py-1 rounded text-xs text-gray-600">
+                                    <Car className="h-3 w-3" />
+                                    Parking
+                                  </span>
+                                ) : null}
+                              </div>
+
+                              {/* Price and Booking */}
+                              <div className="flex items-center justify-between gap-2 mt-auto">
+                                <div className="flex items-center gap-2">
+                                  <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
+                                    {h.dealLabel || "Deal"}
+                                  </span>
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-lg font-bold text-gray-900">
+                                      {h.currency || "$"}
+                                      {h.price}
+                                    </span>
+                                    <span className="text-xs text-gray-500 hidden sm:inline">
+                                      {h.priceNote || "28% less than usual"}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <Button
+                                  className="rounded-full bg-blue-600 px-3 py-1 text-white hover:bg-blue-700 text-xs font-medium whitespace-nowrap flex-shrink-0"
+                                  size="sm"
+                                >
+                                  Book Now
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div> // ✅ properly closed parent div with vertical spacing
                 )}
-              </div>
-
-              {/* Content Section */}
-              <div className="sm:w-2/3 p-3">
-                <div className="flex flex-col h-full">
-                  {/* Header */}
-                  <div className="flex justify-between items-start gap-2 mb-2">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-1">
-                        {h.name}
-                      </h3>
-
-                      {/* Rating and Location */}
-                      <div className="flex items-center gap-1 text-xs text-gray-600 mb-2">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        <span className="font-medium">{(h.rating ?? 0).toFixed(1)}</span>
-                        <span>({(h.reviews || 0).toLocaleString()})</span>
-                        <span className="mx-1">•</span>
-                        <span className="truncate">{h.locationNote || "Excellent Location"}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Amenities */}
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {h.amenities?.includes("Free Wifi") || h.amenities?.includes("wifi") ? (
-                      <span className="inline-flex items-center gap-1 bg-gray-50 px-2 py-1 rounded text-xs text-gray-600">
-                        <Wifi className="h-3 w-3" />
-                        WiFi
-                      </span>
-                    ) : null}
-                    {h.amenities?.includes("Food") || h.amenities?.includes("food") ? (
-                      <span className="inline-flex items-center gap-1 bg-gray-50 px-2 py-1 rounded text-xs text-gray-600">
-                        <Utensils className="h-3 w-3" />
-                        Food
-                      </span>
-                    ) : null}
-                    {h.amenities?.includes("Parking") || h.amenities?.includes("parking") ? (
-                      <span className="inline-flex items-center gap-1 bg-gray-50 px-2 py-1 rounded text-xs text-gray-600">
-                        <Car className="h-3 w-3" />
-                        Parking
-                      </span>
-                    ) : null}
-                  </div>
-
-                  {/* Price and Booking */}
-                  <div className="flex items-center justify-between gap-2 mt-auto">
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
-                        {h.dealLabel || "Deal"}
-                      </span>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-lg font-bold text-gray-900">
-                          {h.currency || "$"}
-                          {h.price}
-                        </span>
-                        <span className="text-xs text-gray-500 hidden sm:inline">
-                          {h.priceNote || "28% less than usual"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <Button
-                      className="rounded-full bg-blue-600 px-3 py-1 text-white hover:bg-blue-700 text-xs font-medium whitespace-nowrap flex-shrink-0"
-                      size="sm"
-                    >
-                      Book Now
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              </CardContent>
             </div>
-          </div>
-        ))}
-      </div> // ✅ properly closed parent div with vertical spacing
-    )}
-  </CardContent>
-</div>
 
 
 
@@ -1313,54 +1302,54 @@ const getPlacesToVisit = (city: string): PlaceToVisit[] => {
             </Card>
 
             {/* Places to Visit */}
-<Card className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
-  <CardHeader className="pb-3">
-    <CardTitle className="text-lg font-semibold">
-      Places to Visit in {event.city || "the area"}
-    </CardTitle>
-  </CardHeader>
+            <Card className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold">
+                  Places to Visit in {event.city || "the area"}
+                </CardTitle>
+              </CardHeader>
 
-  <CardContent className="space-y-5">
-    {getPlacesToVisit(event.city).map((place, index) => (
-      <div key={index} className="rounded-xl overflow-hidden border border-gray-100 bg-white">
-        {/* Image with overlayed title and gradient */}
-        <div className="relative w-full h-48">
-          <Image
-            src={place.image}
-            alt={place.name}
-            fill
-            sizes="(max-width: 640px) 100vw, 600px"
-            className="object-cover"
-          />
+              <CardContent className="space-y-5">
+                {getPlacesToVisit(event.city).map((place, index) => (
+                  <div key={index} className="rounded-xl overflow-hidden border border-gray-100 bg-white">
+                    {/* Image with overlayed title and gradient */}
+                    <div className="relative w-full h-48">
+                      <Image
+                        src={place.image}
+                        alt={place.name}
+                        fill
+                        sizes="(max-width: 640px) 100vw, 600px"
+                        className="object-cover"
+                      />
 
-          {/* Gradient overlay for better text visibility */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+                      {/* Gradient overlay for better text visibility */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
 
-          {/* Title overlay */}
-          <div className="absolute left-4 bottom-4 pr-4">
-            <h3 className="text-white text-lg font-semibold drop-shadow-md">
-              {place.name}
-            </h3>
-          </div>
-        </div>
+                      {/* Title overlay */}
+                      <div className="absolute left-4 bottom-4 pr-4">
+                        <h3 className="text-white text-lg font-semibold drop-shadow-md">
+                          {place.name}
+                        </h3>
+                      </div>
+                    </div>
 
-        {/* White area under image: category on left, button on right */}
-        <div className="px-4 py-3 flex items-center justify-between">
-          <p className="text-gray-600 text-sm">{place.category}</p>
+                    {/* White area under image: category on left, button on right */}
+                    <div className="px-4 py-3 flex items-center justify-between">
+                      <p className="text-gray-600 text-sm">{place.category}</p>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-            aria-label={`More details about ${place.name}`}
-          >
-            More details →
-          </Button>
-        </div>
-      </div>
-    ))}
-  </CardContent>
-</Card>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        aria-label={`More details about ${place.name}`}
+                      >
+                        More details →
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
 
 
 
