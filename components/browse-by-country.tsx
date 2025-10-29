@@ -25,30 +25,99 @@ const countries: Country[] = [
   { id: 12, name: "Japan", flag: "/flags/Japan Flag.png", code: "JP" },
 ]
 
+interface CountryCount {
+  country: string
+  count: number
+}
+
 export default function BrowseByCountry() {
   const router = useRouter()
   const [counts, setCounts] = useState<Record<string, number>>({})
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchCountryCounts = async () => {
       try {
+        setLoading(true)
         const res = await fetch("/api/events?stats=true&group=country")
+        if (!res.ok) throw new Error("Failed to fetch country stats")
+        
         const data = await res.json()
-        const map: Record<string, number> = {}
-        data.countries.forEach((c: any) => {
-          map[c.country] = c.count
-        })
-        setCounts(map)
+        console.log("Country API Response:", data) // Debug log
+        
+        if (data.countries && Array.isArray(data.countries)) {
+          const map: Record<string, number> = {}
+          data.countries.forEach((c: CountryCount) => {
+            // Normalize country names to match frontend list
+            const normalizedCountry = normalizeCountryName(c.country)
+            if (normalizedCountry) {
+              map[normalizedCountry] = (map[normalizedCountry] || 0) + c.count
+            }
+          })
+          setCounts(map)
+        } else {
+          console.log("No countries data found in response")
+        }
       } catch (error) {
         console.error("Error fetching country stats:", error)
+      } finally {
+        setLoading(false)
       }
     }
 
     fetchCountryCounts()
   }, [])
 
+  // Helper function to normalize country names
+  const normalizeCountryName = (countryName: string): string => {
+    if (!countryName) return ''
+    
+    const normalized = countryName.trim().toLowerCase()
+    
+    // Map database country names to frontend country names
+    const countryMap: Record<string, string> = {
+      'india': 'India',
+      'usa': 'USA',
+      'united states': 'USA',
+      'germany': 'Germany',
+      'uk': 'UK',
+      'united kingdom': 'UK',
+      'canada': 'Canada',
+      'uae': 'UAE',
+      'united arab emirates': 'UAE',
+      'australia': 'Australia',
+      'china': 'China',
+      'spain': 'Spain',
+      'italy': 'Italy',
+      'france': 'France',
+      'japan': 'Japan'
+    }
+
+    return countryMap[normalized] || countryName.charAt(0).toUpperCase() + countryName.slice(1).toLowerCase()
+  }
+
   const handleCountryClick = (country: Country) => {
     router.push(`/event?country=${encodeURIComponent(country.name)}`)
+  }
+
+  // Helper function to get count for a country
+  const getCountryCount = (countryName: string): number => {
+    return counts[countryName] || 0
+  }
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-6xl mx-auto mb-12">
+        <div className="px-6 py-6 border-b border-gray-200 text-left">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-1">
+            Browse Event By Country
+          </h2>
+        </div>
+        <div className="p-6 text-center">
+          <p className="text-gray-500">Loading countries...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -65,11 +134,10 @@ export default function BrowseByCountry() {
         <div className="p-6">
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4">
             {countries.map((country) => {
-              const eventCount = counts[country.name] || 0
-              const formattedCount =
-                eventCount >= 1000
-                  ? `${(eventCount / 1000).toFixed(1)}k`
-                  : eventCount
+              const eventCount = getCountryCount(country.name)
+              const formattedCount = eventCount >= 1000
+                ? `${(eventCount / 1000).toFixed(1)}k`
+                : eventCount
 
               return (
                 <button
@@ -79,7 +147,7 @@ export default function BrowseByCountry() {
                 >
                   <div className="aspect-[5/2] flex items-center justify-left">
                     <img
-                      src={country.flag}
+                      src={country.flag || "/placeholder.svg"}
                       alt={`${country.name} flag`}
                       className="max-w-full max-h-full object-contain"
                     />

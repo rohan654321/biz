@@ -32,8 +32,15 @@ const EventCard = ({ event }: { event: Event }) => {
   const month = start.toLocaleString("default", { month: "short" });
   const year = start.getFullYear().toString();
 
+  // FIXED: Include venueAddress like in the original server component
   const location = event.venue
-    ? [event.venue.venueCity, event.venue.venueCountry].filter(Boolean).join(", ")
+    ? [
+        event.venue.venueAddress, // Added this back
+        event.venue.venueCity, 
+        event.venue.venueCountry,
+      ]
+      .filter(Boolean)
+      .join(", ")
     : "Venue coming soon";
 
   return (
