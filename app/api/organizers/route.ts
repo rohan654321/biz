@@ -15,6 +15,7 @@ export async function GET() {
         email: true,
         phone: true,
         avatar: true,
+        
         bio: true,
         website: true,
         location: true,
@@ -60,6 +61,7 @@ export async function GET() {
           image: organizer.avatar || "/Organizers/maxx.png",
           avgRating: organizer.averageRating, // placeholder
           totalReviews: organizer.totalReviews,
+          headquarters:organizer.headquarters,
           reviewCount: 0,
           location: organizer.location || "Not specified",
           country: "India",

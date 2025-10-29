@@ -12,10 +12,12 @@ async function getFeaturedEvents() {
       id: true,
       title: true,
       startDate: true,
+      tags:true,
       edition: true,
       endDate: true,
       bannerImage: true,
       category: true,
+      eventType:true,
       averageRating: true,
       totalReviews: true,
       venue: {
@@ -147,17 +149,11 @@ export default async function FeaturedEvents() {
 
                   {/* Tags */}
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {["Conference", "Venture Capital", event.category || "Technology"].map(
-                      (tag) => (
-                        <span
-                          key={tag}
-                          className="px-2 py-0.5 text-xs font-medium rounded-full 
-                                     border border-gray-300 bg-gray-50 text-gray-700"
-                        >
-                          {tag}
-                        </span>
-                      )
-                    )}
+                    <div className="px-2 py-0.5 text-xs font-medium rounded-full 
+                                     border border-gray-300 bg-gray-50 text-gray-700">
+                                      {event.eventType}
+                                     </div>
+                    
                   </div>
                 </div>
               </div>
