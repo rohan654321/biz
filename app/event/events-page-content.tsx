@@ -142,72 +142,78 @@ export default function EventsPageContent() {
 
   const DEFAULT_EVENT_IMAGE = "/city/c4.jpg"
 
- const getEventImage = (event: any) => {
-  return event.images?.[0] || event.image || DEFAULT_EVENT_IMAGE
-}
-
- const fetchEvents = async () => {
-  try {
-    setLoading(true)
-    setError(null)
-
-    const response = await fetch("/api/events")
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch events")
-    }
-
-    const data: ApiResponse = await response.json()
-
-    const transformedEvents = data.events.map((event: any) => {
-      const resolvedId =
-        event.id ||
-        event._id ||
-        (typeof event._id === "object" && event._id.$oid) ||
-        (typeof event._id === "string" ? event._id : undefined)
-
-      const avg =
-        typeof event?.averageRating === "number" && event.averageRating > 0
-          ? event.averageRating
-          : typeof event?.rating?.average === "number"
-            ? event.rating.average
-            : 4.5
-
-      return {
-        ...event,
-        id: String(resolvedId || ""),
-        eventType: event.eventType || event.categories?.[0] || "Other",
-        timings: {
-          startDate: event.startDate,
-          endDate: event.endDate,
-        },
-        location: {
-          address: event.venue?.venueAddress || "Not Added",
-        },
-        featured: event.tags?.includes("featured") || false,
-        categories: event.categories || [],
-        tags: event.tags || [],
-        // ✅ FIX: Use images array directly, no need for .url property
-        images: event.images || ["/images/gpex.jpg"],
-        pricing: event.pricing || { general: 0 },
-        rating: { average: avg },
-        totalReviews: typeof event?.totalReviews === "number" ? event.totalReviews : undefined,
-      }
-    })
-
-    setEvents(transformedEvents)
-  } catch (err) {
-    setError(err instanceof Error ? err.message : "An error occurred")
-    console.error("[v0] Error fetching events:", err)
-    toast({
-      title: "Error",
-      description: "Failed to load events",
-      variant: "destructive",
-    })
-  } finally {
-    setLoading(false)
+  const getEventImage = (event: any) => {
+    return event.images?.[0] || event.image || DEFAULT_EVENT_IMAGE
   }
-}
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const response = await fetch("/api/events")
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch events")
+      }
+
+      const data: ApiResponse = await response.json()
+
+      const transformedEvents = data.events.map((event: any) => {
+        const resolvedId =
+          event.id ||
+          event._id ||
+          (typeof event._id === "object" && event._id.$oid) ||
+          (typeof event._id === "string" ? event._id : undefined)
+
+        const avg =
+          typeof event?.averageRating === "number" && event.averageRating > 0
+            ? event.averageRating
+            : typeof event?.rating?.average === "number"
+              ? event.rating.average
+              : 4.5
+
+        const categories = Array.isArray(event.category)
+          ? event.category
+          : Array.isArray(event.categories)
+            ? event.categories
+            : []
+
+        return {
+          ...event,
+          id: String(resolvedId || ""),
+          eventType: event.eventType || categories?.[0] || "Other",
+          timings: {
+            startDate: event.startDate,
+            endDate: event.endDate,
+          },
+          location: {
+            address: event.venue?.venueAddress || "Not Added",
+          },
+          featured: event.tags?.includes("featured") || false,
+          categories: categories,
+          tags: event.tags || [],
+          // ✅ FIX: Use images array directly, no need for .url property
+          images: event.images || ["/images/gpex.jpg"],
+          pricing: event.pricing || { general: 0 },
+          rating: { average: avg },
+          totalReviews: typeof event?.totalReviews === "number" ? event.totalReviews : undefined,
+        }
+      })
+
+      setEvents(transformedEvents)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
+      console.error("[v0] Error fetching events:", err)
+      toast({
+        title: "Error",
+        description: "Failed to load events",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     fetchEvents()
@@ -883,10 +889,11 @@ export default function EventsPageContent() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === tab
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700"
-                  }`}
+                }`}
               >
                 {tab}
               </button>
@@ -925,10 +932,11 @@ export default function EventsPageContent() {
                                 setSelectedDateRange(range.value)
                                 setSelectedDate(null)
                               }}
-                              className={`p-2 text-xs text-center rounded border ${selectedDateRange === range.value
+                              className={`p-2 text-xs text-center rounded border ${
+                                selectedDateRange === range.value
                                   ? "bg-blue-100 border-blue-500 text-blue-700"
                                   : "border-gray-200 hover:bg-gray-50"
-                                }`}
+                              }`}
                             >
                               {range.label}
                             </button>
@@ -996,8 +1004,9 @@ export default function EventsPageContent() {
                           {/* All Formats option */}
                           <button
                             onClick={() => setSelectedFormat("All Formats")}
-                            className={`w-full text-left p-2 rounded text-sm flex justify-between items-center ${selectedFormat === "All Formats" ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
-                              }`}
+                            className={`w-full text-left p-2 rounded text-sm flex justify-between items-center ${
+                              selectedFormat === "All Formats" ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
+                            }`}
                           >
                             <span>All Formats</span>
                           </button>
@@ -1007,8 +1016,9 @@ export default function EventsPageContent() {
                             <button
                               key={`${format.name || "format"}-${index}`} // ✅ unique key even if name repeats
                               onClick={() => setSelectedFormat(format.name)}
-                              className={`w-full text-left p-2 rounded text-sm flex justify-between items-center ${selectedFormat === format.name ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
-                                }`}
+                              className={`w-full text-left p-2 rounded text-sm flex justify-between items-center ${
+                                selectedFormat === format.name ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
+                              }`}
                             >
                               <span>{format.name || "Unnamed Format"}</span> {/* fallback text */}
                               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
@@ -1049,8 +1059,9 @@ export default function EventsPageContent() {
                             <button
                               key={location.name}
                               onClick={() => setSelectedLocation(location.name)}
-                              className={`w-full text-left p-2 rounded text-sm flex justify-between items-center ${selectedLocation === location.name ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
-                                }`}
+                              className={`w-full text-left p-2 rounded text-sm flex justify-between items-center ${
+                                selectedLocation === location.name ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
+                              }`}
                             >
                               <span>{location.name}</span>
                               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
@@ -1117,7 +1128,7 @@ export default function EventsPageContent() {
                   </div>
 
                   {/* Related Topic Section */}
-                  <div className="border-b border-gray-100">
+                  {/* <div className="border-b border-gray-100">
                     <button
                       onClick={() => setRelatedTopicOpen(!relatedTopicOpen)}
                       className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
@@ -1147,14 +1158,13 @@ export default function EventsPageContent() {
                         </div>
                       </div>
                     )}
-                  </div>
+                  </div> */}
 
                   {/* Navigation Links */}
                   <div className="p-4 border-b border-gray-100">
                     <h3 className="text-red-500 font-medium mb-1">Top 100 Events</h3>
                     <p className="text-sm text-gray-500">Discover and track top events</p>
                   </div>
-
 
                   <div className="p-4 border-b border-gray-100">
                     <h3 className="text-red-500 font-medium mb-1">Explore Speaker</h3>
@@ -1213,10 +1223,11 @@ export default function EventsPageContent() {
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 rounded text-sm font-medium ${currentPage === page
+                        className={`w-8 h-8 rounded text-sm font-medium ${
+                          currentPage === page
                             ? "bg-blue-600 text-white"
                             : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                          }`}
+                        }`}
                       >
                         {page}
                       </button>
@@ -1248,15 +1259,15 @@ export default function EventsPageContent() {
                     <Link href={`/event/${event.id}`} key={event.id} className="block">
                       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all w-full">
                         <CardContent className="p-0 flex">
-                     {/* Left Image Section */}
-<div className="relative w-[80px] h-[100px] sm:w-[100px] sm:h-[120px] md:w-[120px] md:h-[140px] lg:w-[140px] lg:h-[160px] flex-shrink-0">
-  <Image
-    src={getEventImage(event)} // ✅ This will now work correctly
-    alt={event.title}
-    fill
-    className="object-cover m-2 rounded-sm"
-  />
-</div>
+                          {/* Left Image Section */}
+                          <div className="relative w-[80px] h-[100px] sm:w-[100px] sm:h-[120px] md:w-[120px] md:h-[140px] lg:w-[140px] lg:h-[160px] flex-shrink-0">
+                            <Image
+                              src={getEventImage(event) || "/placeholder.svg"} // ✅ This will now work correctly
+                              alt={event.title}
+                              fill
+                              className="object-cover m-2 rounded-sm"
+                            />
+                          </div>
 
                           {/* Right Section */}
                           <div className="flex-1 flex flex-col px-10 py-1 min-w-0">
@@ -1541,14 +1552,14 @@ export default function EventsPageContent() {
                         </div>
                       </div>
                       <div className="border-t border-gray-300"></div>
-                      <div className="flex gap-2 flex-wrap">
+                      {/* <div className="flex gap-2 flex-wrap">
                         <span className="px-2 py-1 text-xs rounded-full border border-gray-400 bg-white/70 text-gray-800">
                           {event.categories[0] || "General"}
                         </span>
                         <span className="px-2 py-1 text-xs rounded-full border border-gray-400 bg-white/70 text-gray-800">
                           Power & Energy
                         </span>
-                      </div>
+                      </div> */}
                     </div>
                   </Link>
                 ))}

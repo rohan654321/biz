@@ -401,9 +401,9 @@ export default function OrganizersPage() {
               </div>
             </div>
 
-            <p className="text-sm text-gray-600 mb-4 line-clamp-2">{organizer.description}</p>
+            {/* <p className="text-sm text-gray-600 mb-4 line-clamp-2">{organizer.description}</p> */}
 
-            <div className="flex flex-wrap gap-1 mb-4">
+            {/* <div className="flex flex-wrap gap-1 mb-4">
               {organizer.specialties.slice(0, 2).map((specialty, index) => (
                 <Badge key={index} variant="outline" className="text-xs">
                   {specialty}
@@ -414,7 +414,7 @@ export default function OrganizersPage() {
                   +{organizer.specialties.length - 2} more
                 </Badge>
               )}
-            </div>
+            </div> */}
           </CardContent>
         </Card>
       ))}

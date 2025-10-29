@@ -772,16 +772,16 @@ export default function ExhibitorPage() {
                     <span>{exhibitor.headquarters}</span>
                   </div>
                 )}
-                {exhibitor.phone && (
+                {/* {exhibitor.phone && (
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4" />
                     <span>{exhibitor.phone}</span>
                   </div>
-                )}
-                <div className="flex items-center gap-2">
+                )} */}
+                {/* <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4" />
                   <span>{exhibitor.email}</span>
-                </div>
+                </div> */}
                 {exhibitor.website && (
                   <div className="flex items-center gap-2">
                     <Globe className="w-4 h-4" />
@@ -832,7 +832,7 @@ export default function ExhibitorPage() {
       {/* Stats Section */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">{stats.totalEvents}</div>
               <div className="text-sm text-gray-600">Events Participated</div>
@@ -848,10 +848,10 @@ export default function ExhibitorPage() {
               </div>
               <div className="text-sm text-gray-600">Event Rating</div>
             </div>
-            <div className="text-center">
+            {/* <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">{stats.totalReplies}</div>
               <div className="text-sm text-gray-600">Total Replies</div>
-            </div>
+            </div> */}
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">{exhibitor.foundedYear || "2015"}</div>
               <div className="text-sm text-gray-600">Founded</div>
@@ -1056,9 +1056,9 @@ export default function ExhibitorPage() {
                         const event = booth.event;
 
                         return (
-                          <Card 
+                          <div 
                             key={booth.id} 
-                            className="hover:shadow-lg transition-shadow cursor-pointer"
+                            className="hover:shadow-lg transition-shadow cursor-pointer border-2 rounded-lg"
                             onClick={() => router.push(`/event/${event.id}`)}
                           >
                             <CardContent className="p-0">
@@ -1090,7 +1090,7 @@ export default function ExhibitorPage() {
                                     Booth: {booth.boothNumber}
                                   </div>
                                 </div>
-                                <div className="flex items-center justify-between">
+                                {/* <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-1">
                                     <Star className="w-4 h-4 text-yellow-400 fill-current" />
                                     <span className="text-sm font-medium">{event.averageRating || "N/A"}</span>
@@ -1099,10 +1099,10 @@ export default function ExhibitorPage() {
                                   <Badge variant="default">
                                     Upcoming
                                   </Badge>
-                                </div>
+                                </div> */}
                               </div>
                             </CardContent>
-                          </Card>
+                          </div>
                         );
                       })}
                     </div>
@@ -1294,13 +1294,13 @@ export default function ExhibitorPage() {
                         <ExternalLink className="w-4 h-4" />
                       </a>
                     </div>
-                    <div>
+                    {/* <div>
                       <label className="text-sm font-medium text-gray-500">Contact</label>
                       <div className="space-y-1">
                         <p className="text-lg font-semibold text-gray-900">{exhibitor.phone || "+91 98765 43210"}</p>
                         <p className="text-sm text-gray-600">{exhibitor.email}</p>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </CardContent>
