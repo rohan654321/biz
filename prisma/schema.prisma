@@ -179,7 +179,7 @@ model Event {
   shortDescription String?
   slug             String      @unique
   status           EventStatus @default(DRAFT)
-  category         String?
+  category         String[]
   edition          String?
   tags             String[]
   eventType        String[]
