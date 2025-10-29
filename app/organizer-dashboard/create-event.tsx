@@ -319,9 +319,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     "Exhibition",
     "Workshop",
     "Seminar",
-    "Networking Event",
-    "Product Launch",
-    "Corporate Event",
+
   ]
 
   const eventCategories = [
@@ -422,14 +420,30 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     }))
   }
 
-  const handleCategoryToggle = (category: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      categories: prev.categories.includes(category)
-        ? prev.categories.filter((c) => c !== category)
-        : [...prev.categories, category],
-    }))
-  }
+const handleCategoryToggle = (category: string) => {
+  setFormData((prev) => {
+    const currentCategories = prev.categories;
+    
+    // If category is already selected, remove it
+    if (currentCategories.includes(category)) {
+      return {
+        ...prev,
+        categories: currentCategories.filter((c) => c !== category),
+      };
+    }
+    
+    // If category is not selected and we haven't reached the limit, add it
+    if (currentCategories.length < 2) {
+      return {
+        ...prev,
+        categories: [...currentCategories, category],
+      };
+    }
+    
+    // If limit reached, don't change the selection
+    return prev;
+  });
+};
 
   const calculateCompletionPercentage = () => {
     const requiredFields = [

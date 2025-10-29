@@ -7,7 +7,16 @@ import { ObjectId } from "mongodb"
 
 const prisma = new PrismaClient()
 
-
+// Helper function to parse category input
+function parseCategory(category: any): string[] {
+  if (Array.isArray(category)) {
+    return category.filter(Boolean);
+  }
+  if (typeof category === 'string') {
+    return category.split(',').map((cat: string) => cat.trim()).filter(Boolean);
+  }
+  return [];
+}
 
 // ✅ GET Handler
 // ✅ GET Handler - Updated to include lead counts
@@ -117,7 +126,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         venueState: event.venue?.venueState || "",
         venueCountry: event.venue?.venueCountry || "",
         status: event.status,
-        category: event.category || "",
+        category: event.category || [],
         edition: event.edition || "",
         tags: event.tags ?? [],
         eventType: event.eventType ?? [],
@@ -167,7 +176,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
-    const { id } =await params
+    const { id } = await params
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -203,7 +212,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             .replace(/\s+/g, "-")
             .replace(/[^a-z0-9-]/g, ""),
         status: (body.status?.toUpperCase() as EventStatus) || EventStatus.DRAFT,
-        category: body.category || null,
+        category: parseCategory(body.category), // Fixed: Use helper function
         tags: body.tags || [],
         eventType: body.eventType || [],
         startDate: new Date(body.startDate),
@@ -352,7 +361,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           .replace(/\s+/g, "-")
           .replace(/[^a-z0-9-]/g, ""),
       status: (updateData.status?.toUpperCase() as EventStatus) || existingEvent.status,
-      category: updateData.category || null,
+      category: parseCategory(updateData.category), // Fixed: Use helper function
       tags: updateData.tags || [],
       eventType: updateData.eventType || existingEvent.eventType,
       startDate: updateData.startDate ? new Date(updateData.startDate) : existingEvent.startDate,
