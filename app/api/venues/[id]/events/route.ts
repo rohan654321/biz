@@ -44,6 +44,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       isVirtual: event.isVirtual,
       virtualLink: event.virtualLink,
       averageRating: event.averageRating,
+      eventType: event.eventType,
       totalReviews: event.totalReviews,
       ticketTypes: true,
       organizer: event.organizer ? {
