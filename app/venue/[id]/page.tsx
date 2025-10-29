@@ -306,59 +306,59 @@ export default function VenueDetailPage() {
     }
   }
 
-// Fixed function to determine event status
-const getEventStatus = (event: Event): string => {
-  const now = new Date()
-  const startDate = new Date(event.startDate)
-  const endDate = new Date(event.endDate)
-  
-  // Normalize dates to start of day for date comparison
-  const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
-  const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
-  
-  // Get timestamps for time comparison
-  const nowTime = now.getTime()
-  const startTime = startDate.getTime()
-  const endTime = endDate.getTime()
-  
-  console.log('Event:', event.title)
-  console.log('Now:', now.toISOString())
-  console.log('Start:', startDate.toISOString())
-  console.log('End:', endDate.toISOString())
-  
-  // Check if it's a multi-day event
-  const isMultiDay = startDateOnly.getTime() !== endDateOnly.getTime()
-  
-  if (isMultiDay) {
-    // For multi-day events, use date-only comparison
-    if (nowDate < startDateOnly) {
-      console.log('Status: UPCOMING (multi-day)')
-      return "UPCOMING"
-    } else if (nowDate > endDateOnly) {
-      console.log('Status: PAST (multi-day)')
-      return "PAST"
+  // Fixed function to determine event status
+  const getEventStatus = (event: Event): string => {
+    const now = new Date()
+    const startDate = new Date(event.startDate)
+    const endDate = new Date(event.endDate)
+
+    // Normalize dates to start of day for date comparison
+    const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+    const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
+
+    // Get timestamps for time comparison
+    const nowTime = now.getTime()
+    const startTime = startDate.getTime()
+    const endTime = endDate.getTime()
+
+    console.log('Event:', event.title)
+    console.log('Now:', now.toISOString())
+    console.log('Start:', startDate.toISOString())
+    console.log('End:', endDate.toISOString())
+
+    // Check if it's a multi-day event
+    const isMultiDay = startDateOnly.getTime() !== endDateOnly.getTime()
+
+    if (isMultiDay) {
+      // For multi-day events, use date-only comparison
+      if (nowDate < startDateOnly) {
+        console.log('Status: UPCOMING (multi-day)')
+        return "UPCOMING"
+      } else if (nowDate > endDateOnly) {
+        console.log('Status: PAST (multi-day)')
+        return "PAST"
+      } else {
+        console.log('Status: ONGOING (multi-day)')
+        return "ONGOING"
+      }
     } else {
-      console.log('Status: ONGOING (multi-day)')
-      return "ONGOING"
+      // For single-day events, use precise time comparison
+      if (nowTime < startTime) {
+        console.log('Status: UPCOMING (single-day)')
+        return "UPCOMING"
+      } else if (nowTime >= startTime && nowTime <= endTime) {
+        console.log('Status: ONGOING (single-day)')
+        return "ONGOING"
+      } else if (nowTime > endTime) {
+        console.log('Status: PAST (single-day)')
+        return "PAST"
+      }
     }
-  } else {
-    // For single-day events, use precise time comparison
-    if (nowTime < startTime) {
-      console.log('Status: UPCOMING (single-day)')
-      return "UPCOMING"
-    } else if (nowTime >= startTime && nowTime <= endTime) {
-      console.log('Status: ONGOING (single-day)')
-      return "ONGOING"
-    } else if (nowTime > endTime) {
-      console.log('Status: PAST (single-day)')
-      return "PAST"
-    }
+
+    console.log('Status: UNKNOWN - defaulting to UPCOMING')
+    return "UPCOMING"
   }
-  
-  console.log('Status: UNKNOWN - defaulting to UPCOMING')
-  return "UPCOMING"
-}
 
   // Function to get status badge variant
   const getStatusBadgeVariant = (status: string) => {
@@ -509,31 +509,31 @@ const getEventStatus = (event: Event): string => {
   }
 
   // Calculate total capacity from meeting spaces
-// Calculate total capacity from meeting spaces - FIXED VERSION
-const getTotalCapacity = () => {
-  // First check if venue has direct capacity info
-  if (venue?.capacity?.total) return venue.capacity.total
-  
-  // Then check meeting spaces array
-  if (venue?.meetingSpaces && venue.meetingSpaces.length > 0) {
-    return venue.meetingSpaces.reduce((sum, space) => sum + (space.capacity || 0), 0)
-  }
-  
-  // Fallback to 0
-  return 0
-}
+  // Calculate total capacity from meeting spaces - FIXED VERSION
+  const getTotalCapacity = () => {
+    // First check if venue has direct capacity info
+    if (venue?.capacity?.total) return venue.capacity.total
 
-// Get number of halls - FIXED VERSION
-const getHallsCount = () => {
-  // First check if venue has direct halls info
-  if (venue?.capacity?.halls) return venue.capacity.halls
-  
-  // Then count meeting spaces
-  if (venue?.meetingSpaces) return venue.meetingSpaces.length
-  
-  // Fallback to 0
-  return 0
-}
+    // Then check meeting spaces array
+    if (venue?.meetingSpaces && venue.meetingSpaces.length > 0) {
+      return venue.meetingSpaces.reduce((sum, space) => sum + (space.capacity || 0), 0)
+    }
+
+    // Fallback to 0
+    return 0
+  }
+
+  // Get number of halls - FIXED VERSION
+  const getHallsCount = () => {
+    // First check if venue has direct halls info
+    if (venue?.capacity?.halls) return venue.capacity.halls
+
+    // Then count meeting spaces
+    if (venue?.meetingSpaces) return venue.meetingSpaces.length
+
+    // Fallback to 0
+    return 0
+  }
 
   const nextImage = () => {
     const images = venue?.images || venue?.venueImages || []
@@ -857,7 +857,7 @@ const getHallsCount = () => {
                           <div
                             key={event.id}
                             className="flex flex-col sm:flex-row w-full sm:w-[48%] border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer hover:border-blue-300"
-                            onClick={() => router.push(`/events/${event.id}`)}
+                            onClick={() => router.push(`/event/${event.id}`)}
                           >
                             {/* Event Image */}
                             <div className="sm:w-2/5 relative h-44 sm:h-auto mb-4">
@@ -878,12 +878,12 @@ const getHallsCount = () => {
                                     className="font-semibold text-blue-800 text-sm hover:underline cursor-pointer"
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      router.push(`/events/${event.id}`)
+                                      router.push(`/event/${event.id}`)
                                     }}
                                   >
                                     {event.title}
                                   </h3>
-                                  <Badge 
+                                  <Badge
                                     variant={getStatusBadgeVariant(eventStatus)}
                                     className="text-xs px-2 py-0.5"
                                   >
@@ -1079,112 +1079,110 @@ const getHallsCount = () => {
             </Card>
           </TabsContent>
 
-        {/* Events Tab - Fixed white space issue */}
-<TabsContent value="events" className="space-y-6">
-  {eventsLoading ? (
-    <div className="text-center py-12">
-      <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-      <p className="text-gray-600">Loading events...</p>
-    </div>
-  ) : events.length > 0 ? (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {events.map((event) => (
-        <div
-          key={event.id}
-          className="hover:shadow-lg transition-shadow duration-300 cursor-pointer overflow-hidden"
-          onClick={() => router.push(`/events/${event.id}`)}
-        >
-          {/* Image Section - No top padding/margin */}
-          <div className="relative h-48 w-full">
-            <Image
-              src={getEventImage(event)}
-              alt={event.title}
-              fill
-              className="object-cover"
-            />
-            <div className="absolute top-3 left-3">
-              <Badge
-                variant={
-                  event.status === "PUBLISHED"
-                    ? "default"
-                    : event.status === "DRAFT"
-                      ? "secondary"
-                      : "destructive"
-                }
-                className="bg-black/70 text-white"
-              >
-                {event.status}
-              </Badge>
-            </div>
-            <div className="absolute top-3 right-3">
-              <Badge variant="outline" className="bg-white/90">
-                {event.category}
-              </Badge>
-            </div>
-          </div>
-
-                        {/* Content Section */}
-                        <CardHeader className="pb-3 pt-4">
-                          <CardTitle className="text-lg line-clamp-2">{event.title}</CardTitle>
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <Calendar className="w-4 h-4" />
-                            <span>{formatDateTime(event.startDate)}</span>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-3 pt-0">
-                          <p className="text-sm text-gray-600 line-clamp-2">
-                            {event.shortDescription || event.description}
-                          </p>
-
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-1">
-                <User className="w-4 h-4 text-gray-500" />
-                <span>
-                  {event.currentAttendees}
-                  {event.maxAttendees ? ` / ${event.maxAttendees}` : ""} attendees
-                </span>
+          {/* Events Tab - Fixed white space issue */}
+          <TabsContent value="events" className="space-y-6">
+            {eventsLoading ? (
+              <div className="text-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+                <p className="text-gray-600">Loading events...</p>
               </div>
+            ) : events.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {events.map((event) => (
+                  <div
+                    key={event.id}
+                    className="hover:shadow-lg transition-shadow duration-300 cursor-pointer overflow-hidden border-2"
+                    onClick={() => router.push(`/event/${event.id}`)}
+                  >
+                    {/* Image Section - No top padding/margin */}
+                    <div className="relative h-48 w-full mb-7">
+                      <Image
+                        src={getEventImage(event)}
+                        alt={event.title}
+                        fill
+                        className="object-cover"
+                      />
+                      <div className="absolute top-3 left-3">
+                        <Badge
+                          variant={
+                            event.status === "PUBLISHED"
+                              ? "default"
+                              : event.status === "DRAFT"
+                                ? "secondary"
+                                : "destructive"
+                          }
+                          className="bg-black/70 text-white"
+                        >
+                          {event.status}
+                        </Badge>
+                      </div>
+                      <div className="absolute top-3 right-3">
+                        <Badge variant="outline" className="bg-white/90">
+                          {event.eventType}
+                        </Badge>
+                      </div>
+                    </div>
 
-              <div className="flex items-center gap-1">
-                <Star className="w-4 h-4 text-yellow-400" />
-                <span>{event.averageRating > 0 ? event.averageRating.toFixed(1) : "No ratings"}</span>
-                {event.totalReviews > 0 && <span className="text-gray-500">({event.totalReviews})</span>}
+                    {/* Content Section */}
+                    <CardHeader className="pb-3 pt-4">
+                      <CardTitle className="text-lg line-clamp-2">{event.title}</CardTitle>
+                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        <span>{formatDateTime(event.startDate)}</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3 pt-0">
+                      <p className="text-sm text-gray-600 line-clamp-2">
+                        {event.shortDescription || event.description}
+                      </p>
+
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-1">
+                          <User className="w-4 h-4 text-gray-500" />
+                          <span>
+                            {event.currentAttendees}
+                            {event.maxAttendees ? ` / ${event.maxAttendees}` : ""} attendees
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 text-yellow-400" />
+                          <span>{event.averageRating > 0 ? event.averageRating.toFixed(1) : "No ratings"}</span>
+                          {event.totalReviews > 0 && <span className="text-gray-500">({event.totalReviews})</span>}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end pt-2 mb-3">
+
+
+                        <Button
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            router.push(`/event/${event.id}`)
+                          }}
+                        >
+                          View Details
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </div>
+                ))}
               </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <Badge variant={event.isVirtual ? "secondary" : "default"}>
-                {event.isVirtual ? "Virtual" : "In-Person"}
-              </Badge>
-
-              <Button
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  router.push(`/events/${event.id}`)
-                }}
-              >
-                View Details
-              </Button>
-            </div>
-          </CardContent>
-        </div>
-      ))}
-    </div>
-  ) : (
-    <div className="text-center py-12">
-      <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-      <h3 className="text-lg font-medium text-gray-900 mb-2">No events scheduled</h3>
-      <p className="text-gray-600 mb-6">This venue doesn't have any upcoming events.</p>
-      {showScheduleMeeting && (
-        <Button onClick={handleScheduleMeeting} className="bg-red-600 hover:bg-red-700">
-          <Calendar className="w-4 h-4 mr-2" />
-          Schedule Event at this Venue
-        </Button>
-      )}
-    </div>
-  )}
-</TabsContent>
+            ) : (
+              <div className="text-center py-12">
+                <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No events scheduled</h3>
+                <p className="text-gray-600 mb-6">This venue doesn't have any upcoming events.</p>
+                {showScheduleMeeting && (
+                  <Button onClick={handleScheduleMeeting} className="bg-red-600 hover:bg-red-700">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Schedule Event at this Venue
+                  </Button>
+                )}
+              </div>
+            )}
+          </TabsContent>
 
           {/* Reviews Tab - Keep existing design */}
           <TabsContent value="reviews" className="space-y-6">
