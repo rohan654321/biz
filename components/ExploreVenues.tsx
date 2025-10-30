@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Star, MapPin } from "lucide-react"
+import { Star, MapPin, Calendar } from "lucide-react" // Added Calendar icon
 import { useRouter } from "next/navigation"
 import { getAllVenues } from "@/lib/data/events"
 import Link from "next/link"
@@ -18,14 +18,15 @@ export default function ExploreVenues() {
         const res = await fetch("api/organizers/venues")
         if (!res.ok) throw new Error("Failed to get data")
         const data = await res.json()
-        
+
         // DEBUG: Check what data we're getting
         console.log("API Response:", data)
         if (data.length > 0) {
           console.log("First venue:", data[0])
           console.log("First venue images:", data[0]?.images)
+          console.log("First venue event count:", data[0]?.eventCount) // Check event count
         }
-        
+
         setOrganizers(data)
       } catch (err) {
         console.error("Error fetching organizer: ", err)
@@ -64,11 +65,11 @@ export default function ExploreVenues() {
                   key={`${venue.id}-${index}`}
                   onClick={() => handleVenueClick(venue)}
                   className="group rounded-md p-3 bg-white transition-all duration-200 
-                             hover:scale-105 shadow hover:shadow-lg text-left"
+                             hover:scale-105 shadow hover:shadow-lg text-left w-full"
                 >
                   <div className="space-y-2">
                     {/* Image */}
-                    <div className="h-[160px] rounded-md overflow-hidden">
+                    <div className="h-[160px] rounded-md overflow-hidden relative">
                       <img
                         src={getVenueImage(venue)}
                         alt={venue.name}
@@ -79,6 +80,13 @@ export default function ExploreVenues() {
                           target.src = "/city/c1.jpg"
                         }}
                       />
+                      {/* Event Count Badge */}
+                      {venue.eventCount > 0 && (
+                        <div className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          {venue.eventCount} events
+                        </div>
+                      )}
                     </div>
 
                     {/* Venue Info */}
@@ -101,14 +109,29 @@ export default function ExploreVenues() {
                       <p className="text-xs text-gray-700 mb-1 line-clamp-1">
                         {/* {venue.description || "No description available"} */}
                       </p>
+                      <div className="flex justify-between items-center mt-2">
+                        {/* Left side: Location */}
+                        <div className="flex items-center max-w-[120px]"> {/* adjust width as needed */}
+                          <MapPin className="w-3 h-3 mr-1 text-black flex-shrink-0" />
+                          <span className="text-xs text-black truncate">
+                            {venue.location?.city || "No address"}
+                          </span>
+                        </div>
 
-                      <div className="flex items-center mb-1">
-                        <MapPin className="w-3 h-3 mr-1 text-black" />
-                        <span className="text-xs text-black line-clamp-1">
-                          {venue.location?.address || "No address"}
-                        </span>
+
+                        {/* Right side: Event count */}
+                        <div className="flex items-center text-xs text-gray-600">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          <span>{venue.eventCount ?? 0} events</span>
+                        </div>
                       </div>
 
+
+
+                      {/* Event Count and Capacity Info */}
+
+
+                      {/* Optional: Show halls if needed */}
                       {/* <div className="text-xs text-gray-800 flex justify-between">
                         <span>Halls: {venue.totalHalls ?? 0}</span>
                         <span>Capacity: {venue.capacity ?? 0}</span>
