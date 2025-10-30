@@ -114,7 +114,7 @@ export default async function FeaturedEvents() {
                     <h3 className="text-lg font-semibold text-gray-900 leading-tight">
                       {event.title}
                     </h3>
-                    <div className="flex items-center gap-2">
+                    {/* <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1 px-2 py-0.5 border border-green-500 rounded-lg">
                         <Star className="w-3.5 h-3.5 text-green-600" />
                         <span className="text-xs font-medium text-green-700">
@@ -126,7 +126,7 @@ export default async function FeaturedEvents() {
                         eventId={event.id}
                         className="p-1 rounded-full hover:bg-gray-100 transition"
                       />
-                    </div>
+                    </div> */}
                   </div>
 
                   {/* Venue + Edition */}
@@ -134,14 +134,14 @@ export default async function FeaturedEvents() {
                     {/* Left side */}
                     <span className="flex items-center">
                       <MapPin className="w-4 h-4 mr-1 text-gray-700" />
-                      {venueDisplay ? venueDisplay.slice(0, 15) : ""}...
+                      {venueDisplay ? venueDisplay.slice(0, 50) : ""}...
                     </span>
 
                     {/* Right side */}
-                    <span className="flex items-center">
+                    {/* <span className="flex items-center">
                       <Layers className="w-4 h-4 mr-1 text-gray-700" />
                       {event.edition || "1"} edition
-                    </span>
+                    </span> */}
                   </div>
 
 
