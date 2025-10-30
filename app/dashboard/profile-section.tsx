@@ -532,6 +532,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                     <Input
                       type="email"
                       value={formData.email}
+                      disabled
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     />
                   </div>
@@ -540,6 +541,7 @@ export function ProfileSection({ organizerId, userData, onUpdate }: ProfileSecti
                     <Label>Contact Number</Label>
                     <Input
                       value={formData.phone}
+                      disabled
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     />
                   </div>

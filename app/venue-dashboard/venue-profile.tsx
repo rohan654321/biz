@@ -393,48 +393,36 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      {isEditing ? (
-                        <Input
-                          id="email"
-                          type="email"
-                          value={profileData?.email}
-                          onChange={(e) =>
-                            setProfileData(
-                              (prev) =>
-                                ({
-                                  ...(prev ?? {}),
-                                  email: e.target.value,
-                                }) as VenueData,
-                            )
-                          }
-                        />
-                      ) : (
-                        <div className="p-2 bg-muted rounded">{profileData?.email}</div>
-                      )}
-                    </div>
+ <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <div className="p-2 bg-muted rounded flex items-center justify-between">
+          <span>{profileData?.email}</span>
+          {!isEditing && (
+            <CheckCircle className="w-4 h-4 text-green-500" />
+          )}
+        </div>
+        {isEditing && (
+          <p className="text-xs text-muted-foreground">
+            Email cannot be edited
+          </p>
+        )}
+      </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="mobile">Mobile</Label>
-                      {isEditing ? (
-                        <Input
-                          id="mobile"
-                          value={profileData?.mobile}
-                          onChange={(e) =>
-                            setProfileData(
-                              (prev) =>
-                                ({
-                                  ...(prev ?? {}),
-                                  mobile: e.target.value,
-                                }) as VenueData,
-                            )
-                          }
-                        />
-                      ) : (
-                        <div className="p-2 bg-muted rounded">{profileData?.mobile}</div>
-                      )}
-                    </div>
+      {/* Mobile Field - Always Read Only */}
+      <div className="space-y-2">
+        <Label htmlFor="mobile">Mobile</Label>
+        <div className="p-2 bg-muted rounded flex items-center justify-between">
+          <span>{profileData?.mobile}</span>
+          {!isEditing && (
+            <CheckCircle className="w-4 h-4 text-green-500" />
+          )}
+        </div>
+        {isEditing && (
+          <p className="text-xs text-muted-foreground">
+            Mobile number cannot be edited
+          </p>
+        )}
+      </div>
 
                     <div className="space-y-2 md:col-span-2">
                       <Label htmlFor="website">Website</Label>
