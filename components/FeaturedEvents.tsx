@@ -134,7 +134,7 @@ export default async function FeaturedEvents() {
                     {/* Left side */}
                     <span className="flex items-center">
                       <MapPin className="w-4 h-4 mr-1 text-gray-700" />
-                      {venueDisplay ? venueDisplay.slice(0, 50) : ""}...
+                      {venueDisplay ? venueDisplay.slice(0, 100) : ""}...
                     </span>
 
                     {/* Right side */}
