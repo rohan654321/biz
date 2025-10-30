@@ -541,13 +541,13 @@ export default function EventPage({ params }: EventPageProps) {
                   </Button>
 
                   {/* {showExhibitButton && ( */}
-                    <Button
-                      variant="outline"
-                      className="sm:w-[180px] w-full border-blue-300 bg-transparent text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                      onClick={handleExhibitClick}
-                    >
-                      Exhibit
-                    </Button>
+                  <Button
+                    variant="outline"
+                    className="sm:w-[180px] w-full border-blue-300 bg-transparent text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    onClick={handleExhibitClick}
+                  >
+                    Exhibit
+                  </Button>
                   {/* )} */}
                 </div>
               </div>
@@ -674,15 +674,15 @@ export default function EventPage({ params }: EventPageProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow">
                   {/* Timings / Schedule Section */}
                   <div>
-                    <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    {/* <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
                       Event Timing
-                    </h3>
+                    </h3> */}
                     <div className="space-y-3">
-                      <div>
+                      {/* <div>
                         <p className="font-medium text-gray-900">Event Dates:</p>
                         <p className="text-gray-700">{formatDateTimeRange(event.startDate, event.endDate)}</p>
-                      </div>
+                      </div> */}
 
                       {event.registrationStart && event.registrationEnd && (
                         <div>
@@ -741,7 +741,7 @@ export default function EventPage({ params }: EventPageProps) {
                       </div>
                     </div>
 
-                    
+
 
                     <div className="mb-4">
                       <h3 className="font-semibold text-gray-800 mb-1">Official Links</h3>
@@ -806,7 +806,7 @@ export default function EventPage({ params }: EventPageProps) {
                             {event.organizer?.upcomingEvents
                               ? `${event.organizer.upcomingEvents} Upcoming Events`
                               : "1 Upcoming Event"}{" "}
-                            
+
                           </p>
                         </div>
                       </div>
@@ -1142,7 +1142,7 @@ export default function EventPage({ params }: EventPageProps) {
                           </div>
 
                           {/* Additional Info */}
-                      
+
                         </div>
                       </div>
                     </CardContent>
