@@ -125,17 +125,6 @@ export default function ExploreVenues() {
                           <span>{venue.eventCount ?? 0} events</span>
                         </div>
                       </div>
-
-
-
-                      {/* Event Count and Capacity Info */}
-
-
-                      {/* Optional: Show halls if needed */}
-                      {/* <div className="text-xs text-gray-800 flex justify-between">
-                        <span>Halls: {venue.totalHalls ?? 0}</span>
-                        <span>Capacity: {venue.capacity ?? 0}</span>
-                      </div> */}
                     </div>
                   </div>
                 </button>
