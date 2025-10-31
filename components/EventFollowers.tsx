@@ -283,9 +283,9 @@ export default function EventFollowers({ eventId }: EventFollowersProps) {
                       </p>
                     )}
 
-                    <p className="text-sm text-gray-500">
+                    {/* <p className="text-sm text-gray-500">
                       {getLocation(follower)}
-                    </p>
+                    </p> */}
                   </div>
 
                   {!isCurrentUser && (
