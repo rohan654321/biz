@@ -797,7 +797,7 @@ export default function EventPage({ params }: EventPageProps) {
                 handleVisitClick();
               }}
             >
-              Send Stall Book Request
+              Send Stall Book Request  
             </button>
           </div>
         )}
