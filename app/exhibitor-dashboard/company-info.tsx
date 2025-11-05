@@ -28,6 +28,7 @@ import {
   Globe,
   X,
   Plus,
+  CheckCircle,
 } from "lucide-react"
 
 interface ExhibitorData {
@@ -300,33 +301,42 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
               />
             </div>
 
+            {/* Email Field - Always Read Only */}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  disabled={!isEditing}
-                  className="pl-10"
-                />
+                <div className="flex items-center justify-between p-2 bg-muted rounded-md border border-input">
+                  <span className="text-sm pl-7">{formData.email}</span>
+                  {!isEditing && (
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                  )}
+                </div>
               </div>
+              {isEditing && (
+                <p className="text-xs text-muted-foreground">
+                  Email cannot be edited
+                </p>
+              )}
             </div>
 
+            {/* Phone Field - Always Read Only */}
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <Input
-                  id="phone"
-                  value={formData.phone || ""}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  disabled={!isEditing}
-                  className="pl-10"
-                />
+                <div className="flex items-center justify-between p-2 bg-muted rounded-md border border-input">
+                  <span className="text-sm pl-7">{formData.phone || "Not provided"}</span>
+                  {!isEditing && formData.phone && (
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                  )}
+                </div>
               </div>
+              {isEditing && (
+                <p className="text-xs text-muted-foreground">
+                  Phone number cannot be edited
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -459,4 +469,4 @@ export default function CompanyInfo({ exhibitorData, onUpdate }: CompanyInfoProp
       )}
     </div>
   )
-}
+}  

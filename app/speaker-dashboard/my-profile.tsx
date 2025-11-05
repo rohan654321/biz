@@ -242,12 +242,14 @@ export default function MyProfile({ speakerId }: { speakerId: string }) {
                   value: profile.email,
                   type: "email",
                   icon: <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />,
+                  readOnly: true, // 👈 make this field read-only
                 },
                 {
                   id: "phone",
                   label: "Phone",
                   value: profile.phone,
                   icon: <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />,
+                  readOnly: true, // 👈 make this field read-only
                 },
                 {
                   id: "linkedin",
@@ -270,8 +272,10 @@ export default function MyProfile({ speakerId }: { speakerId: string }) {
                       id={field.id}
                       type={field.type || "text"}
                       value={field.value || ""}
-                      onChange={(e) => setProfile({ ...profile, [field.id]: e.target.value })}
-                      disabled={!isEditing}
+                      onChange={(e) =>
+                        !field.readOnly && setProfile({ ...profile, [field.id]: e.target.value })
+                      }
+                      disabled={!isEditing || field.readOnly} // 👈 disable permanently for read-only
                       className={field.icon ? "pl-10" : ""}
                     />
                   </div>

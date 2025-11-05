@@ -8,11 +8,12 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Search, Download, Mail, Phone, MoreHorizontal, Users, AlertCircle, BadgeCheck } from "lucide-react"
+import { Search, Download, Mail, Phone, MoreHorizontal, Users, AlertCircle, BadgeCheck, QrCode } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BadgeGeneratorDialog } from "./badge-generator-dialog"
 import { BulkBadgeSenderDialog } from "./bulk-badge-sender-dialog"
+import { ScannerDialog } from "./scanner-dialog"
 
 interface Attendee {
   id: string
@@ -53,6 +54,7 @@ export default function AttendeesManagement({ eventId }: AttendeesManagementProp
   const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null)
   const [organizerData, setOrganizerData] = useState<any>(null)
   const [bulkBadgeDialogOpen, setBulkBadgeDialogOpen] = useState(false)
+  const [scannerOpen, setScannerOpen] = useState(false)
   const { toast } = useToast()
 
   const fetchAttendees = async () => {
@@ -275,6 +277,15 @@ export default function AttendeesManagement({ eventId }: AttendeesManagementProp
           <p className="text-gray-600">Manage and track your event attendees</p>
         </div>
         <div className="flex gap-2">
+          {/* QR Scanner Button */}
+          <Button 
+            onClick={() => setScannerOpen(true)} 
+            variant="outline" 
+            className="flex items-center gap-2"
+          >
+            <QrCode className="w-4 h-4" />
+            Scan QR Codes
+          </Button>
           <Button onClick={handleSendBadgeToAll} variant="outline" className="flex items-center gap-2 bg-transparent">
             <BadgeCheck className="w-4 h-4" />
             Send Badge to All
@@ -444,6 +455,7 @@ export default function AttendeesManagement({ eventId }: AttendeesManagementProp
         </CardContent>
       </Card>
 
+      {/* Badge Generator Dialog */}
       {selectedAttendee && (
         <BadgeGeneratorDialog
           open={badgeDialogOpen}
@@ -454,12 +466,20 @@ export default function AttendeesManagement({ eventId }: AttendeesManagementProp
         />
       )}
 
+      {/* Bulk Badge Sender Dialog */}
       <BulkBadgeSenderDialog
         open={bulkBadgeDialogOpen}
         onOpenChange={setBulkBadgeDialogOpen}
         attendees={filteredAttendees}
         eventId={eventId}
         organizer={organizerData || {}}
+      />
+
+      {/* QR Scanner Dialog */}
+      <ScannerDialog 
+        open={scannerOpen} 
+        onOpenChange={setScannerOpen} 
+        eventId={eventId} 
       />
     </div>
   )

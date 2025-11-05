@@ -8,7 +8,8 @@ export async function GET(request: NextRequest) {
     const country = searchParams.get("country")
     const search = searchParams.get("search")
 
-    const venues = await prisma.user.findMany({
+    // First, get venues with their event counts
+    const venuesWithEventCounts = await prisma.user.findMany({
       where: {
         AND: [
           { role: "VENUE_MANAGER" },
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         firstName: true,
-        venueImages: true, // This is selected from database
+        venueImages: true,
         lastName: true,
         phone: true,
         email: true,
@@ -37,6 +38,7 @@ export async function GET(request: NextRequest) {
         venueName: true,
         venueDescription: true,
         venueAddress: true,
+        venueCity:true,
         maxCapacity: true,
         totalHalls: true,
         averageRating: true,
@@ -44,52 +46,75 @@ export async function GET(request: NextRequest) {
         amenities: true,
         venueCurrency: true,
         createdAt: true,
+        // Include the events count in the query
+        venueEvents: {
+          select: {
+            id: true,
+          },
+        },
       },
-      orderBy: { createdAt: "desc" },
+      // Order by the number of events (descending) and then by creation date
     })
 
-    const venuesWithRating = venues.map((venue) => ({
-      id: venue.id,
-      name: venue.venueName || "Unnamed Venue",
-      description: venue.venueDescription || "",
-      location: {
-        address: venue.venueAddress || "Address not available",
-        city: "",
-        state: "",
-        country: "",
-      },
-      capacity: venue.maxCapacity ?? 0,
-      totalHalls: venue.totalHalls ?? 0,
-      rating: venue.averageRating ?? 0,
-      reviewCount: venue.totalReviews ?? 0,
-      // ✅ Use venueImages from database, fallback to avatar, then default
-      images: venue.venueImages?.length > 0 
-        ? venue.venueImages 
-        : venue.avatar 
-          ? [venue.avatar] 
-          : ["/city/c1.jpg"],
-      venueImages: venue.venueImages, // Keep original for reference
-      avatar: venue.avatar, // Keep original for reference
-      amenities: venue.amenities || [],
-      currency: venue.venueCurrency || "USD",
-      isVerified: venue.isVerified || false,
-      manager: {
-        name: `${venue.firstName} ${venue.lastName}`.trim(),
-        phone: venue.phone || "",
-        email: venue.email,
-      },
-      createdAt: venue.createdAt,
-    }))
+    // Transform the data and add event count
+    const venuesWithRatingAndCount = venuesWithEventCounts.map((venue) => {
+      const eventCount = venue.venueEvents?.length || 0
+      
+      return {
+        id: venue.id,
+        name: venue.venueName || "Unnamed Venue",
+        description: venue.venueDescription || "",
+        location: {
+          address: venue.venueAddress || "Address not available",
+          city: venue.venueCity || "City is not there",
+          state: "",
+          country: "",
+        },
+        capacity: venue.maxCapacity ?? 0,
+        totalHalls: venue.totalHalls ?? 0,
+        rating: venue.averageRating ?? 0,
+        reviewCount: venue.totalReviews ?? 0,
+        eventCount: eventCount, // Add event count
+        images: venue.venueImages?.length > 0 
+          ? venue.venueImages 
+          : venue.avatar 
+            ? [venue.avatar] 
+            : ["/city/c1.jpg"],
+        venueImages: venue.venueImages,
+        avatar: venue.avatar,
+        amenities: venue.amenities || [],
+        currency: venue.venueCurrency || "USD",
+        isVerified: venue.isVerified || false,
+        manager: {
+          name: `${venue.firstName} ${venue.lastName}`.trim(),
+          phone: venue.phone || "",
+          email: venue.email,
+        },
+        createdAt: venue.createdAt,
+      }
+    })
 
-    console.log("[v0] Found venues:", venuesWithRating.length)
-    console.log("[v0] Sample venue:", venuesWithRating[0]) // Debug full object
-    console.log("[v0] Sample venue images:", venuesWithRating[0]?.images) // Debug images
-    return NextResponse.json(venuesWithRating)
+    // Sort venues by event count (descending) and then by rating (descending)
+    const sortedVenues = venuesWithRatingAndCount.sort((a, b) => {
+      // First sort by event count
+      if (b.eventCount !== a.eventCount) {
+        return b.eventCount - a.eventCount
+      }
+      // If event counts are equal, sort by rating
+      return b.rating - a.rating
+    })
+
+    console.log("[v0] Found venues:", sortedVenues.length)
+    console.log("[v0] Sample venue event count:", sortedVenues[0]?.eventCount)
+    console.log("[v0] Sample venue:", sortedVenues[0])
+    
+    return NextResponse.json(sortedVenues)
   } catch (error) {
     console.error("[v0] Error fetching venues:", error)
     return NextResponse.json({ error: "Failed to fetch venues" }, { status: 500 })
   }
 }
+
 
 export async function POST(req: NextRequest) {
   try {
