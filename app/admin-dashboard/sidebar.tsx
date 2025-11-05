@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import SuperAdminManagement from "./superadminmanagement"
+
 import {
   Sidebar,
   SidebarContent,
@@ -57,6 +59,7 @@ import ContentManagement from "./content-management"
 // import IntegrationsManagement from "./integrations-management"
 // import RolesPermissions from "./roles-permissions"
 import SystemSettings from "./system-settings"
+import SubAdminManagement from "./subadmin-management"
 // import HelpSupport from "./help-support"
 
 export default function AdminDashboard() {
@@ -239,15 +242,30 @@ export default function AdminDashboard() {
   ]
 
   const renderContent = () => {
-    const section = activeSection.split("-")[0]
+    const section = activeSection
+    const subSection = activeSubSection
 
+    // Handle sub-sections first
+if (subSection) {
+  switch (subSection) {
+    case "roles-superadmin":
+      return <SuperAdminManagement />
+    case "roles-subadmins":
+      return <SubAdminManagement />
+    default:
+      break
+  }
+}
+
+
+    // Handle main sections
     switch (section) {
       case "dashboard":
         return <DashboardOverview />
       case "events":
         return <EventManagement />
       case "organizers":
-        return <OrganizerManagement  />
+        return <OrganizerManagement />
       case "exhibitors":
         return <ExhibitorManagement />
       case "speakers":
@@ -255,23 +273,30 @@ export default function AdminDashboard() {
       case "venues":
         return <VenueManagement />
       case "visitors":
-        // return <VisitorManagement  />
+        // return <VisitorManagement />
+        return <div>Visitor Management - Coming Soon</div>
       case "financial":
-        // return <FinancialManagement  />
+        // return <FinancialManagement />
+        return <div>Financial Management - Coming Soon</div>
       case "content":
         return <ContentManagement />
       case "marketing":
         // return <MarketingManagement />
+        return <div>Marketing Management - Coming Soon</div>
       case "reports":
         // return <ReportsAnalytics />
+        return <div>Reports & Analytics - Coming Soon</div>
       case "integrations":
         // return <IntegrationsManagement />
-      case "roles":
-        // return <RolesPermissions />
+        return <div>Integrations Management - Coming Soon</div>
+     case "roles":
+  return <SuperAdminManagement />
+
       case "settings":
         return <SystemSettings />
       case "support":
         // return <HelpSupport />
+        return <div>Help & Support - Coming Soon</div>
       default:
         return <DashboardOverview />
     }
