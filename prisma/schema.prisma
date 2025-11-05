@@ -10,6 +10,125 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model SuperAdmin{
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  email     String  @unique
+  password  String
+  name      String
+  phone     String?
+
+  role     AdminRole @default(SUPER_ADMIN)
+  isActive Boolean   @default(true)
+  lastLogin DateTime?
+
+  //permission
+  permissions String[]
+
+  //security
+  twoFactorEnabled  Boolean  @default(false)
+  loginAttempts     Int      @default(0)
+  lockoutUntil      DateTime?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  //Relationships
+  subAdmins      SubAdmin[]
+  adminSessions  AdminSession[]
+  adminLogs      AdminLog[] 
+
+  @@map("super_admins")
+}
+enum AdminRole {
+  SUPER_ADMIN
+  SUB_ADMIN
+}
+enum AdminType {
+  SUPER_ADMIN
+  SUB_ADMIN
+}
+model AdminSession {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  adminId      String   @db.ObjectId
+  token        String   @unique
+  refreshToken String   @unique
+  deviceInfo   String?
+  ipAddress    String?
+  userAgent    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  adminType    AdminType
+
+  // Relations (optional - depending on type)
+  superAdminId String?    @db.ObjectId
+  superAdmin   SuperAdmin? @relation(fields: [superAdminId], references: [id])
+
+  subAdminId String?     @db.ObjectId
+  subAdmin   SubAdmin?   @relation(fields: [subAdminId], references: [id])
+
+  @@index([adminId, adminType])
+  @@map("admin_sessions")
+}
+
+// Admin Activity Logs
+model AdminLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  adminId     String   @db.ObjectId
+  action      String
+  resource    String?
+  resourceId  String?
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  adminType   AdminType
+
+  // Relations (optional)
+  superAdminId String?    @db.ObjectId
+  superAdmin   SuperAdmin? @relation(fields: [superAdminId], references: [id])
+
+  subAdminId String?     @db.ObjectId
+  subAdmin   SubAdmin?   @relation(fields: [subAdminId], references: [id])
+
+  @@index([adminId, adminType])
+  @@index([action])
+  @@index([createdAt])
+  @@map("admin_logs")
+}
+
+
+model SubAdmin{
+  id      String  @id @default(auto()) @map("_id") @db.ObjectId
+  email   String  @unique
+  password String
+  name     String
+  phone    String?
+   role         AdminRole @default(SUB_ADMIN)
+  isActive     Boolean   @default(true)
+  lastLogin    DateTime?
+  
+  // Permissions (restricted compared to Super Admin)
+  permissions String[]
+  
+  // Assigned by Super Admin
+  createdById String     @db.ObjectId
+  createdBy   SuperAdmin @relation(fields: [createdById], references: [id])
+  
+  // Security
+  twoFactorEnabled Boolean   @default(false)
+  loginAttempts    Int       @default(0)
+  lockoutUntil     DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  adminSessions AdminSession[]
+  adminLogs     AdminLog[]
+  
+  @@map("sub_admins")
+}
+
 // User Management
 model User {
   id       String  @id @default(auto()) @map("_id") @db.ObjectId
