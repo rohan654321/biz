@@ -21,6 +21,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             firstName: true,
             lastName: true,
             email: true,
+            
           },
         },
         event: {
