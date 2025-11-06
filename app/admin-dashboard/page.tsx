@@ -81,9 +81,8 @@ export default function AdminDashboardPage() {
     designation="System Administrator"
     bannerImage="/admin-banner.jpg"
   />
-  <div className="flex flex-1">
     <AdminDashboard />
-  </div>
+  
 </div>
 
   )
