@@ -5,23 +5,6 @@ import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import SuperAdminManagement from "./superadminmanagement"
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import {
@@ -43,6 +26,7 @@ import {
   Bell,
   ChevronRight,
   LogOut,
+  ChevronDown,
 } from "lucide-react"
 
 // Import all section components
@@ -52,22 +36,15 @@ import OrganizerManagement from "./organizer-management"
 import ExhibitorManagement from "./exhibitor-management"
 import SpeakerManagement from "./speaker-management"
 import VenueManagement from "./venue-management"
-// import VisitorManagement from "./visitor-management"
-// import FinancialManagement from "./financial-management"
 import ContentManagement from "./content-management"
-// import MarketingManagement from "./marketing-management"
-// import ReportsAnalytics from "./reports-analytics"
-// import IntegrationsManagement from "./integrations-management"
-// import RolesPermissions from "./roles-permissions"
 import SystemSettings from "./system-settings"
 import SubAdminManagement from "./subadmin-management"
-
-// import HelpSupport from "./help-support"
 
 export default function AdminDashboard() {
   const router = useRouter()
   const [activeSection, setActiveSection] = useState("dashboard")
   const [activeSubSection, setActiveSubSection] = useState("")
+  const [openMenus, setOpenMenus] = useState<Set<string>>(new Set(["dashboard"]))
 
   const handleLogout = () => {
     // Clear authentication data
@@ -78,6 +55,16 @@ export default function AdminDashboard() {
     router.push("/sign-in")
   }
 
+  const toggleMenu = (menuId: string) => {
+    const newOpenMenus = new Set(openMenus)
+    if (newOpenMenus.has(menuId)) {
+      newOpenMenus.delete(menuId)
+    } else {
+      newOpenMenus.add(menuId)
+    }
+    setOpenMenus(newOpenMenus)
+  }
+
   const sidebarItems = [
     {
       title: "Dashboard Overview",
@@ -85,7 +72,7 @@ export default function AdminDashboard() {
       id: "dashboard",
     },
     {
-      title: "Events Management",
+      title: "Events",
       icon: Calendar,
       id: "events",
       subItems: [
@@ -96,7 +83,7 @@ export default function AdminDashboard() {
       ],
     },
     {
-      title: "Organizer Management",
+      title: "Organizer",
       icon: Users,
       id: "organizers",
       subItems: [
@@ -109,7 +96,7 @@ export default function AdminDashboard() {
       ],
     },
     {
-      title: "Exhibitor Management",
+      title: "Exhibitor",
       icon: Building2,
       id: "exhibitors",
       subItems: [
@@ -125,7 +112,7 @@ export default function AdminDashboard() {
       ],
     },
     {
-      title: "Speaker Management",
+      title: "Speaker",
       icon: Mic,
       id: "speakers",
       subItems: [
@@ -139,7 +126,7 @@ export default function AdminDashboard() {
       ],
     },
     {
-      title: "Venue Management",
+      title: "Venue",
       icon: MapPin,
       id: "venues",
       subItems: [
@@ -152,7 +139,7 @@ export default function AdminDashboard() {
       ],
     },
     {
-      title: "Visitor Management",
+      title: "Visitor",
       icon: UserCircle,
       id: "visitors",
       subItems: [
@@ -174,7 +161,7 @@ export default function AdminDashboard() {
       ],
     },
     {
-      title: "Content Management",
+      title: "Content",
       icon: FileText,
       id: "content",
       subItems: [
@@ -316,93 +303,135 @@ export default function AdminDashboard() {
     setActiveSubSection(subId)
   }
 
+  const isMenuOpen = (menuId: string) => openMenus.has(menuId)
+  const isActive = (id: string) => activeSection === id
+  const isSubActive = (id: string) => activeSubSection === id
+
   return (
-    <SidebarProvider>
-      <div className="flex  w-full">
-        <Sidebar className="border-r">
-          {/* <SidebarHeader className="border-b p-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src="/placeholder.svg?height=40&width=40&text=SA" />
-                <AvatarFallback>SA</AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="font-semibold">Super Admin</div>
-                <div className="text-sm text-gray-600">System Administrator</div>
+    <div className="flex h-screen bg-gray-50">
+      {/* Sidebar */}
+      <div className="w-80 bg-white border-r border-gray-200 text-sm flex flex-col">
+        {/* Sidebar Header */}
+        {/* <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <Avatar className="w-10 h-10">
+              <AvatarImage src="/placeholder.svg?height=40&width=40&text=SA" />
+              <AvatarFallback>SA</AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="font-semibold text-gray-900">Super Admin</div>
+              <div className="text-sm text-gray-600">System Administrator</div>
+            </div>
+          </div>
+        </div> */}
+
+        {/* Sidebar Content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
+            <div className="space-y-1">
+              {sidebarItems.map((item) => (
+                <div key={item.id} className="mb-1">
+                  {item.subItems ? (
+                    <div className="rounded-lg">
+                      <button
+                        onClick={() => toggleMenu(item.id)}
+                        className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
+                          isActive(item.id) 
+                            ? "bg-blue-50 text-blue-700 border border-blue-200" 
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon className="w-4 h-4" />
+                          <span className="font-medium">{item.title}</span>
+                        </div>
+                        <ChevronDown 
+                          className={`w-4 h-4 transition-transform duration-200 ${
+                            isMenuOpen(item.id) ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                      
+                      {isMenuOpen(item.id) && (
+                        <div className="mt-1 ml-4 space-y-1 border-l border-gray-200 pl-2">
+                          {item.subItems.map((subItem) => (
+                            <button
+                              key={subItem.id}
+                              onClick={() => handleSubSectionClick(item.id, subItem.id)}
+                              className={`w-full text-left p-2 rounded-lg transition-colors ${
+                                isSubActive(subItem.id)
+                                  ? "bg-blue-50 text-blue-700 border border-blue-200"
+                                  : "text-gray-600 hover:bg-gray-100"
+                              }`}
+                            >
+                              <span className="text-sm">{subItem.title}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleSectionClick(item.id)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                        isActive(item.id)
+                          ? "bg-blue-50 text-blue-700 border border-blue-200"
+                          : "text-gray-700 hover:bg-gray-100"
+                      }`}
+                    >
+                      <item.icon className="w-4 h-4" />
+                      <span className="font-medium">{item.title}</span>
+                    </button>
+                  )}
+                </div>
+              ))}
+              
+              {/* Logout Button */}
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="font-medium">Logout</span>
+                </button>
               </div>
             </div>
-          </SidebarHeader> */}
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Administration</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {sidebarItems.map((item) => (
-                    <Collapsible key={item.id} asChild defaultOpen={activeSection.startsWith(item.id)}>
-                      <SidebarMenuItem>
-                        {item.subItems ? (
-                          <>
-                            <CollapsibleTrigger asChild>
-                              <SidebarMenuButton
-                                onClick={() => handleSectionClick(item.id)}
-                                isActive={activeSection.startsWith(item.id)}
-                                className="w-full justify-start"
-                              >
-                                <item.icon className="w-4 h-4" />
-                                <span>{item.title}</span>
-                                <ChevronRight className="ml-auto w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
-                              </SidebarMenuButton>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                              <SidebarMenuSub>
-                                {item.subItems.map((subItem) => (
-                                  <SidebarMenuSubItem key={subItem.id}>
-                                    <SidebarMenuSubButton
-                                      onClick={() => handleSubSectionClick(item.id, subItem.id)}
-                                      isActive={activeSubSection === subItem.id}
-                                    >
-                                      <span>{subItem.title}</span>
-                                    </SidebarMenuSubButton>
-                                  </SidebarMenuSubItem>
-                                ))}
-                              </SidebarMenuSub>
-                            </CollapsibleContent>
-                          </>
-                        ) : (
-                          <SidebarMenuButton
-                            onClick={() => handleSectionClick(item.id)}
-                            isActive={activeSection === item.id}
-                            className="w-full justify-start"
-                          >
-                            <item.icon className="w-4 h-4" />
-                            <span>{item.title}</span>
-                          </SidebarMenuButton>
-                        )}
-                      </SidebarMenuItem>
-                    </Collapsible>
-                  ))}
-                  
-                  {/* Logout Button */}
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={handleLogout}
-                      className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Logout</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
-
-        <SidebarInset className="flex-1">
-          
-          <div className="flex-1 p-6">{renderContent()}</div>
-        </SidebarInset>
+          </div>
+        </div>
       </div>
-    </SidebarProvider>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Header */}
+        {/* <header className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {sidebarItems.find(item => item.id === activeSection)?.title || "Dashboard"}
+              </h1>
+              <p className="text-gray-600 mt-1">
+                {activeSubSection 
+                  ? sidebarItems
+                      .find(item => item.id === activeSection)
+                      ?.subItems?.find(sub => sub.id === activeSubSection)?.title
+                  : "System Overview"}
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                <Bell className="w-5 h-5 text-gray-600" />
+              </button>
+              <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+            </div>
+          </div>
+        </header> */}
+
+        {/* Content Area */}
+        <main className="flex-1 overflow-auto bg-gray-50 p-6">
+          {renderContent()}
+        </main>
+      </div>
+    </div>
   )
 }
