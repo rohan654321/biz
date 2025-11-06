@@ -1511,6 +1511,172 @@ model BadgeSent {
   @@index([email])
   @@map("badges_sent")
 }
+// Dashboard Content Management System
+model DashboardContent {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Target dashboard
+  dashboardType DashboardType // Which dashboard this content belongs to
+  userRole     UserRole      // Which user role sees this content
+  
+  // Header/Banner Content
+  bannerTitle       String?
+  bannerSubtitle    String?
+  bannerDescription String?
+  bannerImage       String?  // URL to banner image
+  
+  // Main Content Sections
+  welcomeTitle      String?
+  welcomeMessage    String?
+  quickStatsTitle   String?
+  
+  // Features/Modules Section
+  featuresTitle     String?
+  features          Json?    // Array of { title: string, description: string, icon: string }
+  
+  // Support/Help Section
+  supportTitle      String?
+  supportDescription String?
+  supportEmail      String?
+  supportPhone      String?
+  
+  // Quick Actions
+  quickActionsTitle String?
+  quickActions      Json?    // Array of { title: string, description: string, icon: string, link: string }
+  
+  // Custom Messages
+  announcementTitle String?
+  announcementMessage String?
+  announcementType  String?  // info, warning, success, error
+  
+  // SEO/Meta
+  metaTitle       String?
+  metaDescription String?
+  keywords        String[]
+  
+  isActive    Boolean  @default(true)
+  version     Int      @default(1)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String   @db.ObjectId // Super admin who last updated
+  
+  @@unique([dashboardType, userRole])
+  @@map("dashboard_content")
+}
+
+// FAQ Management (Shared across dashboards)
+model FAQ {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  question    String
+  answer      String
+  category    String?  // General, Technical, Billing, etc.
+  
+  // Target audience
+  userRoles   UserRole[]  // Which roles should see this FAQ
+  dashboardTypes DashboardType[] // Which dashboards should show this FAQ
+  
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  views       Int      @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String   @db.ObjectId
+  
+  @@map("faqs")
+}
+
+// Announcements/Banners
+model DashboardAnnouncement {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  message     String
+  type        AnnouncementType @default(INFO)
+  
+  // Target settings
+  userRoles   UserRole[]
+  dashboardTypes DashboardType[]
+  
+  // Display settings
+  startDate   DateTime?
+  endDate     DateTime?
+  isActive    Boolean  @default(true)
+  isDismissible Boolean @default(true)
+  
+  // Appearance
+  backgroundColor String?
+  textColor       String?
+  icon            String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String   @db.ObjectId
+  
+  @@map("dashboard_announcements")
+}
+
+// Help & Support Content (Specific to help pages)
+model HelpSupportContent {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userRole    UserRole // Role-specific help content
+  
+  // Header
+  pageTitle   String
+  pageDescription String
+  
+  // Contact Sections
+  contactTitle    String?
+  contactDescription String?
+  
+  // Support Channels
+  supportEmail     String
+  supportPhone     String
+  officeAddress    String
+  corporateName    String
+  liveChatHours    String
+  
+  // Section Titles
+  emailTitle       String?
+  emailDescription String?
+  phoneTitle       String?
+  phoneDescription String?
+  officeTitle      String?
+  officeDescription String?
+  liveChatTitle    String?
+  liveChatDescription String?
+  faqTitle         String?
+  
+  isActive    Boolean  @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String   @db.ObjectId
+  
+  @@unique([userRole])
+  @@map("help_support_content")
+}
+
+// Enum for dashboard types
+enum DashboardType {
+  SUPER_ADMIN_DASHBOARD
+  ORGANIZER_DASHBOARD
+  EXHIBITOR_DASHBOARD
+  SPEAKER_DASHBOARD
+  VENUE_DASHBOARD
+  ATTENDEE_DASHBOARD
+  VISITOR_DASHBOARD
+}
+
+// Enum for announcement types
+enum AnnouncementType {
+  INFO
+  WARNING
+  SUCCESS
+  ERROR
+  MAINTENANCE
+  UPDATE
+}
 
 enum BadgeSentStatus {
   SENT

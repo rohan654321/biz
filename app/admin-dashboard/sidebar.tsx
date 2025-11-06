@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import SuperAdminManagement from "./superadminmanagement"
 
@@ -60,11 +61,22 @@ import ContentManagement from "./content-management"
 // import RolesPermissions from "./roles-permissions"
 import SystemSettings from "./system-settings"
 import SubAdminManagement from "./subadmin-management"
+
 // import HelpSupport from "./help-support"
 
 export default function AdminDashboard() {
+  const router = useRouter()
   const [activeSection, setActiveSection] = useState("dashboard")
   const [activeSubSection, setActiveSubSection] = useState("")
+
+  const handleLogout = () => {
+    // Clear authentication data
+    localStorage.removeItem("superAdminToken")
+    localStorage.removeItem("superAdmin")
+    
+    // Redirect to signin page
+    router.push("/sign-in")
+  }
 
   const sidebarItems = [
     {
@@ -246,17 +258,16 @@ export default function AdminDashboard() {
     const subSection = activeSubSection
 
     // Handle sub-sections first
-if (subSection) {
-  switch (subSection) {
-    case "roles-superadmin":
-      return <SuperAdminManagement />
-    case "roles-subadmins":
-      return <SubAdminManagement />
-    default:
-      break
-  }
-}
-
+    if (subSection) {
+      switch (subSection) {
+        case "roles-superadmin":
+          return <SuperAdminManagement />
+        case "roles-subadmins":
+          return <SubAdminManagement />
+        default:
+          break
+      }
+    }
 
     // Handle main sections
     switch (section) {
@@ -273,29 +284,22 @@ if (subSection) {
       case "venues":
         return <VenueManagement />
       case "visitors":
-        // return <VisitorManagement />
         return <div>Visitor Management - Coming Soon</div>
       case "financial":
-        // return <FinancialManagement />
         return <div>Financial Management - Coming Soon</div>
       case "content":
         return <ContentManagement />
       case "marketing":
-        // return <MarketingManagement />
         return <div>Marketing Management - Coming Soon</div>
       case "reports":
-        // return <ReportsAnalytics />
         return <div>Reports & Analytics - Coming Soon</div>
       case "integrations":
-        // return <IntegrationsManagement />
         return <div>Integrations Management - Coming Soon</div>
-     case "roles":
-  return <SuperAdminManagement />
-
+      case "roles":
+        return <SuperAdminManagement />
       case "settings":
         return <SystemSettings />
       case "support":
-        // return <HelpSupport />
         return <div>Help & Support - Coming Soon</div>
       default:
         return <DashboardOverview />
@@ -314,9 +318,9 @@ if (subSection) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex  w-full">
         <Sidebar className="border-r">
-          <SidebarHeader className="border-b p-4">
+          {/* <SidebarHeader className="border-b p-4">
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10">
                 <AvatarImage src="/placeholder.svg?height=40&width=40&text=SA" />
@@ -327,7 +331,7 @@ if (subSection) {
                 <div className="text-sm text-gray-600">System Administrator</div>
               </div>
             </div>
-          </SidebarHeader>
+          </SidebarHeader> */}
           <SidebarContent>
             <SidebarGroup>
               <SidebarGroupLabel>Administration</SidebarGroupLabel>
@@ -377,6 +381,17 @@ if (subSection) {
                       </SidebarMenuItem>
                     </Collapsible>
                   ))}
+                  
+                  {/* Logout Button */}
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={handleLogout}
+                      className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Logout</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -384,21 +399,7 @@ if (subSection) {
         </Sidebar>
 
         <SidebarInset className="flex-1">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="flex items-center gap-2 ml-auto">
-              <Button variant="ghost" size="sm">
-                <Bell className="w-4 h-4" />
-              </Button>
-              <Avatar className="w-8 h-8">
-                <AvatarImage src="/placeholder.svg?height=32&width=32&text=SA" />
-                <AvatarFallback>SA</AvatarFallback>
-              </Avatar>
-              <Button variant="ghost" size="sm">
-                <LogOut className="w-4 h-4" />
-              </Button>
-            </div>
-          </header>
+          
           <div className="flex-1 p-6">{renderContent()}</div>
         </SidebarInset>
       </div>
