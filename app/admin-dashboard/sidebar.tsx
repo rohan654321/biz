@@ -5,23 +5,6 @@ import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import SuperAdminManagement from "./superadminmanagement"
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import {
@@ -43,6 +26,7 @@ import {
   Bell,
   ChevronRight,
   LogOut,
+  ChevronDown,
 } from "lucide-react"
 
 // Import all section components
@@ -52,22 +36,16 @@ import OrganizerManagement from "./organizer-management"
 import ExhibitorManagement from "./exhibitor-management"
 import SpeakerManagement from "./speaker-management"
 import VenueManagement from "./venue-management"
-// import VisitorManagement from "./visitor-management"
-// import FinancialManagement from "./financial-management"
 import ContentManagement from "./content-management"
-// import MarketingManagement from "./marketing-management"
-// import ReportsAnalytics from "./reports-analytics"
-// import IntegrationsManagement from "./integrations-management"
-// import RolesPermissions from "./roles-permissions"
 import SystemSettings from "./system-settings"
 import SubAdminManagement from "./subadmin-management"
-
-// import HelpSupport from "./help-support"
+import { CreateEventForm } from "./eventManagement/createEvent/create-event"
 
 export default function AdminDashboard() {
   const router = useRouter()
   const [activeSection, setActiveSection] = useState("dashboard")
   const [activeSubSection, setActiveSubSection] = useState("")
+  const [openMenus, setOpenMenus] = useState<Set<string>>(new Set(["dashboard"]))
 
   const handleLogout = () => {
     // Clear authentication data
@@ -78,6 +56,16 @@ export default function AdminDashboard() {
     router.push("/sign-in")
   }
 
+  const toggleMenu = (menuId: string) => {
+    const newOpenMenus = new Set(openMenus)
+    if (newOpenMenus.has(menuId)) {
+      newOpenMenus.delete(menuId)
+    } else {
+      newOpenMenus.add(menuId)
+    }
+    setOpenMenus(newOpenMenus)
+  }
+
   const sidebarItems = [
     {
       title: "Dashboard Overview",
@@ -85,7 +73,7 @@ export default function AdminDashboard() {
       id: "dashboard",
     },
     {
-      title: "Events Management",
+      title: "Events",
       icon: Calendar,
       id: "events",
       subItems: [
@@ -96,7 +84,7 @@ export default function AdminDashboard() {
       ],
     },
     {
-      title: "Organizer Management",
+      title: "Organizer",
       icon: Users,
       id: "organizers",
       subItems: [
@@ -109,7 +97,7 @@ export default function AdminDashboard() {
       ],
     },
     {
-      title: "Exhibitor Management",
+      title: "Exhibitor",
       icon: Building2,
       id: "exhibitors",
       subItems: [
@@ -125,7 +113,7 @@ export default function AdminDashboard() {
       ],
     },
     {
-      title: "Speaker Management",
+      title: "Speaker",
       icon: Mic,
       id: "speakers",
       subItems: [
@@ -139,7 +127,7 @@ export default function AdminDashboard() {
       ],
     },
     {
-      title: "Venue Management",
+      title: "Venue",
       icon: MapPin,
       id: "venues",
       subItems: [
@@ -152,7 +140,7 @@ export default function AdminDashboard() {
       ],
     },
     {
-      title: "Visitor Management",
+      title: "Visitor",
       icon: UserCircle,
       id: "visitors",
       subItems: [
@@ -174,7 +162,7 @@ export default function AdminDashboard() {
       ],
     },
     {
-      title: "Content Management",
+      title: "Content",
       icon: FileText,
       id: "content",
       subItems: [
@@ -253,58 +241,71 @@ export default function AdminDashboard() {
     },
   ]
 
-  const renderContent = () => {
-    const section = activeSection
-    const subSection = activeSubSection
+ const renderContent = () => {
+  const section = activeSection
+  const subSection = activeSubSection
 
-    // Handle sub-sections first
-    if (subSection) {
-      switch (subSection) {
-        case "roles-superadmin":
-          return <SuperAdminManagement />
-        case "roles-subadmins":
-          return <SubAdminManagement />
-        default:
-          break
-      }
-    }
-
-    // Handle main sections
-    switch (section) {
-      case "dashboard":
-        return <DashboardOverview />
-      case "events":
-        return <EventManagement />
-      case "organizers":
-        return <OrganizerManagement />
-      case "exhibitors":
-        return <ExhibitorManagement />
-      case "speakers":
-        return <SpeakerManagement />
-      case "venues":
-        return <VenueManagement />
-      case "visitors":
-        return <div>Visitor Management - Coming Soon</div>
-      case "financial":
-        return <div>Financial Management - Coming Soon</div>
-      case "content":
-        return <ContentManagement />
-      case "marketing":
-        return <div>Marketing Management - Coming Soon</div>
-      case "reports":
-        return <div>Reports & Analytics - Coming Soon</div>
-      case "integrations":
-        return <div>Integrations Management - Coming Soon</div>
-      case "roles":
+  // Handle sub-sections first
+  if (subSection) {
+    switch (subSection) {
+      // Roles
+      case "roles-superadmin":
         return <SuperAdminManagement />
-      case "settings":
-        return <SystemSettings />
-      case "support":
-        return <div>Help & Support - Coming Soon</div>
+      case "roles-subadmins":
+        return <SubAdminManagement />
+
+      // Events
+      case "events-create":
+        return <CreateEventForm />
+      case "events-all":
+        return <EventManagement />
+      case "events-categories":
+        return <div>Event Categories - Coming Soon</div>
+      case "events-approvals":
+        return <div>Event Approvals - Coming Soon</div>
+
       default:
-        return <DashboardOverview />
+        break
     }
   }
+
+  // Handle main sections
+  switch (section) {
+    case "dashboard":
+      return <DashboardOverview />
+    case "events":
+      return <EventManagement />
+    case "organizers":
+      return <OrganizerManagement />
+    case "exhibitors":
+      return <ExhibitorManagement />
+    case "speakers":
+      return <SpeakerManagement />
+    case "venues":
+      return <VenueManagement />
+    case "visitors":
+      return <div>Visitor Management - Coming Soon</div>
+    case "financial":
+      return <div>Financial Management - Coming Soon</div>
+    case "content":
+      return <ContentManagement />
+    case "marketing":
+      return <div>Marketing Management - Coming Soon</div>
+    case "reports":
+      return <div>Reports & Analytics - Coming Soon</div>
+    case "integrations":
+      return <div>Integrations Management - Coming Soon</div>
+    case "roles":
+      return <SuperAdminManagement />
+    case "settings":
+      return <SystemSettings />
+    case "support":
+      return <div>Help & Support - Coming Soon</div>
+    default:
+      return <DashboardOverview />
+  }
+}
+
 
   const handleSectionClick = (id: string) => {
     setActiveSection(id)
@@ -316,93 +317,95 @@ export default function AdminDashboard() {
     setActiveSubSection(subId)
   }
 
-  return (
-    <SidebarProvider>
-      <div className="flex  w-full">
-        <Sidebar className="border-r">
-          {/* <SidebarHeader className="border-b p-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src="/placeholder.svg?height=40&width=40&text=SA" />
-                <AvatarFallback>SA</AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="font-semibold">Super Admin</div>
-                <div className="text-sm text-gray-600">System Administrator</div>
-              </div>
-            </div>
-          </SidebarHeader> */}
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Administration</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {sidebarItems.map((item) => (
-                    <Collapsible key={item.id} asChild defaultOpen={activeSection.startsWith(item.id)}>
-                      <SidebarMenuItem>
-                        {item.subItems ? (
-                          <>
-                            <CollapsibleTrigger asChild>
-                              <SidebarMenuButton
-                                onClick={() => handleSectionClick(item.id)}
-                                isActive={activeSection.startsWith(item.id)}
-                                className="w-full justify-start"
-                              >
-                                <item.icon className="w-4 h-4" />
-                                <span>{item.title}</span>
-                                <ChevronRight className="ml-auto w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
-                              </SidebarMenuButton>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                              <SidebarMenuSub>
-                                {item.subItems.map((subItem) => (
-                                  <SidebarMenuSubItem key={subItem.id}>
-                                    <SidebarMenuSubButton
-                                      onClick={() => handleSubSectionClick(item.id, subItem.id)}
-                                      isActive={activeSubSection === subItem.id}
-                                    >
-                                      <span>{subItem.title}</span>
-                                    </SidebarMenuSubButton>
-                                  </SidebarMenuSubItem>
-                                ))}
-                              </SidebarMenuSub>
-                            </CollapsibleContent>
-                          </>
-                        ) : (
-                          <SidebarMenuButton
-                            onClick={() => handleSectionClick(item.id)}
-                            isActive={activeSection === item.id}
-                            className="w-full justify-start"
-                          >
-                            <item.icon className="w-4 h-4" />
-                            <span>{item.title}</span>
-                          </SidebarMenuButton>
-                        )}
-                      </SidebarMenuItem>
-                    </Collapsible>
-                  ))}
-                  
-                  {/* Logout Button */}
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={handleLogout}
-                      className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Logout</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
+  const isMenuOpen = (menuId: string) => openMenus.has(menuId)
+  const isActive = (id: string) => activeSection === id
+  const isSubActive = (id: string) => activeSubSection === id
 
-        <SidebarInset className="flex-1">
-          
-          <div className="flex-1 p-6">{renderContent()}</div>
-        </SidebarInset>
+  return (
+  <div className="flex h-screen w-full bg-gray-50 overflow-hidden">
+    {/* Sidebar */}
+    <aside className="w-80 min-w-[20rem] bg-white border-r border-gray-200 flex flex-col overflow-y-auto">
+      <div className="flex-1 p-4">
+        <div className="space-y-1">
+          {sidebarItems.map((item) => (
+            <div key={item.id} className="mb-1">
+              {item.subItems ? (
+                <div className="rounded-lg">
+                  <button
+                    onClick={() => toggleMenu(item.id)}
+                    className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
+                      isActive(item.id)
+                        ? "bg-blue-50 text-blue-700 border border-blue-200"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon className="w-4 h-4" />
+                      <span className="font-medium">{item.title}</span>
+                    </div>
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform duration-200 ${
+                        isMenuOpen(item.id) ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {isMenuOpen(item.id) && (
+                    <div className="mt-1 ml-4 space-y-1 border-l border-gray-200 pl-2">
+                      {item.subItems.map((subItem) => (
+                        <button
+                          key={subItem.id}
+                          onClick={() => handleSubSectionClick(item.id, subItem.id)}
+                          className={`w-full text-left p-2 rounded-lg transition-colors ${
+                            isSubActive(subItem.id)
+                              ? "bg-blue-50 text-blue-700 border border-blue-200"
+                              : "text-gray-600 hover:bg-gray-100"
+                          }`}
+                        >
+                          <span className="text-sm">{subItem.title}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={() => handleSectionClick(item.id)}
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                    isActive(item.id)
+                      ? "bg-blue-50 text-blue-700 border border-blue-200"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <item.icon className="w-4 h-4" />
+                  <span className="font-medium">{item.title}</span>
+                </button>
+              )}
+            </div>
+          ))}
+
+          {/* Logout Button */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 p-3 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="font-medium">Logout</span>
+            </button>
+          </div>
+        </div>
       </div>
-    </SidebarProvider>
-  )
+    </aside>
+
+    {/* Main Content */}
+    <section className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      {/* Content Area */}
+      <main className="flex-1 overflow-y-auto bg-gray-50 p-6 w-full">
+        {renderContent()}
+      </main>
+    </section>
+  </div>
+)
+
 }

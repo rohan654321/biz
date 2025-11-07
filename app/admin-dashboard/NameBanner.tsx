@@ -25,7 +25,7 @@ export function NameBanner({
       />
 
       {/* Gradient overlay for better text readability */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-black/20 rounded-b-2xl" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-black/20 " />
       
       {/* Content overlay */}
       <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-16">
