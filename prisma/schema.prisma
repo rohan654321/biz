@@ -103,7 +103,7 @@ model SubAdmin{
   password String
   name     String
   phone    String?
-   role         AdminRole @default(SUB_ADMIN)
+  role        String   @default("SUB_ADMIN")
   isActive     Boolean   @default(true)
   lastLogin    DateTime?
   

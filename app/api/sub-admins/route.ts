@@ -60,10 +60,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const { name, email, password, permissions, phone } = await request.json()
+    const { name, email, password, permissions, phone, role } = await request.json()
 
-    if (!name || !email || !password || !permissions) {
-      return NextResponse.json({ error: "Name, email, password, and permissions are required" }, { status: 400 })
+    if (!name || !email || !password || !permissions || !role) {
+      return NextResponse.json({ 
+        error: "Name, email, password, role, and permissions are required" 
+      }, { status: 400 })
+    }
+
+    // Validate role
+    const validRoles = ["SUB_ADMIN", "MODERATOR", "SUPPORT"]
+    if (!validRoles.includes(role)) {
+      return NextResponse.json({ 
+        error: "Invalid role. Must be one of: SUB_ADMIN, MODERATOR, SUPPORT" 
+      }, { status: 400 })
     }
 
     // Check if email already exists
@@ -94,8 +104,8 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         permissions,
         phone: phone || null,
+        role,
         createdById: auth.user.id,
-        role: "SUB_ADMIN",
       },
       include: {
         createdBy: {
@@ -119,6 +129,7 @@ export async function POST(request: NextRequest) {
         details: {
           subAdminEmail: subAdmin.email,
           subAdminName: subAdmin.name,
+          subAdminRole: subAdmin.role,
           permissions: subAdmin.permissions,
         },
         ipAddress,

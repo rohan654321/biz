@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { authMiddleware } from "@/lib/auth-middleware"
+import bcrypt from "bcryptjs"
 
 interface RouteParams {
   params: Promise<{
@@ -48,6 +49,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 // UPDATE sub-admin
+// UPDATE sub-admin
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
@@ -60,7 +62,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const { name, email, permissions, phone, isActive } = await request.json()
+    const { name, email, permissions, phone, isActive, role, password } = await request.json()
 
     const subAdmin = await prisma.subAdmin.findUnique({
       where: { id },
@@ -68,6 +70,16 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     if (!subAdmin) {
       return NextResponse.json({ error: "Sub-admin not found" }, { status: 404 })
+    }
+
+    // Validate role if provided
+    if (role) {
+      const validRoles = ["SUB_ADMIN", "MODERATOR", "SUPPORT"]
+      if (!validRoles.includes(role)) {
+        return NextResponse.json({ 
+          error: "Invalid role. Must be one of: SUB_ADMIN, MODERATOR, SUPPORT" 
+        }, { status: 400 })
+      }
     }
 
     // Check if email is being changed and if it's already taken
@@ -89,15 +101,25 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const forwarded = request.headers.get("x-forwarded-for")
     const ipAddress = forwarded ? forwarded.split(",")[0] : "unknown"
 
+    // Prepare update data
+    const updateData: any = {
+      ...(name && { name }),
+      ...(email && { email }),
+      ...(permissions && { permissions }),
+      ...(phone !== undefined && { phone }),
+      ...(isActive !== undefined && { isActive }),
+      ...(role && { role }),
+    }
+
+    // Only update password if provided
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 12)
+      updateData.password = hashedPassword
+    }
+
     const updatedSubAdmin = await prisma.subAdmin.update({
       where: { id },
-      data: {
-        ...(name && { name }),
-        ...(email && { email }),
-        ...(permissions && { permissions }),
-        ...(phone !== undefined && { phone }),
-        ...(isActive !== undefined && { isActive }),
-      },
+      data: updateData,
       include: {
         createdBy: {
           select: {
@@ -120,7 +142,16 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         details: {
           subAdminEmail: updatedSubAdmin.email,
           subAdminName: updatedSubAdmin.name,
-          updatedFields: { name, email, permissions, phone, isActive },
+          subAdminRole: updatedSubAdmin.role,
+          updatedFields: { 
+            name, 
+            email, 
+            permissions, 
+            phone, 
+            isActive, 
+            role,
+            passwordUpdated: !!password 
+          },
         },
         ipAddress,
         userAgent: request.headers.get("user-agent") || "",
@@ -129,7 +160,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     })
 
     // Remove password from response
-    const { password, ...subAdminWithoutPassword } = updatedSubAdmin
+    const { password: _, ...subAdminWithoutPassword } = updatedSubAdmin
 
     return NextResponse.json({
       message: "Sub-admin updated successfully",
@@ -183,6 +214,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         details: {
           subAdminEmail: subAdmin.email,
           subAdminName: subAdmin.name,
+          subAdminRole: subAdmin.role,
         },
         ipAddress,
         userAgent: request.headers.get("user-agent") || "",
