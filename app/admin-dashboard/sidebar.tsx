@@ -39,6 +39,7 @@ import VenueManagement from "./venue-management"
 import ContentManagement from "./content-management"
 import SystemSettings from "./system-settings"
 import SubAdminManagement from "./subadmin-management"
+import { title } from "process"
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -79,7 +80,7 @@ export default function AdminDashboard() {
         { title: "All Events", id: "events-all" },
         { title: "Create New Event", id: "events-create" },
         { title: "Event Categories", id: "events-categories" },
-        { title: "Event Approvals", id: "events-approvals" },
+        { title: "Bluk Data", id: "bulk-data" },
       ],
     },
     {
@@ -89,8 +90,9 @@ export default function AdminDashboard() {
       subItems: [
         { title: "All Organizers", id: "organizers-all" },
         { title: "Add Organizer", id: "organizers-add" },
-        { title: "Connections", id: "organizers-connections" },
-        { title: "Messages", id: "organizers-messages" },
+        { title: "Followers", id: "organizers-connections" },
+        {title: "Promotions", id: "promotions"},
+        // { title: "Messages", id: "organizers-messages" },
         { title: "Venue Bookings", id: "organizers-bookings" },
         { title: "Event Feedback", id: "organizers-feedback" },
       ],
@@ -102,11 +104,11 @@ export default function AdminDashboard() {
       subItems: [
         { title: "All Exhibitors", id: "exhibitors-all" },
         { title: "Add Exhibitor", id: "exhibitors-add" },
-        { title: "Events Participating", id: "exhibitors-events" },
+        // { title: "Events Participating", id: "exhibitors-events" },
         { title: "Promotions", id: "exhibitors-promotions" },
         { title: "Followers", id: "exhibitors-followers" },
-        { title: "Messages", id: "exhibitors-messages" },
-        { title: "Connections", id: "exhibitors-connections" },
+        // { title: "Messages", id: "exhibitors-messages" },
+        // { title: "Connections", id: "exhibitors-connections" },
         { title: "Appointments", id: "exhibitors-appointments" },
         { title: "Feedback", id: "exhibitors-feedback" },
       ],
@@ -119,8 +121,8 @@ export default function AdminDashboard() {
         { title: "All Speakers", id: "speakers-all" },
         { title: "Add Speaker", id: "speakers-add" },
         { title: "Followers", id: "speakers-followers" },
-        { title: "Messages", id: "speakers-messages" },
-        { title: "Connections", id: "speakers-connections" },
+        // { title: "Messages", id: "speakers-messages" },
+        // { title: "Connections", id: "speakers-connections" },
         { title: "Appointments", id: "speakers-appointments" },
         { title: "Feedback", id: "speakers-feedback" },
       ],
@@ -134,7 +136,7 @@ export default function AdminDashboard() {
         { title: "Add Venue", id: "venues-add" },
         { title: "Events by Venue", id: "venues-events" },
         { title: "Booking Enquiries", id: "venues-bookings" },
-        { title: "Followers", id: "venues-followers" },
+        // { title: "Followers", id: "venues-followers" },
         { title: "Feedback", id: "venues-feedback" },
       ],
     },
@@ -143,7 +145,7 @@ export default function AdminDashboard() {
       icon: UserCircle,
       id: "visitors",
       subItems: [
-        { title: "All Visitors", id: "visitors-all" },
+        // { title: "All Visitors", id: "visitors-all" },
         { title: "Events by Visitor", id: "visitors-events" },
         { title: "Connections", id: "visitors-connections" },
         { title: "Appointments", id: "visitors-appointments" },
@@ -191,7 +193,7 @@ export default function AdminDashboard() {
         { title: "Event Performance", id: "reports-events" },
         { title: "User Engagement", id: "reports-engagement" },
         { title: "Revenue Reports", id: "reports-revenue" },
-        { title: "Traffic Sources", id: "reports-traffic" },
+        // { title: "Traffic Sources", id: "reports-traffic" },
         { title: "System Health", id: "reports-system" },
       ],
     },
@@ -213,7 +215,7 @@ export default function AdminDashboard() {
       subItems: [
         { title: "Super Admin", id: "roles-superadmin" },
         { title: "Sub Admins", id: "roles-subadmins" },
-        { title: "Access Control", id: "roles-access" },
+        // { title: "Access Control", id: "roles-access" },
       ],
     },
     {
@@ -250,7 +252,11 @@ export default function AdminDashboard() {
         case "roles-superadmin":
           return <SuperAdminManagement />
         case "roles-subadmins":
-          return <SubAdminManagement />
+          return <SubAdminManagement onSuccess={function (): void {
+            throw new Error("Function not implemented.")
+          } } onCancel={function (): void {
+            throw new Error("Function not implemented.")
+          } } />
         default:
           break
       }
