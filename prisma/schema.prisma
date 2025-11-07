@@ -103,7 +103,7 @@ model SubAdmin{
   password String
   name     String
   phone    String?
-   role         AdminRole @default(SUB_ADMIN)
+  role        String   @default("SUB_ADMIN")
   isActive     Boolean   @default(true)
   lastLogin    DateTime?
   
@@ -1239,7 +1239,7 @@ model ExhibitorManual {
   updatedAt DateTime @updatedAt
 
   @@map("exhibitor_manuals")
-}
+} 
 
 model Follow {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId

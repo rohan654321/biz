@@ -1,17 +1,25 @@
-// components/sub-admin-add-page.tsx
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { ChevronDown, ChevronRight } from "lucide-react"
+import { ChevronDown, ChevronRight, Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
 
-interface SubAdminAddPageProps {
+interface SubAdminEditPageProps {
+  subAdmin: {
+    id: string
+    name: string
+    email: string
+    phone?: string
+    role: string
+    permissions: string[]
+    isActive: boolean
+  }
   onSuccess?: () => void
   onCancel?: () => void
 }
@@ -27,28 +35,44 @@ interface PermissionCategory {
   subItems: PermissionSubItem[]
 }
 
-// Role options
 const ROLE_OPTIONS = [
   { value: "SUB_ADMIN", label: "Sub Admin" },
   { value: "MODERATOR", label: "Moderator" },
   { value: "SUPPORT", label: "Support Staff" },
 ]
 
-export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPageProps) {
+export default function SubAdminEditPage({ subAdmin, onSuccess, onCancel }: SubAdminEditPageProps) {
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
   const [expandedCategories, setExpandedCategories] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: "",
     phone: "",
-    role: "SUB_ADMIN", // Default role
+    role: "SUB_ADMIN",
+    isActive: true,
+    password: "",
+    confirmPassword: "",
   })
+
+  useEffect(() => {
+    setFormData({
+      name: subAdmin.name,
+      email: subAdmin.email,
+      phone: subAdmin.phone || "",
+      role: subAdmin.role,
+      isActive: subAdmin.isActive,
+      password: "",
+      confirmPassword: "",
+    })
+    setSelectedPermissions(subAdmin.permissions)
+  }, [subAdmin])
 
   const getAuthToken = () => {
     if (typeof window !== "undefined") {
-      const token =
+      return (
         localStorage.getItem("superAdminToken") ||
         localStorage.getItem("adminToken") ||
         document.cookie
@@ -59,7 +83,7 @@ export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPage
           .split("; ")
           .find((row) => row.startsWith("adminToken="))
           ?.split("=")[1]
-      return token
+      )
     }
     return null
   }
@@ -76,7 +100,7 @@ export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPage
     )
   }
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -88,37 +112,34 @@ export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPage
       ...prev,
       role,
     }))
-    
-    // Optionally, you can set default permissions based on role
-    if (role === "SUPPORT") {
-      // Default permissions for support staff
-      setSelectedPermissions([
-        "support-tickets",
-        "support-contacts",
-        "support-notes",
-        "visitors-events",
-        "visitors-connections",
-      ])
-    } else if (role === "MODERATOR") {
-      // Default permissions for moderators
-      setSelectedPermissions([
-        "events-all",
-        "events-approvals",
-        "organizers-all",
-        "exhibitors-all",
-        "speakers-all",
-      ])
-    } else {
-      // Default for Sub Admin - empty or basic permissions
-      setSelectedPermissions([])
+  }
+
+  const validateForm = () => {
+    if (!formData.name || !formData.email || selectedPermissions.length === 0) {
+      toast.error("Please fill all required fields and select at least one permission")
+      return false
     }
+
+    // If password is provided, validate it
+    if (formData.password) {
+      if (formData.password.length < 6) {
+        toast.error("Password must be at least 6 characters long")
+        return false
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        toast.error("Passwords do not match")
+        return false
+      }
+    }
+
+    return true
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.name || !formData.email || !formData.password || selectedPermissions.length === 0) {
-      toast.error("Please fill all required fields and select at least one permission")
+    if (!validateForm()) {
       return
     }
 
@@ -127,41 +148,44 @@ export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPage
     try {
       const token = getAuthToken()
 
-      const response = await fetch("/api/sub-admins", {
-        method: "POST",
+      // Prepare update data
+      const updateData: any = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+        isActive: formData.isActive,
+        permissions: selectedPermissions,
+      }
+
+      // Only include password if it's provided
+      if (formData.password) {
+        updateData.password = formData.password
+      }
+
+      const response = await fetch(`/api/sub-admins/${subAdmin.id}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           ...(token && { Authorization: `Bearer ${token}` }),
         },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          phone: formData.phone,
-          role: formData.role,
-          permissions: selectedPermissions,
-        }),
+        body: JSON.stringify(updateData),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create sub-admin")
+        throw new Error(data.error || "Failed to update sub-admin")
       }
 
-      toast.success("Sub-admin created successfully")
+      toast.success("Sub-admin updated successfully")
       
-      // Reset form
-      setFormData({ name: "", email: "", password: "", phone: "", role: "SUB_ADMIN" })
-      setSelectedPermissions([])
-      
-      // Safe call to onSuccess
       if (onSuccess && typeof onSuccess === 'function') {
         onSuccess()
       }
     } catch (error) {
-      console.error("Error creating sub-admin:", error)
-      toast.error(error instanceof Error ? error.message : "Failed to create sub-admin")
+      console.error("Error updating sub-admin:", error)
+      toast.error(error instanceof Error ? error.message : "Failed to update sub-admin")
     } finally {
       setLoading(false)
     }
@@ -170,12 +194,15 @@ export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPage
   const handleCancel = () => {
     if (onCancel && typeof onCancel === 'function') {
       onCancel()
-    } else {
-      // Default behavior - go back
-      if (typeof window !== 'undefined') {
-        window.history.back()
-      }
     }
+  }
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword)
+  }
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword)
   }
 
   const permissionCategories: PermissionCategory[] = [
@@ -342,15 +369,15 @@ export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPage
         <div className="relative flex items-center justify-center w-full mb-6">
           <div className="w-full h-[4px] rounded-full bg-gradient-to-r from-green-300 to-blue-500" />
           <div className="absolute">
-            <div className="bg-green-500 text-white font-semibold text-sm px-4 py-2 rounded-md shadow">
-              ADD NEW SUB ADMIN
+            <div className="bg-blue-500 text-white font-semibold text-sm px-4 py-2 rounded-md shadow">
+              EDIT SUB ADMIN
             </div>
           </div>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-gray-800 pb-5">Sub admin details</CardTitle>
+            <CardTitle className="text-gray-800 pb-5">Edit sub admin details</CardTitle>
           </CardHeader>
           <hr />
           <CardContent className="space-y-5">
@@ -382,19 +409,6 @@ export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPage
                 <hr />
 
                 <div className="grid grid-cols-12 items-center gap-3">
-                  <Label className="col-span-2 text-gray-700 font-medium">Password *</Label>
-                  <Input
-                    className="col-span-9"
-                    type="password"
-                    placeholder="Enter password"
-                    value={formData.password}
-                    onChange={(e) => handleInputChange("password", e.target.value)}
-                    required
-                  />
-                </div>
-                <hr />
-
-                <div className="grid grid-cols-12 items-center gap-3">
                   <Label className="col-span-2 text-gray-700 font-medium">Phone</Label>
                   <Input
                     className="col-span-9"
@@ -405,7 +419,53 @@ export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPage
                 </div>
                 <hr />
 
-                {/* Role Selection */}
+                {/* Password Update Section */}
+                <div className="grid grid-cols-12 items-center gap-3">
+                  <Label className="col-span-2 text-gray-700 font-medium">New Password</Label>
+                  <div className="col-span-9 relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Leave blank to keep current password"
+                      value={formData.password}
+                      onChange={(e) => handleInputChange("password", e.target.value)}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={togglePasswordVisibility}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <hr />
+
+                {formData.password && (
+                  <>
+                    <div className="grid grid-cols-12 items-center gap-3">
+                      <Label className="col-span-2 text-gray-700 font-medium">Confirm Password</Label>
+                      <div className="col-span-9 relative">
+                        <Input
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirm new password"
+                          value={formData.confirmPassword}
+                          onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                          className="pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={toggleConfirmPasswordVisibility}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    <hr />
+                  </>
+                )}
+
                 <div className="grid grid-cols-12 items-center gap-3">
                   <Label className="col-span-2 text-gray-700 font-medium">Role *</Label>
                   <div className="col-span-9 flex gap-4">
@@ -418,7 +478,7 @@ export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPage
                           value={roleOption.value}
                           checked={formData.role === roleOption.value}
                           onChange={(e) => handleRoleChange(e.target.value)}
-                          className="h-4 w-4 text-green-500 border-gray-300 focus:ring-green-500"
+                          className="h-4 w-4 text-blue-500 border-gray-300 focus:ring-blue-500"
                         />
                         <Label 
                           htmlFor={`role-${roleOption.value}`}
@@ -428,6 +488,41 @@ export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPage
                         </Label>
                       </div>
                     ))}
+                  </div>
+                </div>
+                <hr />
+
+                <div className="grid grid-cols-12 items-center gap-3">
+                  <Label className="col-span-2 text-gray-700 font-medium">Status</Label>
+                  <div className="col-span-9 flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="status-active"
+                        name="status"
+                        value="active"
+                        checked={formData.isActive}
+                        onChange={() => handleInputChange("isActive", true)}
+                        className="h-4 w-4 text-green-500 border-gray-300 focus:ring-green-500"
+                      />
+                      <Label htmlFor="status-active" className="text-gray-700 cursor-pointer">
+                        Active
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="status-inactive"
+                        name="status"
+                        value="inactive"
+                        checked={!formData.isActive}
+                        onChange={() => handleInputChange("isActive", false)}
+                        className="h-4 w-4 text-red-500 border-gray-300 focus:ring-red-500"
+                      />
+                      <Label htmlFor="status-inactive" className="text-gray-700 cursor-pointer">
+                        Inactive
+                      </Label>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -469,7 +564,7 @@ export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPage
                                   category.subItems.every((subItem) =>
                                     selectedPermissions.includes(subItem.id),
                                   )
-                                    ? "data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                                    ? "data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                                     : "bg-white border-gray-300"
                                 }`}
                             />
@@ -495,7 +590,7 @@ export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPage
                                     className={`transition-colors duration-200 
                                       ${
                                         selectedPermissions.includes(subItem.id)
-                                          ? "data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                                          ? "data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                                           : "bg-white border-gray-300"
                                       }`}
                                   />
@@ -514,8 +609,8 @@ export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPage
               </div>
 
               <div className="flex justify-start gap-4 pt-6">
-                <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white" disabled={loading}>
-                  {loading ? "Creating..." : "Add User"}
+                <Button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white" disabled={loading}>
+                  {loading ? "Updating..." : "Update User"}
                 </Button>
                 <Button type="button" variant="outline" onClick={handleCancel} disabled={loading}>
                   Cancel

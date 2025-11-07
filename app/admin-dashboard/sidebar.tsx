@@ -39,6 +39,7 @@ import VenueManagement from "./venue-management"
 import ContentManagement from "./content-management"
 import SystemSettings from "./system-settings"
 import SubAdminManagement from "./subadmin-management"
+import { title } from "process"
 import { CreateEventForm } from "./eventManagement/createEvent/create-event"
 
 export default function AdminDashboard() {
@@ -80,7 +81,7 @@ export default function AdminDashboard() {
         { title: "All Events", id: "events-all" },
         { title: "Create New Event", id: "events-create" },
         { title: "Event Categories", id: "events-categories" },
-        { title: "Event Approvals", id: "events-approvals" },
+        { title: "Bluk Data", id: "bulk-data" },
       ],
     },
     {
@@ -90,8 +91,9 @@ export default function AdminDashboard() {
       subItems: [
         { title: "All Organizers", id: "organizers-all" },
         { title: "Add Organizer", id: "organizers-add" },
-        { title: "Connections", id: "organizers-connections" },
-        { title: "Messages", id: "organizers-messages" },
+        { title: "Followers", id: "organizers-connections" },
+        {title: "Promotions", id: "promotions"},
+        // { title: "Messages", id: "organizers-messages" },
         { title: "Venue Bookings", id: "organizers-bookings" },
         { title: "Event Feedback", id: "organizers-feedback" },
       ],
@@ -103,11 +105,11 @@ export default function AdminDashboard() {
       subItems: [
         { title: "All Exhibitors", id: "exhibitors-all" },
         { title: "Add Exhibitor", id: "exhibitors-add" },
-        { title: "Events Participating", id: "exhibitors-events" },
+        // { title: "Events Participating", id: "exhibitors-events" },
         { title: "Promotions", id: "exhibitors-promotions" },
         { title: "Followers", id: "exhibitors-followers" },
-        { title: "Messages", id: "exhibitors-messages" },
-        { title: "Connections", id: "exhibitors-connections" },
+        // { title: "Messages", id: "exhibitors-messages" },
+        // { title: "Connections", id: "exhibitors-connections" },
         { title: "Appointments", id: "exhibitors-appointments" },
         { title: "Feedback", id: "exhibitors-feedback" },
       ],
@@ -120,8 +122,8 @@ export default function AdminDashboard() {
         { title: "All Speakers", id: "speakers-all" },
         { title: "Add Speaker", id: "speakers-add" },
         { title: "Followers", id: "speakers-followers" },
-        { title: "Messages", id: "speakers-messages" },
-        { title: "Connections", id: "speakers-connections" },
+        // { title: "Messages", id: "speakers-messages" },
+        // { title: "Connections", id: "speakers-connections" },
         { title: "Appointments", id: "speakers-appointments" },
         { title: "Feedback", id: "speakers-feedback" },
       ],
@@ -135,7 +137,7 @@ export default function AdminDashboard() {
         { title: "Add Venue", id: "venues-add" },
         { title: "Events by Venue", id: "venues-events" },
         { title: "Booking Enquiries", id: "venues-bookings" },
-        { title: "Followers", id: "venues-followers" },
+        // { title: "Followers", id: "venues-followers" },
         { title: "Feedback", id: "venues-feedback" },
       ],
     },
@@ -144,7 +146,7 @@ export default function AdminDashboard() {
       icon: UserCircle,
       id: "visitors",
       subItems: [
-        { title: "All Visitors", id: "visitors-all" },
+        // { title: "All Visitors", id: "visitors-all" },
         { title: "Events by Visitor", id: "visitors-events" },
         { title: "Connections", id: "visitors-connections" },
         { title: "Appointments", id: "visitors-appointments" },
@@ -192,7 +194,7 @@ export default function AdminDashboard() {
         { title: "Event Performance", id: "reports-events" },
         { title: "User Engagement", id: "reports-engagement" },
         { title: "Revenue Reports", id: "reports-revenue" },
-        { title: "Traffic Sources", id: "reports-traffic" },
+        // { title: "Traffic Sources", id: "reports-traffic" },
         { title: "System Health", id: "reports-system" },
       ],
     },
@@ -214,7 +216,7 @@ export default function AdminDashboard() {
       subItems: [
         { title: "Super Admin", id: "roles-superadmin" },
         { title: "Sub Admins", id: "roles-subadmins" },
-        { title: "Access Control", id: "roles-access" },
+        // { title: "Access Control", id: "roles-access" },
       ],
     },
     {
@@ -322,90 +324,130 @@ export default function AdminDashboard() {
   const isSubActive = (id: string) => activeSubSection === id
 
   return (
-  <div className="flex h-screen w-full bg-gray-50 overflow-hidden">
-    {/* Sidebar */}
-    <aside className="w-80 min-w-[20rem] bg-white border-r border-gray-200 flex flex-col overflow-y-auto">
-      <div className="flex-1 p-4">
-        <div className="space-y-1">
-          {sidebarItems.map((item) => (
-            <div key={item.id} className="mb-1">
-              {item.subItems ? (
-                <div className="rounded-lg">
-                  <button
-                    onClick={() => toggleMenu(item.id)}
-                    className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
-                      isActive(item.id)
-                        ? "bg-blue-50 text-blue-700 border border-blue-200"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
+    <div className="flex h-screen bg-gray-50">
+      {/* Sidebar */}
+      <div className="w-80 bg-white border-r border-gray-200 text-sm flex flex-col">
+        {/* Sidebar Header */}
+        {/* <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <Avatar className="w-10 h-10">
+              <AvatarImage src="/placeholder.svg?height=40&width=40&text=SA" />
+              <AvatarFallback>SA</AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="font-semibold text-gray-900">Super Admin</div>
+              <div className="text-sm text-gray-600">System Administrator</div>
+            </div>
+          </div>
+        </div> */}
+
+        {/* Sidebar Content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
+            <div className="space-y-1">
+              {sidebarItems.map((item) => (
+                <div key={item.id} className="mb-1">
+                  {item.subItems ? (
+                    <div className="rounded-lg">
+                      <button
+                        onClick={() => toggleMenu(item.id)}
+                        className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
+                          isActive(item.id) 
+                            ? "bg-blue-50 text-blue-700 border border-blue-200" 
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon className="w-4 h-4" />
+                          <span className="font-medium">{item.title}</span>
+                        </div>
+                        <ChevronDown 
+                          className={`w-4 h-4 transition-transform duration-200 ${
+                            isMenuOpen(item.id) ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                      
+                      {isMenuOpen(item.id) && (
+                        <div className="mt-1 ml-4 space-y-1 border-l border-gray-200 pl-2">
+                          {item.subItems.map((subItem) => (
+                            <button
+                              key={subItem.id}
+                              onClick={() => handleSubSectionClick(item.id, subItem.id)}
+                              className={`w-full text-left p-2 rounded-lg transition-colors ${
+                                isSubActive(subItem.id)
+                                  ? "bg-blue-50 text-blue-700 border border-blue-200"
+                                  : "text-gray-600 hover:bg-gray-100"
+                              }`}
+                            >
+                              <span className="text-sm">{subItem.title}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleSectionClick(item.id)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                        isActive(item.id)
+                          ? "bg-blue-50 text-blue-700 border border-blue-200"
+                          : "text-gray-700 hover:bg-gray-100"
+                      }`}
+                    >
                       <item.icon className="w-4 h-4" />
                       <span className="font-medium">{item.title}</span>
-                    </div>
-                    <ChevronDown
-                      className={`w-4 h-4 transition-transform duration-200 ${
-                        isMenuOpen(item.id) ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-
-                  {isMenuOpen(item.id) && (
-                    <div className="mt-1 ml-4 space-y-1 border-l border-gray-200 pl-2">
-                      {item.subItems.map((subItem) => (
-                        <button
-                          key={subItem.id}
-                          onClick={() => handleSubSectionClick(item.id, subItem.id)}
-                          className={`w-full text-left p-2 rounded-lg transition-colors ${
-                            isSubActive(subItem.id)
-                              ? "bg-blue-50 text-blue-700 border border-blue-200"
-                              : "text-gray-600 hover:bg-gray-100"
-                          }`}
-                        >
-                          <span className="text-sm">{subItem.title}</span>
-                        </button>
-                      ))}
-                    </div>
+                    </button>
                   )}
                 </div>
-              ) : (
+              ))}
+              
+              {/* Logout Button */}
+              <div className="mt-4 pt-4 border-t border-gray-200">
                 <button
-                  onClick={() => handleSectionClick(item.id)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                    isActive(item.id)
-                      ? "bg-blue-50 text-blue-700 border border-blue-200"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
                 >
-                  <item.icon className="w-4 h-4" />
-                  <span className="font-medium">{item.title}</span>
+                  <LogOut className="w-4 h-4" />
+                  <span className="font-medium">Logout</span>
                 </button>
-              )}
+              </div>
             </div>
-          ))}
-
-          {/* Logout Button */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 p-3 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="font-medium">Logout</span>
-            </button>
           </div>
         </div>
       </div>
-    </aside>
 
-    {/* Main Content */}
-    <section className="flex-1 flex flex-col min-w-0 overflow-hidden">
-      {/* Content Area */}
-      <main className="flex-1 overflow-y-auto bg-gray-50 p-6 w-full">
-        {renderContent()}
-      </main>
-    </section>
-  </div>
-)
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Header */}
+        {/* <header className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {sidebarItems.find(item => item.id === activeSection)?.title || "Dashboard"}
+              </h1>
+              <p className="text-gray-600 mt-1">
+                {activeSubSection 
+                  ? sidebarItems
+                      .find(item => item.id === activeSection)
+                      ?.subItems?.find(sub => sub.id === activeSubSection)?.title
+                  : "System Overview"}
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                <Bell className="w-5 h-5 text-gray-600" />
+              </button>
+              <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+            </div>
+          </div>
+        </header> */}
 
+        {/* Content Area */}
+        <main className="flex-1 overflow-auto bg-gray-50 p-6">
+          {renderContent()}
+        </main>
+      </div>
+    </div>
+  )
 }
