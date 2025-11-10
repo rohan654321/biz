@@ -3,16 +3,9 @@ import { prisma } from "@/lib/prisma"
 import { authMiddleware } from "@/lib/auth-middleware"
 import bcrypt from "bcryptjs"
 
-// GET all sub-admins (Super Admin only)
 export async function GET(request: NextRequest) {
   try {
     const auth = await authMiddleware(request)
-
-    console.log("[v0] Auth result for GET /sub-admins:", {
-      isValid: auth.isValid,
-      user: auth.user,
-    })
-
     if (!auth.isValid || !auth.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -25,11 +18,7 @@ export async function GET(request: NextRequest) {
       where: { isActive: true },
       include: {
         createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+          select: { id: true, name: true, email: true },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -37,21 +26,14 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ subAdmins })
   } catch (error) {
-    console.error("[v0] Get sub-admins error:", error)
+    console.error("Error fetching sub-admins:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
-// CREATE new sub-admin (Super Admin only)
 export async function POST(request: NextRequest) {
   try {
     const auth = await authMiddleware(request)
-
-    console.log("[v0] Auth result for POST /sub-admins:", {
-      isValid: auth.isValid,
-      user: auth.user,
-    })
-
     if (!auth.isValid || !auth.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -63,40 +45,24 @@ export async function POST(request: NextRequest) {
     const { name, email, password, permissions, phone, role } = await request.json()
 
     if (!name || !email || !password || !permissions || !role) {
-      return NextResponse.json({ 
-        error: "Name, email, password, role, and permissions are required" 
-      }, { status: 400 })
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // Validate role
     const validRoles = ["SUB_ADMIN", "MODERATOR", "SUPPORT"]
     if (!validRoles.includes(role)) {
-      return NextResponse.json({ 
-        error: "Invalid role. Must be one of: SUB_ADMIN, MODERATOR, SUPPORT" 
-      }, { status: 400 })
+      return NextResponse.json({ error: "Invalid role" }, { status: 400 })
     }
 
-    // Check if email already exists
-    const existingSubAdmin = await prisma.subAdmin.findUnique({
-      where: { email: email.toLowerCase() },
-    })
-
-    const existingSuperAdmin = await prisma.superAdmin.findUnique({
-      where: { email: email.toLowerCase() },
-    })
-
-    if (existingSubAdmin || existingSuperAdmin) {
+    const existing = await prisma.subAdmin.findUnique({ where: { email } })
+    const existingSuper = await prisma.superAdmin.findUnique({ where: { email } })
+    if (existing || existingSuper) {
       return NextResponse.json({ error: "Email already exists" }, { status: 409 })
     }
 
-    // Hash password using bcrypt
     const hashedPassword = await bcrypt.hash(password, 12)
-
-    // Get IP address safely
     const forwarded = request.headers.get("x-forwarded-for")
     const ipAddress = forwarded ? forwarded.split(",")[0] : "unknown"
 
-    // Create sub-admin
     const subAdmin = await prisma.subAdmin.create({
       data: {
         name,
@@ -108,17 +74,10 @@ export async function POST(request: NextRequest) {
         createdById: auth.user.id,
       },
       include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
+        createdBy: { select: { id: true, name: true, email: true } },
       },
     })
 
-    // Create admin log
     await prisma.adminLog.create({
       data: {
         adminId: auth.user.id,
@@ -138,18 +97,12 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Remove password from response
-    const { password: _, ...subAdminWithoutPassword } = subAdmin
-
     return NextResponse.json(
-      {
-        message: "Sub-admin created successfully",
-        subAdmin: subAdminWithoutPassword,
-      },
-      { status: 201 },
+      { message: "Sub-admin created successfully", subAdmin },
+      { status: 201 }
     )
   } catch (error) {
-    console.error("[v0] Create sub-admin error:", error)
+    console.error("Create sub-admin error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

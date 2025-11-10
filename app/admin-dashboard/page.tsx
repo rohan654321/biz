@@ -1,64 +1,23 @@
-// app/admin-dashboard/page.tsx
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import AdminDashboard from "./sidebar"
 import Navbar from "./navbar"
 import { NameBanner } from "./NameBanner"
 
-interface SuperAdmin {
-  id: string
-  email: string
-  name: string
-  role: string
-}
-
 export default function AdminDashboardPage() {
   const router = useRouter()
-  const [superAdmin, setSuperAdmin] = useState<SuperAdmin | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const { data: session, status } = useSession()
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = localStorage.getItem("superAdminToken")
-        
-        if (!token) {
-          router.push("/sign-in")
-          return
-        }
-
-        // Verify token with backend
-        const response = await fetch("/api/auth/super-admin/verify-token", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-        })
-
-        if (response.ok) {
-          const adminData = await response.json()
-          setSuperAdmin(adminData.superAdmin)
-        } else {
-          // Clear invalid tokens and redirect to sign-in
-          localStorage.removeItem("superAdminToken")
-          localStorage.removeItem("superAdmin")
-          router.push("/sign-in")
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error)
-        router.push("/sign-in")
-      } finally {
-        setIsLoading(false)
-      }
+    if (status === "unauthenticated") {
+      router.push("/sign-in")
     }
+  }, [status, router])
 
-    checkAuth()
-  }, [router])
-
-  if (isLoading) {
+  if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -69,21 +28,22 @@ export default function AdminDashboardPage() {
     )
   }
 
-  if (!superAdmin) {
+  if (!session?.user) {
     return null
   }
 
+  const isSuperAdmin = session.user.adminType === "SUPER_ADMIN"
+  const userPermissions = session.user.permissions || []
+
   return (
     <div className="min-h-screen flex flex-col">
-  <Navbar />
-  <NameBanner 
-    name={superAdmin.name || "Super Admin"}
-    designation="System Administrator"
-    bannerImage="/admin-banner.jpg"
-  />
-    <AdminDashboard />
-  
-</div>
-
+      <Navbar />
+      <NameBanner
+        name={session.user.name || "Admin"}
+        designation={isSuperAdmin ? "Super Administrator" : "Sub Administrator"}
+        bannerImage="/admin-banner.jpg"
+      />
+      <AdminDashboard userRole={session.user.adminType || "SUB_ADMIN"} userPermissions={userPermissions} />
+    </div>
   )
 }

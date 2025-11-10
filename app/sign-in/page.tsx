@@ -1,141 +1,115 @@
-// app/signin/page.tsx
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
+import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Eye, EyeOff, Mail, Lock, Building2 } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react"
 
 export default function SignInPage() {
   const router = useRouter()
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  })
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
-    setError("")
-  }
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
     setError("")
-
-    if (!formData.email || !formData.password) {
-      setError("Please fill in all fields")
-      setIsLoading(false)
-      return
-    }
+    setIsLoading(true)
 
     try {
-      const response = await fetch("/api/auth/super-admin/signin", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "Sign in failed")
+      if (result?.error) {
+        setError("Invalid credentials. Please try again.")
+      } else if (result?.ok) {
+        router.push("/admin-dashboard")
+        router.refresh()
       }
-
-      // Store session and redirect to admin dashboard
-      localStorage.setItem("superAdminToken", data.token)
-      localStorage.setItem("superAdmin", JSON.stringify(data.superAdmin))
-      
-      // Redirect to admin dashboard
-      router.push("/admin-dashboard")
-    } catch (err: any) {
-      setError(err.message || "Invalid email or password")
+    } catch (err) {
+      console.error("Login error:", err)
+      setError("An error occurred during login. Please try again.")
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex items-center justify-center mb-4">
-            <Building2 className="w-12 h-12 text-blue-600" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50 p-4">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="space-y-2 text-center">
+          <div className="mx-auto w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-2">
+            <Lock className="w-6 h-6 text-white" />
           </div>
-          <CardTitle className="text-2xl font-bold">Super Admin Sign In</CardTitle>
+          <CardTitle className="text-2xl font-bold">Admin Sign In</CardTitle>
           <CardDescription>Enter your credentials to access the admin dashboard</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-                {error}
-              </div>
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
 
-            {/* Email Field */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Enter your email address"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className="w-full"
-              />
-            </div>
-
-            {/* Password Field */}
-            <div className="space-y-2">
-              <Label htmlFor="password" className="flex items-center gap-2">
-                <Lock className="w-4 h-4" />
-                Password
-              </Label>
+              <Label htmlFor="email">Email Address</Label>
               <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={handleChange}
+                  id="email"
+                  type="email"
+                  placeholder="admin@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full pr-10"
+                  disabled={isLoading}
+                  className="pl-10"
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </Button>
               </div>
             </div>
 
-            {/* Submit Button */}
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="pl-10 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Signing in...
                 </>
               ) : (
@@ -143,11 +117,10 @@ export default function SignInPage() {
               )}
             </Button>
 
-            {/* Sign Up Link */}
-            <div className="text-center text-sm text-gray-600">
-              Don't have an account?{" "}
-              <Button variant="link" className="p-0 text-blue-600" onClick={() => router.push("/signup")}>
-                Create one here
+            <div className="text-center text-sm text-gray-600 mt-4">
+              <p>Forgot your password?</p>
+              <Button variant="link" className="p-0 h-auto font-normal text-blue-600">
+                Contact your administrator
               </Button>
             </div>
           </form>

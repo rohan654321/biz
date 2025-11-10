@@ -41,7 +41,7 @@ export default function SubAdminLoginPage() {
     setLoading(true)
 
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch("/api/auth/sub-admin/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -60,9 +60,9 @@ export default function SubAdminLoginPage() {
 
       toast.success("Login successful!")
 
-      // Store user info in localStorage
-      localStorage.setItem("adminUser", JSON.stringify(data.user))
-      localStorage.setItem("adminToken", `subadmin-${data.user.id}`)
+      // ✅ Store user info in localStorage with correct keys
+      localStorage.setItem("subAdmin", JSON.stringify(data.user))
+      localStorage.setItem("subAdminToken", data.token)
 
       // Redirect to sub-admin dashboard
       router.push("/sub-admin/dashboard")
@@ -164,10 +164,10 @@ export default function SubAdminLoginPage() {
               </Button>
             </form>
 
-            {/* Debug Info - Remove in production */}
+            {/* Debug Info */}
             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
               <p className="text-xs text-yellow-800">
-                <strong>Debug:</strong> Make sure sub-admin account is created and active in super admin panel.
+                <strong>Note:</strong> Make sure sub-admin account is created and active in super admin panel.
               </p>
             </div>
           </CardContent>

@@ -2,11 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import SuperAdminManagement from "./superadminmanagement"
-
-import { Button } from "@/components/ui/button"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import {
   LayoutDashboard,
   Calendar,
@@ -23,8 +19,6 @@ import {
   Shield,
   Settings,
   HelpCircle,
-  Bell,
-  ChevronRight,
   LogOut,
   ChevronDown,
 } from "lucide-react"
@@ -39,22 +33,115 @@ import VenueManagement from "./venue-management"
 import ContentManagement from "./content-management"
 import SystemSettings from "./system-settings"
 import SubAdminManagement from "./subadmin-management"
-import { title } from "process"
 import { CreateEventForm } from "./eventManagement/createEvent/create-event"
+import { signOut } from "next-auth/react"
 
-export default function AdminDashboard() {
+interface AdminDashboardProps {
+  userRole: "SUPER_ADMIN" | "SUB_ADMIN"
+  userPermissions: string[]
+}
+
+const MENU_PERMISSIONS = {
+  dashboard: "dashboard-overview",
+  events: "events",
+  "events-all": "events-all", // Fixed: was "events-all-events", now matches DB
+  "events-create": "events-create",
+  "events-categories": "events-categories",
+  "events-approvals": "events-approvals", // Added: missing mapping
+  "bulk-data": "bulk-data",
+  organizers: "organizers",
+  "organizers-all": "organizers-all",
+  "organizers-add": "organizers-add",
+  "organizers-connections": "organizers-connections",
+  promotions: "promotions",
+  "organizers-bookings": "organizers-bookings",
+  "organizers-feedback": "organizers-feedback",
+  exhibitors: "exhibitors",
+  "exhibitors-all": "exhibitors-all",
+  "exhibitors-add": "exhibitors-add",
+  "exhibitors-promotions": "exhibitors-promotions",
+  "exhibitors-followers": "exhibitors-followers",
+  "exhibitors-appointments": "exhibitors-appointments",
+  "exhibitors-feedback": "exhibitors-feedback",
+  speakers: "speakers",
+  "speakers-all": "speakers-all",
+  "speakers-add": "speakers-add",
+  "speakers-followers": "speakers-followers",
+  "speakers-appointments": "speakers-appointments",
+  "speakers-feedback": "speakers-feedback",
+  venues: "venues",
+  "venues-all": "venues-all",
+  "venues-add": "venues-add",
+  "venues-events": "venues-events",
+  "venues-bookings": "venues-bookings",
+  "venues-feedback": "venues-feedback",
+  visitors: "visitors",
+  "visitors-events": "visitors-events",
+  "visitors-connections": "visitors-connections",
+  "visitors-appointments": "visitors-appointments",
+  financial: "financial",
+  "financial-payments": "financial-payments",
+  "financial-subscriptions": "financial-subscription",
+  "financial-invoices": "financial-invoices",
+  "financial-transactions": "financial-transactions",
+  content: "content",
+  "content-news": "content-news",
+  "content-blog": "content-blog",
+  "content-banners": "content-banners",
+  "content-featured": "content-featured",
+  "content-media": "content-media",
+  marketing: "marketing",
+  "marketing-email": "marketing-email",
+  "marketing-notifications": "marketing-notifications",
+  "marketing-traffic": "marketing-traffic",
+  "marketing-seo": "marketing-seo",
+  reports: "reports",
+  "reports-events": "reports-events",
+  "reports-engagement": "reports-engagement",
+  "reports-revenue": "reports-revenue",
+  "reports-system": "reports-system",
+  integrations: "integrations",
+  "integrations-payment": "integrations-payment",
+  "integrations-communication": "integrations-communication",
+  "integrations-calendar": "integrations-calendar",
+  "integrations-travel": "integrations-travel",
+  roles: "roles",
+  "roles-superadmin": "roles-superadmin",
+  "roles-subadmins": "roles-subadmins",
+  settings: "settings",
+  "settings-modules": "settings-modules",
+  "settings-notifications": "settings-notifications",
+  "settings-security": "settings-security",
+  "settings-language": "settings-language",
+  "settings-backup": "settings-backup",
+  support: "support",
+  "support-tickets": "support-tickets",
+  "support-contacts": "support-contacts",
+  "support-notes": "support-notes",
+}
+
+export default function AdminDashboard({ userRole, userPermissions }: AdminDashboardProps) {
   const router = useRouter()
   const [activeSection, setActiveSection] = useState("dashboard")
   const [activeSubSection, setActiveSubSection] = useState("")
   const [openMenus, setOpenMenus] = useState<Set<string>>(new Set(["dashboard"]))
 
-  const handleLogout = () => {
-    // Clear authentication data
-    localStorage.removeItem("superAdminToken")
-    localStorage.removeItem("superAdmin")
-    
-    // Redirect to signin page
-    router.push("/sign-in")
+  console.log("[v0] User Role:", userRole)
+  console.log("[v0] User Permissions:", userPermissions)
+
+  const hasPermission = (itemId: string): boolean => {
+    // Super admin has access to everything
+    if (userRole === "SUPER_ADMIN") return true
+
+    // Sub admin needs specific permission
+    const requiredPermission = MENU_PERMISSIONS[itemId as keyof typeof MENU_PERMISSIONS]
+    if (!requiredPermission) return false
+
+    return userPermissions.includes(requiredPermission)
+  }
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/sign-in" })
   }
 
   const toggleMenu = (menuId: string) => {
@@ -73,17 +160,18 @@ export default function AdminDashboard() {
       icon: LayoutDashboard,
       id: "dashboard",
     },
-    {
-      title: "Events",
-      icon: Calendar,
-      id: "events",
-      subItems: [
-        { title: "All Events", id: "events-all" },
-        { title: "Create New Event", id: "events-create" },
-        { title: "Event Categories", id: "events-categories" },
-        { title: "Bluk Data", id: "bulk-data" },
-      ],
-    },
+    // {
+    //   title: "Events",
+    //   icon: Calendar,
+    //   id: "events",
+    //   subItems: [
+    //     { title: "All Events", id: "events-all" },
+    //     { title: "Create New Event", id: "events-create" },
+    //     { title: "Event Categories", id: "events-categories" },
+    //     { title: "Event Approvals", id: "events-approvals" }, // Added Event Approvals menu item
+    //     { title: "Bulk Data", id: "bulk-data" },
+    //   ],
+    // },
     {
       title: "Organizer",
       icon: Users,
@@ -92,8 +180,7 @@ export default function AdminDashboard() {
         { title: "All Organizers", id: "organizers-all" },
         { title: "Add Organizer", id: "organizers-add" },
         { title: "Followers", id: "organizers-connections" },
-        {title: "Promotions", id: "promotions"},
-        // { title: "Messages", id: "organizers-messages" },
+        { title: "Promotions", id: "promotions" },
         { title: "Venue Bookings", id: "organizers-bookings" },
         { title: "Event Feedback", id: "organizers-feedback" },
       ],
@@ -105,11 +192,8 @@ export default function AdminDashboard() {
       subItems: [
         { title: "All Exhibitors", id: "exhibitors-all" },
         { title: "Add Exhibitor", id: "exhibitors-add" },
-        // { title: "Events Participating", id: "exhibitors-events" },
         { title: "Promotions", id: "exhibitors-promotions" },
         { title: "Followers", id: "exhibitors-followers" },
-        // { title: "Messages", id: "exhibitors-messages" },
-        // { title: "Connections", id: "exhibitors-connections" },
         { title: "Appointments", id: "exhibitors-appointments" },
         { title: "Feedback", id: "exhibitors-feedback" },
       ],
@@ -122,8 +206,6 @@ export default function AdminDashboard() {
         { title: "All Speakers", id: "speakers-all" },
         { title: "Add Speaker", id: "speakers-add" },
         { title: "Followers", id: "speakers-followers" },
-        // { title: "Messages", id: "speakers-messages" },
-        // { title: "Connections", id: "speakers-connections" },
         { title: "Appointments", id: "speakers-appointments" },
         { title: "Feedback", id: "speakers-feedback" },
       ],
@@ -137,7 +219,6 @@ export default function AdminDashboard() {
         { title: "Add Venue", id: "venues-add" },
         { title: "Events by Venue", id: "venues-events" },
         { title: "Booking Enquiries", id: "venues-bookings" },
-        // { title: "Followers", id: "venues-followers" },
         { title: "Feedback", id: "venues-feedback" },
       ],
     },
@@ -146,7 +227,6 @@ export default function AdminDashboard() {
       icon: UserCircle,
       id: "visitors",
       subItems: [
-        // { title: "All Visitors", id: "visitors-all" },
         { title: "Events by Visitor", id: "visitors-events" },
         { title: "Connections", id: "visitors-connections" },
         { title: "Appointments", id: "visitors-appointments" },
@@ -194,7 +274,6 @@ export default function AdminDashboard() {
         { title: "Event Performance", id: "reports-events" },
         { title: "User Engagement", id: "reports-engagement" },
         { title: "Revenue Reports", id: "reports-revenue" },
-        // { title: "Traffic Sources", id: "reports-traffic" },
         { title: "System Health", id: "reports-system" },
       ],
     },
@@ -216,7 +295,6 @@ export default function AdminDashboard() {
       subItems: [
         { title: "Super Admin", id: "roles-superadmin" },
         { title: "Sub Admins", id: "roles-subadmins" },
-        // { title: "Access Control", id: "roles-access" },
       ],
     },
     {
@@ -243,71 +321,89 @@ export default function AdminDashboard() {
     },
   ]
 
- const renderContent = () => {
-  const section = activeSection
-  const subSection = activeSubSection
+  const filteredSidebarItems = sidebarItems
+    .map((item) => {
+      // For items with subitems, check if user has permission for any child
+      if (item.subItems) {
+        const filteredSubItems = item.subItems.filter((subItem) => hasPermission(subItem.id))
 
-  // Handle sub-sections first
-  if (subSection) {
-    switch (subSection) {
-      // Roles
-      case "roles-superadmin":
-        return <SuperAdminManagement />
-      case "roles-subadmins":
-        return <SubAdminManagement />
+        // If no subitems are accessible, hide the parent
+        if (filteredSubItems.length === 0) return null
 
-      // Events
-      case "events-create":
-        return <CreateEventForm />
-      case "events-all":
+        return { ...item, subItems: filteredSubItems }
+      }
+
+      // For items without subitems, check direct permission
+      if (!hasPermission(item.id)) return null
+
+      return item
+    })
+    .filter(Boolean) as typeof sidebarItems
+
+  const renderContent = () => {
+    const section = activeSection
+    const subSection = activeSubSection
+
+    // Handle sub-sections first
+    if (subSection) {
+      switch (subSection) {
+        // Roles
+        case "roles-superadmin":
+          return <SuperAdminManagement />
+        case "roles-subadmins":
+          return <SubAdminManagement />
+
+        // Events
+        case "events-create":
+          return <CreateEventForm />
+        case "events-all":
+          return <EventManagement />
+        case "events-categories":
+          return <div>Event Categories - Coming Soon</div>
+        case "events-approvals":
+          return <div>Event Approvals - Coming Soon</div>
+
+        default:
+          break
+      }
+    }
+
+    // Handle main sections
+    switch (section) {
+      case "dashboard":
+        return <DashboardOverview />
+      case "events":
         return <EventManagement />
-      case "events-categories":
-        return <div>Event Categories - Coming Soon</div>
-      case "events-approvals":
-        return <div>Event Approvals - Coming Soon</div>
-
+      case "organizers":
+        return <OrganizerManagement />
+      case "exhibitors":
+        return <ExhibitorManagement />
+      case "speakers":
+        return <SpeakerManagement />
+      case "venues":
+        return <VenueManagement />
+      case "visitors":
+        return <div>Visitor Management - Coming Soon</div>
+      case "financial":
+        return <div>Financial Management - Coming Soon</div>
+      case "content":
+        return <ContentManagement />
+      case "marketing":
+        return <div>Marketing Management - Coming Soon</div>
+      case "reports":
+        return <div>Reports & Analytics - Coming Soon</div>
+      case "integrations":
+        return <div>Integrations Management - Coming Soon</div>
+      case "roles":
+        return <SuperAdminManagement />
+      case "settings":
+        return <SystemSettings />
+      case "support":
+        return <div>Help & Support - Coming Soon</div>
       default:
-        break
+        return <DashboardOverview />
     }
   }
-
-  // Handle main sections
-  switch (section) {
-    case "dashboard":
-      return <DashboardOverview />
-    case "events":
-      return <EventManagement />
-    case "organizers":
-      return <OrganizerManagement />
-    case "exhibitors":
-      return <ExhibitorManagement />
-    case "speakers":
-      return <SpeakerManagement />
-    case "venues":
-      return <VenueManagement />
-    case "visitors":
-      return <div>Visitor Management - Coming Soon</div>
-    case "financial":
-      return <div>Financial Management - Coming Soon</div>
-    case "content":
-      return <ContentManagement />
-    case "marketing":
-      return <div>Marketing Management - Coming Soon</div>
-    case "reports":
-      return <div>Reports & Analytics - Coming Soon</div>
-    case "integrations":
-      return <div>Integrations Management - Coming Soon</div>
-    case "roles":
-      return <SuperAdminManagement />
-    case "settings":
-      return <SystemSettings />
-    case "support":
-      return <div>Help & Support - Coming Soon</div>
-    default:
-      return <DashboardOverview />
-  }
-}
-
 
   const handleSectionClick = (id: string) => {
     setActiveSection(id)
@@ -327,33 +423,19 @@ export default function AdminDashboard() {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <div className="w-80 bg-white border-r border-gray-200 text-sm flex flex-col">
-        {/* Sidebar Header */}
-        {/* <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <Avatar className="w-10 h-10">
-              <AvatarImage src="/placeholder.svg?height=40&width=40&text=SA" />
-              <AvatarFallback>SA</AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="font-semibold text-gray-900">Super Admin</div>
-              <div className="text-sm text-gray-600">System Administrator</div>
-            </div>
-          </div>
-        </div> */}
-
         {/* Sidebar Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-4">
             <div className="space-y-1">
-              {sidebarItems.map((item) => (
+              {filteredSidebarItems.map((item) => (
                 <div key={item.id} className="mb-1">
                   {item.subItems ? (
                     <div className="rounded-lg">
                       <button
                         onClick={() => toggleMenu(item.id)}
                         className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
-                          isActive(item.id) 
-                            ? "bg-blue-50 text-blue-700 border border-blue-200" 
+                          isActive(item.id)
+                            ? "bg-blue-50 text-blue-700 border border-blue-200"
                             : "text-gray-700 hover:bg-gray-100"
                         }`}
                       >
@@ -361,13 +443,13 @@ export default function AdminDashboard() {
                           <item.icon className="w-4 h-4" />
                           <span className="font-medium">{item.title}</span>
                         </div>
-                        <ChevronDown 
+                        <ChevronDown
                           className={`w-4 h-4 transition-transform duration-200 ${
                             isMenuOpen(item.id) ? "rotate-180" : ""
                           }`}
                         />
                       </button>
-                      
+
                       {isMenuOpen(item.id) && (
                         <div className="mt-1 ml-4 space-y-1 border-l border-gray-200 pl-2">
                           {item.subItems.map((subItem) => (
@@ -401,7 +483,7 @@ export default function AdminDashboard() {
                   )}
                 </div>
               ))}
-              
+
               {/* Logout Button */}
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <button
@@ -419,34 +501,8 @@ export default function AdminDashboard() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
-        {/* <header className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {sidebarItems.find(item => item.id === activeSection)?.title || "Dashboard"}
-              </h1>
-              <p className="text-gray-600 mt-1">
-                {activeSubSection 
-                  ? sidebarItems
-                      .find(item => item.id === activeSection)
-                      ?.subItems?.find(sub => sub.id === activeSubSection)?.title
-                  : "System Overview"}
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                <Bell className="w-5 h-5 text-gray-600" />
-              </button>
-              <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-            </div>
-          </div>
-        </header> */}
-
         {/* Content Area */}
-        <main className="flex-1 overflow-auto bg-gray-50 p-6">
-          {renderContent()}
-        </main>
+        <main className="flex-1 overflow-auto bg-gray-50 p-6">{renderContent()}</main>
       </div>
     </div>
   )
