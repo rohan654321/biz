@@ -160,18 +160,18 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       icon: LayoutDashboard,
       id: "dashboard",
     },
-    // {
-    //   title: "Events",
-    //   icon: Calendar,
-    //   id: "events",
-    //   subItems: [
-    //     { title: "All Events", id: "events-all" },
-    //     { title: "Create New Event", id: "events-create" },
-    //     { title: "Event Categories", id: "events-categories" },
-    //     { title: "Event Approvals", id: "events-approvals" }, // Added Event Approvals menu item
-    //     { title: "Bulk Data", id: "bulk-data" },
-    //   ],
-    // },
+    {
+      title: "Events",
+      icon: Calendar,
+      id: "events",
+      subItems: [
+        { title: "All Events", id: "events-all" },
+        { title: "Create New Event", id: "events-create" },
+        { title: "Event Categories", id: "events-categories" },
+        { title: "Event Approvals", id: "events-approvals" }, // Added Event Approvals menu item
+        { title: "Bulk Data", id: "bulk-data" },
+      ],
+    },
     {
       title: "Organizer",
       icon: Users,
@@ -355,13 +355,15 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
 
         // Events
         case "events-create":
-          return <CreateEventForm />
+          // return <CreateEventForm />
         case "events-all":
-          return <EventManagement />
+          // return <EventManagement />
         case "events-categories":
           return <div>Event Categories - Coming Soon</div>
         case "events-approvals":
           return <div>Event Approvals - Coming Soon</div>
+        case "bulk-data":
+          return <div>Event Bulk uploade - Coming Soon</div>
 
         default:
           break
