@@ -15,6 +15,8 @@ export interface TicketType {
 }
 
 export interface EventFormData {
+  registrationStart: any
+  registrationEnd: any
   // Basic Info
   title: string
   slug: string

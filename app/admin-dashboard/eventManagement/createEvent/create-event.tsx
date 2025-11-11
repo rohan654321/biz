@@ -1,17 +1,21 @@
+// Updated CreateEventForm component
 "use client"
 
 import { useState, useRef } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Save, Eye } from "lucide-react"
+import { Save, Eye, Loader2 } from "lucide-react"
 import { FormProgress } from "./form-progress"
 import { BasicInfoTab } from "./basic-info-tab"
 import { EventDetailsTab } from "./event-details-tab"
 import { PricingTab } from "./pricing-tab"
 import { MediaTab } from "./media-tab"
 import { PreviewTab } from "./preview-tab"
-import type { EventFormData } from "./types"
+import { SelectOrganizer } from "./select-organizer"
+import { SelectVenue } from "./select-venue"
+import { SelectSpeakers } from "./select-speakers"
+import type { EventFormData, SpaceCost } from "./types"
 
 export function CreateEventForm() {
   const [activeTab, setActiveTab] = useState("basic")
@@ -31,6 +35,8 @@ export function CreateEventForm() {
     venue: "",
     city: "",
     address: "",
+    registrationStart: "",
+    registrationEnd: "",
     currency: "USD",
     generalPrice: 0,
     studentPrice: 0,
@@ -72,6 +78,11 @@ export function CreateEventForm() {
   const [isUploadingImages, setIsUploadingImages] = useState(false)
   const [isUploadingBrochure, setIsUploadingBrochure] = useState(false)
   const [isUploadingLayoutPlan, setIsUploadingLayoutPlan] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // New state for organizer, venue, and speakers
+  const [organizerId, setOrganizerId] = useState("")
+  const [speakerSessions, setSpeakerSessions] = useState<any[]>([])
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const brochureInputRef = useRef<HTMLInputElement>(null)
@@ -94,20 +105,31 @@ export function CreateEventForm() {
   }
 
   const handleVenueChange = (venueData: {
-  venueId?: string
-  venueName: string
-  venueAddress: string
-  city: string
-}) => {
-  setFormData((prev) => ({
-    ...prev,
-    venue: venueData.venueName, // ✅ just store name
-    address: venueData.venueAddress,
-    city: venueData.city,
-  }))
-}
+    venueId?: string
+    venueName: string
+    venueAddress: string
+    city: string
+    state?: string
+    country?: string
+  }) => {
+    setFormData((prev) => ({
+      ...prev,
+      venueId: venueData.venueId || "",
+      venue: venueData.venueName,
+      address: venueData.venueAddress,
+      city: venueData.city,
+    }))
+  }
 
+  const handleOrganizerChange = (organizerId: string, organizerEmail?: string) => {
+    setOrganizerId(organizerId)
+  }
 
+  const handleSpeakerSessionsChange = (sessions: any[]) => {
+    setSpeakerSessions(sessions)
+  }
+
+  // Highlight handlers
   const handleAddHighlight = () => {
     if (newHighlight.trim()) {
       setFormData((prev) => ({
@@ -125,6 +147,7 @@ export function CreateEventForm() {
     }))
   }
 
+  // Tag handlers
   const handleAddTag = () => {
     if (newTag.trim()) {
       setFormData((prev) => ({
@@ -142,6 +165,7 @@ export function CreateEventForm() {
     }))
   }
 
+  // Space cost handlers
   const handleAddCustomSpaceCost = () => {
     setFormData((prev) => ({
       ...prev,
@@ -172,6 +196,7 @@ export function CreateEventForm() {
     }))
   }
 
+  // Image handlers
   const handleRemoveImage = (index: number) => {
     setFormData((prev) => ({
       ...prev,
@@ -179,9 +204,60 @@ export function CreateEventForm() {
     }))
   }
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     console.log("Publishing event:", formData)
-    // Add your publish logic here
+    
+    // Validate required fields
+    const errors: any = {}
+    if (!formData.title) errors.title = "Title is required"
+    if (!formData.description) errors.description = "Description is required"
+    if (!formData.startDate) errors.startDate = "Start date is required"
+    if (!formData.endDate) errors.endDate = "End date is required"
+    
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors)
+      setActiveTab("basic")
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const eventData = {
+        ...formData,
+        organizerId: organizerId,
+        speakerSessions: speakerSessions,
+        // Convert dates to ISO string if needed
+        startDate: new Date(formData.startDate).toISOString(),
+        endDate: new Date(formData.endDate).toISOString(),
+        registrationStart: formData.registrationStart ? new Date(formData.registrationStart).toISOString() : new Date(formData.startDate).toISOString(),
+        registrationEnd: formData.registrationEnd ? new Date(formData.registrationEnd).toISOString() : new Date(formData.endDate).toISOString(),
+      }
+
+      const response = await fetch('/api/admin/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(eventData),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        console.log("Event created successfully:", result)
+        alert("Event created successfully!")
+        // Redirect or reset form
+      } else {
+        console.error("Error creating event:", result)
+        alert(`Error creating event: ${result.error}`)
+      }
+    } catch (error) {
+      console.error("Error creating event:", error)
+      alert("Error creating event. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const calculateProgress = () => {
@@ -215,9 +291,17 @@ export function CreateEventForm() {
                 <Save className="h-4 w-4 mr-2" />
                 Save Draft
               </Button>
-              <Button size="sm" onClick={handlePublish}>
-                <Eye className="h-4 w-4 mr-2" />
-                Publish Event
+              <Button 
+                size="sm" 
+                onClick={handlePublish}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Eye className="h-4 w-4 mr-2" />
+                )}
+                {isSubmitting ? "Publishing..." : "Publish Event"}
               </Button>
             </div>
           </div>
@@ -226,8 +310,11 @@ export function CreateEventForm() {
           <FormProgress completionPercentage={calculateProgress()} />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-8">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
+              <TabsTrigger value="organizer">Organizer</TabsTrigger>
+              <TabsTrigger value="venue">Venue</TabsTrigger>
+              <TabsTrigger value="speakers">Speakers</TabsTrigger>
               <TabsTrigger value="details">Event Details</TabsTrigger>
               <TabsTrigger value="pricing">Pricing</TabsTrigger>
               <TabsTrigger value="media">Media</TabsTrigger>
@@ -243,6 +330,27 @@ export function CreateEventForm() {
                 onFormChange={handleFormChange}
                 onCategoryToggle={handleCategoryToggle}
                 onVenueChange={handleVenueChange}
+              />
+            </TabsContent>
+
+            <TabsContent value="organizer" className="space-y-6 mt-6">
+              <SelectOrganizer
+                selectedOrganizerId={organizerId}
+                onOrganizerChange={handleOrganizerChange}
+              />
+            </TabsContent>
+
+            <TabsContent value="venue" className="space-y-6 mt-6">
+              <SelectVenue
+                selectedVenueId={formData.venueId}
+                onVenueChange={handleVenueChange}
+              />
+            </TabsContent>
+
+            <TabsContent value="speakers" className="space-y-6 mt-6">
+              <SelectSpeakers
+                speakerSessions={speakerSessions}
+                onSpeakerSessionsChange={handleSpeakerSessionsChange}
               />
             </TabsContent>
 
@@ -280,7 +388,7 @@ export function CreateEventForm() {
                 isUploadingBrochure={isUploadingBrochure}
                 isUploadingLayoutPlan={isUploadingLayoutPlan}
                 fileInputRef={fileInputRef}
-                brochureInputRef={brochureInputRef }
+                brochureInputRef={brochureInputRef}
                 layoutPlanInputRef={layoutPlanInputRef}
                 onFormChange={handleFormChange}
                 onRemoveImage={handleRemoveImage}
