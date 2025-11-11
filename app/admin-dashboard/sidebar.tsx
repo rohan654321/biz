@@ -357,7 +357,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         case "events-create":
           // return <CreateEventForm />
         case "events-all":
-          return <EventManagement />
+          // return <EventManagement />
         case "events-categories":
           return <div>Event Categories - Coming Soon</div>
         case "events-approvals":
