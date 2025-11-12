@@ -1,53 +1,47 @@
 import { prisma } from "@/lib/prisma"
 
-export async function assignCategoriesToEvent(eventId: string, categoryIds: string[]) {
-  // First, remove existing category associations
-  await prisma.eventsOnCategories.deleteMany({
-    where: { eventId }
+export async function getCategoryWithEventCount(categoryId: string) {
+  const category = await prisma.eventCategory.findUnique({
+    where: { id: categoryId }
   })
 
-  // Then create new associations
-  if (categoryIds.length > 0) {
-    await prisma.eventsOnCategories.createMany({
-      data: categoryIds.map(categoryId => ({
-        eventId,
-        categoryId
-      }))
-    })
+  if (!category) {
+    return null
   }
-}
 
-export async function getEventCategories(eventId: string) {
-  const eventWithCategories = await prisma.event.findUnique({
-    where: { id: eventId },
-    include: {
-      categories: {
-        include: {
-          category: true
-        }
-      }
+  const eventCount = await prisma.eventsOnCategories.count({
+    where: {
+      categoryId: categoryId
     }
   })
 
-  return eventWithCategories?.categories.map(ec => ec.category) || []
+  return {
+    ...category,
+    eventCount
+  }
 }
 
-export async function getCategoriesWithEventCount() {
+export async function getAllCategoriesWithEventCounts() {
   const categories = await prisma.eventCategory.findMany({
-    include: {
-      _count: {
-        select: {
-          events: true
-        }
-      }
-    },
     orderBy: {
       name: 'asc'
     }
   })
 
-  return categories.map(category => ({
-    ...category,
-    eventCount: category._count.events
-  }))
+  const categoriesWithCounts = await Promise.all(
+    categories.map(async (category) => {
+      const eventCount = await prisma.eventsOnCategories.count({
+        where: {
+          categoryId: category.id
+        }
+      })
+      
+      return {
+        ...category,
+        eventCount
+      }
+    })
+  )
+
+  return categoriesWithCounts
 }
