@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 
 // GET all categories
+// GET all categories
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -15,7 +16,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const includeCounts = searchParams.get('includeCounts') === 'true'
 
-    // Get all categories
     const categories = await prisma.eventCategory.findMany({
       orderBy: {
         name: 'asc'
@@ -25,18 +25,33 @@ export async function GET(request: NextRequest) {
     let categoriesWithData = categories
 
     if (includeCounts) {
-      // Get event counts for each category
+      // Get event counts from BOTH systems
       const categoriesWithEventCounts = await Promise.all(
         categories.map(async (category) => {
-          const eventCount = await prisma.eventsOnCategories.count({
+          // Count from new system (EventsOnCategories)
+          const newSystemCount = await prisma.eventsOnCategories.count({
             where: {
               categoryId: category.id
             }
           })
+
+          // Count from old system (event.category array field)
+          const oldSystemCount = await prisma.event.count({
+            where: {
+              category: {
+                has: category.name
+              },
+              isPublic: true
+            }
+          })
+
+          const totalEventCount = newSystemCount + oldSystemCount
           
           return {
             ...category,
-            eventCount
+            eventCount: totalEventCount,
+            newSystemCount, // for debugging
+            oldSystemCount  // for debugging
           }
         })
       )
@@ -63,7 +78,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, description, icon, color, isActive = true } = await request.json()
+    const { name, icon, color, isActive = true } = await request.json()
 
     if (!name) {
       return NextResponse.json(
@@ -92,7 +107,6 @@ export async function POST(request: NextRequest) {
     const category = await prisma.eventCategory.create({
       data: {
         name,
-        description,
         icon,
         color,
         isActive

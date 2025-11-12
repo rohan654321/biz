@@ -358,7 +358,8 @@ model Event {
 
   // Relationships
   registrations    EventRegistration[]
-  // categories       EventCategory[]
+  countries EventsOnCountries[]
+  cities    EventsOnCities[]
   categories       EventsOnCategories[]
   speakerSessions  SpeakerSession[]
   exhibitorBooths  ExhibitorBooth[]
@@ -1689,7 +1690,7 @@ enum BadgeSentStatus {
 model EventCategory {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String   @unique
-  description String?
+  // description String?
   icon        String?
   color       String?
   isActive    Boolean  @default(true)
@@ -1715,4 +1716,72 @@ model EventsOnCategories {
 
   @@unique([eventId, categoryId])
   @@map("events_on_categories")
+}
+model Country {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  code        String   @unique
+  flag        String?
+  flagPublicId String?  // Add this field
+  currency    String?
+  timezone    String?
+  isActive    Boolean  @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  cities     City[]
+  events     EventsOnCountries[]
+
+  @@map("countries")
+}
+
+model City {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   
+  countryId   String   @db.ObjectId
+  country     Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  latitude    Float?
+  longitude   Float?
+  timezone    String?
+  image       String?    // Cloudinary URL for city image
+  imagePublicId String?  // Cloudinary public ID
+  isActive    Boolean  @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  events     EventsOnCities[]
+
+  @@unique([name, countryId])
+  @@map("cities")
+}
+
+// Join tables for many-to-many relationships
+model EventsOnCountries {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId     String   @db.ObjectId
+  countryId   String   @db.ObjectId
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  country     Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  assignedAt  DateTime @default(now())
+
+  @@unique([eventId, countryId])
+  @@map("events_on_countries")
+}
+
+model EventsOnCities {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId     String   @db.ObjectId
+  cityId      String   @db.ObjectId
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  city        City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  assignedAt  DateTime @default(now())
+
+  @@unique([eventId, cityId])
+  @@map("events_on_cities")
 }

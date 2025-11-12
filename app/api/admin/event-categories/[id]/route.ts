@@ -60,7 +60,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, description, icon, color, isActive } = await request.json()
+    const { name, icon, color, isActive } = await request.json()
 
     // Check if category exists
     const existingCategory = await prisma.eventCategory.findUnique({
@@ -100,7 +100,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       where: { id: params.id },
       data: {
         name,
-        description,
         icon,
         color,
         isActive

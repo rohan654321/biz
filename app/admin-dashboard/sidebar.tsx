@@ -36,6 +36,7 @@ import SubAdminManagement from "./subadmin-management"
 import { CreateEventForm } from "./eventManagement/createEvent/create-event"
 import { signOut } from "next-auth/react"
 import EventCategories from "./event-categories"
+import CountriesManagement from "./countries-management"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -45,10 +46,10 @@ interface AdminDashboardProps {
 const MENU_PERMISSIONS = {
   dashboard: "dashboard-overview",
   events: "events",
-  "events-all": "events-all", // Fixed: was "events-all-events", now matches DB
+  "events-all": "events-all",
   "events-create": "events-create",
   "events-categories": "events-categories",
-  "events-approvals": "events-approvals", // Added: missing mapping
+  "events-approvals": "events-approvals",
   "bulk-data": "bulk-data",
   organizers: "organizers",
   "organizers-all": "organizers-all",
@@ -119,6 +120,10 @@ const MENU_PERMISSIONS = {
   "support-tickets": "support-tickets",
   "support-contacts": "support-contacts",
   "support-notes": "support-notes",
+  // Add permissions for locations
+  locations: "locations",
+  countries: "countries",
+  cities: "cities",
 }
 
 export default function AdminDashboard({ userRole, userPermissions }: AdminDashboardProps) {
@@ -172,6 +177,15 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Bulk Data", id: "bulk-data" },
       ],
     },
+    // {
+    //   title: "Locations",
+    //   icon: MapPin,
+    //   id: "locations",
+    //   subItems: [
+    //     { title: "Countries", id: "countries" },
+    //     { title: "Cities", id: "cities" },
+    //   ],
+    // },
     {
       title: "Organizer",
       icon: Users,
@@ -344,6 +358,9 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
     const section = activeSection
     const subSection = activeSubSection
 
+    console.log("Active Section:", section)
+    console.log("Active Sub Section:", subSection)
+
     // Handle sub-sections first
     if (subSection) {
       switch (subSection) {
@@ -355,17 +372,23 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
 
         // Events
         case "events-create":
-          // return <CreateEventForm />
+          return <div>Create Event - Coming Soon</div>
         case "events-all":
           // return <EventManagement />
         case "events-categories":
-          return <EventCategories/>
+          // return <EventCategories />
         case "events-approvals":
           return <div>Event Approvals - Coming Soon</div>
         case "bulk-data":
-          return <div>Event Bulk uploade - Coming Soon</div>
+          return <div>Event Bulk upload - Coming Soon</div>
+
+        // Locations
+        // case "countries":
+        // case "cities":
+        //   return <CountriesManagement activeTab={subSection as "countries" | "cities"} />
 
         default:
+          console.log("Unknown sub-section:", subSection)
           break
       }
     }
@@ -376,6 +399,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         return <DashboardOverview />
       case "events":
         return <EventManagement />
+      // case "locations":
+      // // return <CountriesManagement /> 
       case "organizers":
         return <OrganizerManagement />
       case "exhibitors":

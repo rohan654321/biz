@@ -1,59 +1,56 @@
 import { NextRequest, NextResponse } from "next/server"
-import { Cloudinary } from "@/lib/cloudinary"
+import { uploadToCloudinary } from "@/lib/cloudinary"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File
-    const folder = formData.get('folder') as string
+    const folder = formData.get('folder') as string || "uploads"
 
     if (!file) {
       return NextResponse.json(
-        { error: 'No file provided' },
+        { error: "No file provided" },
         { status: 400 }
       )
     }
 
-    // Convert file to buffer
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-
-    // Upload to Cloudinary
-    const result = await new Promise<any>((resolve, reject) => {
-      const uploadStream = Cloudinary.uploader.upload_stream(
-        {
-          folder: folder || 'event-categories/icons',
-          resource_type: 'auto',
-          transformation: [
-            {
-              width: 128,
-              height: 128,
-              crop: 'fit',
-              quality: 'auto',
-              format: 'webp'
-            }
-          ]
-        },
-        (error, result) => {
-          if (error) reject(error)
-          else resolve(result)
-        }
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      return NextResponse.json(
+        { error: "Only image files are allowed" },
+        { status: 400 }
       )
-      uploadStream.end(buffer)
-    })
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: "File size must be less than 5MB" },
+        { status: 400 }
+      )
+    }
+
+    const uploadResult = await uploadToCloudinary(file, folder)
 
     return NextResponse.json({
-      secure_url: result.secure_url,
-      public_id: result.public_id,
-      format: result.format,
-      width: result.width,
-      height: result.height
+      secure_url: uploadResult.secure_url,
+      public_id: uploadResult.public_id,
+      format: uploadResult.format,
+      bytes: uploadResult.bytes
     })
 
   } catch (error) {
-    console.error('Upload error:', error)
+    console.error("Upload error:", error)
     return NextResponse.json(
-      { error: 'Upload failed' },
+      { error: "Internal server error" },
       { status: 500 }
     )
   }

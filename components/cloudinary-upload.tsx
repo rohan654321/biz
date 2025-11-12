@@ -12,7 +12,7 @@ interface CloudinaryUploadProps {
 export default function CloudinaryUpload({ 
   onUploadComplete, 
   currentImage, 
-  folder = "event-categories/icons" 
+  folder = "flags" 
 }: CloudinaryUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImage || null)
@@ -82,7 +82,7 @@ export default function CloudinaryUpload({
         <div className="relative inline-block">
           <img
             src={previewUrl}
-            alt="Category icon preview"
+            alt="Flag preview"
             className="w-20 h-20 object-cover rounded-lg border border-gray-200"
           />
           <button
@@ -120,7 +120,7 @@ export default function CloudinaryUpload({
           <div className="flex flex-col items-center">
             <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
             <p className="text-sm font-medium text-gray-900 mb-1">
-              {previewUrl ? 'Change Icon' : 'Upload Icon'}
+              {previewUrl ? 'Change Flag' : 'Upload Flag'}
             </p>
             <p className="text-xs text-gray-500">
               PNG, JPG, SVG up to 5MB

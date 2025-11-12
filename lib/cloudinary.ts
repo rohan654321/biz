@@ -7,7 +7,7 @@ cloudinary.config({
   secure: true,
 })
 
-export const Cloudinary = cloudinary // Capitalized export for clarity
+export const Cloudinary = cloudinary
 
 export interface CloudinaryUploadResult {
   asset_id: string
@@ -25,6 +25,7 @@ export interface CloudinaryUploadResult {
   folder?: string
   original_filename?: string
 }
+
 export async function uploadToCloudinary(
   file: File,
   folder = "events/brochures"
@@ -32,14 +33,13 @@ export async function uploadToCloudinary(
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
 
-  // Determine resource type based on file type
-  const resourceType = file.type === 'application/pdf' ? 'raw' : 'auto'
+  const resourceType = file.type === 'application/pdf' ? 'raw' : 'image'
 
   return new Promise<CloudinaryUploadResult>((resolve, reject) => {
     const uploadStream = Cloudinary.uploader.upload_stream(
       {
         folder,
-        resource_type: resourceType, // Use 'raw' for PDFs
+        resource_type: resourceType,
         type: 'upload',
       },
       (error, result) => {

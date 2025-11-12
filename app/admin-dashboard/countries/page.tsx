@@ -10,52 +10,57 @@ import {
   CheckCircle,
   XCircle,
   MoreVertical,
-  Image
+  Globe
 } from "lucide-react"
 import CloudinaryUpload from "@/components/cloudinary-upload"
 
-interface EventCategory {
+interface Country {
   id: string
   name: string
-  icon?: string  // Cloudinary URL
-  color?: string
+  code: string
+  flag?: string
+  flagPublicId?: string
+  currency?: string
+  timezone?: string
   isActive: boolean
   eventCount: number
+  cityCount: number
   createdAt: string
   updatedAt: string
 }
 
-export default function EventCategories() {
-  const [categories, setCategories] = useState<EventCategory[]>([])
+export default function CountriesManagement() {
+  const [countries, setCountries] = useState<Country[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [showForm, setShowForm] = useState(false)
-  const [editingCategory, setEditingCategory] = useState<EventCategory | null>(null)
+  const [editingCountry, setEditingCountry] = useState<Country | null>(null)
+  
   const [formData, setFormData] = useState({
     name: "",
-   
-    icon: "",  // Cloudinary URL
-    color: "#3B82F6",
+    code: "",
+    flag: "",
+    currency: "USD",
+    timezone: "UTC",
     isActive: true
   })
 
   useEffect(() => {
-    fetchCategories()
+    fetchCountries()
   }, [])
 
-  const fetchCategories = async () => {
+  const fetchCountries = async () => {
     try {
       setLoading(true)
-      const response = await fetch("/api/admin/event-categories?includeCounts=true")
-      
+      const response = await fetch("/api/admin/countries?includeCounts=true")
       if (response.ok) {
         const data = await response.json()
-        setCategories(data)
+        setCountries(data)
       } else {
-        console.error("Failed to fetch categories")
+        console.error("Failed to fetch countries")
       }
     } catch (error) {
-      console.error("Error fetching categories:", error)
+      console.error("Error fetching countries:", error)
     } finally {
       setLoading(false)
     }
@@ -65,11 +70,11 @@ export default function EventCategories() {
     e.preventDefault()
     
     try {
-      const url = editingCategory 
-        ? `/api/admin/event-categories/${editingCategory.id}`
-        : "/api/admin/event-categories"
+      const url = editingCountry 
+        ? `/api/admin/countries/${editingCountry.id}`
+        : "/api/admin/countries"
       
-      const method = editingCategory ? "PUT" : "POST"
+      const method = editingCountry ? "PUT" : "POST"
       
       const response = await fetch(url, {
         method,
@@ -81,68 +86,58 @@ export default function EventCategories() {
 
       if (response.ok) {
         setShowForm(false)
-        setEditingCategory(null)
+        setEditingCountry(null)
         setFormData({
           name: "",
-       
-          icon: "",
-          color: "#3B82F6",
+          code: "",
+          flag: "",
+          currency: "USD",
+          timezone: "UTC",
           isActive: true
         })
-        fetchCategories()
+        fetchCountries()
       } else {
         const error = await response.json()
-        alert(error.error || "Failed to save category")
+        alert(error.error || "Failed to save country")
       }
     } catch (error) {
-      console.error("Error saving category:", error)
-      alert("Failed to save category")
+      console.error("Error saving country:", error)
+      alert("Failed to save country")
     }
   }
 
-  const handleEdit = (category: EventCategory) => {
-    setEditingCategory(category)
-    setFormData({
-      name: category.name,
-      
-      icon: category.icon || "",
-      color: category.color || "#3B82F6",
-      isActive: category.isActive
-    })
-    setShowForm(true)
-  }
-
-  const handleDelete = async (categoryId: string) => {
-    if (!confirm("Are you sure you want to delete this category?")) {
+  const handleDelete = async (countryId: string) => {
+    if (!confirm("Are you sure you want to delete this country?")) {
       return
     }
 
     try {
-      const response = await fetch(`/api/admin/event-categories/${categoryId}`, {
+      const response = await fetch(`/api/admin/countries/${countryId}`, {
         method: "DELETE",
       })
 
       if (response.ok) {
-        fetchCategories()
+        fetchCountries()
       } else {
         const error = await response.json()
-        alert(error.error || "Failed to delete category")
+        alert(error.error || "Failed to delete country")
       }
     } catch (error) {
-      console.error("Error deleting category:", error)
-      alert("Failed to delete category")
+      console.error("Error deleting country:", error)
+      alert("Failed to delete country")
     }
   }
 
-  const handleIconUpload = (iconUrl: string) => {
+  const handleFlagUpload = (flagUrl: string) => {
     setFormData(prev => ({
       ...prev,
-      icon: iconUrl
+      flag: flagUrl
     }))
   }
 
-  const filteredCategories = categories.filter(category =>
-    category.name.toLowerCase().includes(searchTerm.toLowerCase()) 
+  const filteredCountries = countries.filter(country =>
+    country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    country.code.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   if (loading) {
@@ -158,17 +153,18 @@ export default function EventCategories() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Event Categories</h1>
-          <p className="text-gray-600">Manage event categories and their properties</p>
+          <h1 className="text-2xl font-bold text-gray-900">Countries Management</h1>
+          <p className="text-gray-600">Manage countries for events</p>
         </div>
         <button
           onClick={() => {
-            setEditingCategory(null)
+            setEditingCountry(null)
             setFormData({
               name: "",
-              // description: "",
-              icon: "",
-              color: "#3B82F6",
+              code: "",
+              flag: "",
+              currency: "USD",
+              timezone: "UTC",
               isActive: true
             })
             setShowForm(true)
@@ -176,17 +172,17 @@ export default function EventCategories() {
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          Add Category
+          Add Country
         </button>
       </div>
 
-      {/* Search and Filter */}
+      {/* Search and Actions */}
       <div className="flex gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
-            placeholder="Search categories..."
+            placeholder="Search countries..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -198,37 +194,31 @@ export default function EventCategories() {
         </button>
       </div>
 
-      {/* Categories Grid */}
+      {/* Countries Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCategories.map((category) => (
+        {filteredCountries.map((country) => (
           <div
-            key={category.id}
+            key={country.id}
             className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
           >
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-3">
-                {category.icon ? (
-                  <div 
-                    className="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden"
-                    style={{ backgroundColor: category.color + '20' }}
-                  >
+                {country.flag ? (
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gray-100 overflow-hidden">
                     <img 
-                      src={category.icon} 
-                      alt={category.name}
-                      className="w-8 h-8 object-contain"
+                      src={country.flag} 
+                      alt={`${country.name} flag`}
+                      className="w-12 h-12 object-cover"
                     />
                   </div>
                 ) : (
-                  <div 
-                    className="w-12 h-12 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: category.color + '20', color: category.color }}
-                  >
-                    <Image className="w-6 h-6" />
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-blue-100 text-blue-600">
+                    <Globe className="w-6 h-6" />
                   </div>
                 )}
                 <div>
-                  <h3 className="font-semibold text-gray-900">{category.name}</h3>
-                  <p className="text-sm text-gray-600">{category.eventCount} events</p>
+                  <h3 className="font-semibold text-gray-900">{country.name}</h3>
+                  <p className="text-sm text-gray-600">{country.code}</p>
                 </div>
               </div>
               <div className="relative">
@@ -238,28 +228,48 @@ export default function EventCategories() {
               </div>
             </div>
 
-        
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-gray-900">{country.eventCount}</p>
+                <p className="text-xs text-gray-600">Events</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-gray-900">{country.cityCount}</p>
+                <p className="text-xs text-gray-600">Cities</p>
+              </div>
+            </div>
 
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
-                {category.isActive ? (
+                {country.isActive ? (
                   <CheckCircle className="w-4 h-4 text-green-600" />
                 ) : (
                   <XCircle className="w-4 h-4 text-red-600" />
                 )}
-                <span className={`text-sm ${category.isActive ? 'text-green-600' : 'text-red-600'}`}>
-                  {category.isActive ? 'Active' : 'Inactive'}
+                <span className={`text-sm ${country.isActive ? 'text-green-600' : 'text-red-600'}`}>
+                  {country.isActive ? 'Active' : 'Inactive'}
                 </span>
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => handleEdit(category)}
+                  onClick={() => {
+                    setEditingCountry(country)
+                    setFormData({
+                      name: country.name,
+                      code: country.code,
+                      flag: country.flag || "",
+                      currency: country.currency || "USD",
+                      timezone: country.timezone || "UTC",
+                      isActive: country.isActive
+                    })
+                    setShowForm(true)
+                  }}
                   className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                 >
                   <Edit3 className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => handleDelete(category.id)}
+                  onClick={() => handleDelete(country.id)}
                   className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -270,29 +280,30 @@ export default function EventCategories() {
         ))}
       </div>
 
-      {filteredCategories.length === 0 && (
+      {/* Empty State */}
+      {filteredCountries.length === 0 && (
         <div className="text-center py-12">
-          <div className="text-gray-400 text-6xl mb-4">📂</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No categories found</h3>
+          <div className="text-gray-400 text-6xl mb-4">🌎</div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No countries found</h3>
           <p className="text-gray-600">
-            {searchTerm ? "Try adjusting your search terms" : "Get started by creating your first category"}
+            {searchTerm ? "Try adjusting your search terms" : "Get started by creating your first country"}
           </p>
         </div>
       )}
 
-      {/* Add/Edit Form Modal */}
+      {/* Country Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <h2 className="text-xl font-bold mb-4">
-                {editingCategory ? 'Edit Category' : 'Add New Category'}
+                {editingCountry ? 'Edit Country' : 'Add New Country'}
               </h2>
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category Name *
+                    Country Name *
                   </label>
                   <input
                     type="text"
@@ -300,48 +311,62 @@ export default function EventCategories() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter category name"
+                    placeholder="Enter country name"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
+                    Country Code *
                   </label>
-         
+                  <input
+                    type="text"
+                    required
+                    maxLength={3}
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
+                    placeholder="e.g., USA, IND, UK"
+                  />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category Icon
+                    Country Flag
                   </label>
                   <CloudinaryUpload
-                    onUploadComplete={handleIconUpload}
-                    currentImage={formData.icon}
-                    folder="event-categories/icons"
+                    onUploadComplete={handleFlagUpload}
+                    currentImage={formData.flag}
+                    folder="flags"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Upload a custom icon image for this category
+                    Upload a flag image for this country
                   </p>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Color
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={formData.color}
-                      onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                      className="w-12 h-10 rounded border border-gray-300"
-                    />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Currency
+                    </label>
                     <input
                       type="text"
-                      value={formData.color}
-                      onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="#3B82F6"
+                      value={formData.currency}
+                      onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="e.g., USD, INR, EUR"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Timezone
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.timezone}
+                      onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="e.g., UTC, EST, IST"
                     />
                   </div>
                 </div>
@@ -355,7 +380,7 @@ export default function EventCategories() {
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <label htmlFor="isActive" className="text-sm text-gray-700">
-                    Active Category
+                    Active Country
                   </label>
                 </div>
 
@@ -364,13 +389,13 @@ export default function EventCategories() {
                     type="submit"
                     className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors"
                   >
-                    {editingCategory ? 'Update Category' : 'Create Category'}
+                    {editingCountry ? 'Update Country' : 'Create Country'}
                   </button>
                   <button
                     type="button"
                     onClick={() => {
                       setShowForm(false)
-                      setEditingCategory(null)
+                      setEditingCountry(null)
                     }}
                     className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors"
                   >
