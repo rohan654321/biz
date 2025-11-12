@@ -35,6 +35,7 @@ import SystemSettings from "./system-settings"
 import SubAdminManagement from "./subadmin-management"
 import { CreateEventForm } from "./eventManagement/createEvent/create-event"
 import { signOut } from "next-auth/react"
+import EventCategories from "./event-categories"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -168,7 +169,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "All Events", id: "events-all" },
         { title: "Create New Event", id: "events-create" },
         { title: "Event Categories", id: "events-categories" },
-        { title: "Event Approvals", id: "events-approvals" }, // Added Event Approvals menu item
         { title: "Bulk Data", id: "bulk-data" },
       ],
     },
@@ -359,7 +359,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         case "events-all":
           // return <EventManagement />
         case "events-categories":
-          return <div>Event Categories - Coming Soon</div>
+          return <EventCategories/>
         case "events-approvals":
           return <div>Event Approvals - Coming Soon</div>
         case "bulk-data":

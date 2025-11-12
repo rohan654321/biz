@@ -358,6 +358,8 @@ model Event {
 
   // Relationships
   registrations    EventRegistration[]
+  // categories       EventCategory[]
+  categories       EventsOnCategories[]
   speakerSessions  SpeakerSession[]
   exhibitorBooths  ExhibitorBooth[]
   reviews          Review[]
@@ -1682,4 +1684,35 @@ enum BadgeSentStatus {
   SENT
   FAILED
   BOUNCED
+}
+
+model EventCategory {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  description String?
+  icon        String?
+  color       String?
+  isActive    Boolean  @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Explicit many-to-many relationship with Event
+  events EventsOnCategories[]
+
+  @@map("event_categories")
+}
+
+// Explicit join table for many-to-many relationship
+model EventsOnCategories {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  eventId     String        @db.ObjectId
+  categoryId  String        @db.ObjectId
+  event       Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  category    EventCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  assignedAt  DateTime      @default(now())
+
+  @@unique([eventId, categoryId])
+  @@map("events_on_categories")
 }
