@@ -372,11 +372,11 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
 
         // Events
         case "events-create":
-          return <div>Create Event - Coming Soon</div>
+          return  <div>Create Event - Coming Soon</div>   //<CreateEventForm/>
         case "events-all":
-          // return <EventManagement />
+          return   <div>Event Management - Coming Soon</div>    //<EventManagement />
         case "events-categories":
-          // return <EventCategories />
+          return  <div>Event Categories - Coming Soon</div>         //<EventCategories />
         case "events-approvals":
           return <div>Event Approvals - Coming Soon</div>
         case "bulk-data":
@@ -399,8 +399,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         return <DashboardOverview />
       case "events":
         return <EventManagement />
-      // case "locations":
-      // // return <CountriesManagement /> 
+      case "locations":
+      return <CountriesManagement /> 
       case "organizers":
         return <OrganizerManagement />
       case "exhibitors":

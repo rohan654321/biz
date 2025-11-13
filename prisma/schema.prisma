@@ -1724,6 +1724,7 @@ model Country {
   flag        String?
   flagPublicId String?  // Add this field
   currency    String?
+  isPermitted Boolean   @default(false)
   timezone    String?
   isActive    Boolean  @default(true)
 
@@ -1749,6 +1750,7 @@ model City {
   image       String?    // Cloudinary URL for city image
   imagePublicId String?  // Cloudinary public ID
   isActive    Boolean  @default(true)
+  isPermitted Boolean  @default(false)
 
   // Timestamps
   createdAt DateTime @default(now())

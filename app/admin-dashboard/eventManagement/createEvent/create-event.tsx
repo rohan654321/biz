@@ -80,6 +80,7 @@ export function CreateEventForm() {
   const [isUploadingLayoutPlan, setIsUploadingLayoutPlan] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   
+  
   // New state for organizer, venue, and speakers
   const [organizerId, setOrganizerId] = useState("")
   const [speakerSessions, setSpeakerSessions] = useState<any[]>([])
@@ -259,6 +260,19 @@ export function CreateEventForm() {
       setIsSubmitting(false)
     }
   }
+  const handleUploadStatusChange = (type: 'images' | 'brochure' | 'layout', status: boolean) => {
+  switch (type) {
+    case 'images':
+      setIsUploadingImages(status)
+      break
+    case 'brochure':
+      setIsUploadingBrochure(status)
+      break
+    case 'layout':
+      setIsUploadingLayoutPlan(status)
+      break
+  }
+}
 
   const calculateProgress = () => {
     const fields = [
@@ -381,19 +395,20 @@ export function CreateEventForm() {
               />
             </TabsContent>
 
-            <TabsContent value="media" className="space-y-6 mt-6">
-              <MediaTab
-                formData={formData}
-                isUploadingImages={isUploadingImages}
-                isUploadingBrochure={isUploadingBrochure}
-                isUploadingLayoutPlan={isUploadingLayoutPlan}
-                fileInputRef={fileInputRef}
-                brochureInputRef={brochureInputRef}
-                layoutPlanInputRef={layoutPlanInputRef}
-                onFormChange={handleFormChange}
-                onRemoveImage={handleRemoveImage}
-              />
-            </TabsContent>
+<TabsContent value="media" className="space-y-6 mt-6">
+  <MediaTab
+    formData={formData}
+    isUploadingImages={isUploadingImages}
+    isUploadingBrochure={isUploadingBrochure}
+    isUploadingLayoutPlan={isUploadingLayoutPlan}
+    fileInputRef={fileInputRef}
+    brochureInputRef={brochureInputRef}
+    layoutPlanInputRef={layoutPlanInputRef}
+    onFormChange={handleFormChange}
+    onRemoveImage={handleRemoveImage}
+    onUploadStatusChange={handleUploadStatusChange}
+  />
+</TabsContent>
 
             <TabsContent value="preview" className="space-y-6 mt-6">
               <PreviewTab formData={formData} />

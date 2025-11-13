@@ -92,93 +92,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const formData = await request.formData()
-    const name = formData.get('name') as string
-    const countryId = formData.get('countryId') as string
-    const latitude = formData.get('latitude') as string
-    const longitude = formData.get('longitude') as string
-    const timezone = formData.get('timezone') as string
-    const imageFile = formData.get('image') as File | null
-    const isActive = formData.get('isActive') === 'true'
+    // Check content type
+    const contentType = request.headers.get('content-type') || ''
 
-    if (!name || !countryId) {
+    if (contentType.includes('multipart/form-data')) {
+      // Handle form data with file upload
+      return await handleCityFormDataRequest(request)
+    } else if (contentType.includes('application/json')) {
+      // Handle JSON data (without file upload)
+      return await handleCityJsonRequest(request)
+    } else {
       return NextResponse.json(
-        { error: "City name and country are required" },
+        { error: "Unsupported content type" },
         { status: 400 }
       )
     }
-
-    // Check if country exists
-    const country = await prisma.country.findUnique({
-      where: { id: countryId }
-    })
-
-    if (!country) {
-      return NextResponse.json(
-        { error: "Country not found" },
-        { status: 404 }
-      )
-    }
-
-    // Check if city already exists in this country
-    const existingCity = await prisma.city.findFirst({
-      where: {
-        name: { equals: name, mode: 'insensitive' },
-        countryId: countryId
-      }
-    })
-
-    if (existingCity) {
-      return NextResponse.json(
-        { error: "City with this name already exists in the selected country" },
-        { status: 409 }
-      )
-    }
-
-    let imageUrl = ""
-    let imagePublicId = ""
-
-    // Upload city image to Cloudinary if provided
-    if (imageFile && imageFile.size > 0) {
-      try {
-        const uploadResult = await uploadToCloudinary(imageFile, "cities")
-        imageUrl = uploadResult.secure_url
-        imagePublicId = uploadResult.public_id
-      } catch (uploadError) {
-        console.error("Error uploading city image:", uploadError)
-        return NextResponse.json(
-          { error: "Failed to upload city image" },
-          { status: 500 }
-        )
-      }
-    }
-
-    const city = await prisma.city.create({
-      data: {
-        name,
-        countryId,
-        latitude: latitude ? parseFloat(latitude) : undefined,
-        longitude: longitude ? parseFloat(longitude) : undefined,
-        timezone,
-        image: imageUrl,
-        imagePublicId,
-        isActive
-      },
-      include: {
-        country: {
-          select: {
-            id: true,
-            name: true,
-            code: true
-          }
-        }
-      }
-    })
-
-    return NextResponse.json({
-      ...city,
-      eventCount: 0
-    }, { status: 201 })
   } catch (error) {
     console.error("Error creating city:", error)
     return NextResponse.json(
@@ -186,4 +114,161 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+// Handle form data requests (with file upload)
+async function handleCityFormDataRequest(request: NextRequest) {
+  const formData = await request.formData()
+  const name = formData.get('name') as string
+  const countryId = formData.get('countryId') as string
+  const latitude = formData.get('latitude') as string
+  const longitude = formData.get('longitude') as string
+  const timezone = formData.get('timezone') as string
+  const imageFile = formData.get('image') as File | null
+  const isActive = formData.get('isActive') === 'true'
+
+  if (!name || !countryId) {
+    return NextResponse.json(
+      { error: "City name and country are required" },
+      { status: 400 }
+    )
+  }
+
+  // Check if country exists
+  const country = await prisma.country.findUnique({
+    where: { id: countryId }
+  })
+
+  if (!country) {
+    return NextResponse.json(
+      { error: "Country not found" },
+      { status: 404 }
+    )
+  }
+
+  // Check if city already exists in this country
+  const existingCity = await prisma.city.findFirst({
+    where: {
+      name: { equals: name, mode: 'insensitive' },
+      countryId: countryId
+    }
+  })
+
+  if (existingCity) {
+    return NextResponse.json(
+      { error: "City with this name already exists in the selected country" },
+      { status: 409 }
+    )
+  }
+
+  let imageUrl = ""
+  let imagePublicId = ""
+
+  // Upload city image to Cloudinary if provided
+  if (imageFile && imageFile.size > 0) {
+    try {
+      const uploadResult = await uploadToCloudinary(imageFile, "cities")
+      imageUrl = uploadResult.secure_url
+      imagePublicId = uploadResult.public_id
+    } catch (uploadError) {
+      console.error("Error uploading city image:", uploadError)
+      return NextResponse.json(
+        { error: "Failed to upload city image" },
+        { status: 500 }
+      )
+    }
+  }
+
+  const city = await prisma.city.create({
+    data: {
+      name,
+      countryId,
+      latitude: latitude ? parseFloat(latitude) : undefined,
+      longitude: longitude ? parseFloat(longitude) : undefined,
+      timezone,
+      image: imageUrl,
+      imagePublicId,
+      isActive
+    },
+    include: {
+      country: {
+        select: {
+          id: true,
+          name: true,
+          code: true
+        }
+      }
+    }
+  })
+
+  return NextResponse.json({
+    ...city,
+    eventCount: 0
+  }, { status: 201 })
+}
+
+// Handle JSON requests (without file upload)
+async function handleCityJsonRequest(request: NextRequest) {
+  const jsonData = await request.json()
+  const { name, countryId, latitude, longitude, timezone, image, isActive } = jsonData
+
+  if (!name || !countryId) {
+    return NextResponse.json(
+      { error: "City name and country are required" },
+      { status: 400 }
+    )
+  }
+
+  // Check if country exists
+  const country = await prisma.country.findUnique({
+    where: { id: countryId }
+  })
+
+  if (!country) {
+    return NextResponse.json(
+      { error: "Country not found" },
+      { status: 404 }
+    )
+  }
+
+  // Check if city already exists in this country
+  const existingCity = await prisma.city.findFirst({
+    where: {
+      name: { equals: name, mode: 'insensitive' },
+      countryId: countryId
+    }
+  })
+
+  if (existingCity) {
+    return NextResponse.json(
+      { error: "City with this name already exists in the selected country" },
+      { status: 409 }
+    )
+  }
+
+  const city = await prisma.city.create({
+    data: {
+      name,
+      countryId,
+      latitude: latitude ? parseFloat(latitude) : undefined,
+      longitude: longitude ? parseFloat(longitude) : undefined,
+      timezone: timezone || "UTC",
+      image: image || "",
+      isActive: isActive !== undefined ? isActive : true
+    },
+    include: {
+      country: {
+        select: {
+          id: true,
+          name: true,
+          code: true
+        }
+      }
+    }
+  })
+
+  return NextResponse.json({
+    ...city,
+    eventCount: 0
+  }, { status: 201 })
 }

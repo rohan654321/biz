@@ -41,12 +41,43 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Get event count from both systems
-    const newSystemCount = await prisma.eventsOnCountries.count({
+    // Get all active cities for this country
+    const countryCities = await prisma.city.findMany({
+      where: { 
+        countryId: params.id,
+        isActive: true 
+      },
+      select: { id: true, name: true }
+    })
+
+    let totalEventCount = 0
+
+    // Count events for each city in this country
+    for (const city of countryCities) {
+      // Count from new system (EventsOnCities)
+      const newSystemCount = await prisma.eventsOnCities.count({
+        where: { cityId: city.id }
+      })
+
+      // Count from old system (events with venue in this city)
+      const oldSystemCount = await prisma.event.count({
+        where: {
+          venue: {
+            venueCity: city.name
+          },
+          isPublic: true
+        }
+      })
+
+      totalEventCount += newSystemCount + oldSystemCount
+    }
+
+    // Also count country-level events
+    const countryNewSystemCount = await prisma.eventsOnCountries.count({
       where: { countryId: params.id }
     })
 
-    const oldSystemCount = await prisma.event.count({
+    const countryOldSystemCount = await prisma.event.count({
       where: {
         OR: [
           { venue: { venueCountry: country.name } },
@@ -57,19 +88,19 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
     })
 
-    console.log(`Single Country ${country.name}: New Count: ${newSystemCount}, Old Count: ${oldSystemCount}`)
+    totalEventCount += countryNewSystemCount + countryOldSystemCount
 
     return NextResponse.json({
       ...country,
-      eventCount: newSystemCount + oldSystemCount,
+      eventCount: totalEventCount,
       cities: country.cities.map(city => ({
         ...city,
         eventCount: city._count.events
       })),
       debug: {
-        newSystemCount,
-        oldSystemCount,
-        totalEventCount: newSystemCount + oldSystemCount
+        totalEventCount,
+        cityCount: countryCities.length,
+        countryLevelEvents: countryNewSystemCount + countryOldSystemCount
       }
     })
   } catch (error) {
@@ -90,133 +121,21 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const formData = await request.formData()
-    const name = formData.get('name') as string
-    const code = formData.get('code') as string
-    const flagFile = formData.get('flag') as File | null
-    const removeFlag = formData.get('removeFlag') === 'true'
-    const currency = formData.get('currency') as string
-    const timezone = formData.get('timezone') as string
-    const isActive = formData.get('isActive') === 'true'
+    // Check content type
+    const contentType = request.headers.get('content-type') || ''
 
-    // Check if country exists
-    const existingCountry = await prisma.country.findUnique({
-      where: { id: params.id }
-    })
-
-    if (!existingCountry) {
+    if (contentType.includes('multipart/form-data')) {
+      // Handle form data with file upload
+      return await handleFormDataRequest(request, params.id)
+    } else if (contentType.includes('application/json')) {
+      // Handle JSON data (without file upload)
+      return await handleJsonRequest(request, params.id)
+    } else {
       return NextResponse.json(
-        { error: "Country not found" },
-        { status: 404 }
+        { error: "Unsupported content type" },
+        { status: 400 }
       )
     }
-
-    // Check for duplicates
-    if ((name && name !== existingCountry.name) || (code && code !== existingCountry.code)) {
-      const duplicateCountry = await prisma.country.findFirst({
-        where: {
-          OR: [
-            { name: { equals: name, mode: 'insensitive' } },
-            { code: { equals: code?.toUpperCase(), mode: 'insensitive' } }
-          ],
-          id: { not: params.id }
-        }
-      })
-
-      if (duplicateCountry) {
-        return NextResponse.json(
-          { error: "Country with this name or code already exists" },
-          { status: 409 }
-        )
-      }
-    }
-
-    let flagUrl = existingCountry.flag
-    let flagPublicId = existingCountry.flagPublicId
-
-    // Handle flag removal
-    if (removeFlag && existingCountry.flagPublicId) {
-      try {
-        await deleteFromCloudinary(existingCountry.flagPublicId)
-        flagUrl = ""
-        flagPublicId = ""
-      } catch (error) {
-        console.error("Error deleting flag from Cloudinary:", error)
-      }
-    }
-
-    // Handle new flag upload
-    if (flagFile && flagFile.size > 0) {
-      // Delete old flag if exists
-      if (existingCountry.flagPublicId) {
-        try {
-          await deleteFromCloudinary(existingCountry.flagPublicId)
-        } catch (error) {
-          console.error("Error deleting old flag:", error)
-        }
-      }
-
-      // Upload new flag
-      try {
-        const uploadResult = await uploadToCloudinary(flagFile, "flags")
-        flagUrl = uploadResult.secure_url
-        flagPublicId = uploadResult.public_id
-      } catch (uploadError) {
-        console.error("Error uploading flag:", uploadError)
-        return NextResponse.json(
-          { error: "Failed to upload flag image" },
-          { status: 500 }
-        )
-      }
-    }
-
-    const updatedCountry = await prisma.country.update({
-      where: { id: params.id },
-      data: {
-        name,
-        code: code ? code.toUpperCase() : undefined,
-        flag: flagUrl,
-        flagPublicId,
-        currency,
-        timezone,
-        isActive
-      },
-      include: {
-        cities: {
-          where: { isActive: true },
-          include: {
-            _count: {
-              select: { events: true }
-            }
-          }
-        }
-      }
-    })
-
-    // Get updated event count
-    const newSystemCount = await prisma.eventsOnCountries.count({
-      where: { countryId: params.id }
-    })
-
-    const oldSystemCount = await prisma.event.count({
-      where: {
-        OR: [
-          { venue: { venueCountry: updatedCountry.name } },
-          { venue: { venueCountry: { contains: updatedCountry.name, mode: 'insensitive' } } },
-          { venue: { venueCountry: { contains: updatedCountry.code, mode: 'insensitive' } } }
-        ],
-        isPublic: true
-      }
-    })
-
-    return NextResponse.json({
-      ...updatedCountry,
-      eventCount: newSystemCount + oldSystemCount,
-      cities: updatedCountry.cities.map(city => ({
-        ...city,
-        eventCount: city._count.events
-      }))
-    })
   } catch (error) {
     console.error("Error updating country:", error)
     return NextResponse.json(
@@ -224,6 +143,225 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       { status: 500 }
     )
   }
+}
+
+// Handle form data requests (with file upload)
+async function handleFormDataRequest(request: NextRequest, countryId: string) {
+  const formData = await request.formData()
+  const name = formData.get('name') as string
+  const code = formData.get('code') as string
+  const flagFile = formData.get('flag') as File | null
+  const removeFlag = formData.get('removeFlag') === 'true'
+  const currency = formData.get('currency') as string
+  const timezone = formData.get('timezone') as string
+  const isActive = formData.get('isActive') === 'true'
+  const isPermitted = formData.get('isPermitted') === 'true'
+
+  // Check if country exists
+  const existingCountry = await prisma.country.findUnique({
+    where: { id: countryId }
+  })
+
+  if (!existingCountry) {
+    return NextResponse.json(
+      { error: "Country not found" },
+      { status: 404 }
+    )
+  }
+
+  // Check for duplicates
+  if ((name && name !== existingCountry.name) || (code && code !== existingCountry.code)) {
+    const duplicateCountry = await prisma.country.findFirst({
+      where: {
+        OR: [
+          { name: { equals: name, mode: 'insensitive' } },
+          { code: { equals: code?.toUpperCase(), mode: 'insensitive' } }
+        ],
+        id: { not: countryId }
+      }
+    })
+
+    if (duplicateCountry) {
+      return NextResponse.json(
+        { error: "Country with this name or code already exists" },
+        { status: 409 }
+      )
+    }
+  }
+
+  let flagUrl = existingCountry.flag
+  let flagPublicId = existingCountry.flagPublicId
+
+  // Handle flag removal
+  if (removeFlag && existingCountry.flagPublicId) {
+    try {
+      await deleteFromCloudinary(existingCountry.flagPublicId)
+      flagUrl = ""
+      flagPublicId = ""
+    } catch (error) {
+      console.error("Error deleting flag from Cloudinary:", error)
+    }
+  }
+
+  // Handle new flag upload
+  if (flagFile && flagFile.size > 0) {
+    // Delete old flag if exists
+    if (existingCountry.flagPublicId) {
+      try {
+        await deleteFromCloudinary(existingCountry.flagPublicId)
+      } catch (error) {
+        console.error("Error deleting old flag:", error)
+      }
+    }
+
+    // Upload new flag
+    try {
+      const uploadResult = await uploadToCloudinary(flagFile, "flags")
+      flagUrl = uploadResult.secure_url
+      flagPublicId = uploadResult.public_id
+    } catch (uploadError) {
+      console.error("Error uploading flag:", uploadError)
+      return NextResponse.json(
+        { error: "Failed to upload flag image" },
+        { status: 500 }
+      )
+    }
+  }
+
+  const updatedCountry = await prisma.country.update({
+    where: { id: countryId },
+    data: {
+      name: name || existingCountry.name,
+      code: code ? code.toUpperCase() : existingCountry.code,
+      flag: flagUrl,
+      flagPublicId,
+      currency: currency || existingCountry.currency,
+      timezone: timezone || existingCountry.timezone,
+      isActive: isActive !== undefined ? isActive : existingCountry.isActive,
+      isPermitted: isPermitted !== undefined ? isPermitted : existingCountry.isPermitted
+    },
+    include: {
+      cities: {
+        where: { isActive: true },
+        include: {
+          _count: {
+            select: { events: true }
+          }
+        }
+      }
+    }
+  })
+
+  // Get updated event count
+  const newSystemCount = await prisma.eventsOnCountries.count({
+    where: { countryId: countryId }
+  })
+
+  const oldSystemCount = await prisma.event.count({
+    where: {
+      OR: [
+        { venue: { venueCountry: updatedCountry.name } },
+        { venue: { venueCountry: { contains: updatedCountry.name, mode: 'insensitive' } } },
+        { venue: { venueCountry: { contains: updatedCountry.code, mode: 'insensitive' } } }
+      ],
+      isPublic: true
+    }
+  })
+
+  return NextResponse.json({
+    ...updatedCountry,
+    eventCount: newSystemCount + oldSystemCount,
+    cities: updatedCountry.cities.map(city => ({
+      ...city,
+      eventCount: city._count.events
+    }))
+  })
+}
+
+// Handle JSON requests (without file upload)
+async function handleJsonRequest(request: NextRequest, countryId: string) {
+  const jsonData = await request.json()
+  const { name, code, flag, currency, timezone, isActive, isPermitted } = jsonData
+
+  // Check if country exists
+  const existingCountry = await prisma.country.findUnique({
+    where: { id: countryId }
+  })
+
+  if (!existingCountry) {
+    return NextResponse.json(
+      { error: "Country not found" },
+      { status: 404 }
+    )
+  }
+
+  // Check for duplicates
+  if ((name && name !== existingCountry.name) || (code && code !== existingCountry.code)) {
+    const duplicateCountry = await prisma.country.findFirst({
+      where: {
+        OR: [
+          { name: { equals: name, mode: 'insensitive' } },
+          { code: { equals: code?.toUpperCase(), mode: 'insensitive' } }
+        ],
+        id: { not: countryId }
+      }
+    })
+
+    if (duplicateCountry) {
+      return NextResponse.json(
+        { error: "Country with this name or code already exists" },
+        { status: 409 }
+      )
+    }
+  }
+
+  const updatedCountry = await prisma.country.update({
+    where: { id: countryId },
+    data: {
+      name: name || existingCountry.name,
+      code: code ? code.toUpperCase() : existingCountry.code,
+      flag: flag !== undefined ? flag : existingCountry.flag,
+      currency: currency || existingCountry.currency,
+      timezone: timezone || existingCountry.timezone,
+      isActive: isActive !== undefined ? isActive : existingCountry.isActive,
+      isPermitted: isPermitted !== undefined ? isPermitted : existingCountry.isPermitted
+    },
+    include: {
+      cities: {
+        where: { isActive: true },
+        include: {
+          _count: {
+            select: { events: true }
+          }
+        }
+      }
+    }
+  })
+
+  // Get updated event count
+  const newSystemCount = await prisma.eventsOnCountries.count({
+    where: { countryId: countryId }
+  })
+
+  const oldSystemCount = await prisma.event.count({
+    where: {
+      OR: [
+        { venue: { venueCountry: updatedCountry.name } },
+        { venue: { venueCountry: { contains: updatedCountry.name, mode: 'insensitive' } } },
+        { venue: { venueCountry: { contains: updatedCountry.code, mode: 'insensitive' } } }
+      ],
+      isPublic: true
+    }
+  })
+
+  return NextResponse.json({
+    ...updatedCountry,
+    eventCount: newSystemCount + oldSystemCount,
+    cities: updatedCountry.cities.map(city => ({
+      ...city,
+      eventCount: city._count.events
+    }))
+  })
 }
 
 // DELETE country

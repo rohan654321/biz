@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 
 // GET all categories
-// GET all categories
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)

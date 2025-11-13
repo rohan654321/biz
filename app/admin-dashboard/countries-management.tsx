@@ -11,7 +11,9 @@ import {
   XCircle,
   MoreVertical,
   MapPin,
-  Globe
+  Globe,
+  Eye,
+  EyeOff
 } from "lucide-react"
 import CloudinaryUpload from "@/components/cloudinary-upload"
 
@@ -24,6 +26,7 @@ interface Country {
   currency?: string
   timezone?: string
   isActive: boolean
+  isPermitted: boolean
   eventCount: number
   cityCount: number
   createdAt: string
@@ -41,6 +44,7 @@ interface City {
   image?: string
   imagePublicId?: string
   isActive: boolean
+  isPermitted: boolean
   eventCount: number
   createdAt: string
   updatedAt: string
@@ -72,7 +76,8 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
     flag: "",
     currency: "USD",
     timezone: "UTC",
-    isActive: true
+    isActive: true,
+    isPermitted: false
   })
 
   const [cityFormData, setCityFormData] = useState({
@@ -82,7 +87,8 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
     longitude: "",
     timezone: "UTC",
     image: "",
-    isActive: true
+    isActive: true,
+    isPermitted: false
   })
 
   // Update active tab when prop changes
@@ -130,30 +136,82 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
         : "/api/admin/countries"
       
       const method = editingCountry ? "PUT" : "POST"
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(countryFormData),
-      })
 
-      if (response.ok) {
-        setShowCountryForm(false)
-        setEditingCountry(null)
-        setCountryFormData({
-          name: "",
-          code: "",
-          flag: "",
-          currency: "USD",
-          timezone: "UTC",
-          isActive: true
+      // Check if we have a new file to upload
+      const hasNewFile = countryFormData.flag && !countryFormData.flag.startsWith('http')
+      
+      if (hasNewFile) {
+        // Use FormData for file uploads
+        const formData = new FormData()
+        formData.append('name', countryFormData.name)
+        formData.append('code', countryFormData.code)
+        formData.append('currency', countryFormData.currency)
+        formData.append('timezone', countryFormData.timezone)
+        formData.append('isActive', countryFormData.isActive.toString())
+        formData.append('isPermitted', countryFormData.isPermitted.toString())
+        
+        // If it's a new file (not already uploaded URL), add it to form data
+        if (countryFormData.flag && !countryFormData.flag.startsWith('http')) {
+          // Convert data URL to blob if needed
+          if (countryFormData.flag.startsWith('data:')) {
+            const response = await fetch(countryFormData.flag)
+            const blob = await response.blob()
+            formData.append('flag', blob, 'flag.jpg')
+          } else {
+            // If it's already a Cloudinary URL, just pass it as string
+            formData.append('flag', countryFormData.flag)
+          }
+        }
+
+        const response = await fetch(url, {
+          method,
+          body: formData,
         })
-        fetchData()
+
+        if (response.ok) {
+          setShowCountryForm(false)
+          setEditingCountry(null)
+          setCountryFormData({
+            name: "",
+            code: "",
+            flag: "",
+            currency: "USD",
+            timezone: "UTC",
+            isActive: true,
+            isPermitted: false
+          })
+          fetchData()
+        } else {
+          const error = await response.json()
+          alert(error.error || "Failed to save country")
+        }
       } else {
-        const error = await response.json()
-        alert(error.error || "Failed to save country")
+        // Use JSON for non-file updates
+        const response = await fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(countryFormData),
+        })
+
+        if (response.ok) {
+          setShowCountryForm(false)
+          setEditingCountry(null)
+          setCountryFormData({
+            name: "",
+            code: "",
+            flag: "",
+            currency: "USD",
+            timezone: "UTC",
+            isActive: true,
+            isPermitted: false
+          })
+          fetchData()
+        } else {
+          const error = await response.json()
+          alert(error.error || "Failed to save country")
+        }
       }
     } catch (error) {
       console.error("Error saving country:", error)
@@ -170,35 +228,89 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
         : "/api/admin/cities"
       
       const method = editingCity ? "PUT" : "POST"
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...cityFormData,
-          latitude: cityFormData.latitude ? parseFloat(cityFormData.latitude) : undefined,
-          longitude: cityFormData.longitude ? parseFloat(cityFormData.longitude) : undefined
-        }),
-      })
 
-      if (response.ok) {
-        setShowCityForm(false)
-        setEditingCity(null)
-        setCityFormData({
-          name: "",
-          countryId: "",
-          latitude: "",
-          longitude: "",
-          timezone: "UTC",
-          image: "",
-          isActive: true
+      // Check if we have a new file to upload
+      const hasNewFile = cityFormData.image && !cityFormData.image.startsWith('http')
+      
+      if (hasNewFile) {
+        // Use FormData for file uploads
+        const formData = new FormData()
+        formData.append('name', cityFormData.name)
+        formData.append('countryId', cityFormData.countryId)
+        formData.append('latitude', cityFormData.latitude)
+        formData.append('longitude', cityFormData.longitude)
+        formData.append('timezone', cityFormData.timezone)
+        formData.append('isActive', cityFormData.isActive.toString())
+        formData.append('isPermitted', cityFormData.isPermitted.toString())
+        
+        // If it's a new file (not already uploaded URL), add it to form data
+        if (cityFormData.image && !cityFormData.image.startsWith('http')) {
+          // Convert data URL to blob if needed
+          if (cityFormData.image.startsWith('data:')) {
+            const response = await fetch(cityFormData.image)
+            const blob = await response.blob()
+            formData.append('image', blob, 'city.jpg')
+          } else {
+            // If it's already a Cloudinary URL, just pass it as string
+            formData.append('image', cityFormData.image)
+          }
+        }
+
+        const response = await fetch(url, {
+          method,
+          body: formData,
         })
-        fetchData()
+
+        if (response.ok) {
+          setShowCityForm(false)
+          setEditingCity(null)
+          setCityFormData({
+            name: "",
+            countryId: "",
+            latitude: "",
+            longitude: "",
+            timezone: "UTC",
+            image: "",
+            isActive: true,
+            isPermitted: false
+          })
+          fetchData()
+        } else {
+          const error = await response.json()
+          alert(error.error || "Failed to save city")
+        }
       } else {
-        const error = await response.json()
-        alert(error.error || "Failed to save city")
+        // Use JSON for non-file updates
+        const response = await fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...cityFormData,
+            latitude: cityFormData.latitude ? parseFloat(cityFormData.latitude) : undefined,
+            longitude: cityFormData.longitude ? parseFloat(cityFormData.longitude) : undefined
+          }),
+        })
+
+        if (response.ok) {
+          setShowCityForm(false)
+          setEditingCity(null)
+          setCityFormData({
+            name: "",
+            countryId: "",
+            latitude: "",
+            longitude: "",
+            timezone: "UTC",
+            image: "",
+            isActive: true,
+            isPermitted: false
+          })
+          fetchData()
+        } else {
+          const error = await response.json()
+          alert(error.error || "Failed to save city")
+        }
       }
     } catch (error) {
       console.error("Error saving city:", error)
@@ -247,6 +359,54 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
     } catch (error) {
       console.error("Error deleting city:", error)
       alert("Failed to delete city")
+    }
+  }
+
+  const handleToggleCountryPermission = async (countryId: string, currentPermission: boolean) => {
+    try {
+      const response = await fetch(`/api/admin/countries/${countryId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          isPermitted: !currentPermission
+        }),
+      })
+
+      if (response.ok) {
+        fetchData()
+      } else {
+        const error = await response.json()
+        alert(error.error || "Failed to update country permission")
+      }
+    } catch (error) {
+      console.error("Error updating country permission:", error)
+      alert("Failed to update country permission")
+    }
+  }
+
+  const handleToggleCityPermission = async (cityId: string, currentPermission: boolean) => {
+    try {
+      const response = await fetch(`/api/admin/cities/${cityId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          isPermitted: !currentPermission
+        }),
+      })
+
+      if (response.ok) {
+        fetchData()
+      } else {
+        const error = await response.json()
+        alert(error.error || "Failed to update city permission")
+      }
+    } catch (error) {
+      console.error("Error updating city permission:", error)
+      alert("Failed to update city permission")
     }
   }
 
@@ -346,7 +506,8 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                 flag: "",
                 currency: "USD",
                 timezone: "UTC",
-                isActive: true
+                isActive: true,
+                isPermitted: false
               })
               setShowCountryForm(true)
             }}
@@ -366,7 +527,8 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                 longitude: "",
                 timezone: "UTC",
                 image: "",
-                isActive: true
+                isActive: true,
+                isPermitted: false
               })
               setShowCityForm(true)
             }}
@@ -378,13 +540,58 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
         )}
       </div>
 
+      {/* Stats Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {currentActiveTab === "countries" ? (
+          <>
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+              <div className="text-2xl font-bold text-gray-900">{countries.length}</div>
+              <div className="text-sm text-gray-600">Total Countries</div>
+            </div>
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+              <div className="text-2xl font-bold text-green-600">
+                {countries.filter(c => c.isPermitted).length}
+              </div>
+              <div className="text-sm text-gray-600">Public Countries</div>
+            </div>
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+              <div className="text-2xl font-bold text-blue-600">
+                {countries.filter(c => c.isActive).length}
+              </div>
+              <div className="text-sm text-gray-600">Active Countries</div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+              <div className="text-2xl font-bold text-gray-900">{cities.length}</div>
+              <div className="text-sm text-gray-600">Total Cities</div>
+            </div>
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+              <div className="text-2xl font-bold text-green-600">
+                {cities.filter(c => c.isPermitted).length}
+              </div>
+              <div className="text-sm text-gray-600">Public Cities</div>
+            </div>
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+              <div className="text-2xl font-bold text-blue-600">
+                {cities.filter(c => c.isActive).length}
+              </div>
+              <div className="text-sm text-gray-600">Active Cities</div>
+            </div>
+          </>
+        )}
+      </div>
+
       {/* Countries Grid */}
       {currentActiveTab === "countries" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCountries.map((country) => (
             <div
               key={country.id}
-              className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
+              className={`bg-white rounded-lg border p-6 hover:shadow-md transition-shadow ${
+                country.isPermitted ? 'border-green-200' : 'border-gray-200'
+              }`}
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
@@ -434,6 +641,19 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                   <span className={`text-sm ${country.isActive ? 'text-green-600' : 'text-red-600'}`}>
                     {country.isActive ? 'Active' : 'Inactive'}
                   </span>
+                  
+                  {/* Permission Toggle */}
+                  <button
+                    onClick={() => handleToggleCountryPermission(country.id, country.isPermitted)}
+                    className={`p-1 rounded transition-colors ${
+                      country.isPermitted 
+                        ? 'text-green-600 hover:bg-green-50' 
+                        : 'text-gray-400 hover:bg-gray-50'
+                    }`}
+                    title={country.isPermitted ? 'Hide from public' : 'Show on public pages'}
+                  >
+                    {country.isPermitted ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  </button>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -445,7 +665,8 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                         flag: country.flag || "",
                         currency: country.currency || "USD",
                         timezone: country.timezone || "UTC",
-                        isActive: country.isActive
+                        isActive: country.isActive,
+                        isPermitted: country.isPermitted
                       })
                       setShowCountryForm(true)
                     }}
@@ -472,7 +693,9 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
           {filteredCities.map((city) => (
             <div
               key={city.id}
-              className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
+              className={`bg-white rounded-lg border p-6 hover:shadow-md transition-shadow ${
+                city.isPermitted ? 'border-green-200' : 'border-gray-200'
+              }`}
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
@@ -516,6 +739,19 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                   <span className={`text-sm ${city.isActive ? 'text-green-600' : 'text-red-600'}`}>
                     {city.isActive ? 'Active' : 'Inactive'}
                   </span>
+                  
+                  {/* Permission Toggle */}
+                  <button
+                    onClick={() => handleToggleCityPermission(city.id, city.isPermitted)}
+                    className={`p-1 rounded transition-colors ${
+                      city.isPermitted 
+                        ? 'text-green-600 hover:bg-green-50' 
+                        : 'text-gray-400 hover:bg-gray-50'
+                    }`}
+                    title={city.isPermitted ? 'Hide from public' : 'Show on public pages'}
+                  >
+                    {city.isPermitted ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  </button>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -528,7 +764,8 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                         longitude: city.longitude?.toString() || "",
                         timezone: city.timezone || "UTC",
                         image: city.image || "",
-                        isActive: city.isActive
+                        isActive: city.isActive,
+                        isPermitted: city.isPermitted
                       })
                       setShowCityForm(true)
                     }}
@@ -650,17 +887,32 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="countryIsActive"
-                    checked={countryFormData.isActive}
-                    onChange={(e) => setCountryFormData({ ...countryFormData, isActive: e.target.checked })}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <label htmlFor="countryIsActive" className="text-sm text-gray-700">
-                    Active Country
-                  </label>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="countryIsActive"
+                      checked={countryFormData.isActive}
+                      onChange={(e) => setCountryFormData({ ...countryFormData, isActive: e.target.checked })}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label htmlFor="countryIsActive" className="text-sm text-gray-700">
+                      Active Country
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="countryIsPermitted"
+                      checked={countryFormData.isPermitted}
+                      onChange={(e) => setCountryFormData({ ...countryFormData, isPermitted: e.target.checked })}
+                      className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    />
+                    <label htmlFor="countryIsPermitted" className="text-sm text-gray-700">
+                      Show on public pages
+                    </label>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-4">
@@ -786,17 +1038,32 @@ export default function CountriesManagement({ activeTab = "countries" }: Countri
                   />
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="cityIsActive"
-                    checked={cityFormData.isActive}
-                    onChange={(e) => setCityFormData({ ...cityFormData, isActive: e.target.checked })}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <label htmlFor="cityIsActive" className="text-sm text-gray-700">
-                    Active City
-                  </label>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="cityIsActive"
+                      checked={cityFormData.isActive}
+                      onChange={(e) => setCityFormData({ ...cityFormData, isActive: e.target.checked })}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label htmlFor="cityIsActive" className="text-sm text-gray-700">
+                      Active City
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="cityIsPermitted"
+                      checked={cityFormData.isPermitted}
+                      onChange={(e) => setCityFormData({ ...cityFormData, isPermitted: e.target.checked })}
+                      className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    />
+                    <label htmlFor="cityIsPermitted" className="text-sm text-gray-700">
+                      Show on public pages
+                    </label>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-4">
