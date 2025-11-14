@@ -35,6 +35,29 @@ import SystemSettings from "./system-settings"
 import SubAdminManagement from "./subadmin-management"
 import { CreateEventForm } from "./eventManagement/createEvent/create-event"
 import { signOut } from "next-auth/react"
+import ImportPage from "./import"
+import AdsManagement from "./ads-management"
+import PromotionsManagement from "./promotions-management"
+import EmailCampaigns from "./email-notifications"
+import PushNotifications from "./push-notifications"
+import EmailTemplates from "./email-templates"
+import PushTemplates from "./push-templates"
+import OrganizerPromotionsPage from "./organizer/promotions"
+import ExhibitorPromotionsPage from "./exhibitors/promotions"
+import ExhibitorAppointmentsPage from "./exhibitors/appointments"
+import ExhibitorFeedbackPage from "./exhibitors/feedback"
+import OrganizerConnectionsPage from "./organizer/connections"
+import OrganizerVenueBookingsPage from "./organizer/venue-bookings"
+import OrganizerFeedbackPage from "./organizer/feedback"
+import ExhibitorFollowersPage from "./exhibitors/followers"
+import SpeakerFollowersPage from "./speaker/followers"
+import SpeakerFeedbackPage from "./speaker/feedback"
+import VenuesEventsPage from "./venue/events"
+import UserManagement from "./user-management"
+import VenueBookingsPage from "./venue/bookings"
+import VisitorEventsPage from "./visitors/events"
+import VisitorConnectionsPage from "./visitors/connections"
+import VisitorAppointmentsPage from "./visitors/appointments"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -168,7 +191,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "All Events", id: "events-all" },
         { title: "Create New Event", id: "events-create" },
         { title: "Event Categories", id: "events-categories" },
-        { title: "Event Approvals", id: "events-approvals" }, // Added Event Approvals menu item
+        // { title: "Event Approvals", id: "events-approvals" }, // Added Event Approvals menu item
         { title: "Bulk Data", id: "bulk-data" },
       ],
     },
@@ -227,6 +250,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       icon: UserCircle,
       id: "visitors",
       subItems: [
+        { title: "All visitors", id: "visitors-all" },
         { title: "Events by Visitor", id: "visitors-events" },
         { title: "Connections", id: "visitors-connections" },
         { title: "Appointments", id: "visitors-appointments" },
@@ -262,10 +286,13 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       subItems: [
         { title: "Email Campaigns", id: "marketing-email" },
         { title: "Push Notifications", id: "marketing-notifications" },
+        { title: "Email Templates", id: "template-email" },
+        { title: "Push Templates", id: "template-notifications" },
         { title: "Traffic Analytics", id: "marketing-traffic" },
         { title: "SEO & Keywords", id: "marketing-seo" },
       ],
     },
+
     {
       title: "Reports & Analytics",
       icon: BarChart3,
@@ -353,17 +380,85 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         case "roles-subadmins":
           return <SubAdminManagement />
 
+
         // Events
         case "events-create":
-          // return <CreateEventForm />
+          return <CreateEventForm />
         case "events-all":
-          // return <EventManagement />
+          return <EventManagement />
         case "events-categories":
           return <div>Event Categories - Coming Soon</div>
         case "events-approvals":
           return <div>Event Approvals - Coming Soon</div>
         case "bulk-data":
-          return <div>Event Bulk uploade - Coming Soon</div>
+          return <div><ImportPage /></div>
+
+        // case "content-banners":
+        //   return (
+        //     <div>
+        //       <AdsManagement />
+        //     </div>
+        //   )
+
+        // case "marketing-email":
+        //   return (<div><EmailCampaigns /></div>)
+
+        // case "marketing-notifications":
+        //   return (<div><PushNotifications /></div>)
+
+        // case "template-email":
+        //   return (<div><EmailTemplates /></div>)
+
+        // case "template-notifications":
+        //   return (<div><PushTemplates /></div>)
+
+        // case "promotions":
+        //   return <div><OrganizerPromotionsPage /></div>
+
+        // case "exhibitors-promotions":
+        //   return <div><ExhibitorPromotionsPage /></div>
+
+        // case "exhibitors-appointments":
+        //   return <div><ExhibitorAppointmentsPage /></div>
+
+        // case "exhibitors-feedback":
+        //   return <div><ExhibitorFeedbackPage /></div>
+
+        // case "organizers-connections":
+        //   return <div><OrganizerConnectionsPage /></div>
+
+        // case "organizers-bookings":
+        //   return <div><OrganizerVenueBookingsPage /></div>
+
+        // case "organizers-feedback":
+        //   return <div><OrganizerFeedbackPage /></div>
+
+        // case "exhibitors-followers":
+        //   return <div><ExhibitorFollowersPage /></div>
+
+        // case "speakers-followers":
+        //   return <div><SpeakerFollowersPage /></div>
+
+        // case "speakers-feedback":
+        //   return <div><SpeakerFeedbackPage /></div>
+
+        // case "venues-events":
+        //   return <div><VenuesEventsPage /></div>
+
+        case "visitors-all":
+          return <div><UserManagement /></div>
+
+        // case "venues-bookings":
+        //   return <div><VenueBookingsPage /></div>
+
+        // case "visitors-events":
+        //   return <div><VisitorEventsPage /></div>
+
+        // case "visitors-connections":
+        //   return <div><VisitorConnectionsPage /></div>
+
+        // case "visitors-appointments":
+        //   return <div><VisitorAppointmentsPage /></div>
 
         default:
           break
@@ -402,6 +497,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         return <SystemSettings />
       case "support":
         return <div>Help & Support - Coming Soon</div>
+
       default:
         return <DashboardOverview />
     }
@@ -435,20 +531,18 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                     <div className="rounded-lg">
                       <button
                         onClick={() => toggleMenu(item.id)}
-                        className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
-                          isActive(item.id)
-                            ? "bg-blue-50 text-blue-700 border border-blue-200"
-                            : "text-gray-700 hover:bg-gray-100"
-                        }`}
+                        className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${isActive(item.id)
+                          ? "bg-blue-50 text-blue-700 border border-blue-200"
+                          : "text-gray-700 hover:bg-gray-100"
+                          }`}
                       >
                         <div className="flex items-center gap-3">
                           <item.icon className="w-4 h-4" />
                           <span className="font-medium">{item.title}</span>
                         </div>
                         <ChevronDown
-                          className={`w-4 h-4 transition-transform duration-200 ${
-                            isMenuOpen(item.id) ? "rotate-180" : ""
-                          }`}
+                          className={`w-4 h-4 transition-transform duration-200 ${isMenuOpen(item.id) ? "rotate-180" : ""
+                            }`}
                         />
                       </button>
 
@@ -458,11 +552,10 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                             <button
                               key={subItem.id}
                               onClick={() => handleSubSectionClick(item.id, subItem.id)}
-                              className={`w-full text-left p-2 rounded-lg transition-colors ${
-                                isSubActive(subItem.id)
-                                  ? "bg-blue-50 text-blue-700 border border-blue-200"
-                                  : "text-gray-600 hover:bg-gray-100"
-                              }`}
+                              className={`w-full text-left p-2 rounded-lg transition-colors ${isSubActive(subItem.id)
+                                ? "bg-blue-50 text-blue-700 border border-blue-200"
+                                : "text-gray-600 hover:bg-gray-100"
+                                }`}
                             >
                               <span className="text-sm">{subItem.title}</span>
                             </button>
@@ -473,11 +566,10 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                   ) : (
                     <button
                       onClick={() => handleSectionClick(item.id)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                        isActive(item.id)
-                          ? "bg-blue-50 text-blue-700 border border-blue-200"
-                          : "text-gray-700 hover:bg-gray-100"
-                      }`}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${isActive(item.id)
+                        ? "bg-blue-50 text-blue-700 border border-blue-200"
+                        : "text-gray-700 hover:bg-gray-100"
+                        }`}
                     >
                       <item.icon className="w-4 h-4" />
                       <span className="font-medium">{item.title}</span>
