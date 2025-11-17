@@ -36,19 +36,6 @@ import SystemSettings from "./system-settings"
 import SubAdminManagement from "./subadmin-management"
 import { CreateEventForm } from "./eventManagement/createEvent/create-event"
 import { signOut } from "next-auth/react"
-import EventCategories from "./event-categories"
-import CountriesManagement from "./countries-management"
-import MainHelpSupport from "./help-support.tsx/main-help-support"
-import SupportContacts from "./help-support.tsx/support-contacts"
-import SupportNotes from "./help-support.tsx/support-notes"
-import SupportTickets from "./help-support.tsx/support-tickets"
-import FAQManagement from "./help-support.tsx/faq-management"
-import AddOrganizerForm from "./add-organizer-form"
-import { Button } from "@/components/ui/button"
-import AddExhibitorForm from "./add-exhibitor-form"
-import AddSpeaker from "./AddSpeaker"
-import AddVenue from "./add-venue"
-import AddVenueComponent from "./AddVenue"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -187,6 +174,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "All Events", id: "events-all" },
         { title: "Create New Event", id: "events-create" },
         { title: "Event Categories", id: "events-categories" },
+        { title: "Event Approvals", id: "events-approvals" }, // Added Event Approvals menu item
         { title: "Bulk Data", id: "bulk-data" },
       ],
     },
@@ -254,6 +242,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       icon: UserCircle,
       id: "visitors",
       subItems: [
+        { title: "All visitors", id: "visitors-all" },
         { title: "Events by Visitor", id: "visitors-events" },
         { title: "Connections", id: "visitors-connections" },
         { title: "Appointments", id: "visitors-appointments" },
@@ -289,10 +278,13 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       subItems: [
         { title: "Email Campaigns", id: "marketing-email" },
         { title: "Push Notifications", id: "marketing-notifications" },
+        { title: "Email Templates", id: "template-email" },
+        { title: "Push Templates", id: "template-notifications" },
         { title: "Traffic Analytics", id: "marketing-traffic" },
         { title: "SEO & Keywords", id: "marketing-seo" },
       ],
     },
+
     {
       title: "Reports & Analytics",
       icon: BarChart3,
@@ -384,177 +376,18 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         case "roles-subadmins":
           return <SubAdminManagement />
 
+
         // Events
         case "events-create":
-          return <CreateEventForm/> //<div>Create Event - Coming Soon</div> 
+          // return <CreateEventForm />
         case "events-all":
-          return <EventManagement />//<div>Event Management - Coming Soon</div> //<EventManagement />
+          // return <EventManagement />
         case "events-categories":
           return <div>Event Categories - Coming Soon</div> //<EventCategories />
         case "events-approvals":
           return <div>Event Approvals - Coming Soon</div>
         case "bulk-data":
-          return <div>Event Bulk upload - Coming Soon</div>
-
-        // Organizers
-        case "organizers-add":
-          return (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-gray-900">Add New Organizer</h1>
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleSubSectionClick("organizers", "organizers-all")}
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Organizers
-                </Button>
-              </div>
-              <AddOrganizerForm 
-                onSuccess={() => {
-                  // Optionally navigate back to organizers list after success
-                  handleSubSectionClick("organizers", "organizers-all")
-                }}
-                onCancel={() => handleSubSectionClick("organizers", "organizers-all")}
-              />
-            </div>
-          )
-        case "organizers-all":
-          return <div>Organizer Management - Coming Soon</div>//<OrganizerManagement />
-        case "organizers-connections":
-          return <div>Organizer Connections - Coming Soon</div>
-        case "promotions":
-          return <div>Promotions Management - Coming Soon</div>
-        case "organizers-bookings":
-          return <div>Organizer Bookings - Coming Soon</div>
-        case "organizers-feedback":
-          return <div>Organizer Feedback - Coming Soon</div>
-
-        // Exhibitors
-        case "exhibitors-all":
-          return <div>All Exhibitor - Coming soon</div>
-          // return <ExhibitorManagement />
-        case "exhibitors-add":
-          return  <div>Add Exhibitor - Coming Soon</div> //<AddExhibitorForm/>
-        case "exhibitors-promotions":
-          return <div>Exhibitor Promotions - Coming Soon</div>
-        case "exhibitors-followers":
-          return <div>Exhibitor Followers - Coming Soon</div>
-        case "exhibitors-appointments":
-          return <div>Exhibitor Appointments - Coming Soon</div>
-        case "exhibitors-feedback":
-          return <div>Exhibitor Feedback - Coming Soon</div>
-
-        // Speakers
-        case "speakers-all":
-          return <div>All Speaker - Coming Soon</div>//<SpeakerManagement />
-        case "speakers-add":
-          return <div>Add Speaker  - Coming Soon</div> //<AddSpeaker/>
-        case "speakers-followers":
-          return <div>Speaker Followers - Coming Soon</div>
-        case "speakers-appointments":
-          return <div>Speaker Appointments - Coming Soon</div>
-        case "speakers-feedback":
-          return <div>Speaker Feedback - Coming Soon</div>
-
-        // Venues
-        case "venues-all":
-          return <div>Venue Management - Coming Soon</div>//<VenueManagement />
-        case "venues-add":
-          return <div>Add Venues - Coming Soon</div>//<AddVenueComponent/>
-        case "venues-events":
-          return <div>Venue Events - Coming Soon</div>
-        case "venues-bookings":
-          return <div>Venue Bookings - Coming Soon</div>
-        case "venues-feedback":
-          return <div>Venue Feedback - Coming Soon</div>
-
-        // Visitors
-        case "visitors-events":
-          return <div>Visitor Events - Coming Soon</div>
-        case "visitors-connections":
-          return <div>Visitor Connections - Coming Soon</div>
-        case "visitors-appointments":
-          return <div>Visitor Appointments - Coming Soon</div>
-
-        // Financial
-        case "financial-payments":
-          return <div>Payments Dashboard - Coming Soon</div>
-        case "financial-subscriptions":
-          return <div>Subscriptions & Plans - Coming Soon</div>
-        case "financial-invoices":
-          return <div>Invoices & Receipts - Coming Soon</div>
-        case "financial-transactions":
-          return <div>Transaction History - Coming Soon</div>
-
-        // Content
-        case "content-news":
-          return <div>News & Announcements - Coming Soon</div>
-        case "content-blog":
-          return <div>Blog & Articles - Coming Soon</div>
-        case "content-banners":
-          return <div>Banner & Ads Manager - Coming Soon</div>
-        case "content-featured":
-          return <div>Featured Events - Coming Soon</div>
-        case "content-media":
-          return <div>Media Library - Coming Soon</div>
-
-        // Marketing
-        case "marketing-email":
-          return <div>Email Campaigns - Coming Soon</div>
-        case "marketing-notifications":
-          return <div>Push Notifications - Coming Soon</div>
-        case "marketing-traffic":
-          return <div>Traffic Analytics - Coming Soon</div>
-        case "marketing-seo":
-          return <div>SEO & Keywords - Coming Soon</div>
-
-        // Reports
-        case "reports-events":
-          return <div>Event Performance - Coming Soon</div>
-        case "reports-engagement":
-          return <div>User Engagement - Coming Soon</div>
-        case "reports-revenue":
-          return <div>Revenue Reports - Coming Soon</div>
-        case "reports-system":
-          return <div>System Health - Coming Soon</div>
-
-        // Integrations
-        case "integrations-payment":
-          return <div>Payment Gateways - Coming Soon</div>
-        case "integrations-communication":
-          return <div>Email/SMS Providers - Coming Soon</div>
-        case "integrations-calendar":
-          return <div>Calendar & API - Coming Soon</div>
-        case "integrations-travel":
-          return <div>Hotel & Travel Partners - Coming Soon</div>
-
-        // Settings
-        case "settings-modules":
-          return <div>Module Management - Coming Soon</div>
-        case "settings-notifications":
-          return <div>Notifications - Coming Soon</div>
-        case "settings-security":
-          return <div>Security - Coming Soon</div>
-        case "settings-language":
-          return <div>Language & Localization - Coming Soon</div>
-        case "settings-backup":
-          return <div>Backup & Restore - Coming Soon</div>
-
-        // Support
-        case "support-tickets":
-          return <div>Suppot Ticket - Comming Soon</div>//<SupportTickets />
-        case "support-contacts":
-          return <div>Suppot Contacts - Comming Soon</div>//<SupportContacts />
-        case "support-faq":
-          return <div>FAQs - Comming Soon</div> //<FAQManagement />
-        case "support-notes":
-          return <div>Suppot Notes - Comming Soon</div>//<SupportNotes />
-
-        // Locations
-        // case "countries":
-        // case "cities":
-        //   return <CountriesManagement activeTab={subSection as "countries" | "cities"} />
+          return <div>Event Bulk uploade - Coming Soon</div>
 
         default:
           console.log("Unknown sub-section:", subSection)
@@ -596,7 +429,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       case "settings":
         return <SystemSettings />
       case "support":
-        return <MainHelpSupport />
+        return <div>Help & Support - Coming Soon</div>
       default:
         return <DashboardOverview />
     }
@@ -630,20 +463,18 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                     <div className="rounded-lg">
                       <button
                         onClick={() => toggleMenu(item.id)}
-                        className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
-                          isActive(item.id)
-                            ? "bg-blue-50 text-blue-700 border border-blue-200"
-                            : "text-gray-700 hover:bg-gray-100"
-                        }`}
+                        className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${isActive(item.id)
+                          ? "bg-blue-50 text-blue-700 border border-blue-200"
+                          : "text-gray-700 hover:bg-gray-100"
+                          }`}
                       >
                         <div className="flex items-center gap-3">
                           <item.icon className="w-4 h-4" />
                           <span className="font-medium">{item.title}</span>
                         </div>
                         <ChevronDown
-                          className={`w-4 h-4 transition-transform duration-200 ${
-                            isMenuOpen(item.id) ? "rotate-180" : ""
-                          }`}
+                          className={`w-4 h-4 transition-transform duration-200 ${isMenuOpen(item.id) ? "rotate-180" : ""
+                            }`}
                         />
                       </button>
 
@@ -653,11 +484,10 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                             <button
                               key={subItem.id}
                               onClick={() => handleSubSectionClick(item.id, subItem.id)}
-                              className={`w-full text-left p-2 rounded-lg transition-colors ${
-                                isSubActive(subItem.id)
-                                  ? "bg-blue-50 text-blue-700 border border-blue-200"
-                                  : "text-gray-600 hover:bg-gray-100"
-                              }`}
+                              className={`w-full text-left p-2 rounded-lg transition-colors ${isSubActive(subItem.id)
+                                ? "bg-blue-50 text-blue-700 border border-blue-200"
+                                : "text-gray-600 hover:bg-gray-100"
+                                }`}
                             >
                               <span className="text-sm">{subItem.title}</span>
                             </button>
@@ -668,11 +498,10 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                   ) : (
                     <button
                       onClick={() => handleSectionClick(item.id)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                        isActive(item.id)
-                          ? "bg-blue-50 text-blue-700 border border-blue-200"
-                          : "text-gray-700 hover:bg-gray-100"
-                      }`}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${isActive(item.id)
+                        ? "bg-blue-50 text-blue-700 border border-blue-200"
+                        : "text-gray-700 hover:bg-gray-100"
+                        }`}
                     >
                       <item.icon className="w-4 h-4" />
                       <span className="font-medium">{item.title}</span>
