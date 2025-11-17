@@ -9,6 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { ChevronDown, ChevronRight, Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
+import { apiClient } from "@/lib/api-client"
+import { AuthErrorHandler } from "./auth-error-handler"
 
 interface SubAdminEditPageProps {
   subAdmin: {
@@ -47,6 +49,7 @@ export default function SubAdminEditPage({ subAdmin, onSuccess, onCancel }: SubA
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [authError, setAuthError] = useState<Error | null>(null)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -69,24 +72,6 @@ export default function SubAdminEditPage({ subAdmin, onSuccess, onCancel }: SubA
     })
     setSelectedPermissions(subAdmin.permissions)
   }, [subAdmin])
-
-  const getAuthToken = () => {
-    if (typeof window !== "undefined") {
-      return (
-        localStorage.getItem("superAdminToken") ||
-        localStorage.getItem("adminToken") ||
-        document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("superAdminToken="))
-          ?.split("=")[1] ||
-        document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("adminToken="))
-          ?.split("=")[1]
-      )
-    }
-    return null
-  }
 
   const handleToggle = (perm: string) => {
     setSelectedPermissions((prev) => 
@@ -144,10 +129,9 @@ export default function SubAdminEditPage({ subAdmin, onSuccess, onCancel }: SubA
     }
 
     setLoading(true)
+    setAuthError(null)
 
     try {
-      const token = getAuthToken()
-
       // Prepare update data
       const updateData: any = {
         name: formData.name,
@@ -163,20 +147,7 @@ export default function SubAdminEditPage({ subAdmin, onSuccess, onCancel }: SubA
         updateData.password = formData.password
       }
 
-      const response = await fetch(`/api/sub-admins/${subAdmin.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify(updateData),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to update sub-admin")
-      }
+      const data = await apiClient.put(`/sub-admins/${subAdmin.id}`, updateData)
 
       toast.success("Sub-admin updated successfully")
       
@@ -185,7 +156,15 @@ export default function SubAdminEditPage({ subAdmin, onSuccess, onCancel }: SubA
       }
     } catch (error) {
       console.error("Error updating sub-admin:", error)
-      toast.error(error instanceof Error ? error.message : "Failed to update sub-admin")
+      if (error instanceof Error) {
+        if (error.message.includes("Authentication failed")) {
+          setAuthError(error)
+        } else {
+          toast.error(error.message)
+        }
+      } else {
+        toast.error("Failed to update sub-admin")
+      }
     } finally {
       setLoading(false)
     }
@@ -362,6 +341,10 @@ export default function SubAdminEditPage({ subAdmin, onSuccess, onCancel }: SubA
     permissionCategories.slice(5, 10),
     permissionCategories.slice(10),
   ]
+
+  if (authError) {
+    return <AuthErrorHandler error={authError} />
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">

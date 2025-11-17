@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server"
-import jwt from "jsonwebtoken"
+import { getToken } from "next-auth/jwt"
 import { prisma } from "./prisma"
 
 interface AuthUser {
@@ -16,36 +16,27 @@ interface AuthResult {
 
 export async function authMiddleware(request: NextRequest): Promise<AuthResult> {
   try {
-    // Get token from cookies or Authorization header
-    let token = request.cookies.get("superAdminToken")?.value
+    // Get token from NextAuth
+    const token = await getToken({ 
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET
+    })
 
-    if (!token) {
-      const authHeader = request.headers.get("authorization")
-      if (authHeader && authHeader.startsWith("Bearer ")) {
-        token = authHeader.substring(7)
-      }
-    }
-
-    if (!token) {
+    if (!token || !token.email) {
       return { isValid: false, user: null }
     }
 
-    // Verify token using your existing JWT secret
-    const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET || "your-secret-key") as any
+    const userEmail = token.email as string
 
     // Check if it's a super admin
-    if (decoded.role === "SUPER_ADMIN") {
-      const superAdmin = await prisma.superAdmin.findUnique({
-        where: {
-          id: decoded.id,
-          isActive: true,
-        },
-      })
+    const superAdmin = await prisma.superAdmin.findUnique({
+      where: {
+        email: userEmail,
+        isActive: true,
+      },
+    })
 
-      if (!superAdmin) {
-        return { isValid: false, user: null }
-      }
-
+    if (superAdmin) {
       return {
         isValid: true,
         user: {
@@ -58,19 +49,15 @@ export async function authMiddleware(request: NextRequest): Promise<AuthResult> 
     }
 
     // Check if it's a sub admin
-    if (decoded.role === "SUB_ADMIN") {
-      const subAdmin = await prisma.subAdmin.findUnique({
-        where: {
-          id: decoded.id,
-          isActive: true,
-        },
-        include: { createdBy: true },
-      })
+    const subAdmin = await prisma.subAdmin.findUnique({
+      where: {
+        email: userEmail,
+        isActive: true,
+      },
+      include: { createdBy: true },
+    })
 
-      if (!subAdmin) {
-        return { isValid: false, user: null }
-      }
-
+    if (subAdmin) {
       return {
         isValid: true,
         user: {
