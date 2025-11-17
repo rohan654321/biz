@@ -21,6 +21,7 @@ import {
   HelpCircle,
   LogOut,
   ChevronDown,
+  ArrowLeft,
 } from "lucide-react"
 
 // Import all section components
@@ -37,6 +38,17 @@ import { CreateEventForm } from "./eventManagement/createEvent/create-event"
 import { signOut } from "next-auth/react"
 import EventCategories from "./event-categories"
 import CountriesManagement from "./countries-management"
+import MainHelpSupport from "./help-support.tsx/main-help-support"
+import SupportContacts from "./help-support.tsx/support-contacts"
+import SupportNotes from "./help-support.tsx/support-notes"
+import SupportTickets from "./help-support.tsx/support-tickets"
+import FAQManagement from "./help-support.tsx/faq-management"
+import AddOrganizerForm from "./add-organizer-form"
+import { Button } from "@/components/ui/button"
+import AddExhibitorForm from "./add-exhibitor-form"
+import AddSpeaker from "./AddSpeaker"
+import AddVenue from "./add-venue"
+import AddVenueComponent from "./AddVenue"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -120,6 +132,7 @@ const MENU_PERMISSIONS = {
   "support-tickets": "support-tickets",
   "support-contacts": "support-contacts",
   "support-notes": "support-notes",
+  "support-faq": "support-faq",
   // Add permissions for locations
   locations: "locations",
   countries: "countries",
@@ -330,6 +343,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       subItems: [
         { title: "Support Tickets", id: "support-tickets" },
         { title: "Contact Logs", id: "support-contacts" },
+        { title: "FAQ Management", id: "support-faq" },
         { title: "Admin Notes", id: "support-notes" },
       ],
     },
@@ -372,15 +386,170 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
 
         // Events
         case "events-create":
-          return  <div>Create Event - Coming Soon</div>   //<CreateEventForm/>
+          return <CreateEventForm/> //<div>Create Event - Coming Soon</div> 
         case "events-all":
-          return   <div>Event Management - Coming Soon</div>    //<EventManagement />
+          return <EventManagement />//<div>Event Management - Coming Soon</div> //<EventManagement />
         case "events-categories":
-          return  <div>Event Categories - Coming Soon</div>         //<EventCategories />
+          return <div>Event Categories - Coming Soon</div> //<EventCategories />
         case "events-approvals":
           return <div>Event Approvals - Coming Soon</div>
         case "bulk-data":
           return <div>Event Bulk upload - Coming Soon</div>
+
+        // Organizers
+        case "organizers-add":
+          return (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h1 className="text-3xl font-bold text-gray-900">Add New Organizer</h1>
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleSubSectionClick("organizers", "organizers-all")}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Organizers
+                </Button>
+              </div>
+              <AddOrganizerForm 
+                onSuccess={() => {
+                  // Optionally navigate back to organizers list after success
+                  handleSubSectionClick("organizers", "organizers-all")
+                }}
+                onCancel={() => handleSubSectionClick("organizers", "organizers-all")}
+              />
+            </div>
+          )
+        case "organizers-all":
+          return <div>Organizer Management - Coming Soon</div>//<OrganizerManagement />
+        case "organizers-connections":
+          return <div>Organizer Connections - Coming Soon</div>
+        case "promotions":
+          return <div>Promotions Management - Coming Soon</div>
+        case "organizers-bookings":
+          return <div>Organizer Bookings - Coming Soon</div>
+        case "organizers-feedback":
+          return <div>Organizer Feedback - Coming Soon</div>
+
+        // Exhibitors
+        case "exhibitors-all":
+          return <div>All Exhibitor - Coming soon</div>
+          // return <ExhibitorManagement />
+        case "exhibitors-add":
+          return  <div>Add Exhibitor - Coming Soon</div> //<AddExhibitorForm/>
+        case "exhibitors-promotions":
+          return <div>Exhibitor Promotions - Coming Soon</div>
+        case "exhibitors-followers":
+          return <div>Exhibitor Followers - Coming Soon</div>
+        case "exhibitors-appointments":
+          return <div>Exhibitor Appointments - Coming Soon</div>
+        case "exhibitors-feedback":
+          return <div>Exhibitor Feedback - Coming Soon</div>
+
+        // Speakers
+        case "speakers-all":
+          return <div>All Speaker - Coming Soon</div>//<SpeakerManagement />
+        case "speakers-add":
+          return <div>Add Speaker  - Coming Soon</div> //<AddSpeaker/>
+        case "speakers-followers":
+          return <div>Speaker Followers - Coming Soon</div>
+        case "speakers-appointments":
+          return <div>Speaker Appointments - Coming Soon</div>
+        case "speakers-feedback":
+          return <div>Speaker Feedback - Coming Soon</div>
+
+        // Venues
+        case "venues-all":
+          return <div>Venue Management - Coming Soon</div>//<VenueManagement />
+        case "venues-add":
+          return <div>Add Venues - Coming Soon</div>//<AddVenueComponent/>
+        case "venues-events":
+          return <div>Venue Events - Coming Soon</div>
+        case "venues-bookings":
+          return <div>Venue Bookings - Coming Soon</div>
+        case "venues-feedback":
+          return <div>Venue Feedback - Coming Soon</div>
+
+        // Visitors
+        case "visitors-events":
+          return <div>Visitor Events - Coming Soon</div>
+        case "visitors-connections":
+          return <div>Visitor Connections - Coming Soon</div>
+        case "visitors-appointments":
+          return <div>Visitor Appointments - Coming Soon</div>
+
+        // Financial
+        case "financial-payments":
+          return <div>Payments Dashboard - Coming Soon</div>
+        case "financial-subscriptions":
+          return <div>Subscriptions & Plans - Coming Soon</div>
+        case "financial-invoices":
+          return <div>Invoices & Receipts - Coming Soon</div>
+        case "financial-transactions":
+          return <div>Transaction History - Coming Soon</div>
+
+        // Content
+        case "content-news":
+          return <div>News & Announcements - Coming Soon</div>
+        case "content-blog":
+          return <div>Blog & Articles - Coming Soon</div>
+        case "content-banners":
+          return <div>Banner & Ads Manager - Coming Soon</div>
+        case "content-featured":
+          return <div>Featured Events - Coming Soon</div>
+        case "content-media":
+          return <div>Media Library - Coming Soon</div>
+
+        // Marketing
+        case "marketing-email":
+          return <div>Email Campaigns - Coming Soon</div>
+        case "marketing-notifications":
+          return <div>Push Notifications - Coming Soon</div>
+        case "marketing-traffic":
+          return <div>Traffic Analytics - Coming Soon</div>
+        case "marketing-seo":
+          return <div>SEO & Keywords - Coming Soon</div>
+
+        // Reports
+        case "reports-events":
+          return <div>Event Performance - Coming Soon</div>
+        case "reports-engagement":
+          return <div>User Engagement - Coming Soon</div>
+        case "reports-revenue":
+          return <div>Revenue Reports - Coming Soon</div>
+        case "reports-system":
+          return <div>System Health - Coming Soon</div>
+
+        // Integrations
+        case "integrations-payment":
+          return <div>Payment Gateways - Coming Soon</div>
+        case "integrations-communication":
+          return <div>Email/SMS Providers - Coming Soon</div>
+        case "integrations-calendar":
+          return <div>Calendar & API - Coming Soon</div>
+        case "integrations-travel":
+          return <div>Hotel & Travel Partners - Coming Soon</div>
+
+        // Settings
+        case "settings-modules":
+          return <div>Module Management - Coming Soon</div>
+        case "settings-notifications":
+          return <div>Notifications - Coming Soon</div>
+        case "settings-security":
+          return <div>Security - Coming Soon</div>
+        case "settings-language":
+          return <div>Language & Localization - Coming Soon</div>
+        case "settings-backup":
+          return <div>Backup & Restore - Coming Soon</div>
+
+        // Support
+        case "support-tickets":
+          return <div>Suppot Ticket - Comming Soon</div>//<SupportTickets />
+        case "support-contacts":
+          return <div>Suppot Contacts - Comming Soon</div>//<SupportContacts />
+        case "support-faq":
+          return <div>FAQs - Comming Soon</div> //<FAQManagement />
+        case "support-notes":
+          return <div>Suppot Notes - Comming Soon</div>//<SupportNotes />
 
         // Locations
         // case "countries":
@@ -400,8 +569,9 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       case "events":
         return <EventManagement />
       case "locations":
-      return <CountriesManagement /> 
+        return <CountriesManagement /> 
       case "organizers":
+        // Default to "All Organizers" when main organizers section is clicked
         return <OrganizerManagement />
       case "exhibitors":
         return <ExhibitorManagement />
@@ -426,7 +596,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       case "settings":
         return <SystemSettings />
       case "support":
-        return <div>Help & Support - Coming Soon</div>
+        return <MainHelpSupport />
       default:
         return <DashboardOverview />
     }

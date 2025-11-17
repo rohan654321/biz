@@ -187,62 +187,6 @@ model User {
   totalAttendees Int   @default(0)
   totalRevenue   Float @default(0)
 
-  // Relationships
-  organizedEvents          Event[]              @relation("EventOrganizer")
-  registrations            EventRegistration[]
-  speakerSessions          SpeakerSession[]
-  speakerMaterials         Material[]           @relation("SpeakerMaterials")
-  exhibitorBooths          ExhibitorBooth[]
-  products                 Product[]
-  venueBookings            VenueBooking[]
-  sentMessages             Message[]            @relation("MessageSender")
-  receivedMessages         Message[]            @relation("MessageReceiver")
-  reviews                  Review[]
-  payments                 Payment[]
-  legaldoc                 LegalDocument[]      @relation("VenueLegalDocuments")
-  notifications            Notification[]
-  analytics                UserAnalytics[]
-  settings                 Settings?
-  campaigns                Campaign[]
-  broadcastsSent           Broadcast[]          @relation("BroadcastSender")
-  broadcastsReceived       BroadcastRecipient[]
-  venueEvents              Event[]              @relation("EventVenue")
-  exhibitorReviews         Review[]             @relation("ExhibitorReviews")
-  venueReviews             Review[]             @relation("VenueReviews")
-  organizerReviews         Review[]             @relation("OrganizerReviews")
-  venueAnalytics           VenueAnalytics[]
-  meetingSpaces            MeetingSpace[]
-  leads                    EventLead[]
-  organizerPromotions      Promotion[]          @relation("OrganizerPromotions")
-  exhibitorPromotions      Promotion[]          @relation("ExhibitorPromotions")
-  savedEvents              SavedEvent[]
-  replies                  ReviewReply[]
-  connectionsSent          Connection[]         @relation("ConnectionSender")
-  connectionsReceived      Connection[]         @relation("ConnectionReceiver")
-  // Add these lines to the User model's relationships section:
-  venueAppointments        VenueAppointment[]   @relation("VenueAppointments")
-  venueAppointmentRequests VenueAppointment[]   @relation("VenueAppointmentRequests")
-  //verification of otps
-  verificationCodes        VerificationCode[]
-
-  // Relations for organizer-speaker
-  organizerId String? @db.ObjectId
-  organizer   User?   @relation("OrganizerSpeakers", fields: [organizerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  speakers    User[]  @relation("OrganizerSpeakers")
-
-  // Exhibitor relation
-  organizerIdForExhibitor String? @db.ObjectId
-  organizerForExhibitor   User?   @relation("OrganizerExhibitors", fields: [organizerIdForExhibitor], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  exhibitors              User[]  @relation("OrganizerExhibitors")
-
-  // Venue Manager relation
-  organizerIdForVenueManager String? @db.ObjectId
-  organizerForVenueManager   User?   @relation("OrganizerVenueManagers", fields: [organizerIdForVenueManager], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  venueManagers              User[]  @relation("OrganizerVenueManagers")
-
-  followers Follow[] @relation("UserFollowing")
-  following Follow[] @relation("UserFollowers")
-
   // Venue fields
   venueName        String?
   venueDescription String?
@@ -272,11 +216,95 @@ model User {
   // Speaker fields
   speakingExperience String?
 
-  // Appointment relationships
-  appointmentsRequested Appointment[] @relation("AppointmentRequester")
-  appointmentsReceived  Appointment[] @relation("AppointmentExhibitor")
+  // ===== RELATIONSHIPS =====
 
-  exhibitorManuals ExhibitorManual[] @relation("ExhibitorManualUploads")
+  // Event Relationships
+  organizedEvents          Event[]              @relation("EventOrganizer")
+  venueEvents              Event[]              @relation("EventVenue")
+  savedEvents              SavedEvent[]
+  registrations            EventRegistration[]
+
+  // Speaker Relationships
+  speakerSessions          SpeakerSession[]
+  speakerMaterials         Material[]           @relation("SpeakerMaterials")
+
+  // Exhibitor Relationships
+  exhibitorBooths          ExhibitorBooth[]
+  products                 Product[]
+  exhibitorManuals         ExhibitorManual[]    @relation("ExhibitorManualUploads")
+
+  // Venue Relationships
+  venueBookings            VenueBooking[]
+  meetingSpaces            MeetingSpace[]
+
+  // Communication Relationships
+  sentMessages             Message[]            @relation("MessageSender")
+  receivedMessages         Message[]            @relation("MessageReceiver")
+  broadcastsSent           Broadcast[]          @relation("BroadcastSender")
+  broadcastsReceived       BroadcastRecipient[]
+
+  // Review & Rating Relationships
+  reviews                  Review[]
+  exhibitorReviews         Review[]             @relation("ExhibitorReviews")
+  venueReviews             Review[]             @relation("VenueReviews")
+  organizerReviews         Review[]             @relation("OrganizerReviews")
+  replies                  ReviewReply[]
+
+  // Payment & Financial Relationships
+  payments                 Payment[]
+
+  // Legal & Document Relationships
+  legaldoc                 LegalDocument[]      @relation("VenueLegalDocuments")
+
+  // Notification & Settings Relationships
+  notifications            Notification[]
+  settings                 Settings?
+
+  // Analytics Relationships
+  analytics                UserAnalytics[]
+  venueAnalytics           VenueAnalytics[]
+
+  // Marketing & Campaign Relationships
+  campaigns                Campaign[]
+  leads                    EventLead[]
+  organizerPromotions      Promotion[]          @relation("OrganizerPromotions")
+  exhibitorPromotions      Promotion[]          @relation("ExhibitorPromotions")
+
+  // Social & Connection Relationships
+  connectionsSent          Connection[]         @relation("ConnectionSender")
+  connectionsReceived      Connection[]         @relation("ConnectionReceiver")
+  followers                Follow[]             @relation("UserFollowing")
+  following                Follow[]             @relation("UserFollowers")
+
+  // Appointment Relationships
+  appointmentsRequested    Appointment[]        @relation("AppointmentRequester")
+  appointmentsReceived     Appointment[]        @relation("AppointmentExhibitor")
+  venueAppointments        VenueAppointment[]   @relation("VenueAppointments")
+  venueAppointmentRequests VenueAppointment[]   @relation("VenueAppointmentRequests")
+
+  // Support Relationships
+  createdSupportTickets    SupportTicket[]      @relation("UserSupportTickets")
+  assignedSupportTickets   SupportTicket[]      @relation("AssignedTickets")
+  supportTicketReplies     SupportTicketReply[]
+    createdAdminNotes AdminNote[]         @relation("AdminNoteAuthor")
+  noteCollaborations NoteCollaborator[] @relation("NoteCollaboratorUser")
+  // Verification & Security
+  verificationCodes        VerificationCode[]
+
+  // Organizer-Speaker Relationships
+  organizerId String? @db.ObjectId
+  organizer   User?   @relation("OrganizerSpeakers", fields: [organizerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  speakers    User[]  @relation("OrganizerSpeakers")
+
+  // Organizer-Exhibitor Relationships
+  organizerIdForExhibitor String? @db.ObjectId
+  organizerForExhibitor   User?   @relation("OrganizerExhibitors", fields: [organizerIdForExhibitor], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  exhibitors              User[]  @relation("OrganizerExhibitors")
+
+  // Organizer-Venue Manager Relationships
+  organizerIdForVenueManager String? @db.ObjectId
+  organizerForVenueManager   User?   @relation("OrganizerVenueManagers", fields: [organizerIdForVenueManager], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  venueManagers              User[]  @relation("OrganizerVenueManagers")
 
   @@map("users")
 }
@@ -1585,7 +1613,6 @@ model FAQ {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  updatedBy String   @db.ObjectId
   
   @@map("faqs")
 }
@@ -1654,7 +1681,6 @@ model HelpSupportContent {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  updatedBy String   @db.ObjectId
   
   @@unique([userRole])
   @@map("help_support_content")
@@ -1786,4 +1812,122 @@ model EventsOnCities {
 
   @@unique([eventId, cityId])
   @@map("events_on_cities")
+}
+model SupportTicket {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  title       String
+  description String
+  category    String
+  priority    TicketPriority @default(MEDIUM)
+  status      TicketStatus @default(OPEN)
+  
+  // User who created the ticket
+  userId      String   @db.ObjectId
+  user        User     @relation("UserSupportTickets", fields: [userId], references: [id], onDelete: Cascade)
+  userRole    UserRole
+  
+  // Admin assignment
+  assignedToId String?   @db.ObjectId
+  assignedTo   User?     @relation("AssignedTickets", fields: [assignedToId], references: [id])
+  
+  // Responses
+  replies     SupportTicketReply[]
+  
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  closedAt    DateTime?
+
+  @@map("support_tickets")
+}
+
+model SupportTicketReply {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  ticketId  String   @db.ObjectId
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  content   String
+  isInternal Boolean @default(false) // Internal notes vs user-facing replies
+  
+  attachments String[]
+  
+  createdAt DateTime @default(now())
+  
+  @@map("support_ticket_replies")
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_RESPONSE
+  RESOLVED
+  CLOSED
+}
+
+model AdminNote {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  content     String
+  category    String   @default("General")
+  tags        String[]
+  
+  // Access control
+  visibility  NoteVisibility @default(PRIVATE)
+  userRoles   UserRole[]     // Which roles can see this note
+  dashboardTypes DashboardType[] // Which dashboards should show this note
+  
+  // Author info
+  createdById String?   @db.ObjectId
+  createdBy   User?     @relation("AdminNoteAuthor", fields: [createdById], references: [id])
+  
+  // Status
+  isPinned    Boolean  @default(false)
+  isArchived  Boolean  @default(false)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  archivedAt  DateTime?
+
+  // Reverse relation
+  collaborators NoteCollaborator[]
+
+  @@map("admin_notes")
+}
+
+enum NoteVisibility {
+  PRIVATE
+  TEAM
+  PUBLIC
+}
+
+model NoteCollaborator {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  noteId      String   @db.ObjectId
+  userId      String   @db.ObjectId
+  permission  CollaboratorPermission @default(VIEW)
+  assignedAt  DateTime @default(now())
+  
+  note        AdminNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user        User      @relation("NoteCollaboratorUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([noteId, userId])
+  @@map("note_collaborators")
+}
+
+enum CollaboratorPermission {
+  VIEW
+  EDIT
+  MANAGE
 }
