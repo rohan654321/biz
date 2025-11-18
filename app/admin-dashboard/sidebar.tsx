@@ -37,6 +37,7 @@ import SubAdminManagement from "./subadmin-management"
 import { CreateEventForm } from "./eventManagement/createEvent/create-event"
 import { signOut } from "next-auth/react"
 import CountriesManagement from "./countries-management"
+import VisitorManagement from "./visitor-management"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -414,7 +415,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       case "venues":
         return <VenueManagement />
       case "visitors":
-        return <div>Visitor Management - Coming Soon</div>
+        return <div>Visitor Management - Coming Soon</div> // <VisitorManagement/>
       case "financial":
         return <div>Financial Management - Coming Soon</div>
       case "content":
