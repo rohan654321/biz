@@ -187,96 +187,96 @@
     totalAttendees Int   @default(0)
     totalRevenue   Float @default(0)
 
-    // Relationships
-    organizedEvents          Event[]              @relation("EventOrganizer")
-    registrations            EventRegistration[]
-    speakerSessions          SpeakerSession[]
-    speakerMaterials         Material[]           @relation("SpeakerMaterials")
-    exhibitorBooths          ExhibitorBooth[]
-    products                 Product[]
-    venueBookings            VenueBooking[]
-    sentMessages             Message[]            @relation("MessageSender")
-    receivedMessages         Message[]            @relation("MessageReceiver")
-    reviews                  Review[]
-    payments                 Payment[]
-    legaldoc                 LegalDocument[]      @relation("VenueLegalDocuments")
-    notifications            Notification[]
-    analytics                UserAnalytics[]
-    settings                 Settings?
-    campaigns                Campaign[]
-    broadcastsSent           Broadcast[]          @relation("BroadcastSender")
-    broadcastsReceived       BroadcastRecipient[]
-    venueEvents              Event[]              @relation("EventVenue")
-    exhibitorReviews         Review[]             @relation("ExhibitorReviews")
-    venueReviews             Review[]             @relation("VenueReviews")
-    organizerReviews         Review[]             @relation("OrganizerReviews")
-    venueAnalytics           VenueAnalytics[]
-    meetingSpaces            MeetingSpace[]
-    leads                    EventLead[]
-    organizerPromotions      Promotion[]          @relation("OrganizerPromotions")
-    exhibitorPromotions      Promotion[]          @relation("ExhibitorPromotions")
-    savedEvents              SavedEvent[]
-    replies                  ReviewReply[]
-    connectionsSent          Connection[]         @relation("ConnectionSender")
-    connectionsReceived      Connection[]         @relation("ConnectionReceiver")
-    // Add these lines to the User model's relationships section:
-    venueAppointments        VenueAppointment[]   @relation("VenueAppointments")
-    venueAppointmentRequests VenueAppointment[]   @relation("VenueAppointmentRequests")
-    //verification of otps
-    verificationCodes        VerificationCode[]
+   // Relationships
+   organizedEvents          Event[]              @relation("EventOrganizer")
+   registrations            EventRegistration[]
+   speakerSessions          SpeakerSession[]
+   speakerMaterials         Material[]           @relation("SpeakerMaterials")
+   exhibitorBooths          ExhibitorBooth[]
+   products                 Product[]
+   venueBookings            VenueBooking[]
+   sentMessages             Message[]            @relation("MessageSender")
+   receivedMessages         Message[]            @relation("MessageReceiver")
+   reviews                  Review[]
+   payments                 Payment[]
+   legaldoc                 LegalDocument[]      @relation("VenueLegalDocuments")
+   notifications            Notification[]
+   analytics                UserAnalytics[]
+   settings                 Settings?
+   campaigns                Campaign[]
+   broadcastsSent           Broadcast[]          @relation("BroadcastSender")
+   broadcastsReceived       BroadcastRecipient[]
+   venueEvents              Event[]              @relation("EventVenue")
+   exhibitorReviews         Review[]             @relation("ExhibitorReviews")
+   venueReviews             Review[]             @relation("VenueReviews")
+   organizerReviews         Review[]             @relation("OrganizerReviews")
+   venueAnalytics           VenueAnalytics[]
+   meetingSpaces            MeetingSpace[]
+   leads                    EventLead[]
+   organizerPromotions      Promotion[]          @relation("OrganizerPromotions")
+   exhibitorPromotions      Promotion[]          @relation("ExhibitorPromotions")
+   savedEvents              SavedEvent[]
+   replies                  ReviewReply[]
+   connectionsSent          Connection[]         @relation("ConnectionSender")
+   connectionsReceived      Connection[]         @relation("ConnectionReceiver")
+   // Add these lines to the User model's relationships section:
+   venueAppointments        VenueAppointment[]   @relation("VenueAppointments")
+   venueAppointmentRequests VenueAppointment[]   @relation("VenueAppointmentRequests")
+   //verification of otps
+   verificationCodes        VerificationCode[]
 
-    // Relations for organizer-speaker
-    organizerId String? @db.ObjectId
-    organizer   User?   @relation("OrganizerSpeakers", fields: [organizerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-    speakers    User[]  @relation("OrganizerSpeakers")
+   // Relations for organizer-speaker
+   organizerId String? @db.ObjectId
+   organizer   User?   @relation("OrganizerSpeakers", fields: [organizerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+   speakers    User[]  @relation("OrganizerSpeakers")
 
-    // Exhibitor relation
-    organizerIdForExhibitor String? @db.ObjectId
-    organizerForExhibitor   User?   @relation("OrganizerExhibitors", fields: [organizerIdForExhibitor], references: [id], onDelete: NoAction, onUpdate: NoAction)
-    exhibitors              User[]  @relation("OrganizerExhibitors")
+   // Exhibitor relation
+   organizerIdForExhibitor String? @db.ObjectId
+   organizerForExhibitor   User?   @relation("OrganizerExhibitors", fields: [organizerIdForExhibitor], references: [id], onDelete: NoAction, onUpdate: NoAction)
+   exhibitors              User[]  @relation("OrganizerExhibitors")
 
-    // Venue Manager relation
-    organizerIdForVenueManager String? @db.ObjectId
-    organizerForVenueManager   User?   @relation("OrganizerVenueManagers", fields: [organizerIdForVenueManager], references: [id], onDelete: NoAction, onUpdate: NoAction)
-    venueManagers              User[]  @relation("OrganizerVenueManagers")
+   // Venue Manager relation
+   organizerIdForVenueManager String? @db.ObjectId
+   organizerForVenueManager   User?   @relation("OrganizerVenueManagers", fields: [organizerIdForVenueManager], references: [id], onDelete: NoAction, onUpdate: NoAction)
+   venueManagers              User[]  @relation("OrganizerVenueManagers")
 
-    followers Follow[] @relation("UserFollowing")
-    following Follow[] @relation("UserFollowers")
+   followers Follow[] @relation("UserFollowing")
+   following Follow[] @relation("UserFollowers")
 
-    // Venue fields
-    venueName        String?
-    venueDescription String?
-    venueAddress     String?
-    venueCity        String?
-    venueState       String?
-    venueCountry     String?
-    venueZipCode     String?
-    venuePhone       String?
-    venueEmail       String?
-    venueWebsite     String?
-    maxCapacity      Int?
-    totalHalls       Int?
-    activeBookings   Int?
-    averageRating    Float    @default(0)
-    totalReviews     Int      @default(0)
-    amenities        String[]
-    venueImages      String[]
-    venueVideos      String[]
-    floorPlans       String[]
-    virtualTour      String?
-    basePrice        Float?
-    venueCurrency    String   @default("USD")
-    latitude         Float?
-    longitude        Float?
+   // Venue fields
+   venueName        String?
+   venueDescription String?
+   venueAddress     String?
+   venueCity        String?
+   venueState       String?
+   venueCountry     String?
+   venueZipCode     String?
+   venuePhone       String?
+   venueEmail       String?
+   venueWebsite     String?
+   maxCapacity      Int?
+   totalHalls       Int?
+   activeBookings   Int?
+   averageRating    Float    @default(0)
+   totalReviews     Int      @default(0)
+   amenities        String[]
+   venueImages      String[]
+   venueVideos      String[]
+   floorPlans       String[]
+   virtualTour      String?
+   basePrice        Float?
+   venueCurrency    String   @default("USD")
+   latitude         Float?
+   longitude        Float?
 
-    // Speaker fields
-    speakingExperience String?
+  // Speaker fields
+  speakingExperience String?
 
-    // Appointment relationships
-    appointmentsRequested Appointment[] @relation("AppointmentRequester")
-    appointmentsReceived  Appointment[] @relation("AppointmentExhibitor")
+  // Appointment relationships
+  appointmentsRequested Appointment[] @relation("AppointmentRequester")
+  appointmentsReceived  Appointment[] @relation("AppointmentExhibitor")
 
-    exhibitorManuals ExhibitorManual[] @relation("ExhibitorManualUploads")
+  exhibitorManuals ExhibitorManual[] @relation("ExhibitorManualUploads")
 
     @@map("users")
   }
@@ -356,20 +356,20 @@
     averageRating Float @default(0)
     totalReviews  Int   @default(0)
 
-    // Relationships
-    registrations    EventRegistration[]
-    speakerSessions  SpeakerSession[]
-    exhibitorBooths  ExhibitorBooth[]
-    reviews          Review[]
-    analytics        EventAnalytics[]
-    campaigns        Campaign[]
-    leads            EventLead[]
-    promotions       Promotion[]
-    savedEvents      SavedEvent[]
-    appointments     Appointment[]
-    ticketTypes      TicketType[]
-    exhibitorManuals ExhibitorManual[]
-    conference       Conference[]
+  // Relationships
+  registrations    EventRegistration[]
+  speakerSessions  SpeakerSession[]
+  exhibitorBooths  ExhibitorBooth[]
+  reviews          Review[]
+  analytics        EventAnalytics[]
+  campaigns        Campaign[]
+  leads            EventLead[]
+  promotions       Promotion[]
+  savedEvents      SavedEvent[]
+  appointments     Appointment[]
+  ticketTypes      TicketType[]
+  exhibitorManuals ExhibitorManual[]
+  conference       Conference[]
 
     @@map("events")
   }
@@ -1565,27 +1565,27 @@ requester   User?   @relation("VenueAppointmentRequests", fields: [requesterId],
     @@map("dashboard_content")
   }
 
-  // FAQ Management (Shared across dashboards)
-  model FAQ {
-    id          String   @id @default(auto()) @map("_id") @db.ObjectId
-    question    String
-    answer      String
-    category    String?  // General, Technical, Billing, etc.
-    
-    // Target audience
-    userRoles   UserRole[]  // Which roles should see this FAQ
-    dashboardTypes DashboardType[] // Which dashboards should show this FAQ
-    
-    order       Int      @default(0)
-    isActive    Boolean  @default(true)
-    views       Int      @default(0)
-    
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-    updatedBy String   @db.ObjectId
-    
-    @@map("faqs")
-  }
+// FAQ Management (Shared across dashboards)
+model FAQ {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  question    String
+  answer      String
+  category    String?  // General, Technical, Billing, etc.
+  
+  // Target audience
+  userRoles   UserRole[]  // Which roles should see this FAQ
+  dashboardTypes DashboardType[] // Which dashboards should show this FAQ
+  
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  views       Int      @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String   @db.ObjectId
+  
+  @@map("faqs")
+}
 
   // Announcements/Banners
   model DashboardAnnouncement {
@@ -1616,46 +1616,46 @@ requester   User?   @relation("VenueAppointmentRequests", fields: [requesterId],
     @@map("dashboard_announcements")
   }
 
-  // Help & Support Content (Specific to help pages)
-  model HelpSupportContent {
-    id          String   @id @default(auto()) @map("_id") @db.ObjectId
-    userRole    UserRole // Role-specific help content
-    
-    // Header
-    pageTitle   String
-    pageDescription String
-    
-    // Contact Sections
-    contactTitle    String?
-    contactDescription String?
-    
-    // Support Channels
-    supportEmail     String
-    supportPhone     String
-    officeAddress    String
-    corporateName    String
-    liveChatHours    String
-    
-    // Section Titles
-    emailTitle       String?
-    emailDescription String?
-    phoneTitle       String?
-    phoneDescription String?
-    officeTitle      String?
-    officeDescription String?
-    liveChatTitle    String?
-    liveChatDescription String?
-    faqTitle         String?
-    
-    isActive    Boolean  @default(true)
-    
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-    updatedBy String   @db.ObjectId
-    
-    @@unique([userRole])
-    @@map("help_support_content")
-  }
+// Help & Support Content (Specific to help pages)
+model HelpSupportContent {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userRole    UserRole // Role-specific help content
+  
+  // Header
+  pageTitle   String
+  pageDescription String
+  
+  // Contact Sections
+  contactTitle    String?
+  contactDescription String?
+  
+  // Support Channels
+  supportEmail     String
+  supportPhone     String
+  officeAddress    String
+  corporateName    String
+  liveChatHours    String
+  
+  // Section Titles
+  emailTitle       String?
+  emailDescription String?
+  phoneTitle       String?
+  phoneDescription String?
+  officeTitle      String?
+  officeDescription String?
+  liveChatTitle    String?
+  liveChatDescription String?
+  faqTitle         String?
+  
+  isActive    Boolean  @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String   @db.ObjectId
+  
+  @@unique([userRole])
+  @@map("help_support_content")
+}
 
   // Enum for dashboard types
   enum DashboardType {
@@ -1678,154 +1678,8 @@ requester   User?   @relation("VenueAppointmentRequests", fields: [requesterId],
     UPDATE
   }
 
-  enum BadgeSentStatus {
-    SENT
-    FAILED
-    BOUNCED
-  }
-
-
-  // Email Campaigns
-  model EmailCampaign {
-    id                String   @id @default(auto()) @map("_id") @db.ObjectId
-    title             String
-    subject           String
-    content           String
-    htmlContent       String?
-    status            String   @default("draft") // draft, scheduled, sending, sent, paused, cancelled
-    priority          String   @default("medium") // low, medium, high, urgent
-    targetAudiences   String[]
-    scheduledAt       DateTime?
-    sentAt            DateTime?
-    createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
-    
-    // Stats
-    totalRecipients   Int      @default(0)
-    sent              Int      @default(0)
-    delivered         Int      @default(0)
-    opened            Int      @default(0)
-    clicked           Int      @default(0)
-    bounced           Int      @default(0)
-    unsubscribed      Int      @default(0)
-    
-    // Engagement rates (calculated fields)
-    openRate          Float    @default(0)
-    clickRate         Float    @default(0)
-    deliveryRate      Float    @default(0)
-    bounceRate        Float    @default(0)
-    unsubscribeRate   Float    @default(0)
-    
-    // Relations
-    recipients        EmailRecipient[]
-    
-    @@map("email_campaigns")
-  }
-
-  model EmailRecipient {
-    id                String   @id @default(auto()) @map("_id") @db.ObjectId
-    campaignId        String   @db.ObjectId
-    recipientEmail    String
-    recipientName     String?
-    status            String   @default("pending") // pending, sent, delivered, opened, clicked, bounced, unsubscribed
-    sentAt            DateTime?
-    deliveredAt       DateTime?
-    openedAt          DateTime?
-    clickedAt         DateTime?
-    bouncedAt         DateTime?
-    unsubscribedAt    DateTime?
-    errorMessage      String?
-    
-    campaign          EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-    
-    @@map("email_recipients")
-    @@index([campaignId])
-    @@index([recipientEmail])
-  }
-
-  // Email Templates
-  model EmailTemplate {
-    id          String   @id @default(auto()) @map("_id") @db.ObjectId
-    name        String
-    subject     String
-    content     String
-    htmlContent String?
-    category    String?
-    isActive    Boolean  @default(true)
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
-    
-    @@map("email_templates")
-  }
-
-  // Push Notifications
-  model PushNotification {
-    id                String   @id @default(auto()) @map("_id") @db.ObjectId
-    title             String
-    message           String
-    imageUrl          String?
-    actionUrl         String?
-    status            String   @default("draft") // draft, scheduled, sending, sent, paused, cancelled
-    priority          String   @default("medium") // low, medium, high, urgent
-    targetAudiences   String[]
-    targetPlatforms   String[] // ios, android, web
-    scheduledAt       DateTime?
-    sentAt            DateTime?
-    createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
-    
-    // Stats
-    totalRecipients   Int      @default(0)
-    sent              Int      @default(0)
-    delivered         Int      @default(0)
-    opened            Int      @default(0)
-    clicked           Int      @default(0)
-    failed            Int      @default(0)
-    
-    // Engagement rates
-    deliveryRate      Float    @default(0)
-    openRate          Float    @default(0)
-    clickRate         Float    @default(0)
-    failureRate       Float    @default(0)
-    
-    // Relations
-    recipients        PushRecipient[]
-    
-    @@map("push_notifications")
-  }
-
-  model PushRecipient {
-    id                String   @id @default(auto()) @map("_id") @db.ObjectId
-    notificationId    String   @db.ObjectId
-    deviceToken       String
-    platform          String   // ios, android, web
-    userId            String?
-    status            String   @default("pending") // pending, sent, delivered, opened, clicked, failed
-    sentAt            DateTime?
-    deliveredAt       DateTime?
-    openedAt          DateTime?
-    clickedAt         DateTime?
-    failedAt          DateTime?
-    errorMessage      String?
-    
-    notification      PushNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
-    
-    @@map("push_recipients")
-    @@index([notificationId])
-    @@index([deviceToken])
-  }
-
-  // Push Notification Templates
-  model PushTemplate {
-    id          String   @id @default(auto()) @map("_id") @db.ObjectId
-    name        String
-    title       String
-    message     String
-    imageUrl    String?
-    category    String?
-    isActive    Boolean  @default(true)
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
-    
-    @@map("push_templates")
-  }
+enum BadgeSentStatus {
+  SENT
+  FAILED
+  BOUNCED
+}

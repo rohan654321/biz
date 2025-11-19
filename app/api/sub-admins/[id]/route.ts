@@ -49,7 +49,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 // UPDATE sub-admin
-// UPDATE sub-admin
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,118 +33,143 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-// Mock data for organizers
-const organizersData = [
-  {
-    id: 1,
-    name: "TechEvents Pro",
-    email: "contact@techevents.com",
-    phone: "+91 98765 43210",
-    location: "Mumbai, Maharashtra",
-    status: "active",
-    joinDate: "2024-01-15",
-    totalEvents: 24,
-    totalRevenue: 450000,
-    rating: 4.8,
-    avatar: "/placeholder.svg?height=40&width=40&text=TE",
-    category: "Technology",
-    description: "Leading technology event organizer specializing in conferences and workshops",
-    documents: ["GST Certificate", "PAN Card", "Business License"],
-    lastActive: "2024-01-10",
-  },
-  {
-    id: 2,
-    name: "Business Summit India",
-    email: "info@businesssummit.in",
-    phone: "+91 87654 32109",
-    location: "Delhi, NCR",
-    status: "pending",
-    joinDate: "2024-01-12",
-    totalEvents: 0,
-    totalRevenue: 0,
-    rating: 0,
-    avatar: "/placeholder.svg?height=40&width=40&text=BS",
-    category: "Business",
-    description: "Corporate event management company focusing on business conferences",
-    documents: ["GST Certificate", "PAN Card"],
-    lastActive: "2024-01-12",
-  },
-  {
-    id: 3,
-    name: "Healthcare Connect",
-    email: "admin@healthcareconnect.org",
-    phone: "+91 76543 21098",
-    location: "Bangalore, Karnataka",
-    status: "active",
-    joinDate: "2023-11-20",
-    totalEvents: 18,
-    totalRevenue: 320000,
-    rating: 4.6,
-    avatar: "/placeholder.svg?height=40&width=40&text=HC",
-    category: "Healthcare",
-    description: "Medical conference and healthcare event organizer",
-    documents: ["GST Certificate", "PAN Card", "Business License", "Medical Association Certificate"],
-    lastActive: "2024-01-08",
-  },
-  {
-    id: 4,
-    name: "EduFest Organizers",
-    email: "hello@edufest.edu",
-    phone: "+91 65432 10987",
-    location: "Pune, Maharashtra",
-    status: "suspended",
-    joinDate: "2023-08-10",
-    totalEvents: 12,
-    totalRevenue: 180000,
-    rating: 3.9,
-    avatar: "/placeholder.svg?height=40&width=40&text=EF",
-    category: "Education",
-    description: "Educational event management specializing in academic conferences",
-    documents: ["GST Certificate", "PAN Card"],
-    lastActive: "2023-12-15",
-  },
-  {
-    id: 5,
-    name: "Creative Arts Hub",
-    email: "contact@creativearts.in",
-    phone: "+91 54321 09876",
-    location: "Chennai, Tamil Nadu",
-    status: "pending",
-    joinDate: "2024-01-08",
-    totalEvents: 0,
-    totalRevenue: 0,
-    rating: 0,
-    avatar: "/placeholder.svg?height=40&width=40&text=CA",
-    category: "Arts & Culture",
-    description: "Art exhibitions and cultural event organizer",
-    documents: ["PAN Card"],
-    lastActive: "2024-01-08",
-  },
-]
+interface Organizer {
+  location: string | null
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  phone: string | null
+  avatar: string | null
+  role: string
+  isActive: boolean
+  isVerified: boolean
+  lastLogin: string | null
+  createdAt: string
+  updatedAt: string
+  organizationName: string | null
+  description: string | null
+  headquarters: string | null
+  founded: string | null
+  teamSize: string | null
+  specialties: string[]
+  achievements: string[]
+  certifications: string[]
+  businessEmail: string | null
+  businessPhone: string | null
+  businessAddress: string | null
+  taxId: string | null
+  totalEvents: number
+  activeEvents: number
+  totalAttendees: number
+  totalRevenue: number
+  _count: {
+    organizedEvents: number
+    speakers: number
+    exhibitors: number
+    venueManagers: number
+    campaigns: number
+  }
+}
 
 export default function OrganizerManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [selectedOrganizer, setSelectedOrganizer] = useState<any>(null)
+  const [selectedOrganizer, setSelectedOrganizer] = useState<Organizer | null>(null)
   const [showApprovalDialog, setShowApprovalDialog] = useState(false)
   const [approvalAction, setApprovalAction] = useState<"approve" | "reject">("approve")
   const [approvalMessage, setApprovalMessage] = useState("")
+  const [organizers, setOrganizers] = useState<Organizer[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch organizers from API
+  useEffect(() => {
+    fetchOrganizers()
+  }, [])
+
+// In your fetchOrganizers function, update the API endpoint:
+const fetchOrganizers = async () => {
+  try {
+    setLoading(true)
+    setError(null)
+    const response = await fetch('/api/admin/organizers')
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch organizers')
+    }
+    
+    const data = await response.json()
+    setOrganizers(data.organizers || [])
+  } catch (err) {
+    console.error('Error fetching organizers:', err)
+    setError('Failed to load organizers')
+  } finally {
+    setLoading(false)
+  }
+}
+
+// Update the transformOrganizerData function:
+const transformOrganizerData = (organizer: Organizer) => {
+  // Determine status based on isActive and isVerified
+  let status: "active" | "pending" | "suspended" = "pending"
+  if (organizer.isActive && organizer.isVerified) {
+    status = "active"
+  } else if (!organizer.isActive) {
+    status = "suspended"
+  } else if (!organizer.isVerified) {
+    status = "pending"
+  }
+
+  // Generate location from available data
+  const location = organizer.headquarters || organizer.businessAddress || "Location not specified"
+  
+  // Calculate rating based on reviews or events
+  const rating = organizer.totalEvents > 10 ? 4.5 : organizer.totalEvents > 5 ? 4.0 : organizer.totalEvents > 0 ? 3.5 : 0
+
+  // Mock documents (replace with actual document data when available)
+  const documents = organizer.certifications && organizer.certifications.length > 0 
+    ? organizer.certifications 
+    : ["Business Registration", "Tax ID"]
+
+  return {
+    id: organizer.id,
+    name: organizer.organizationName || `${organizer.firstName} ${organizer.lastName}`,
+    email: organizer.email,
+    phone: organizer.phone || organizer.businessPhone || "Not provided",
+    location: location,
+    status: status,
+    joinDate: new Date(organizer.createdAt).toISOString().split('T')[0],
+    totalEvents: organizer.totalEvents || organizer._count?.organizedEvents || 0,
+    totalRevenue: organizer.totalRevenue || 0,
+    rating: rating,
+    avatar: organizer.avatar || `/placeholder.svg?height=40&width=40&text=${organizer.firstName?.charAt(0) || 'O'}${organizer.lastName?.charAt(0) || 'R'}`,
+    category: organizer.specialties?.[0] || "General Events",
+    description: organizer.description || "No description provided",
+    documents: documents,
+    lastActive: organizer.lastLogin ? new Date(organizer.lastLogin).toISOString().split('T')[0] : new Date(organizer.updatedAt).toISOString().split('T')[0],
+    // Keep original data for detailed view
+    originalData: organizer
+  }
+}
 
   // Filter organizers based on search and status
-  const filteredOrganizers = organizersData.filter((organizer) => {
-    const matchesSearch =
-      organizer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      organizer.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || organizer.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
+  const filteredOrganizers = organizers
+    .map(transformOrganizerData)
+    .filter((organizer) => {
+      const matchesSearch =
+        organizer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        organizer.email.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesStatus = statusFilter === "all" || organizer.status === statusFilter
+      return matchesSearch && matchesStatus
+    })
 
   // Calculate statistics
   const stats = {
-    total: organizersData.length,
-    active: organizersData.filter((o) => o.status === "active").length,
-    pending: organizersData.filter((o) => o.status === "pending").length,
-    suspended: organizersData.filter((o) => o.status === "suspended").length,
+    total: organizers.length,
+    active: organizers.filter((o) => o.isActive && o.isVerified).length,
+    pending: organizers.filter((o) => !o.isVerified).length,
+    suspended: organizers.filter((o) => !o.isActive).length,
   }
 
   const getStatusBadge = (status: string) => {
@@ -176,16 +201,82 @@ export default function OrganizerManagement() {
   }
 
   const handleApproval = (organizer: any, action: "approve" | "reject") => {
-    setSelectedOrganizer(organizer)
+    setSelectedOrganizer(organizer.originalData)
     setApprovalAction(action)
     setShowApprovalDialog(true)
   }
 
-  const submitApproval = () => {
-    // Here you would implement the actual approval/rejection logic
-    console.log(`${approvalAction} organizer:`, selectedOrganizer.id, "Message:", approvalMessage)
-    setShowApprovalDialog(false)
-    setApprovalMessage("")
+  const submitApproval = async () => {
+    try {
+      // Here you would implement the actual approval/rejection logic
+      const response = await fetch(`/api/admin/organizers/${selectedOrganizer?.id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: approvalAction,
+          message: approvalMessage
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update organizer status')
+      }
+
+      // Refresh the organizers list
+      await fetchOrganizers()
+      setShowApprovalDialog(false)
+      setApprovalMessage("")
+    } catch (error) {
+      console.error('Error updating organizer status:', error)
+      setError('Failed to update organizer status')
+    }
+  }
+
+  const handleExport = async () => {
+    try {
+      const response = await fetch('/api/admin/organizers/export')
+      if (!response.ok) {
+        throw new Error('Failed to export data')
+      }
+      
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'organizers.csv'
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('Error exporting data:', error)
+      setError('Failed to export data')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading organizers...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="text-center">
+          <p className="text-destructive text-lg font-semibold mb-2">Error</p>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <Button onClick={fetchOrganizers}>Try Again</Button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -193,7 +284,7 @@ export default function OrganizerManagement() {
       <div className="flex items-center justify-between ">
         <h1 className="text-3xl font-bold text-gray-900">Organizer Management</h1>
         <div className="flex gap-2 ">
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleExport}>
             <Download className="w-4 h-4 mr-2" />
             Export Data
           </Button>
@@ -248,7 +339,7 @@ export default function OrganizerManagement() {
       <Card>
         <CardContent className="w-auto max-w-300">
           <div className="flex flex-col md:flex-row gap-2 mb-6">
-            <div className="flex- relative">
+            <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 placeholder="Search organizers by name or email..."
@@ -488,7 +579,7 @@ export default function OrganizerManagement() {
           </DialogHeader>
           <div className="space-y-4">
             <p>
-              Are you sure you want to {approvalAction} <strong>{selectedOrganizer?.name}</strong>?
+              Are you sure you want to {approvalAction} <strong>{selectedOrganizer?.organizationName || `${selectedOrganizer?.firstName} ${selectedOrganizer?.lastName}`}</strong>?
             </p>
             <div>
               <label className="block text-sm font-medium mb-2">

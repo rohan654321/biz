@@ -1,39 +1,68 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth-options"
+import { v2 as cloudinary } from 'cloudinary'
 
-export async function GET(
-  request: Request, 
-  { params }: { params: Promise<{ id: string }> }
-) {
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+})
+
+// Helper function to upload files to Cloudinary with timeout
+async function uploadToCloudinary(file: string, folder: string = 'events') {
   try {
-    const { id } = await params
-    const event = await prisma.event.findUnique({
-      where: { id },
-      include: {
-        organizer: {
-          select: {
-            firstName: true,
-            lastName: true,
-            organizationName: true,
-          },
-        },
-        venue: {
-          select: {
-            venueName: true,
-            venueCity: true,
-          },
-        },
-      },
-    })
+    const result = await Promise.race([
+      cloudinary.uploader.upload(file, {
+        folder: folder,
+        resource_type: 'auto',
+        timeout: 30000 // 30 second timeout
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Upload timeout')), 30000)
+      )
+    ]) as any;
     
-    if (!event) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 })
-    }
-    
-    return NextResponse.json({ event })
+    return result.secure_url
+  } catch (error) {
+    console.error('Cloudinary upload error:', error)
+    throw new Error('Failed to upload file to Cloudinary')
+  }
+}
+
+// Helper function to parse category input
+function parseCategory(category: any): string[] {
+  if (Array.isArray(category)) {
+    return category.filter(Boolean)
+  }
+  if (typeof category === 'string') {
+    return category.split(',').map((cat: string) => cat.trim()).filter(Boolean)
+  }
+  return []
+}
+
+// Helper function to parse tags
+function parseTags(tags: any): string[] {
+  if (Array.isArray(tags)) {
+    return tags.filter(Boolean)
+  }
+  if (typeof tags === 'string') {
+    return tags.split(',').map((tag: string) => tag.trim()).filter(Boolean)
+  }
+  return []
+}
+
+// Helper function to check if string is base64
+function isBase64(str: string): boolean {
+  if (typeof str !== 'string') return false
+  if (str.startsWith('http')) return false
+  if (str.startsWith('data:')) return true
+  try {
+    return btoa(atob(str)) === str
   } catch (err) {
-    console.error("Error fetching event:", err)
-    return NextResponse.json({ error: "Failed to fetch event" }, { status: 500 })
+    return false
   }
 }
 
@@ -42,6 +71,17 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    // Check if user is admin
+    if (session.user?.role !== "ADMIN" && session.user?.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     const { id } = await params
     const data = await request.json()
     
@@ -50,16 +90,33 @@ export async function PATCH(
     // Map frontend fields to Prisma schema
     const updateData: any = {}
     
-    // Basic fields that exist in your Prisma schema
+    // Basic text fields
     if (data.title !== undefined) updateData.title = data.title
     if (data.description !== undefined) updateData.description = data.description
+    if (data.shortDescription !== undefined) updateData.shortDescription = data.shortDescription
+    if (data.slug !== undefined) updateData.slug = data.slug
+    if (data.edition !== undefined) updateData.edition = data.edition.toString()
+    
+    // Date fields
     if (data.date !== undefined) updateData.startDate = new Date(data.date)
     if (data.endDate !== undefined) updateData.endDate = new Date(data.endDate)
+    
+    // Capacity fields
     if (data.maxCapacity !== undefined) updateData.maxAttendees = data.maxCapacity
+    if (data.attendees !== undefined) updateData.currentAttendees = data.attendees
+    
+    // Boolean fields
     if (data.featured !== undefined) updateData.isFeatured = data.featured
     if (data.vip !== undefined) updateData.isVIP = data.vip
-    if (data.category !== undefined) updateData.category = [data.category]
-    if (data.tags !== undefined) updateData.tags = data.tags
+    
+    // Categorical fields
+    if (data.category !== undefined) updateData.category = parseCategory(data.category)
+    if (data.tags !== undefined) updateData.tags = parseTags(data.tags)
+    if (data.eventType !== undefined) updateData.eventType = [data.eventType]
+    
+    // Location and venue fields
+    if (data.timezone !== undefined) updateData.timezone = data.timezone
+    if (data.currency !== undefined) updateData.currency = data.currency
     
     // Handle status mapping
     if (data.status !== undefined) {
@@ -71,7 +128,143 @@ export async function PATCH(
         : "DRAFT"
     }
 
-    // Handle venue update - IMPROVED APPROACH
+    // Handle file uploads to Cloudinary - only upload new base64 files
+    const fileUploads: Promise<void>[] = []
+    
+    // Upload banner image if provided (base64 only)
+    if (data.bannerImage && isBase64(data.bannerImage)) {
+      fileUploads.push(
+        uploadToCloudinary(data.bannerImage, 'events/banners')
+          .then(url => { updateData.bannerImage = url })
+          .catch(error => { 
+            console.error('Failed to upload banner image:', error)
+            // Keep original if upload fails
+            updateData.bannerImage = data.bannerImage 
+          })
+      )
+    } else if (data.bannerImage !== undefined) {
+      updateData.bannerImage = data.bannerImage
+    }
+    
+    // Upload thumbnail image if provided (base64 only)
+    if (data.thumbnailImage && isBase64(data.thumbnailImage)) {
+      fileUploads.push(
+        uploadToCloudinary(data.thumbnailImage, 'events/thumbnails')
+          .then(url => { updateData.thumbnailImage = url })
+          .catch(error => { 
+            console.error('Failed to upload thumbnail image:', error)
+            updateData.thumbnailImage = data.thumbnailImage 
+          })
+      )
+    } else if (data.thumbnailImage !== undefined) {
+      updateData.thumbnailImage = data.thumbnailImage
+    }
+    
+    // Handle multiple images - only upload new base64 images
+    if (data.images && Array.isArray(data.images)) {
+      const imageUploads = data.images.map(async (image: string) => {
+        if (isBase64(image)) {
+          try {
+            return await uploadToCloudinary(image, 'events/gallery')
+          } catch (error) {
+            console.error('Failed to upload image:', error)
+            return image // Return original if upload fails
+          }
+        }
+        return image
+      })
+      
+      fileUploads.push(
+        Promise.all(imageUploads)
+          .then(urls => { updateData.images = urls })
+          .catch(error => { 
+            console.error('Failed to upload images:', error)
+            updateData.images = data.images 
+          })
+      )
+    }
+    
+    // Handle videos - only upload new base64 videos
+    if (data.videos && Array.isArray(data.videos)) {
+      const videoUploads = data.videos.map(async (video: string) => {
+        if (isBase64(video)) {
+          try {
+            return await uploadToCloudinary(video, 'events/videos')
+          } catch (error) {
+            console.error('Failed to upload video:', error)
+            return video
+          }
+        }
+        return video
+      })
+      
+      fileUploads.push(
+        Promise.all(videoUploads)
+          .then(urls => { updateData.videos = urls })
+          .catch(error => { 
+            console.error('Failed to upload videos:', error)
+            updateData.videos = data.videos 
+          })
+      )
+    }
+    
+    // Handle documents - only upload new base64 documents
+    if (data.brochure && isBase64(data.brochure)) {
+      fileUploads.push(
+        uploadToCloudinary(data.brochure, 'events/documents')
+          .then(url => { updateData.brochure = url })
+          .catch(error => { 
+            console.error('Failed to upload brochure:', error)
+            updateData.brochure = data.brochure 
+          })
+      )
+    } else if (data.brochure !== undefined) {
+      updateData.brochure = data.brochure
+    }
+    
+    if (data.layout && isBase64(data.layout)) {
+      fileUploads.push(
+        uploadToCloudinary(data.layout, 'events/documents')
+          .then(url => { updateData.layoutPlan = url })
+          .catch(error => { 
+            console.error('Failed to upload layout:', error)
+            updateData.layoutPlan = data.layout 
+          })
+      )
+    } else if (data.layout !== undefined) {
+      updateData.layoutPlan = data.layout
+    }
+    
+    // Handle multiple documents - only upload new base64 documents
+    if (data.documents && Array.isArray(data.documents)) {
+      const documentUploads = data.documents.map(async (doc: string) => {
+        if (isBase64(doc)) {
+          try {
+            return await uploadToCloudinary(doc, 'events/documents')
+          } catch (error) {
+            console.error('Failed to upload document:', error)
+            return doc
+          }
+        }
+        return doc
+      })
+      
+      fileUploads.push(
+        Promise.all(documentUploads)
+          .then(urls => { updateData.documents = urls })
+          .catch(error => { 
+            console.error('Failed to upload documents:', error)
+            updateData.documents = data.documents 
+          })
+      )
+    }
+
+    // Wait for all file uploads to complete
+    if (fileUploads.length > 0) {
+      await Promise.all(fileUploads)
+    }
+
+    // Handle venue update
     if (data.venue || data.location) {
       console.log("Processing venue update:", { venue: data.venue, location: data.location })
       
@@ -123,6 +316,7 @@ export async function PATCH(
       }
     }
 
+    // Update the event with all the data
     const updatedEvent = await prisma.event.update({
       where: { id },
       data: updateData,
@@ -159,10 +353,7 @@ export async function PATCH(
       },
     })
 
-    console.log("Updated event venue info:", {
-      venueName: updatedEvent.venue?.venueName,
-      venueCity: updatedEvent.venue?.venueCity
-    })
+    console.log("Updated event successfully:", updatedEvent.id)
 
     // Format the response to match frontend expectations
     const formattedEvent = {
@@ -174,8 +365,8 @@ export async function PATCH(
         "Unknown Organizer",
       date: updatedEvent.startDate.toISOString().split('T')[0],
       endDate: updatedEvent.endDate.toISOString().split('T')[0],
-      location: updatedEvent.venue?.venueCity || data.location || "Virtual", // Use the provided location if venue not found
-      venue: updatedEvent.venue?.venueName || data.venue || "N/A", // Use the provided venue name if venue not found
+      location: updatedEvent.venue?.venueCity || data.location || "Virtual",
+      venue: updatedEvent.venue?.venueName || data.venue || "N/A",
       status:
         updatedEvent.status === "PUBLISHED"
           ? "Approved"
@@ -193,7 +384,13 @@ export async function PATCH(
       vip: updatedEvent.isVIP || false,
       priority: "Medium",
       description: updatedEvent.description,
+      shortDescription: updatedEvent.shortDescription,
+      slug: updatedEvent.slug,
+      edition: updatedEvent.edition,
       tags: updatedEvent.tags,
+      eventType: updatedEvent.eventType?.[0] || "",
+      timezone: updatedEvent.timezone,
+      currency: updatedEvent.currency,
       createdAt: updatedEvent.createdAt.toISOString(),
       lastModified: updatedEvent.updatedAt.toISOString(),
       views: updatedEvent.analytics?.[0]?.pageViews || 0,
@@ -201,11 +398,36 @@ export async function PATCH(
       rating: updatedEvent.averageRating,
       reviews: updatedEvent.totalReviews,
       image: updatedEvent.bannerImage || "/placeholder.svg",
+      bannerImage: updatedEvent.bannerImage,
+      thumbnailImage: updatedEvent.thumbnailImage,
+      images: updatedEvent.images || [],
+      videos: updatedEvent.videos || [],
+      brochure: updatedEvent.brochure,
+      layout: updatedEvent.layoutPlan,
+      documents: updatedEvent.documents || [],
       promotionBudget:
         updatedEvent.promotions.reduce((acc, p) => acc + (p.amount || 0), 0) || 0,
       socialShares: Math.floor(Math.random() * 1000),
       organizerId: updatedEvent.organizerId,
     }
+
+    // Log the admin action
+    await prisma.adminLog.create({
+      data: {
+        adminId: session.user.id,
+        adminType: session.user.role === "SUPER_ADMIN" ? "SUPER_ADMIN" : "SUB_ADMIN",
+        action: "EVENT_UPDATED",
+        resource: "EVENT",
+        resourceId: updatedEvent.id,
+        details: {
+          title: updatedEvent.title,
+          updatedFields: Object.keys(data),
+          hasFileUploads: fileUploads.length > 0
+        },
+        ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
+        userAgent: request.headers.get('user-agent') || 'unknown'
+      }
+    })
 
     return NextResponse.json({ 
       success: true, 
@@ -215,49 +437,6 @@ export async function PATCH(
     console.error("Error updating event:", error)
     return NextResponse.json({ 
       error: "Failed to update event",
-      details: error instanceof Error ? error.message : "Unknown error"
-    }, { status: 500 })
-  }
-}
-
-export async function DELETE(
-  request: Request, 
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params
-    
-    console.log("Soft deleting event:", id)
-    
-    // Check if event exists first
-    const event = await prisma.event.findUnique({
-      where: { id }
-    })
-    
-    if (!event) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 })
-    }
-    
-    // Soft delete by updating status instead of actually deleting
-    const updatedEvent = await prisma.event.update({
-      where: { id },
-      data: {
-        status: "CANCELLED",
-        isPublic: false,
-      }
-    })
-    
-    console.log("Event soft deleted successfully:", id)
-    
-    return NextResponse.json({ 
-      success: true,
-      message: "Event deleted successfully",
-      event: updatedEvent
-    })
-  } catch (error) {
-    console.error("Error soft deleting event:", error)
-    return NextResponse.json({ 
-      error: "Failed to delete event",
       details: error instanceof Error ? error.message : "Unknown error"
     }, { status: 500 })
   }

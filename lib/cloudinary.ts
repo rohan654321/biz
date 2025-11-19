@@ -1,5 +1,7 @@
+// lib/cloudinary.ts
 import { v2 as cloudinary } from "cloudinary"
 
+// Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
   api_key: process.env.CLOUDINARY_API_KEY!,
@@ -7,54 +9,72 @@ cloudinary.config({
   secure: true,
 })
 
-export const Cloudinary = cloudinary // Capitalized export for clarity
+export const Cloudinary = cloudinary
 
 export interface CloudinaryUploadResult {
   asset_id: string
   public_id: string
-  format: string
   version: number
-  resource_type: string
-  type: string
-  created_at: string
-  bytes: number
+  version_id: string
+  signature: string
   width: number
   height: number
-  secure_url: string
+  format: string
+  resource_type: string
+  created_at: string
+  tags: string[]
+  bytes: number
+  type: string
+  etag: string
+  placeholder: boolean
   url: string
-  folder?: string
-  original_filename?: string
+  secure_url: string
+  folder: string
+  original_filename: string
 }
+
 export async function uploadToCloudinary(
   file: File,
-  folder = "events/brochures"
+  folder = "speakers"
 ): Promise<CloudinaryUploadResult> {
-  const arrayBuffer = await file.arrayBuffer()
-  const buffer = Buffer.from(arrayBuffer)
+  try {
+    // Convert File to buffer
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
 
-  // Determine resource type based on file type
-  const resourceType = file.type === 'application/pdf' ? 'raw' : 'auto'
-
-  return new Promise<CloudinaryUploadResult>((resolve, reject) => {
-    const uploadStream = Cloudinary.uploader.upload_stream(
-      {
-        folder,
-        resource_type: resourceType, // Use 'raw' for PDFs
-        type: 'upload',
-      },
-      (error, result) => {
-        if (error) reject(error)
-        else if (result) resolve(result as unknown as CloudinaryUploadResult)
-        else reject(new Error("Unknown Cloudinary response"))
-      }
-    )
-    uploadStream.end(buffer)
-  })
+    return new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder,
+          resource_type: 'auto',
+          allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
+          transformation: [
+            { width: 500, height: 500, crop: 'limit', quality: 'auto' }
+          ]
+        },
+        (error, result) => {
+          if (error) {
+            console.error('Cloudinary upload error:', error)
+            reject(new Error(`Cloudinary upload failed: ${error.message}`))
+          } else if (result) {
+            resolve(result as unknown as CloudinaryUploadResult)
+          } else {
+            reject(new Error('Cloudinary returned no result'))
+          }
+        }
+      )
+      
+      uploadStream.end(buffer)
+    })
+  } catch (error) {
+    console.error('Error preparing file for upload:', error)
+    throw new Error(`Failed to process file: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
 }
 
 export async function deleteFromCloudinary(publicId: string) {
   try {
-    const result = await Cloudinary.uploader.destroy(publicId)
+    const result = await cloudinary.uploader.destroy(publicId)
     return result
   } catch (error) {
     console.error("Error deleting from Cloudinary:", error)

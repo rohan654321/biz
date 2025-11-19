@@ -6,11 +6,14 @@ import bcrypt from "bcryptjs"
 export async function GET(request: NextRequest) {
   try {
     const auth = await authMiddleware(request)
-    if (!auth.isValid || !auth.user) {
+    
+    // Check if authentication is valid
+    if (!auth.isValid) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    if (auth.user.role !== "SUPER_ADMIN") {
+    // Check if user exists and has proper role
+    if (!auth.user || auth.user.role !== "SUPER_ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -34,11 +37,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const auth = await authMiddleware(request)
-    if (!auth.isValid || !auth.user) {
+    
+    // Check if authentication is valid
+    if (!auth.isValid) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    if (auth.user.role !== "SUPER_ADMIN") {
+    // Check if user exists and has proper role
+    if (!auth.user || auth.user.role !== "SUPER_ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
