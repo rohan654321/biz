@@ -129,148 +129,149 @@
     @@map("sub_admins")
   }
 
-  // User Management
-  model User {
-    id       String  @id @default(auto()) @map("_id") @db.ObjectId
-    email    String? @unique
-    password String  @default("TEMP_PASSWORD")
+model User {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  email    String? @unique
+  password String  @default("TEMP_PASSWORD")
 
-    firstName        String
-    lastName         String
-    phone            String?
-    avatar           String?
-    role             UserRole  @default(ATTENDEE)
-    isVerified       Boolean   @default(false)
-    isActive         Boolean   @default(true)
-    emailVerified    Boolean   @default(false)
-    phoneVerified    Boolean   @default(false)
-    twoFactorEnabled Boolean   @default(false)
-    lastLogin        DateTime?
-    loginAttempts    Int       @default(0)
-    lockoutUntil     DateTime?
-    createdAt        DateTime  @default(now())
-    updatedAt        DateTime  @updatedAt
+  firstName        String
+  lastName         String
+  phone            String?
+  avatar           String?
+  role             UserRole  @default(ATTENDEE)
+  isVerified       Boolean   @default(false)
+  isActive         Boolean   @default(true)
+  emailVerified    Boolean   @default(false)
+  phoneVerified    Boolean   @default(false)
+  twoFactorEnabled Boolean   @default(false)
+  lastLogin        DateTime?
+  loginAttempts    Int       @default(0)
+  lockoutUntil     DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-    // Profile Information
-    bio             String?
-    website         String?
-    linkedin        String?
-    twitter         String?
-    instagram       String?
-    company         String?
-    companyIndustry String?
-    jobTitle        String?
-    location        String?
-    timezone        String?
-    language        String   @default("en")
-    interests       String[] @default([])
+  // Profile Information
+  bio             String?
+  website         String?
+  linkedin        String?
+  twitter         String?
+  instagram       String?
+  company         String?
+  companyIndustry String?
+  jobTitle        String?
+  location        String?
+  timezone        String?
+  language        String   @default("en")
+  interests       String[] @default([])
 
-    // Organizer-specific fields
-    organizationName String?
-    description      String?
-    headquarters     String?
-    founded          String?
-    teamSize         String?
-    specialties      String[]
-    achievements     String[]
-    certifications   String[]
+  // Organizer-specific fields
+  organizationName String?
+  description      String?
+  headquarters     String?
+  founded          String?
+  teamSize         String?
+  specialties      String[]
+  achievements     String[]
+  certifications   String[]
 
-    // Business Information
-    businessEmail   String?
-    businessPhone   String?
-    businessAddress String?
-    taxId           String?
+  // Business Information
+  businessEmail   String?
+  businessPhone   String?
+  businessAddress String?
+  taxId           String?
 
-    // Statistics (computed fields)
-    totalEvents    Int   @default(0)
-    activeEvents   Int   @default(0)
-    totalAttendees Int   @default(0)
-    totalRevenue   Float @default(0)
+  // Statistics (computed fields)
+  totalEvents    Int   @default(0)
+  activeEvents   Int   @default(0)
+  totalAttendees Int   @default(0)
+  totalRevenue   Float @default(0)
 
-   // Relationships
-   organizedEvents          Event[]              @relation("EventOrganizer")
-   registrations            EventRegistration[]
-   speakerSessions          SpeakerSession[]
-   speakerMaterials         Material[]           @relation("SpeakerMaterials")
-   exhibitorBooths          ExhibitorBooth[]
-   products                 Product[]
-   venueBookings            VenueBooking[]
-   sentMessages             Message[]            @relation("MessageSender")
-   receivedMessages         Message[]            @relation("MessageReceiver")
-   reviews                  Review[]
-   payments                 Payment[]
-   legaldoc                 LegalDocument[]      @relation("VenueLegalDocuments")
-   notifications            Notification[]
-   analytics                UserAnalytics[]
-   settings                 Settings?
-   campaigns                Campaign[]
-   broadcastsSent           Broadcast[]          @relation("BroadcastSender")
-   broadcastsReceived       BroadcastRecipient[]
-   venueEvents              Event[]              @relation("EventVenue")
-   exhibitorReviews         Review[]             @relation("ExhibitorReviews")
-   venueReviews             Review[]             @relation("VenueReviews")
-   organizerReviews         Review[]             @relation("OrganizerReviews")
-   venueAnalytics           VenueAnalytics[]
-   meetingSpaces            MeetingSpace[]
-   leads                    EventLead[]
-   organizerPromotions      Promotion[]          @relation("OrganizerPromotions")
-   exhibitorPromotions      Promotion[]          @relation("ExhibitorPromotions")
-   savedEvents              SavedEvent[]
-   replies                  ReviewReply[]
-   connectionsSent          Connection[]         @relation("ConnectionSender")
-   connectionsReceived      Connection[]         @relation("ConnectionReceiver")
-   // Add these lines to the User model's relationships section:
-   venueAppointments        VenueAppointment[]   @relation("VenueAppointments")
-   venueAppointmentRequests VenueAppointment[]   @relation("VenueAppointmentRequests")
-   //verification of otps
-   verificationCodes        VerificationCode[]
-   createdTickets    SupportTicket[]     @relation("TicketCreator")
-assignedTickets   SupportTicket[]     @relation("TicketAssignee")
-ticketReplies     SupportTicketReply[] @relation("TicketReplyAuthor")
+  // ========== RELATIONSHIPS ==========
+  organizedEvents          Event[]              @relation("EventOrganizer")
+  registrations            EventRegistration[]
+  speakerSessions          SpeakerSession[]
+  speakerMaterials         Material[]           @relation("SpeakerMaterials")
+  exhibitorBooths          ExhibitorBooth[]
+  products                 Product[]
+  venueBookings            VenueBooking[]
+  sentMessages             Message[]            @relation("MessageSender")
+  receivedMessages         Message[]            @relation("MessageReceiver")
+  reviews                  Review[]
+  payments                 Payment[]
+  legaldoc                 LegalDocument[]      @relation("VenueLegalDocuments")
+  notifications            Notification[]
+  analytics                UserAnalytics[]
+  settings                 Settings?
+  campaigns                Campaign[]
+  broadcastsSent           Broadcast[]          @relation("BroadcastSender")
+  broadcastsReceived       BroadcastRecipient[]
+  venueEvents              Event[]              @relation("EventVenue")
+  exhibitorReviews         Review[]             @relation("ExhibitorReviews")
+  venueReviews             Review[]             @relation("VenueReviews")
+  organizerReviews         Review[]             @relation("OrganizerReviews")
+  venueAnalytics           VenueAnalytics[]
+  meetingSpaces            MeetingSpace[]
+  leads                    EventLead[]
+  organizerPromotions      Promotion[]          @relation("OrganizerPromotions")
+  exhibitorPromotions      Promotion[]          @relation("ExhibitorPromotions")
+  savedEvents              SavedEvent[]
+  replies                  ReviewReply[]
+  connectionsSent          Connection[]         @relation("ConnectionSender")
+  connectionsReceived      Connection[]         @relation("ConnectionReceiver")
+  venueAppointments        VenueAppointment[]   @relation("VenueAppointments")
+  venueAppointmentRequests VenueAppointment[]   @relation("VenueAppointmentRequests")
+  verificationCodes        VerificationCode[]
+  createdTickets           SupportTicket[]      @relation("TicketCreator")
+  assignedTickets          SupportTicket[]      @relation("TicketAssignee")
+  ticketReplies            SupportTicketReply[] @relation("TicketReplyAuthor")
 
-   // Relations for organizer-speaker
-   organizerId String? @db.ObjectId
-   organizer   User?   @relation("OrganizerSpeakers", fields: [organizerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-   speakers    User[]  @relation("OrganizerSpeakers")
+  // ADMIN NOTES RELATIONSHIPS
+  adminNotesCreated   AdminNote[]         @relation("AdminNoteCreator")
+  noteCollaborations  NoteCollaborator[]  @relation("NoteCollaborations")
 
-   // Exhibitor relation
-   organizerIdForExhibitor String? @db.ObjectId
-   organizerForExhibitor   User?   @relation("OrganizerExhibitors", fields: [organizerIdForExhibitor], references: [id], onDelete: NoAction, onUpdate: NoAction)
-   exhibitors              User[]  @relation("OrganizerExhibitors")
+  // Relations for organizer-speaker
+  organizerId String? @db.ObjectId
+  organizer   User?   @relation("OrganizerSpeakers", fields: [organizerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  speakers    User[]  @relation("OrganizerSpeakers")
 
-   // Venue Manager relation
-   organizerIdForVenueManager String? @db.ObjectId
-   organizerForVenueManager   User?   @relation("OrganizerVenueManagers", fields: [organizerIdForVenueManager], references: [id], onDelete: NoAction, onUpdate: NoAction)
-   venueManagers              User[]  @relation("OrganizerVenueManagers")
+  // Exhibitor relation
+  organizerIdForExhibitor String? @db.ObjectId
+  organizerForExhibitor   User?   @relation("OrganizerExhibitors", fields: [organizerIdForExhibitor], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  exhibitors              User[]  @relation("OrganizerExhibitors")
 
-   followers Follow[] @relation("UserFollowing")
-   following Follow[] @relation("UserFollowers")
+  // Venue Manager relation
+  organizerIdForVenueManager String? @db.ObjectId
+  organizerForVenueManager   User?   @relation("OrganizerVenueManagers", fields: [organizerIdForVenueManager], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  venueManagers              User[]  @relation("OrganizerVenueManagers")
 
-   // Venue fields
-   venueName        String?
-   venueDescription String?
-   venueAddress     String?
-   venueCity        String?
-   venueState       String?
-   venueCountry     String?
-   venueZipCode     String?
-   venuePhone       String?
-   venueEmail       String?
-   venueWebsite     String?
-   maxCapacity      Int?
-   totalHalls       Int?
-   activeBookings   Int?
-   averageRating    Float    @default(0)
-   totalReviews     Int      @default(0)
-   amenities        String[]
-   venueImages      String[]
-   venueVideos      String[]
-   floorPlans       String[]
-   virtualTour      String?
-   basePrice        Float?
-   venueCurrency    String   @default("USD")
-   latitude         Float?
-   longitude        Float?
+  followers Follow[] @relation("UserFollowing")
+  following Follow[] @relation("UserFollowers")
+
+  // Venue fields
+  venueName        String?
+  venueDescription String?
+  venueAddress     String?
+  venueCity        String?
+  venueState       String?
+  venueCountry     String?
+  venueZipCode     String?
+  venuePhone       String?
+  venueEmail       String?
+  venueWebsite     String?
+  maxCapacity      Int?
+  totalHalls       Int?
+  activeBookings   Int?
+  averageRating    Float    @default(0)
+  totalReviews     Int      @default(0)
+  amenities        String[]
+  venueImages      String[]
+  venueVideos      String[]
+  floorPlans       String[]
+  virtualTour      String?
+  basePrice        Float?
+  venueCurrency    String   @default("USD")
+  latitude         Float?
+  longitude        Float?
 
   // Speaker fields
   speakingExperience String?
@@ -281,8 +282,8 @@ ticketReplies     SupportTicketReply[] @relation("TicketReplyAuthor")
 
   exhibitorManuals ExhibitorManual[] @relation("ExhibitorManualUploads")
 
-    @@map("users")
-  }
+  @@map("users")
+}
 
   enum UserRole {
     ADMIN
@@ -1885,4 +1886,59 @@ model EventsOnCities {
 
   @@unique([eventId, cityId])
   @@map("events_on_cities")
+}
+model AdminNote {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  content     String
+  category    String   @default("General")
+  tags        String[]
+  visibility  NoteVisibility @default(PRIVATE)
+  userRoles   UserRole[]
+  dashboardTypes DashboardType[]
+  isPinned    Boolean  @default(false)
+  isArchived  Boolean  @default(false)
+  archivedAt  DateTime?
+  
+  // Relationships - make both fields optional
+  createdById String?   @db.ObjectId
+  createdBy   User?     @relation("AdminNoteCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  
+  collaborators NoteCollaborator[]
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("admin_notes")
+}
+
+model NoteCollaborator {
+  id         String           @id @default(auto()) @map("_id") @db.ObjectId
+  noteId     String           @db.ObjectId
+  userId     String           @db.ObjectId
+  permission CollaboratorPermission @default(VIEW)
+  
+  // Relationships
+  note       AdminNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user       User      @relation("NoteCollaborations", fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([noteId, userId])
+  @@map("note_collaborators")
+}
+
+// Add these enums to your schema
+enum NoteVisibility {
+  PRIVATE
+  TEAM
+  PUBLIC
+}
+
+enum CollaboratorPermission {
+  VIEW
+  EDIT
+  MANAGE
 }

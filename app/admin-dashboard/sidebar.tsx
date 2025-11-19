@@ -371,90 +371,93 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
     })
     .filter(Boolean) as typeof sidebarItems
 
-  const renderContent = () => {
-    const section = activeSection
-    const subSection = activeSubSection
+const renderContent = () => {
+  const section = activeSection
+  const subSection = activeSubSection
 
-    console.log("Active Section:", section)
-    console.log("Active Sub Section:", subSection)
+  console.log("Active Section:", section)
+  console.log("Active Sub Section:", subSection)
 
-    // Handle sub-sections first
-    if (subSection) {
-      switch (subSection) {
-        // Roles
-        case "roles-superadmin":
-          return <SuperAdminManagement />
-        case "roles-subadmins":
-          return <SubAdminManagement />
-        case "organizers-add":
-          return <AddOrganizerForm/>  
-        // Events
-        case "events-create":
-          return <CreateEventForm />
-        case "events-all":
-          return <EventManagement />
-        case "events-categories":
-          return  <EventCategories />//<div>Event Categories - Coming Soon</div>
-        // case "events-approvals":
-        //   return //<div>Event Approvals - Coming Soon</div>
-        case "bulk-data":
-          return <ImportPage/>//<div>Event Bulk uploade - Coming Soon</div>
-
-        default:
-          console.log("Unknown sub-section:", subSection)
-          break
-      }
-    }
-
-    // Handle main sections
-    switch (section) {
-      case "dashboard":
-        return <DashboardOverview />
-      case "events":
-        return <EventManagement />
-      case "locations":
-        return <CountriesManagement /> 
-      case "organizers":
-        // Default to "All Organizers" when main organizers section is clicked
-        return <OrganizerManagement />
-      case "exhibitors":
-        return <ExhibitorManagement />
-      case "speakers":
-        return <SpeakerManagement />
-      case "venues":
-        return <VenueManagement />
-      case "visitors":
-        return <VisitorManagement/>//<div>Visitor Management - Coming Soon</div>  
-      case "financial":
-        return <div>Financial Management - Coming Soon</div>
-      case "content":
-        return <ContentManagement />
-      case "marketing":
-        return <div>Marketing Management - Coming Soon</div>
-      case "reports":
-        return <div>Reports & Analytics - Coming Soon</div>
-      case "integrations":
-        return <div>Integrations Management - Coming Soon</div>
-      case "roles":
+  // Handle sub-sections first
+  if (subSection) {
+    switch (subSection) {
+      // Roles
+      case "roles-superadmin":
         return <SuperAdminManagement />
-      case "settings":
-        return <SystemSettings />
-      case "support":
-        return <MainHelpSupport/>//<div>Help & Support - Coming Soon</div>
+      case "roles-subadmins":
+        return <SubAdminManagement />
+      case "organizers-add":
+        return <AddOrganizerForm />  
+      
+      // Events
+      case "events-create":
+        return <CreateEventForm />
+      case "events-all":
+        return <EventManagement />
+      case "events-categories":
+        return <EventCategories />
+      case "bulk-data":
+        return <ImportPage />
+
+      // Help & Support sub-sections
       case "support-tickets":
-        return <SupportTickets/>
+        return <SupportTickets />
       case "support-contacts":
-        return <SupportContacts/>
+        return <SupportContacts />
       case "support-faq":
-        return <FAQManagement/>
-      case  "support-notes":
-        return <AdminNotes/>     
-      case  "exhibitors-add":
-        return <AddExhibitorForm/>    
+        return <FAQManagement />
+      case "support-notes":
+        return <AdminNotes />
+
+      // Exhibitors
+      case "exhibitors-add":
+        return <AddExhibitorForm />
+
       default:
-        return <DashboardOverview />
+        console.log("Unknown sub-section:", subSection)
+        break
     }
   }
+
+  // Handle main sections
+  switch (section) {
+    case "dashboard":
+      return <DashboardOverview />
+    case "events":
+      return <EventManagement />
+    case "locations":
+      return <CountriesManagement /> 
+    case "organizers":
+      return <OrganizerManagement />
+    case "exhibitors":
+      return <ExhibitorManagement />
+    case "speakers":
+      return <SpeakerManagement />
+    case "venues":
+      return <VenueManagement />
+    case "visitors":
+      return <VisitorManagement />
+    case "financial":
+      return <div>Financial Management - Coming Soon</div>
+    case "content":
+      return <ContentManagement />
+    case "marketing":
+      return <div>Marketing Management - Coming Soon</div>
+    case "reports":
+      return <div>Reports & Analytics - Coming Soon</div>
+    case "integrations":
+      return <div>Integrations Management - Coming Soon</div>
+    case "roles":
+      return <SuperAdminManagement />
+    case "settings":
+      return <SystemSettings />
+    case "support":
+      // Default to Support Tickets when main support section is clicked
+      return <SupportTickets />
+    default:
+      return <DashboardOverview />
+  }
+}
 
   const handleSectionClick = (id: string) => {
     setActiveSection(id)
