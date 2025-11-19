@@ -109,61 +109,78 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
   useEffect(() => {
     const connectWebSocket = () => {
       try {
-        ws.current = new WebSocket(`${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001'}/messages?userId=${organizerId}`)
-        
+        ws.current = new WebSocket(
+          `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001'}?userId=${organizerId}`
+        )
+
+
         ws.current.onopen = () => {
           console.log("WebSocket connected")
           setIsOnline(true)
         }
-        
+
         ws.current.onmessage = (event) => {
-          const data = JSON.parse(event.data)
-          
-          if (data.type === 'NEW_MESSAGE') {
-            setMessages(prev => [...prev, data.message])
-            
-            // Update conversations list with new message
-            setConversations(prev => {
-              const existingConvIndex = prev.findIndex(conv => conv.contactId === data.message.senderId)
-              if (existingConvIndex !== -1) {
-                const updatedConvs = [...prev]
-                updatedConvs[existingConvIndex] = {
-                  ...updatedConvs[existingConvIndex],
-                  lastMessage: data.message.content,
-                  lastMessageTime: data.message.createdAt,
-                  unreadCount: selectedContact === data.message.senderId ? 
-                    0 : updatedConvs[existingConvIndex].unreadCount + 1
+          const data = JSON.parse(event.data);
+
+          switch (data.type) {
+            case "NEW_MESSAGE":
+              setMessages(prev => [...prev, data.message]);
+
+              // Update conversations list
+              setConversations(prev => {
+                const idx = prev.findIndex(conv => conv.contactId === data.message.senderId);
+                if (idx !== -1) {
+                  const updated = [...prev];
+                  updated[idx] = {
+                    ...updated[idx],
+                    lastMessage: data.message.content,
+                    lastMessageTime: data.message.createdAt,
+                    unreadCount:
+                      selectedContact === data.message.senderId
+                        ? 0
+                        : updated[idx].unreadCount + 1,
+                  };
+                  return updated;
                 }
-                return updatedConvs
-              }
-              return prev
-            })
+                return prev;
+              });
+              break;
+
+            case "MESSAGE_SENT":
+              console.log("Delivered:", data.message);
+              break;
+
+            case "MESSAGES_READ":
+              setMessages(prev =>
+                prev.map(msg =>
+                  msg.senderId === organizerId
+                    ? { ...msg, isRead: true }
+                    : msg
+                )
+              );
+              break;
+
+            case "USER_STATUS":
+              setConnections(prev =>
+                prev.map(conn =>
+                  conn.id === data.userId ? { ...conn, isOnline: data.isOnline } : conn
+                )
+              );
+              break;
+
+            default:
+              console.log("UNKNOWN WS EVENT:", data);
           }
-          
-          if (data.type === 'MESSAGE_READ') {
-            setMessages(prev => 
-              prev.map(msg => 
-                msg.id === data.messageId ? {...msg, isRead: true} : msg
-              )
-            )
-          }
-          
-          if (data.type === 'USER_STATUS') {
-            setConnections(prev => 
-              prev.map(conn => 
-                conn.id === data.userId ? {...conn, isOnline: data.isOnline} : conn
-              )
-            )
-          }
-        }
-        
+        };
+
+
         ws.current.onclose = () => {
           console.log("WebSocket disconnected")
           setIsOnline(false)
           // Attempt to reconnect after 3 seconds
           setTimeout(connectWebSocket, 3000)
         }
-        
+
         ws.current.onerror = (error) => {
           console.error("WebSocket error:", error)
           setIsOnline(false)
@@ -172,9 +189,9 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
         console.error("Failed to connect WebSocket:", error)
       }
     }
-    
+
     connectWebSocket()
-    
+
     return () => {
       if (ws.current) {
         ws.current.close()
@@ -271,15 +288,15 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
       })
 
       if (!response.ok) throw new Error("Failed to mark messages as read")
-      
+
       // Update local state
-      setMessages(prev => prev.map(msg => ({...msg, isRead: true})))
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.contactId === contactId ? {...conv, unreadCount: 0} : conv
+      setMessages(prev => prev.map(msg => ({ ...msg, isRead: true })))
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.contactId === contactId ? { ...conv, unreadCount: 0 } : conv
         )
       )
-      
+
       // Send read receipt via WebSocket if available
       if (ws.current && ws.current.readyState === WebSocket.OPEN) {
         ws.current.send(JSON.stringify({
@@ -293,92 +310,92 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
     }
   }
 
- const sendMessage = async () => {
-  if (!newMessage.trim() || !selectedContact) return
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !selectedContact) return
 
-  // Declare tempId outside the try block so it's accessible in catch
-  const tempId = Date.now().toString()
-  
-  try {
-    setSending(true)
-    
-    // Optimistically add message to UI
-    const optimisticMessage: Message = {
-      id: tempId,
-      senderId: organizerId,
-      receiverId: selectedContact,
-      content: newMessage.trim(),
-      createdAt: new Date().toISOString(),
-      isRead: false,
-      sender: {
-        firstName: "You",
-        lastName: "",
-        avatar: "/placeholder.svg"
-      }
-    }
-    
-    setMessages(prev => [...prev, optimisticMessage])
-    setNewMessage("")
-    
-    // Update conversations list optimistically
-    setConversations(prev => {
-      const existingConvIndex = prev.findIndex(conv => conv.contactId === selectedContact)
-      if (existingConvIndex !== -1) {
-        const updatedConvs = [...prev]
-        updatedConvs[existingConvIndex] = {
-          ...updatedConvs[existingConvIndex],
-          lastMessage: newMessage.trim(),
-          lastMessageTime: new Date().toISOString()
-        }
-        return updatedConvs
-      }
-      return prev
-    })
+    // Declare tempId outside the try block so it's accessible in catch
+    const tempId = Date.now().toString()
 
-    // Send via API
-    const response = await fetch(`/api/organizers/${organizerId}/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contactId: selectedContact,
+    try {
+      setSending(true)
+
+      // Optimistically add message to UI
+      const optimisticMessage: Message = {
+        id: tempId,
+        senderId: organizerId,
+        receiverId: selectedContact,
         content: newMessage.trim(),
-      }),
-    })
+        createdAt: new Date().toISOString(),
+        isRead: false,
+        sender: {
+          firstName: "You",
+          lastName: "",
+          avatar: "/placeholder.svg"
+        }
+      }
 
-    if (!response.ok) throw new Error("Failed to send message")
+      setMessages(prev => [...prev, optimisticMessage])
+      setNewMessage("")
 
-    const data = await response.json()
-    
-    // Replace optimistic message with real one
-    setMessages(prev => prev.map(msg => msg.id === tempId ? data.message : msg))
-    
-    // Send via WebSocket if available
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({
-        type: "NEW_MESSAGE",
-        message: data.message
-      }))
+      // Update conversations list optimistically
+      setConversations(prev => {
+        const existingConvIndex = prev.findIndex(conv => conv.contactId === selectedContact)
+        if (existingConvIndex !== -1) {
+          const updatedConvs = [...prev]
+          updatedConvs[existingConvIndex] = {
+            ...updatedConvs[existingConvIndex],
+            lastMessage: newMessage.trim(),
+            lastMessageTime: new Date().toISOString()
+          }
+          return updatedConvs
+        }
+        return prev
+      })
+
+      // Send via API
+      const response = await fetch(`/api/organizers/${organizerId}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contactId: selectedContact,
+          content: newMessage.trim(),
+        }),
+      })
+
+      if (!response.ok) throw new Error("Failed to send message")
+
+      const data = await response.json()
+
+      // Replace optimistic message with real one
+      setMessages(prev => prev.map(msg => msg.id === tempId ? data.message : msg))
+
+      // Send via WebSocket if available
+      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+        ws.current.send(JSON.stringify({
+          type: "NEW_MESSAGE",
+          message: data.message
+        }))
+      }
+
+      toast({
+        title: "Success",
+        description: "Message sent successfully",
+      })
+    } catch (error) {
+      console.error("Error sending message:", error)
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(msg => msg.id !== tempId))
+      toast({
+        title: "Error",
+        description: "Failed to send message",
+        variant: "destructive",
+      })
+    } finally {
+      setSending(false)
     }
-
-    toast({
-      title: "Success",
-      description: "Message sent successfully",
-    })
-  } catch (error) {
-    console.error("Error sending message:", error)
-    // Remove optimistic message on error
-    setMessages(prev => prev.filter(msg => msg.id !== tempId))
-    toast({
-      title: "Error",
-      description: "Failed to send message",
-      variant: "destructive",
-    })
-  } finally {
-    setSending(false)
   }
-}
 
   const startNewChat = (connection: Connection) => {
     setSelectedContact(connection.id)
@@ -550,7 +567,7 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
         <div className={`w-2 h-2 rounded-full mr-1 ${isOnline ? 'bg-green-500' : 'bg-red-500'}`} />
         <span className="text-xs">{isOnline ? 'Online' : 'Offline'}</span>
       </div>
-      
+
       {/* Conversations Sidebar */}
       <div className="w-1/3 border-r flex flex-col">
         {/* Header */}
@@ -635,9 +652,9 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input 
-              placeholder="Search chats..." 
-              className="pl-10 h-9" 
+            <Input
+              placeholder="Search chats..."
+              className="pl-10 h-9"
               aria-label="Search chats"
             />
           </div>
@@ -661,12 +678,11 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
               {conversations.map((conversation) => (
                 <div
                   key={conversation.id}
-                  className={`group relative p-3 hover:bg-gray-50 cursor-pointer ${
-                    selectedContact === conversation.contactId ? "bg-blue-50 border-r-2 border-blue-500" : ""
-                  }`}
+                  className={`group relative p-3 hover:bg-gray-50 cursor-pointer ${selectedContact === conversation.contactId ? "bg-blue-50 border-r-2 border-blue-500" : ""
+                    }`}
                 >
-                  <div 
-                    className="flex items-start gap-3" 
+                  <div
+                    className="flex items-start gap-3"
                     onClick={() => setSelectedContact(conversation.contactId)}
                     onKeyPress={(e) => e.key === 'Enter' && setSelectedContact(conversation.contactId)}
                     tabIndex={0}
@@ -797,20 +813,18 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                     >
                       <div className="relative max-w-xs lg:max-w-md">
                         <div
-                          className={`px-4 py-2 rounded-lg ${
-                            message.senderId === organizerId ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"
-                          }`}
+                          className={`px-4 py-2 rounded-lg ${message.senderId === organizerId ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"
+                            }`}
                         >
                           <p className="text-sm break-words">{message.content}</p>
                           <div
-                            className={`flex items-center justify-end gap-1 mt-1 ${
-                              message.senderId === organizerId ? "text-blue-100" : "text-gray-500"
-                            }`}
+                            className={`flex items-center justify-end gap-1 mt-1 ${message.senderId === organizerId ? "text-blue-100" : "text-gray-500"
+                              }`}
                           >
                             <span className="text-xs">{formatTime(message.createdAt)}</span>
                             {message.senderId === organizerId &&
-                              (message.isRead ? 
-                                <CheckCheck className="w-3 h-3" aria-label="Message read" /> : 
+                              (message.isRead ?
+                                <CheckCheck className="w-3 h-3" aria-label="Message read" /> :
                                 <Check className="w-3 h-3" aria-label="Message sent" />)}
                           </div>
                         </div>
@@ -845,8 +859,8 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
                   disabled={sending}
                   aria-label="Type a message"
                 />
-                <Button 
-                  onClick={sendMessage} 
+                <Button
+                  onClick={sendMessage}
                   disabled={!newMessage.trim() || sending}
                   aria-label="Send message"
                 >
