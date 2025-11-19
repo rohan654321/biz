@@ -14,9 +14,17 @@ export interface TicketType {
   currency?: string
 }
 
+export interface ExhibitorBooth {
+  exhibitorId: string
+  boothNumber: string
+  // boothSize: string
+  spaceType: string
+  // specialRequirements: string[]
+  // notes?: string
+  totalCost: number
+}
+
 export interface EventFormData {
-  registrationStart: any
-  registrationEnd: any
   // Basic Info
   title: string
   slug: string
@@ -33,6 +41,8 @@ export interface EventFormData {
   venue: string
   city: string
   address: string
+  registrationStart: string
+  registrationEnd: string
 
   // Pricing
   currency: string
@@ -51,7 +61,6 @@ export interface EventFormData {
 
   // Space Costs
   spaceCosts: SpaceCost[]
-
   ticketTypes: TicketType[]
 
   // Media
@@ -96,6 +105,9 @@ export interface EventFormData {
   certificates: string
   materials: string
   followUp: string
+
+  // Exhibitors
+  exhibitorBooths?: ExhibitorBooth[]
 }
 
 export interface ValidationErrors {
@@ -117,7 +129,3 @@ export interface Venue {
   zipCode: string
   capacity: number
 }
-
-
-
-

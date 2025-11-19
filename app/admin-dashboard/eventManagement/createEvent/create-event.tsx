@@ -1,7 +1,6 @@
-// Updated CreateEventForm component
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,7 +14,8 @@ import { PreviewTab } from "./preview-tab"
 import { SelectOrganizer } from "./select-organizer"
 import { SelectVenue } from "./select-venue"
 import { SelectSpeakers } from "./select-speakers"
-import type { EventFormData, SpaceCost } from "./types"
+import { SelectExhibitors } from "./select-exhibitors"
+import type { EventFormData, SpaceCost, ExhibitorBooth } from "./types"
 
 export function CreateEventForm() {
   const [activeTab, setActiveTab] = useState("basic")
@@ -80,14 +80,46 @@ export function CreateEventForm() {
   const [isUploadingLayoutPlan, setIsUploadingLayoutPlan] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   
-  
-  // New state for organizer, venue, and speakers
+  // New state for organizer, venue, speakers, and exhibitors
   const [organizerId, setOrganizerId] = useState("")
   const [speakerSessions, setSpeakerSessions] = useState<any[]>([])
+  const [exhibitorBooths, setExhibitorBooths] = useState<ExhibitorBooth[]>([])
+  
+  // State for categories from backend
+  const [eventCategories, setEventCategories] = useState<string[]>([])
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const brochureInputRef = useRef<HTMLInputElement>(null)
   const layoutPlanInputRef = useRef<HTMLInputElement>(null)
+
+  // Fetch categories from backend on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setIsLoadingCategories(true)
+        const response = await fetch('/api/admin/event-categories')
+        if (response.ok) {
+          const data = await response.json()
+          // Extract category names from the response
+          const categoryNames = data.map((category: any) => category.name)
+          setEventCategories(categoryNames)
+        } else {
+          console.error("Failed to fetch categories")
+          // Fallback to default categories
+          setEventCategories(["Technology", "Healthcare", "Finance", "Education", "Entertainment"])
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error)
+        // Fallback to default categories
+        setEventCategories(["Technology", "Healthcare", "Finance", "Education", "Entertainment"])
+      } finally {
+        setIsLoadingCategories(false)
+      }
+    }
+
+    fetchCategories()
+  }, [])
 
   const handleFormChange = (updates: Partial<EventFormData>) => {
     setFormData((prev) => ({
@@ -128,6 +160,10 @@ export function CreateEventForm() {
 
   const handleSpeakerSessionsChange = (sessions: any[]) => {
     setSpeakerSessions(sessions)
+  }
+
+  const handleExhibitorBoothsChange = (booths: ExhibitorBooth[]) => {
+    setExhibitorBooths(booths)
   }
 
   // Highlight handlers
@@ -205,6 +241,20 @@ export function CreateEventForm() {
     }))
   }
 
+  const handleUploadStatusChange = (type: 'images' | 'brochure' | 'layout', status: boolean) => {
+    switch (type) {
+      case 'images':
+        setIsUploadingImages(status)
+        break
+      case 'brochure':
+        setIsUploadingBrochure(status)
+        break
+      case 'layout':
+        setIsUploadingLayoutPlan(status)
+        break
+    }
+  }
+
   const handlePublish = async () => {
     console.log("Publishing event:", formData)
     
@@ -228,6 +278,7 @@ export function CreateEventForm() {
         ...formData,
         organizerId: organizerId,
         speakerSessions: speakerSessions,
+        exhibitorBooths: exhibitorBooths,
         // Convert dates to ISO string if needed
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
@@ -260,19 +311,6 @@ export function CreateEventForm() {
       setIsSubmitting(false)
     }
   }
-  const handleUploadStatusChange = (type: 'images' | 'brochure' | 'layout', status: boolean) => {
-  switch (type) {
-    case 'images':
-      setIsUploadingImages(status)
-      break
-    case 'brochure':
-      setIsUploadingBrochure(status)
-      break
-    case 'layout':
-      setIsUploadingLayoutPlan(status)
-      break
-  }
-}
 
   const calculateProgress = () => {
     const fields = [
@@ -288,7 +326,6 @@ export function CreateEventForm() {
   }
 
   const eventTypes = ["Conference", "Exhibition", "Seminar", "Workshop", "Trade Show"]
-  const eventCategories = ["Technology", "Healthcare", "Finance", "Education", "Entertainment"]
   const currencies = ["USD", "EUR", "GBP", "INR", "JPY"]
 
   return (
@@ -324,11 +361,12 @@ export function CreateEventForm() {
           <FormProgress completionPercentage={calculateProgress()} />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-            <TabsList className="grid w-full grid-cols-8">
+            <TabsList className="grid w-full grid-cols-9">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
               <TabsTrigger value="organizer">Organizer</TabsTrigger>
               <TabsTrigger value="venue">Venue</TabsTrigger>
               <TabsTrigger value="speakers">Speakers</TabsTrigger>
+              <TabsTrigger value="exhibitors">Exhibitors</TabsTrigger>
               <TabsTrigger value="details">Event Details</TabsTrigger>
               <TabsTrigger value="pricing">Pricing</TabsTrigger>
               <TabsTrigger value="media">Media</TabsTrigger>
@@ -341,6 +379,7 @@ export function CreateEventForm() {
                 validationErrors={validationErrors}
                 eventTypes={eventTypes}
                 eventCategories={eventCategories}
+                isLoadingCategories={isLoadingCategories}
                 onFormChange={handleFormChange}
                 onCategoryToggle={handleCategoryToggle}
                 onVenueChange={handleVenueChange}
@@ -365,6 +404,13 @@ export function CreateEventForm() {
               <SelectSpeakers
                 speakerSessions={speakerSessions}
                 onSpeakerSessionsChange={handleSpeakerSessionsChange}
+              />
+            </TabsContent>
+
+            <TabsContent value="exhibitors" className="space-y-6 mt-6">
+              <SelectExhibitors
+                exhibitorBooths={exhibitorBooths}
+                onExhibitorBoothsChange={handleExhibitorBoothsChange}
               />
             </TabsContent>
 
@@ -395,20 +441,20 @@ export function CreateEventForm() {
               />
             </TabsContent>
 
-<TabsContent value="media" className="space-y-6 mt-6">
-  <MediaTab
-    formData={formData}
-    isUploadingImages={isUploadingImages}
-    isUploadingBrochure={isUploadingBrochure}
-    isUploadingLayoutPlan={isUploadingLayoutPlan}
-    fileInputRef={fileInputRef}
-    brochureInputRef={brochureInputRef}
-    layoutPlanInputRef={layoutPlanInputRef}
-    onFormChange={handleFormChange}
-    onRemoveImage={handleRemoveImage}
-    onUploadStatusChange={handleUploadStatusChange}
-  />
-</TabsContent>
+            <TabsContent value="media" className="space-y-6 mt-6">
+              <MediaTab
+                formData={formData}
+                isUploadingImages={isUploadingImages}
+                isUploadingBrochure={isUploadingBrochure}
+                isUploadingLayoutPlan={isUploadingLayoutPlan}
+                fileInputRef={fileInputRef}
+                brochureInputRef={brochureInputRef}
+                layoutPlanInputRef={layoutPlanInputRef}
+                onFormChange={handleFormChange}
+                onRemoveImage={handleRemoveImage}
+                onUploadStatusChange={handleUploadStatusChange}
+              />
+            </TabsContent>
 
             <TabsContent value="preview" className="space-y-6 mt-6">
               <PreviewTab formData={formData} />

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Clock } from "lucide-react"
+import { Clock, Loader2 } from "lucide-react"
 import type { EventFormData, ValidationErrors } from "./types"
 
 interface BasicInfoTabProps {
@@ -13,6 +13,7 @@ interface BasicInfoTabProps {
   validationErrors: ValidationErrors
   eventTypes: string[]
   eventCategories: string[]
+  isLoadingCategories?: boolean
   onFormChange: (updates: Partial<EventFormData>) => void
   onCategoryToggle: (category: string) => void
   onVenueChange: (venueData: {
@@ -28,6 +29,7 @@ export function BasicInfoTab({
   validationErrors,
   eventTypes,
   eventCategories,
+  isLoadingCategories = false,
   onFormChange,
   onCategoryToggle,
 }: BasicInfoTabProps) {
@@ -100,25 +102,32 @@ export function BasicInfoTab({
 
             <div className="md:col-span-2">
               <Label>Event Categories</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
-                {eventCategories.map((category) => (
-                  <div key={category} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id={`category-${category}`}
-                      checked={formData.categories.includes(category)}
-                      onChange={() => onCategoryToggle(category)}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <label
-                      htmlFor={`category-${category}`}
-                      className="text-sm font-medium text-gray-700 cursor-pointer"
-                    >
-                      {category}
-                    </label>
-                  </div>
-                ))}
-              </div>
+              {isLoadingCategories ? (
+                <div className="flex items-center space-x-2 mt-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm text-muted-foreground">Loading categories...</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
+                  {eventCategories.map((category) => (
+                    <div key={category} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`category-${category}`}
+                        checked={formData.categories.includes(category)}
+                        onChange={() => onCategoryToggle(category)}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label
+                        htmlFor={`category-${category}`}
+                        className="text-sm font-medium text-gray-700 cursor-pointer"
+                      >
+                        {category}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="md:col-span-2">
