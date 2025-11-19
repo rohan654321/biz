@@ -45,6 +45,8 @@ import SupportTickets from "./help-support/support-tickets"
 import SupportContacts from "./help-support/support-contacts"
 import FAQManagement from "./help-support/faq-management"
 import AdminNotes from "./help-support/support-notes"
+import AddOrganizerForm from "./add-organizer-form"
+import AddExhibitorForm from "./add-exhibitor-form"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -384,8 +386,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <SuperAdminManagement />
         case "roles-subadmins":
           return <SubAdminManagement />
-
-
+        case "organizers-add":
+          return <AddOrganizerForm/>  
         // Events
         case "events-create":
           return <CreateEventForm />
@@ -446,7 +448,9 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       case "support-faq":
         return <FAQManagement/>
       case  "support-notes":
-        return <AdminNotes/>       
+        return <AdminNotes/>     
+      case  "exhibitors-add":
+        return <AddExhibitorForm/>    
       default:
         return <DashboardOverview />
     }

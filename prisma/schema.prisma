@@ -374,6 +374,8 @@ ticketReplies     SupportTicketReply[] @relation("TicketReplyAuthor")
   exhibitorManuals ExhibitorManual[]
   conference       Conference[]
   categories       EventsOnCategories[]
+  countries EventsOnCountries[]
+  cities    EventsOnCities[]
 
     @@map("events")
   }
@@ -1563,7 +1565,7 @@ requester   User?   @relation("VenueAppointmentRequests", fields: [requesterId],
     
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
-    updatedBy String   @db.ObjectId // Super admin who last updated
+    updatedBy String?   @db.ObjectId // Super admin who last updated
     
     @@unique([dashboardType, userRole])
     @@map("dashboard_content")
@@ -1586,7 +1588,7 @@ model FAQ {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  updatedBy String   @db.ObjectId
+  updatedBy String?   @db.ObjectId
   
   @@map("faqs")
 }
@@ -1615,7 +1617,7 @@ model FAQ {
     
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
-    updatedBy String   @db.ObjectId
+    updatedBy String?   @db.ObjectId
     
     @@map("dashboard_announcements")
   }
@@ -1655,7 +1657,7 @@ model HelpSupportContent {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  updatedBy String   @db.ObjectId
+  updatedBy String?   @db.ObjectId
   
   @@unique([userRole])
   @@map("help_support_content")
@@ -1806,4 +1808,81 @@ enum SupportTicketStatus {
   RESOLVED
   CLOSED
   REOPENED
+}
+// Country and City Management Models
+model Country {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  code        String   @unique
+  flag        String?
+  flagPublicId String?
+  currency    String   @default("USD")
+  timezone    String   @default("UTC")
+  isActive    Boolean  @default(true)
+  isPermitted Boolean  @default(false)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relationships
+  cities      City[]
+  events      EventsOnCountries[]
+  
+  // Remove the duplicate indexes since @unique already creates them
+  @@index([isActive])
+  @@index([isPermitted])
+  @@map("countries")
+}
+
+model City {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  countryId   String   @db.ObjectId
+  latitude    Float?
+  longitude   Float?
+  timezone    String   @default("UTC")
+  image       String?
+  imagePublicId String?
+  isActive    Boolean  @default(true)
+  isPermitted Boolean  @default(false)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relationships
+  country     Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  events      EventsOnCities[]
+  
+  @@unique([name, countryId])
+  @@index([isActive])
+  @@index([isPermitted])
+  @@map("cities")
+}
+
+// Many-to-many relationship between Events and Countries
+model EventsOnCountries {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId   String   @db.ObjectId
+  countryId String   @db.ObjectId
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  country   Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@unique([eventId, countryId])
+  @@map("events_on_countries")
+}
+
+// Many-to-many relationship between Events and Cities
+model EventsOnCities {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId   String   @db.ObjectId
+  cityId    String   @db.ObjectId
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  city      City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@unique([eventId, cityId])
+  @@map("events_on_cities")
 }
