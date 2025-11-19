@@ -21,6 +21,7 @@ import {
   HelpCircle,
   LogOut,
   ChevronDown,
+  ArrowLeft,
 } from "lucide-react"
 
 // Import all section components
@@ -35,29 +36,8 @@ import SystemSettings from "./system-settings"
 import SubAdminManagement from "./subadmin-management"
 import { CreateEventForm } from "./eventManagement/createEvent/create-event"
 import { signOut } from "next-auth/react"
-import ImportPage from "./import"
-import AdsManagement from "./ads-management"
-import PromotionsManagement from "./promotions-management"
-import EmailCampaigns from "./email-notifications"
-import PushNotifications from "./push-notifications"
-import EmailTemplates from "./email-templates"
-import PushTemplates from "./push-templates"
-import OrganizerPromotionsPage from "./organizer/promotions"
-import ExhibitorPromotionsPage from "./exhibitors/promotions"
-import ExhibitorAppointmentsPage from "./exhibitors/appointments"
-import ExhibitorFeedbackPage from "./exhibitors/feedback"
-import OrganizerConnectionsPage from "./organizer/connections"
-import OrganizerVenueBookingsPage from "./organizer/venue-bookings"
-import OrganizerFeedbackPage from "./organizer/feedback"
-import ExhibitorFollowersPage from "./exhibitors/followers"
-import SpeakerFollowersPage from "./speaker/followers"
-import SpeakerFeedbackPage from "./speaker/feedback"
-import VenuesEventsPage from "./venue/events"
-import UserManagement from "./user-management"
-import VenueBookingsPage from "./venue/bookings"
-import VisitorEventsPage from "./visitors/events"
-import VisitorConnectionsPage from "./visitors/connections"
-import VisitorAppointmentsPage from "./visitors/appointments"
+import CountriesManagement from "./countries-management"
+import VisitorManagement from "./visitor-management"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -67,10 +47,10 @@ interface AdminDashboardProps {
 const MENU_PERMISSIONS = {
   dashboard: "dashboard-overview",
   events: "events",
-  "events-all": "events-all", // Fixed: was "events-all-events", now matches DB
+  "events-all": "events-all",
   "events-create": "events-create",
   "events-categories": "events-categories",
-  "events-approvals": "events-approvals", // Added: missing mapping
+  "events-approvals": "events-approvals",
   "bulk-data": "bulk-data",
   organizers: "organizers",
   "organizers-all": "organizers-all",
@@ -141,6 +121,11 @@ const MENU_PERMISSIONS = {
   "support-tickets": "support-tickets",
   "support-contacts": "support-contacts",
   "support-notes": "support-notes",
+  "support-faq": "support-faq",
+  // Add permissions for locations
+  locations: "locations",
+  countries: "countries",
+  cities: "cities",
 }
 
 export default function AdminDashboard({ userRole, userPermissions }: AdminDashboardProps) {
@@ -191,10 +176,19 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "All Events", id: "events-all" },
         { title: "Create New Event", id: "events-create" },
         { title: "Event Categories", id: "events-categories" },
-        // { title: "Event Approvals", id: "events-approvals" }, // Added Event Approvals menu item
+        { title: "Event Approvals", id: "events-approvals" }, // Added Event Approvals menu item
         { title: "Bulk Data", id: "bulk-data" },
       ],
     },
+    // {
+    //   title: "Locations",
+    //   icon: MapPin,
+    //   id: "locations",
+    //   subItems: [
+    //     { title: "Countries", id: "countries" },
+    //     { title: "Cities", id: "cities" },
+    //   ],
+    // },
     {
       title: "Organizer",
       icon: Users,
@@ -343,6 +337,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       subItems: [
         { title: "Support Tickets", id: "support-tickets" },
         { title: "Contact Logs", id: "support-contacts" },
+        { title: "FAQ Management", id: "support-faq" },
         { title: "Admin Notes", id: "support-notes" },
       ],
     },
@@ -371,6 +366,9 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
     const section = activeSection
     const subSection = activeSubSection
 
+    console.log("Active Section:", section)
+    console.log("Active Sub Section:", subSection)
+
     // Handle sub-sections first
     if (subSection) {
       switch (subSection) {
@@ -383,84 +381,18 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
 
         // Events
         case "events-create":
-          return <CreateEventForm />
+          // return <CreateEventForm />
         case "events-all":
-          return <EventManagement />
+          // return <EventManagement />
         case "events-categories":
-          return <div>Event Categories - Coming Soon</div>
+          return <div>Event Categories - Coming Soon</div> //<EventCategories />
         case "events-approvals":
           return <div>Event Approvals - Coming Soon</div>
         case "bulk-data":
-          return <div><ImportPage /></div>
-
-        // case "content-banners":
-        //   return (
-        //     <div>
-        //       <AdsManagement />
-        //     </div>
-        //   )
-
-        // case "marketing-email":
-        //   return (<div><EmailCampaigns /></div>)
-
-        // case "marketing-notifications":
-        //   return (<div><PushNotifications /></div>)
-
-        // case "template-email":
-        //   return (<div><EmailTemplates /></div>)
-
-        // case "template-notifications":
-        //   return (<div><PushTemplates /></div>)
-
-        // case "promotions":
-        //   return <div><OrganizerPromotionsPage /></div>
-
-        // case "exhibitors-promotions":
-        //   return <div><ExhibitorPromotionsPage /></div>
-
-        // case "exhibitors-appointments":
-        //   return <div><ExhibitorAppointmentsPage /></div>
-
-        // case "exhibitors-feedback":
-        //   return <div><ExhibitorFeedbackPage /></div>
-
-        // case "organizers-connections":
-        //   return <div><OrganizerConnectionsPage /></div>
-
-        // case "organizers-bookings":
-        //   return <div><OrganizerVenueBookingsPage /></div>
-
-        // case "organizers-feedback":
-        //   return <div><OrganizerFeedbackPage /></div>
-
-        // case "exhibitors-followers":
-        //   return <div><ExhibitorFollowersPage /></div>
-
-        // case "speakers-followers":
-        //   return <div><SpeakerFollowersPage /></div>
-
-        // case "speakers-feedback":
-        //   return <div><SpeakerFeedbackPage /></div>
-
-        // case "venues-events":
-        //   return <div><VenuesEventsPage /></div>
-
-        case "visitors-all":
-          return <div><UserManagement /></div>
-
-        // case "venues-bookings":
-        //   return <div><VenueBookingsPage /></div>
-
-        // case "visitors-events":
-        //   return <div><VisitorEventsPage /></div>
-
-        // case "visitors-connections":
-        //   return <div><VisitorConnectionsPage /></div>
-
-        // case "visitors-appointments":
-        //   return <div><VisitorAppointmentsPage /></div>
+          return <div>Event Bulk uploade - Coming Soon</div>
 
         default:
+          console.log("Unknown sub-section:", subSection)
           break
       }
     }
@@ -471,7 +403,10 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         return <DashboardOverview />
       case "events":
         return <EventManagement />
+      case "locations":
+        return <CountriesManagement /> 
       case "organizers":
+        // Default to "All Organizers" when main organizers section is clicked
         return <OrganizerManagement />
       case "exhibitors":
         return <ExhibitorManagement />
@@ -480,7 +415,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       case "venues":
         return <VenueManagement />
       case "visitors":
-        return <div>Visitor Management - Coming Soon</div>
+        return <div>Visitor Management - Coming Soon</div> // <VisitorManagement/>
       case "financial":
         return <div>Financial Management - Coming Soon</div>
       case "content":
@@ -497,7 +432,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         return <SystemSettings />
       case "support":
         return <div>Help & Support - Coming Soon</div>
-
       default:
         return <DashboardOverview />
     }

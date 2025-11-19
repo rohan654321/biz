@@ -8,14 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   DropdownMenu,
@@ -41,6 +33,11 @@ import {
   Trash2,
   MessageSquare,
   ArrowLeft,
+  Upload,
+  X,
+  Image,
+  Video,
+  FileText,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
@@ -63,7 +60,13 @@ interface Event {
   vip: boolean
   priority: "High" | "Medium" | "Low"
   description: string
+  shortDescription: string
+  slug: string
+  edition: string
   tags: string[]
+  eventType: string
+  timezone: string
+  currency: string
   createdAt: string
   lastModified: string
   views: number
@@ -71,41 +74,324 @@ interface Event {
   rating: number
   reviews: number
   image: string
+  bannerImage: string
+  thumbnailImage: string
+  images: string[]
+  videos: string[]
+  brochure: string
+  layout: string
+  documents: string[]
   promotionBudget: number
   socialShares: number
+}
+
+interface Category {
+  id: string
+  name: string
+  icon?: string
+  color?: string
+  isActive: boolean
+  eventCount?: number
+}
+
+// File Upload Component
+function FileUpload({
+  label,
+  accept,
+  onFileUpload,
+  multiple = false,
+  currentFiles = [],
+  onFileRemove,
+}: {
+  label: string
+  accept: string
+  onFileUpload: (files: File[]) => void
+  multiple?: boolean
+  currentFiles?: string[]
+  onFileRemove?: (index: number) => void
+}) {
+  const [dragOver, setDragOver] = useState(false)
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length > 0) {
+      onFileUpload(files)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setDragOver(false)
+    const files = Array.from(e.dataTransfer.files)
+    if (files.length > 0) {
+      onFileUpload(files)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setDragOver(true)
+  }
+
+  const handleDragLeave = () => {
+    setDragOver(false)
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div
+        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+          dragOver ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"
+        }`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onClick={() => document.getElementById(`file-upload-${label}`)?.click()}
+      >
+        <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+        <p className="text-sm text-gray-600">
+          Drag & drop files here or click to upload
+        </p>
+        <p className="text-xs text-gray-500 mt-1">
+          {accept.includes("image") ? "Images" : accept.includes("video") ? "Videos" : "Documents"} accepted
+        </p>
+        <input
+          id={`file-upload-${label}`}
+          type="file"
+          accept={accept}
+          multiple={multiple}
+          onChange={handleFileChange}
+          className="hidden"
+        />
+      </div>
+      
+      {/* Current files preview */}
+      {currentFiles && currentFiles.length > 0 && (
+        <div className="mt-3">
+          <Label className="text-sm">Current Files:</Label>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {currentFiles.map((file, index) => (
+              <div key={index} className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2 text-sm">
+                {file.includes("image") ? (
+                  <Image className="w-4 h-4" />
+                ) : file.includes("video") ? (
+                  <Video className="w-4 h-4" />
+                ) : (
+                  <FileText className="w-4 h-4" />
+                )}
+                <span className="truncate max-w-32">
+                  {file.split('/').pop()}
+                </span>
+                {onFileRemove && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onFileRemove(index)
+                    }}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Image Preview Component
+function ImagePreview({ src, onRemove }: { src: string; onRemove: () => void }) {
+  return (
+    <div className="relative group">
+      <img
+        src={src}
+        alt="Preview"
+        className="w-20 h-20 object-cover rounded-lg border"
+      />
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <X className="w-3 h-3" />
+      </button>
+    </div>
+  )
 }
 
 // Edit Event Component
 function EditEventForm({ 
   event, 
   onSave, 
-  onCancel 
+  onCancel,
+  categories 
 }: { 
   event: Event
   onSave: (updatedEvent: Event) => void
   onCancel: () => void
+  categories: Category[]
 }) {
-  const [formData, setFormData] = useState<Event>(event)
+  // Initialize formData with safe defaults for arrays
+  const [formData, setFormData] = useState<Event>({
+    ...event,
+    images: event.images || [],
+    videos: event.videos || [],
+    documents: event.documents || [],
+    tags: event.tags || [],
+    shortDescription: event.shortDescription || "",
+    slug: event.slug || "",
+    edition: event.edition || "",
+    eventType: event.eventType || "in-person",
+    timezone: event.timezone || "UTC",
+    currency: event.currency || "USD",
+    bannerImage: event.bannerImage || "",
+    thumbnailImage: event.thumbnailImage || "",
+    brochure: event.brochure || "",
+    layout: event.layout || "",
+  })
+
+  const [uploading, setUploading] = useState(false)
+  const [newImages, setNewImages] = useState<File[]>([])
+  const [newVideos, setNewVideos] = useState<File[]>([])
+  const [newDocuments, setNewDocuments] = useState<File[]>([])
+
+  // Convert file to base64 for Cloudinary upload
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = error => reject(error)
+    })
+  }
+
+  // Handle image uploads
+  const handleImageUpload = async (files: File[]) => {
+    setUploading(true)
+    try {
+      setNewImages(prev => [...prev, ...files])
+    } catch (error) {
+      console.error("Error processing images:", error)
+      alert("Failed to process images")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  // Handle video uploads
+  const handleVideoUpload = async (files: File[]) => {
+    setUploading(true)
+    try {
+      setNewVideos(prev => [...prev, ...files])
+    } catch (error) {
+      console.error("Error processing videos:", error)
+      alert("Failed to process videos")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  // Handle document uploads
+  const handleDocumentUpload = async (files: File[]) => {
+    setUploading(true)
+    try {
+      setNewDocuments(prev => [...prev, ...files])
+    } catch (error) {
+      console.error("Error processing documents:", error)
+      alert("Failed to process documents")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  // Remove image
+  const removeImage = (index: number, isNew: boolean = false) => {
+    if (isNew) {
+      setNewImages(prev => prev.filter((_, i) => i !== index))
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        images: (prev.images || []).filter((_, i) => i !== index)
+      }))
+    }
+  }
+
+  // Remove video
+  const removeVideo = (index: number, isNew: boolean = false) => {
+    if (isNew) {
+      setNewVideos(prev => prev.filter((_, i) => i !== index))
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        videos: (prev.videos || []).filter((_, i) => i !== index)
+      }))
+    }
+  }
+
+  // Remove document
+  const removeDocument = (index: number, isNew: boolean = false) => {
+    if (isNew) {
+      setNewDocuments(prev => prev.filter((_, i) => i !== index))
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        documents: (prev.documents || []).filter((_, i) => i !== index)
+      }))
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setUploading(true)
+
     try {
-      // Prepare data for API
+      // Convert all new files to base64
+      const imageUploads = Promise.all(newImages.map(fileToBase64))
+      const videoUploads = Promise.all(newVideos.map(fileToBase64))
+      const documentUploads = Promise.all(newDocuments.map(fileToBase64))
+
+      const [newImageBase64, newVideoBase64, newDocumentBase64] = await Promise.all([
+        imageUploads,
+        videoUploads,
+        documentUploads
+      ])
+
+      // Prepare data for API - ensure all arrays have safe defaults
       const updateData = {
         title: formData.title,
         description: formData.description,
+        shortDescription: formData.shortDescription,
+        slug: formData.slug,
+        edition: formData.edition,
         date: formData.date,
         endDate: formData.endDate,
         status: formData.status,
         maxCapacity: formData.maxCapacity,
+        currentAttendees: formData.attendees,
         featured: formData.featured,
         vip: formData.vip,
         category: formData.category,
-        tags: formData.tags,
+        tags: formData.tags || [],
+        eventType: formData.eventType,
+        timezone: formData.timezone,
         venue: formData.venue,
         location: formData.location,
         organizer: formData.organizer,
         ticketPrice: formData.ticketPrice,
+        currency: formData.currency,
+        // Combine existing and new files with safe array access
+        images: [...(formData.images || []), ...newImageBase64],
+        videos: [...(formData.videos || []), ...newVideoBase64],
+        documents: [...(formData.documents || []), ...newDocumentBase64],
+        brochure: formData.brochure,
+        layout: formData.layout,
+        bannerImage: formData.bannerImage,
+        thumbnailImage: formData.thumbnailImage,
       }
 
       console.log("Sending update data:", updateData)
@@ -124,7 +410,6 @@ function EditEventForm({
       
       console.log("Update successful:", result)
       
-      // Make sure we're passing the formatted event back
       if (result.event) {
         onSave(result.event)
       } else {
@@ -133,8 +418,15 @@ function EditEventForm({
     } catch (error) {
       console.error("Error updating event:", error)
       alert(error instanceof Error ? error.message : "Failed to update event")
+    } finally {
+      setUploading(false)
     }
   }
+
+  // Safe array access for rendering
+  const currentImages = formData.images || []
+  const currentVideos = formData.videos || []
+  const currentDocuments = formData.documents || []
 
   return (
     <div className="space-y-6">
@@ -153,168 +445,473 @@ function EditEventForm({
       <Card>
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Basic Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Event Title *</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="Enter event title"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="slug">Slug *</Label>
+                  <Input
+                    id="slug"
+                    value={formData.slug}
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                    placeholder="event-slug"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edition">Edition</Label>
+                  <Input
+                    id="edition"
+                    value={formData.edition}
+                    onChange={(e) => setFormData({ ...formData, edition: e.target.value })}
+                    placeholder="e.g., 2024, First Edition"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="organizer">Organizer *</Label>
+                  <Input
+                    id="organizer"
+                    value={formData.organizer}
+                    onChange={(e) => setFormData({ ...formData, organizer: e.target.value })}
+                    placeholder="Enter organizer name"
+                    required
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="title">Event Title</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Enter event title"
+                <Label htmlFor="shortDescription">Short Description</Label>
+                <Textarea
+                  id="shortDescription"
+                  value={formData.shortDescription}
+                  onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
+                  placeholder="Brief description (max 200 characters)"
+                  rows={2}
+                  maxLength={200}
                 />
+                <p className="text-xs text-gray-500">
+                  {formData.shortDescription?.length || 0}/200 characters
+                </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="organizer">Organizer</Label>
-                <Input
-                  id="organizer"
-                  value={formData.organizer}
-                  onChange={(e) => setFormData({ ...formData, organizer: e.target.value })}
-                  placeholder="Enter organizer name"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="date">Start Date</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="endDate">End Date</Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="Enter event location"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="venue">Venue</Label>
-                <Input
-                  id="venue"
-                  value={formData.venue}
-                  onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
-                  placeholder="Enter venue name"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="exhibition">Exhibition</SelectItem>
-                    <SelectItem value="conference">Conference</SelectItem>
-                    <SelectItem value="workshop">Workshop</SelectItem>
-                    <SelectItem value="healthcare">Healthcare</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value: Event["status"]) => setFormData({ ...formData, status: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Approved">Approved</SelectItem>
-                    <SelectItem value="Pending Review">Pending Review</SelectItem>
-                    <SelectItem value="Flagged">Flagged</SelectItem>
-                    <SelectItem value="Rejected">Rejected</SelectItem>
-                    <SelectItem value="Draft">Draft</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="ticketPrice">Ticket Price (₹)</Label>
-                <Input
-                  id="ticketPrice"
-                  type="number"
-                  value={formData.ticketPrice}
-                  onChange={(e) => setFormData({ ...formData, ticketPrice: Number(e.target.value) })}
-                  placeholder="Enter ticket price"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="maxCapacity">Max Capacity</Label>
-                <Input
-                  id="maxCapacity"
-                  type="number"
-                  value={formData.maxCapacity}
-                  onChange={(e) => setFormData({ ...formData, maxCapacity: Number(e.target.value) })}
-                  placeholder="Enter maximum capacity"
+                <Label htmlFor="description">Full Description *</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Detailed event description"
+                  rows={4}
+                  required
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Enter event description"
-                rows={4}
+            {/* Date & Time */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Date & Time</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="date">Start Date *</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="endDate">End Date *</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="timezone">Timezone *</Label>
+                  <Select
+                    value={formData.timezone}
+                    onValueChange={(value) => setFormData({ ...formData, timezone: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select timezone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="UTC">UTC</SelectItem>
+                      <SelectItem value="EST">Eastern Time (EST)</SelectItem>
+                      <SelectItem value="PST">Pacific Time (PST)</SelectItem>
+                      <SelectItem value="CST">Central Time (CST)</SelectItem>
+                      <SelectItem value="IST">India Standard Time (IST)</SelectItem>
+                      <SelectItem value="GMT">Greenwich Mean Time (GMT)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Location & Venue */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Location & Venue</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="venue">Venue Name *</Label>
+                  <Input
+                    id="venue"
+                    value={formData.venue}
+                    onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
+                    placeholder="Enter venue name"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location *</Label>
+                  <Input
+                    id="location"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="Enter event location"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Event Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Event Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category *</Label>
+                  <Select
+                    value={formData.category}
+                    onValueChange={(value) => setFormData({ ...formData, category: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories
+                        .filter(category => category.isActive)
+                        .map((category) => (
+                          <SelectItem key={category.id} value={category.name}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="eventType">Event Type</Label>
+                  <Select
+                    value={formData.eventType}
+                    onValueChange={(value) => setFormData({ ...formData, eventType: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select event type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="in-person">In-Person</SelectItem>
+                      <SelectItem value="virtual">Virtual</SelectItem>
+                      <SelectItem value="hybrid">Hybrid</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="currency">Currency</Label>
+                  <Select
+                    value={formData.currency}
+                    onValueChange={(value) => setFormData({ ...formData, currency: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD ($)</SelectItem>
+                      <SelectItem value="EUR">EUR (€)</SelectItem>
+                      <SelectItem value="GBP">GBP (£)</SelectItem>
+                      <SelectItem value="INR">INR (₹)</SelectItem>
+                      <SelectItem value="CAD">CAD (C$)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tags">Tags</Label>
+                <Input
+                  id="tags"
+                  value={(formData.tags || []).join(', ')}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    tags: e.target.value.split(',').map(tag => tag.trim()).filter(Boolean) 
+                  })}
+                  placeholder="Enter tags separated by commas"
+                />
+              </div>
+            </div>
+
+            {/* Capacity & Pricing */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Capacity & Pricing</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="maxCapacity">Max Capacity *</Label>
+                  <Input
+                    id="maxCapacity"
+                    type="number"
+                    value={formData.maxCapacity}
+                    onChange={(e) => setFormData({ ...formData, maxCapacity: Number(e.target.value) })}
+                    placeholder="Enter maximum capacity"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="attendees">Current Attendees</Label>
+                  <Input
+                    id="attendees"
+                    type="number"
+                    value={formData.attendees}
+                    onChange={(e) => setFormData({ ...formData, attendees: Number(e.target.value) })}
+                    placeholder="Current number of attendees"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="ticketPrice">Ticket Price ({formData.currency})</Label>
+                  <Input
+                    id="ticketPrice"
+                    type="number"
+                    step="0.01"
+                    value={formData.ticketPrice}
+                    onChange={(e) => setFormData({ ...formData, ticketPrice: Number(e.target.value) })}
+                    placeholder="Enter ticket price"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Media Uploads */}
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold">Media & Documents</h3>
+              
+              {/* Banner Image */}
+              <div className="space-y-2">
+                <Label>Banner Image</Label>
+                <div className="flex items-center gap-4">
+                  {formData.bannerImage && (
+                    <ImagePreview
+                      src={formData.bannerImage}
+                      onRemove={() => setFormData({ ...formData, bannerImage: "" })}
+                    />
+                  )}
+                  <FileUpload
+                    label="Upload Banner Image"
+                    accept="image/*"
+                    onFileUpload={async (files) => {
+                      if (files.length > 0) {
+                        const base64 = await fileToBase64(files[0])
+                        setFormData({ ...formData, bannerImage: base64 })
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Thumbnail Image */}
+              <div className="space-y-2">
+                <Label>Thumbnail Image</Label>
+                <div className="flex items-center gap-4">
+                  {formData.thumbnailImage && (
+                    <ImagePreview
+                      src={formData.thumbnailImage}
+                      onRemove={() => setFormData({ ...formData, thumbnailImage: "" })}
+                    />
+                  )}
+                  <FileUpload
+                    label="Upload Thumbnail Image"
+                    accept="image/*"
+                    onFileUpload={async (files) => {
+                      if (files.length > 0) {
+                        const base64 = await fileToBase64(files[0])
+                        setFormData({ ...formData, thumbnailImage: base64 })
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Gallery Images */}
+              <FileUpload
+                label="Gallery Images"
+                accept="image/*"
+                multiple={true}
+                currentFiles={currentImages}
+                onFileUpload={handleImageUpload}
+                onFileRemove={(index) => removeImage(index)}
               />
+              
+              {/* New Images Preview */}
+              {newImages.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm">New Images to Upload:</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {newImages.map((file, index) => (
+                      <ImagePreview
+                        key={index}
+                        src={URL.createObjectURL(file)}
+                        onRemove={() => removeImage(index, true)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Videos */}
+              <FileUpload
+                label="Videos"
+                accept="video/*"
+                multiple={true}
+                currentFiles={currentVideos}
+                onFileUpload={handleVideoUpload}
+                onFileRemove={(index) => removeVideo(index)}
+              />
+
+              {/* Documents */}
+              <FileUpload
+                label="Documents (Brochure, Layout, etc.)"
+                accept=".pdf,.doc,.docx,.ppt,.pptx"
+                multiple={true}
+                currentFiles={currentDocuments}
+                onFileUpload={handleDocumentUpload}
+                onFileRemove={(index) => removeDocument(index)}
+              />
+
+              {/* Specific Documents */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>Brochure</Label>
+                  <FileUpload
+                    label="Upload Brochure"
+                    accept=".pdf,.doc,.docx"
+                    onFileUpload={async (files) => {
+                      if (files.length > 0) {
+                        const base64 = await fileToBase64(files[0])
+                        setFormData({ ...formData, brochure: base64 })
+                      }
+                    }}
+                    currentFiles={formData.brochure ? [formData.brochure] : []}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Layout Plan</Label>
+                  <FileUpload
+                    label="Upload Layout Plan"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onFileUpload={async (files) => {
+                      if (files.length > 0) {
+                        const base64 = await fileToBase64(files[0])
+                        setFormData({ ...formData, layout: base64 })
+                      }
+                    }}
+                    currentFiles={formData.layout ? [formData.layout] : []}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="featured"
-                  checked={formData.featured}
-                  onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                  className="rounded border-gray-300"
-                />
-                <Label htmlFor="featured">Featured Event</Label>
-              </div>
+            {/* Status & Features */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Status & Features</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value: Event["status"]) => setFormData({ ...formData, status: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Approved">Approved</SelectItem>
+                      <SelectItem value="Pending Review">Pending Review</SelectItem>
+                      <SelectItem value="Flagged">Flagged</SelectItem>
+                      <SelectItem value="Rejected">Rejected</SelectItem>
+                      <SelectItem value="Draft">Draft</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="vip"
-                  checked={formData.vip}
-                  onChange={(e) => setFormData({ ...formData, vip: e.target.checked })}
-                  className="rounded border-gray-300"
-                />
-                <Label htmlFor="vip">VIP Event</Label>
+                <div className="space-y-2">
+                  <Label>Features</Label>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="featured"
+                        checked={formData.featured}
+                        onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                        className="rounded border-gray-300"
+                      />
+                      <Label htmlFor="featured" className="cursor-pointer">Featured Event</Label>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="vip"
+                        checked={formData.vip}
+                        onChange={(e) => setFormData({ ...formData, vip: e.target.checked })}
+                        className="rounded border-gray-300"
+                      />
+                      <Label htmlFor="vip" className="cursor-pointer">VIP Event</Label>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="flex gap-4 pt-4">
-              <Button type="submit" className="flex-1">
-                Save Changes
+            {/* Submit Buttons */}
+            <div className="flex gap-4 pt-6 border-t">
+              <Button 
+                type="submit" 
+                className="flex-1" 
+                disabled={uploading}
+              >
+                {uploading ? "Uploading..." : "Save Changes"}
               </Button>
-              <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onCancel} 
+                className="flex-1"
+                disabled={uploading}
+              >
                 Cancel
               </Button>
             </div>
@@ -333,6 +930,7 @@ function EventList({
   selectedCategory,
   activeTab,
   eventCounts,
+  categories,
   onEdit,
   onStatusChange,
   onFeatureToggle,
@@ -350,6 +948,7 @@ function EventList({
   selectedCategory: string
   activeTab: string
   eventCounts: any
+  categories: Category[]
   onEdit: (event: Event) => void
   onStatusChange: (eventId: string, status: Event["status"]) => void
   onFeatureToggle: (eventId: string, current: boolean) => void
@@ -454,11 +1053,13 @@ function EventList({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="exhibition">Exhibition</SelectItem>
-            <SelectItem value="conference">Conference</SelectItem>
-            <SelectItem value="workshop">Workshop</SelectItem>
-            <SelectItem value="healthcare">Healthcare</SelectItem>
-            <SelectItem value="other">Other</SelectItem>
+            {categories
+              .filter(category => category.isActive)
+              .map((category) => (
+                <SelectItem key={category.id} value={category.name.toLowerCase()}>
+                  {category.name}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
       </div>
@@ -482,7 +1083,7 @@ function EventList({
                   <div className="flex items-start justify-between">
                     <div className="flex gap-4 flex-1">
                       <img
-                        src={event.image || "/placeholder.svg"}
+                        src={event.thumbnailImage || event.bannerImage || event.image || "/placeholder.svg"}
                         alt={event.title}
                         className="w-20 h-20 rounded-lg object-cover"
                       />
@@ -519,6 +1120,13 @@ function EventList({
                             <Users className="w-4 h-4" />
                             {event.attendees}/{event.maxCapacity}
                           </div>
+                        </div>
+
+                        {/* Additional Info */}
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span>Type: {event.eventType || "In-Person"}</span>
+                          <span>Category: {event.category}</span>
+                          {event.edition && <span>Edition: {event.edition}</span>}
                         </div>
                       </div>
                     </div>
@@ -581,9 +1189,12 @@ function EventList({
   )
 }
 
+// Main Component
 export default function EventManagement() {
   const [events, setEvents] = useState<Event[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [categoriesLoading, setCategoriesLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [selectedCategory, setSelectedCategory] = useState("all")
@@ -595,7 +1206,7 @@ export default function EventManagement() {
 
   const router = useRouter()
 
-  // Fetch from backend
+  // Fetch events from backend
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -609,6 +1220,29 @@ export default function EventManagement() {
       }
     }
     fetchEvents()
+  }, [])
+
+  // Fetch categories from backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("/api/admin/event-categories?includeCounts=true")
+        const data = await res.json()
+        
+        if (Array.isArray(data)) {
+          setCategories(data)
+        } else {
+          console.error("Unexpected categories response format:", data)
+          setCategories([])
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error)
+        setCategories([])
+      } finally {
+        setCategoriesLoading(false)
+      }
+    }
+    fetchCategories()
   }, [])
 
   // Handle actions
@@ -714,7 +1348,7 @@ export default function EventManagement() {
     vip: events.filter((e) => e.vip).length,
   }
 
-  if (loading)
+  if (loading || categoriesLoading)
     return (
       <div className="flex justify-center items-center h-[80vh]">
         <p className="text-gray-500">Loading events...</p>
@@ -728,6 +1362,7 @@ export default function EventManagement() {
         event={selectedEvent}
         onSave={handleSaveEvent}
         onCancel={handleCancelEdit}
+        categories={categories}
       />
     )
   }
@@ -741,6 +1376,7 @@ export default function EventManagement() {
       selectedCategory={selectedCategory}
       activeTab={activeTab}
       eventCounts={eventCounts}
+      categories={categories}
       onEdit={handleEditEvent}
       onStatusChange={handleStatusChange}
       onFeatureToggle={handleFeatureToggle}

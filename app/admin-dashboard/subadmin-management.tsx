@@ -1,4 +1,3 @@
-// components/sub-admin-add-page.tsx
 "use client"
 
 import type React from "react"
@@ -10,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface SubAdminAddPageProps {
   onSuccess?: () => void
@@ -45,24 +45,7 @@ export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPage
     phone: "",
     role: "SUB_ADMIN", // Default role
   })
-
-  const getAuthToken = () => {
-    if (typeof window !== "undefined") {
-      const token =
-        localStorage.getItem("superAdminToken") ||
-        localStorage.getItem("adminToken") ||
-        document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("superAdminToken="))
-          ?.split("=")[1] ||
-        document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("adminToken="))
-          ?.split("=")[1]
-      return token
-    }
-    return null
-  }
+  const router = useRouter()
 
   const handleToggle = (perm: string) => {
     setSelectedPermissions((prev) => 
@@ -125,13 +108,10 @@ export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPage
     setLoading(true)
 
     try {
-      const token = getAuthToken()
-
       const response = await fetch("/api/sub-admins", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
         },
         body: JSON.stringify({
           name: formData.name,
@@ -142,6 +122,12 @@ export default function SubAdminAddPage({ onSuccess, onCancel }: SubAdminAddPage
           permissions: selectedPermissions,
         }),
       })
+
+      if (response.status === 401) {
+        toast.error("Session expired. Please login again.")
+        router.push("/sign-in")
+        return
+      }
 
       const data = await response.json()
 

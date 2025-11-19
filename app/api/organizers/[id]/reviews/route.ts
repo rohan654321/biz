@@ -1,28 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
-
-// Disable static generation for this route
-export const dynamic = 'force-dynamic';
+import { authOptions } from '@/lib/auth-options';
 
 // POST: Create a new organizer review
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
 
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'You must be logged in to submit a review' },
         { status: 401 }
       );
     }
 
-    // Await params before using
-    const params = await context.params;
-    const organizerId = params.id;
+    const { id: organizerId } = await params;
 
     if (!organizerId) {
       return NextResponse.json({ error: 'Invalid organizer ID' }, { status: 400 });
@@ -45,14 +41,7 @@ export async function POST(
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
+    // Check if organizer exists
     const organizer = await prisma.user.findFirst({
       where: { 
         id: organizerId, 
@@ -64,17 +53,31 @@ export async function POST(
       return NextResponse.json({ error: 'Organizer not found' }, { status: 404 });
     }
 
-    // ✅ Allow multiple reviews per user for organizers
+    // Check if user already reviewed this organizer
+    const existingReview = await prisma.review.findFirst({
+      where: {
+        userId: session.user.id,
+        organizerId: organizerId
+      }
+    });
+
+    if (existingReview) {
+      return NextResponse.json(
+        { error: 'You have already reviewed this organizer' },
+        { status: 400 }
+      );
+    }
+
+    // Create the review
     const review = await prisma.review.create({
       data: {
-        userId: user.id,
-        organizerId: organizerId, // Storing organizer as organizerId
+        userId: session.user.id,
+        organizerId: organizerId,
         rating: parseInt(rating),
         title: title || '',
         comment,
         isApproved: true,
         isPublic: true,
-        replies: { create: [] }
       },
       include: {
         user: { 
@@ -98,10 +101,9 @@ export async function POST(
     });
 
     const totalReviews = allReviews.length;
-    const averageRating =
-      totalReviews > 0
-        ? allReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
-        : 0;
+    const averageRating = totalReviews > 0
+      ? allReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
+      : 0;
 
     await prisma.user.update({
       where: { id: organizerId },
@@ -131,11 +133,10 @@ export async function POST(
 // GET: Fetch reviews for an organizer
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const params = await context.params;
-    const organizerId = params.id;
+    const { id: organizerId } = await params;
 
     if (!organizerId) {
       return NextResponse.json({ error: 'Invalid organizer ID' }, { status: 400 });
@@ -150,6 +151,7 @@ export async function GET(
         id: true,
         firstName: true,
         lastName: true,
+        organizationName: true,
         averageRating: true,
         totalReviews: true
       }
@@ -209,7 +211,7 @@ export async function GET(
     return NextResponse.json({
       organizer: {
         id: organizer.id,
-        name: `${organizer.firstName} ${organizer.lastName}`,
+        name: organizer.organizationName || `${organizer.firstName} ${organizer.lastName}`,
         averageRating: organizer.averageRating || 0,
         totalReviews: organizer.totalReviews || 0
       },

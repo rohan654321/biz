@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -26,7 +26,6 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-//   DollarSign,
   Star,
   TrendingUp,
   Mail,
@@ -35,105 +34,145 @@ import {
   Download,
   Plus,
 } from "lucide-react"
+import AddExhibitorForm from "./add-exhibitor-form"
 
-// Mock exhibitor data
-const mockExhibitors = [
-  {
-    id: "1",
-    companyName: "TechCorp Solutions",
-    contactPerson: "John Smith",
-    email: "john@techcorp.com",
-    phone: "+1-555-0123",
-    website: "https://techcorp.com",
-    industry: "Technology",
-    location: "San Francisco, CA",
-    status: "active",
-    verified: true,
-    joinDate: "2023-01-15",
-    eventsParticipated: 12,
-    totalProducts: 25,
-    revenue: 125000,
-    rating: 4.8,
-    avatar: "/placeholder.svg?height=40&width=40&text=TC",
-    description: "Leading provider of enterprise software solutions",
-    specialties: ["Software", "AI/ML", "Cloud Services"],
-    certifications: ["ISO 9001", "SOC 2", "GDPR Compliant"],
-  },
-  {
-    id: "2",
-    companyName: "Green Energy Inc",
-    contactPerson: "Sarah Johnson",
-    email: "sarah@greenenergy.com",
-    phone: "+1-555-0124",
-    website: "https://greenenergy.com",
-    industry: "Energy",
-    location: "Austin, TX",
-    status: "pending",
-    verified: false,
-    joinDate: "2023-11-20",
-    eventsParticipated: 3,
-    totalProducts: 8,
-    revenue: 45000,
-    rating: 4.2,
-    avatar: "/placeholder.svg?height=40&width=40&text=GE",
-    description: "Sustainable energy solutions for the future",
-    specialties: ["Solar", "Wind", "Battery Storage"],
-    certifications: ["Energy Star", "LEED Certified"],
-  },
-  {
-    id: "3",
-    companyName: "MedDevice Pro",
-    contactPerson: "Dr. Michael Chen",
-    email: "michael@meddevice.com",
-    phone: "+1-555-0125",
-    website: "https://meddevice.com",
-    industry: "Healthcare",
-    location: "Boston, MA",
-    status: "suspended",
-    verified: true,
-    joinDate: "2022-08-10",
-    eventsParticipated: 18,
-    totalProducts: 42,
-    revenue: 280000,
-    rating: 4.6,
-    avatar: "/placeholder.svg?height=40&width=40&text=MD",
-    description: "Advanced medical devices and diagnostics",
-    specialties: ["Diagnostics", "Surgical Tools", "Monitoring"],
-    certifications: ["FDA Approved", "CE Marked", "ISO 13485"],
-  },
-]
+
+interface Exhibitor {
+  id: string
+  companyName: string
+  contactPerson: string
+  email: string
+  phone: string
+  website: string
+  industry: string
+  location: string
+  status: "active" | "pending" | "suspended"
+  verified: boolean
+  joinDate: string
+  eventsParticipated: number
+  totalProducts: number
+  revenue: number
+  rating: number
+  avatar: string
+  description: string
+}
 
 export default function ExhibitorManagement() {
   const [activeTab, setActiveTab] = useState("overview")
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [industryFilter, setIndustryFilter] = useState("all")
-  const [selectedExhibitor, setSelectedExhibitor] = useState(null)
-
-  // Filter exhibitors based on search and filters
-  const filteredExhibitors = mockExhibitors.filter((exhibitor) => {
-    const matchesSearch =
-      exhibitor.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exhibitor.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exhibitor.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || exhibitor.status === statusFilter
-    const matchesIndustry = industryFilter === "all" || exhibitor.industry === industryFilter
-
-    return matchesSearch && matchesStatus && matchesIndustry
+  const [exhibitors, setExhibitors] = useState<Exhibitor[]>([])
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    pending: 0,
+    suspended: 0,
+    verified: 0,
+    totalRevenue: 0,
+    avgRating: 0,
   })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
 
-  // Calculate statistics
-  const stats = {
-    total: mockExhibitors.length,
-    active: mockExhibitors.filter((e) => e.status === "active").length,
-    pending: mockExhibitors.filter((e) => e.status === "pending").length,
-    suspended: mockExhibitors.filter((e) => e.status === "suspended").length,
-    verified: mockExhibitors.filter((e) => e.verified).length,
-    totalRevenue: mockExhibitors.reduce((sum, e) => sum + e.revenue, 0),
-    avgRating: mockExhibitors.reduce((sum, e) => sum + e.rating, 0) / mockExhibitors.length,
+
+  // Fetch exhibitors and stats
+  useEffect(() => {
+    fetchExhibitors()
+    fetchStats()
+  }, [searchTerm, statusFilter, industryFilter])
+
+  const fetchExhibitors = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const params = new URLSearchParams()
+      if (searchTerm) params.append('search', searchTerm)
+      if (statusFilter !== 'all') params.append('status', statusFilter)
+      if (industryFilter !== 'all') params.append('industry', industryFilter)
+      
+      const response = await fetch(`/api/admin/exhibitors?${params}`)
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch exhibitors: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      
+      if (data.exhibitors) {
+        // Ensure all required fields have values
+        const safeExhibitors = data.exhibitors.map((exhibitor: Exhibitor) => ({
+          ...exhibitor,
+          companyName: exhibitor.companyName || "Unnamed Company",
+          contactPerson: exhibitor.contactPerson || "Unknown Contact",
+          email: exhibitor.email || "No email",
+          phone: exhibitor.phone || "No phone",
+          location: exhibitor.location || "Unknown location",
+          industry: exhibitor.industry || "Other",
+          avatar: exhibitor.avatar || "/placeholder.svg",
+        }))
+        setExhibitors(safeExhibitors)
+      }
+    } catch (error) {
+      console.error('Error fetching exhibitors:', error)
+      setError('Failed to load exhibitors')
+      setExhibitors([])
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const getStatusColor = (status:any) => {
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/admin/exhibitors/stats')
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data.stats)
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error)
+    }
+  }
+
+  const handleStatusChange = async (exhibitorId: string, newStatus: boolean) => {
+    try {
+      const response = await fetch(`/api/admin/exhibitors/${exhibitorId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isActive: newStatus }),
+      })
+
+      if (response.ok) {
+        fetchExhibitors()
+        fetchStats()
+      }
+    } catch (error) {
+      console.error('Error updating status:', error)
+    }
+  }
+
+  const handleDelete = async (exhibitorId: string) => {
+    if (!confirm('Are you sure you want to delete this exhibitor?')) return
+
+    try {
+      const response = await fetch(`/api/admin/exhibitors/${exhibitorId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        fetchExhibitors()
+        fetchStats()
+      }
+    } catch (error) {
+      console.error('Error deleting exhibitor:', error)
+    }
+  }
+
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
         return "bg-green-100 text-green-800"
@@ -146,7 +185,7 @@ export default function ExhibitorManagement() {
     }
   }
 
-  const getStatusIcon = (status:any) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case "active":
         return <CheckCircle className="w-4 h-4" />
@@ -159,6 +198,51 @@ export default function ExhibitorManagement() {
     }
   }
 
+  // Safe fallback for avatar text
+  const getAvatarFallback = (companyName: string, contactPerson: string) => {
+    if (companyName && companyName.length >= 2) {
+      return companyName.substring(0, 2).toUpperCase()
+    }
+    if (contactPerson && contactPerson.length >= 2) {
+      return contactPerson.substring(0, 2).toUpperCase()
+    }
+    return "EX"
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading exhibitors...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-red-600">{error}</div>
+      </div>
+    )
+  }
+if (showAddForm) {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-gray-900">Add New Exhibitor</h1>
+
+        <Button variant="outline" onClick={() => setShowAddForm(false)}>
+          Back
+        </Button>
+      </div>
+
+      <AddExhibitorForm
+        onSuccess={() => setShowAddForm(false)}
+        onCancel={() => setShowAddForm(false)}
+      />
+    </div>
+  )
+}
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -166,17 +250,17 @@ export default function ExhibitorManagement() {
           <h1 className="text-3xl font-bold text-gray-900">Exhibitor Management</h1>
           <p className="text-gray-600">Manage exhibitor accounts, approvals, and performance</p>
         </div>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Exhibitor
-        </Button>
+        <Button onClick={() => setShowAddForm(true)}>
+  <Plus className="w-4 h-4 mr-2" />
+  Add Exhibitor
+</Button>
+
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="exhibitors">Exhibitors</TabsTrigger>
-          {/* <TabsTrigger value="analytics">Analytics</TabsTrigger> */}
           <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
 
@@ -203,21 +287,10 @@ export default function ExhibitorManagement() {
               <CardContent>
                 <div className="text-2xl font-bold">{stats.active}</div>
                 <p className="text-xs text-muted-foreground">
-                  {Math.round((stats.active / stats.total) * 100)}% of total
+                  {stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}% of total
                 </p>
               </CardContent>
             </Card>
-
-            {/* <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">+8% from last month</p>
-              </CardContent>
-            </Card> */}
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -248,7 +321,7 @@ export default function ExhibitorManagement() {
                     <div className="w-20 bg-gray-200 rounded-full h-2">
                       <div
                         className="bg-green-600 h-2 rounded-full"
-                        style={{ width: `${(stats.active / stats.total) * 100}%` }}
+                        style={{ width: `${stats.total > 0 ? (stats.active / stats.total) * 100 : 0}%` }}
                       ></div>
                     </div>
                   </div>
@@ -263,7 +336,7 @@ export default function ExhibitorManagement() {
                     <div className="w-20 bg-gray-200 rounded-full h-2">
                       <div
                         className="bg-yellow-600 h-2 rounded-full"
-                        style={{ width: `${(stats.pending / stats.total) * 100}%` }}
+                        style={{ width: `${stats.total > 0 ? (stats.pending / stats.total) * 100 : 0}%` }}
                       ></div>
                     </div>
                   </div>
@@ -278,45 +351,9 @@ export default function ExhibitorManagement() {
                     <div className="w-20 bg-gray-200 rounded-full h-2">
                       <div
                         className="bg-red-600 h-2 rounded-full"
-                        style={{ width: `${(stats.suspended / stats.total) * 100}%` }}
+                        style={{ width: `${stats.total > 0 ? (stats.suspended / stats.total) * 100 : 0}%` }}
                       ></div>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">TechCorp Solutions approved</p>
-                    <p className="text-xs text-gray-500">2 hours ago</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">New exhibitor registration</p>
-                    <p className="text-xs text-gray-500">4 hours ago</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Green Energy Inc pending review</p>
-                    <p className="text-xs text-gray-500">1 day ago</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">MedDevice Pro suspended</p>
-                    <p className="text-xs text-gray-500">2 days ago</p>
                   </div>
                 </div>
               </CardContent>
@@ -355,160 +392,136 @@ export default function ExhibitorManagement() {
               <SelectContent>
                 <SelectItem value="all">All Industries</SelectItem>
                 <SelectItem value="Technology">Technology</SelectItem>
-                <SelectItem value="Energy">Energy</SelectItem>
                 <SelectItem value="Healthcare">Healthcare</SelectItem>
+                <SelectItem value="Energy">Energy</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Exhibitors Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredExhibitors.map((exhibitor) => (
-              <Card key={exhibitor.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-12 h-12">
-                        <AvatarImage src={exhibitor.avatar || "/placeholder.svg"} />
-                        <AvatarFallback>{exhibitor.companyName.substring(0, 2)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <CardTitle className="text-lg">{exhibitor.companyName}</CardTitle>
-                        <CardDescription>{exhibitor.contactPerson}</CardDescription>
+          {exhibitors.length === 0 ? (
+            <div className="text-center py-12">
+              <Building2 className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-semibold text-gray-900">No exhibitors</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                {searchTerm || statusFilter !== 'all' || industryFilter !== 'all' 
+                  ? "No exhibitors match your search criteria." 
+                  : "Get started by creating a new exhibitor."}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {exhibitors.map((exhibitor) => (
+                <Card key={exhibitor.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src={exhibitor.avatar} />
+                          <AvatarFallback>
+                            {getAvatarFallback(exhibitor.companyName, exhibitor.contactPerson)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <CardTitle className="text-lg">{exhibitor.companyName}</CardTitle>
+                          <CardDescription>{exhibitor.contactPerson}</CardDescription>
+                        </div>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleStatusChange(exhibitor.id, exhibitor.status !== 'active')}
+                          >
+                            {exhibitor.status === 'active' ? (
+                              <>
+                                <XCircle className="mr-2 h-4 w-4" />
+                                Suspend
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Activate
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            className="text-red-600"
+                            onClick={() => handleDelete(exhibitor.id)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Badge className={getStatusColor(exhibitor.status)}>
+                        {getStatusIcon(exhibitor.status)}
+                        <span className="ml-1 capitalize">{exhibitor.status}</span>
+                      </Badge>
+                      {exhibitor.verified && (
+                        <Badge variant="outline" className="text-blue-600 border-blue-600">
+                          Verified
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Mail className="w-4 h-4" />
+                        <span className="truncate">{exhibitor.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Phone className="w-4 h-4" />
+                        <span>{exhibitor.phone}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <MapPin className="w-4 h-4" />
+                        <span className="truncate">{exhibitor.location}</span>
                       </div>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Badge className={getStatusColor(exhibitor.status)}>
-                      {getStatusIcon(exhibitor.status)}
-                      <span className="ml-1 capitalize">{exhibitor.status}</span>
-                    </Badge>
-                    {exhibitor.verified && (
-                      <Badge variant="outline" className="text-blue-600 border-blue-600">
-                        Verified
-                      </Badge>
-                    )}
-                  </div>
 
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Mail className="w-4 h-4" />
-                      <span>{exhibitor.email}</span>
+                    <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                      <div className="text-center">
+                        <div className="text-lg font-semibold">{exhibitor.eventsParticipated}</div>
+                        <div className="text-xs text-gray-500">Events</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-semibold">{exhibitor.totalProducts}</div>
+                        <div className="text-xs text-gray-500">Products</div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Phone className="w-4 h-4" />
-                      <span>{exhibitor.phone}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin className="w-4 h-4" />
-                      <span>{exhibitor.location}</span>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4 pt-2 border-t">
-                    <div className="text-center">
-                      <div className="text-lg font-semibold">{exhibitor.eventsParticipated}</div>
-                      <div className="text-xs text-gray-500">Events</div>
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                        <span className="text-sm font-medium">{exhibitor.rating}</span>
+                      </div>
+                      <div className="text-sm font-medium text-green-600">
+                        ${exhibitor.revenue.toLocaleString()}
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <div className="text-lg font-semibold">{exhibitor.totalProducts}</div>
-                      <div className="text-xs text-gray-500">Products</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span className="text-sm font-medium">{exhibitor.rating}</span>
-                    </div>
-                    <div className="text-sm font-medium text-green-600">${exhibitor.revenue.toLocaleString()}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* Analytics Tab */}
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Industry Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span>Technology</span>
-                    <span className="font-medium">45%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Healthcare</span>
-                    <span className="font-medium">25%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Energy</span>
-                    <span className="font-medium">20%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Others</span>
-                    <span className="font-medium">10%</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Performance Metrics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span>Average Event Participation</span>
-                    <span className="font-medium">11 events</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Average Products per Exhibitor</span>
-                    <span className="font-medium">25 products</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Average Revenue</span>
-                    <span className="font-medium">$150K</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Customer Satisfaction</span>
-                    <span className="font-medium">4.5/5.0</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         {/* Reports Tab */}
@@ -539,19 +552,6 @@ export default function ExhibitorManagement() {
                 <Button className="w-full">Generate Report</Button>
               </CardContent>
             </Card>
-
-            {/* <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5" />
-                  Revenue Report
-                </CardTitle>
-                <CardDescription>Revenue breakdown by exhibitor and industry</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full">Download PDF</Button>
-              </CardContent>
-            </Card> */}
           </div>
         </TabsContent>
       </Tabs>

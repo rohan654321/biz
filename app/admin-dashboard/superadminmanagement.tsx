@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,6 +11,7 @@ import SubAdminAddPage from "./subadmin-management"
 import SubAdminEditPage from "./sub-admin-edit-page"
 import SubAdminViewPage from "./sub-admin-view-page"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface SubAdmin {
   id: string
@@ -31,72 +33,76 @@ interface SubAdmin {
 type ViewMode = "list" | "add" | "edit" | "view"
 
 export default function SuperAdminManagement() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
   const [viewMode, setViewMode] = useState<ViewMode>("list")
   const [selectedSubAdmin, setSelectedSubAdmin] = useState<SubAdmin | null>(null)
   const [subAdmins, setSubAdmins] = useState<SubAdmin[]>([])
   const [loading, setLoading] = useState(true)
 
-  const getAuthToken = () => {
-    if (typeof window !== "undefined") {
-      return (
-        localStorage.getItem("superAdminToken") ||
-        localStorage.getItem("adminToken") ||
-        document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("superAdminToken="))
-          ?.split("=")[1] ||
-        document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("adminToken="))
-          ?.split("=")[1]
-      )
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/sign-in")
     }
-    return null
-  }
+  }, [status, router])
 
   const fetchSubAdmins = async () => {
     try {
-      const token = getAuthToken()
-      const response = await fetch('/api/sub-admins', {
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      })
-      if (!response.ok) throw new Error('Failed to fetch sub-admins')
+      setLoading(true)
+      const response = await fetch('/api/sub-admins')
+      
+      if (response.status === 401) {
+        toast.error("Session expired. Please login again.")
+        router.push("/sign-in")
+        return
+      }
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch sub-admins')
+      }
       
       const data = await response.json()
       setSubAdmins(data.subAdmins)
     } catch (error) {
       console.error('Error fetching sub-admins:', error)
-      toast.error('Failed to load sub-admins')
+      toast.error(error instanceof Error ? error.message : 'Failed to load sub-admins')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchSubAdmins()
-  }, [])
+    if (session) {
+      fetchSubAdmins()
+    }
+  }, [session])
 
   const handleDeleteSubAdmin = async (id: string) => {
     if (!confirm('Are you sure you want to delete this sub-admin?')) return
 
     try {
-      const token = getAuthToken()
       const response = await fetch(`/api/sub-admins/${id}`, {
         method: 'DELETE',
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
       })
 
-      if (!response.ok) throw new Error('Failed to delete sub-admin')
+      if (response.status === 401) {
+        toast.error("Session expired. Please login again.")
+        router.push("/sign-in")
+        return
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete sub-admin')
+      }
 
       toast.success('Sub-admin deleted successfully')
       fetchSubAdmins()
     } catch (error) {
       console.error('Error deleting sub-admin:', error)
-      toast.error('Failed to delete sub-admin')
+      toast.error(error instanceof Error ? error.message : 'Failed to delete sub-admin')
     }
   }
 
@@ -135,6 +141,19 @@ export default function SuperAdminManagement() {
       "SUPPORT": "Support Staff"
     }
     return roleMap[role] || role
+  }
+
+  // Show loading while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (!session) {
+    return null // Will redirect due to useEffect
   }
 
   if (viewMode !== "list") {
