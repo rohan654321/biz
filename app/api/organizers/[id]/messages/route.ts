@@ -2,7 +2,6 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth-options"
 import { prisma } from "@/lib/prisma"
-import { sendToUser } from "@/server/websocket"
 
 // In-memory storage for demo purposes
 const messageStorage: { [conversationId: string]: any[] } = {}
@@ -215,12 +214,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         },
       },
     })
-
-    sendToUser(contactId, {
-  type: "NEW_MESSAGE",
-  message: newMessage
-})
-
 
     return NextResponse.json({ message: newMessage })
   } catch (error) {
