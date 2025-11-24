@@ -452,8 +452,8 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         case "exhibitors-feedback":
           return <ExhibitorFeedbackPage />
 
-        // case "speakers-add":
-        //   return <AddSpeaker />
+        case "speakers-add":
+          return <AddSpeaker />
 
         // case "speakers-followers":
         //   return <SpeakerFollowersPage />
