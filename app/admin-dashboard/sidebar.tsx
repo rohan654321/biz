@@ -461,14 +461,14 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         case "speakers-feedback":
           return <SpeakerFeedbackPage />
 
-        // case "venues-add":
-        //   return <AddVenueComponent />
+        case "venues-add":
+          return <AddVenueComponent />
 
-        // case "venues-events":
-        //   return <VenuesEventsPage />
+        case "venues-events":
+          return <VenuesEventsPage />
 
-        // case "venues-bookings":
-        //   return <VenueBookingsPage />
+        case "venues-bookings":
+          return <VenueBookingsPage />
 
         // case "visitors-events":
         //   return <VisitorEventsPage />
