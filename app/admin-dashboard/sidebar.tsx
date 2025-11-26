@@ -38,15 +38,6 @@ import { CreateEventForm } from "./eventManagement/createEvent/create-event"
 import { signOut } from "next-auth/react"
 import CountriesManagement from "./countries-management"
 import VisitorManagement from "./visitor-management"
-import EventCategories from "./event-categories"
-import ImportPage from "./import"
-import MainHelpSupport from "./help-support/main-help-support"
-import SupportTickets from "./help-support/support-tickets"
-import SupportContacts from "./help-support/support-contacts"
-import FAQManagement from "./help-support/faq-management"
-import AdminNotes from "./help-support/support-notes"
-import AddOrganizerForm from "./add-organizer-form"
-import AddExhibitorForm from "./add-exhibitor-form"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -232,7 +223,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "All Speakers", id: "speakers-all" },
         { title: "Add Speaker", id: "speakers-add" },
         { title: "Followers", id: "speakers-followers" },
-        { title: "Appointments", id: "speakers-appointments" },
+        // { title: "Appointments", id: "speakers-appointments" },
         { title: "Feedback", id: "speakers-feedback" },
       ],
     },
@@ -378,40 +369,27 @@ const renderContent = () => {
   console.log("Active Section:", section)
   console.log("Active Sub Section:", subSection)
 
-  // Handle sub-sections first
-  if (subSection) {
-    switch (subSection) {
-      // Roles
-      case "roles-superadmin":
-        return <SuperAdminManagement />
-      case "roles-subadmins":
-        return <SubAdminManagement />
-      case "organizers-add":
-        return <AddOrganizerForm />  
-      
-      // Events
-      case "events-create":
-        return <CreateEventForm />
-      case "events-all":
-        return <EventManagement />
-      case "events-categories":
-        return <EventCategories />
-      case "bulk-data":
-        return <ImportPage />
+    // Handle sub-sections first
+    if (subSection) {
+      switch (subSection) {
+        // Roles
+        case "roles-superadmin":
+          return <SuperAdminManagement />
+        case "roles-subadmins":
+          return <SubAdminManagement />
 
-      // Help & Support sub-sections
-      case "support-tickets":
-        return <SupportTickets />
-      case "support-contacts":
-        return <SupportContacts />
-      case "support-faq":
-        return <FAQManagement />
-      case "support-notes":
-        return <AdminNotes />
 
-      // Exhibitors
-      case "exhibitors-add":
-        return <AddExhibitorForm />
+        // Events
+        case "events-create":
+          // return <CreateEventForm />
+        case "events-all":
+          // return <EventManagement />
+        case "events-categories":
+          return <div>Event Categories - Coming Soon</div> //<EventCategories />
+        case "events-approvals":
+          return <div>Event Approvals - Coming Soon</div>
+        case "bulk-data":
+          return <div>Event Bulk uploade - Coming Soon</div>
 
       default:
         console.log("Unknown sub-section:", subSection)
@@ -419,45 +397,45 @@ const renderContent = () => {
     }
   }
 
-  // Handle main sections
-  switch (section) {
-    case "dashboard":
-      return <DashboardOverview />
-    case "events":
-      return <EventManagement />
-    case "locations":
-      return <CountriesManagement /> 
-    case "organizers":
-      return <OrganizerManagement />
-    case "exhibitors":
-      return <ExhibitorManagement />
-    case "speakers":
-      return <SpeakerManagement />
-    case "venues":
-      return <VenueManagement />
-    case "visitors":
-      return <VisitorManagement />
-    case "financial":
-      return <div>Financial Management - Coming Soon</div>
-    case "content":
-      return <ContentManagement />
-    case "marketing":
-      return <div>Marketing Management - Coming Soon</div>
-    case "reports":
-      return <div>Reports & Analytics - Coming Soon</div>
-    case "integrations":
-      return <div>Integrations Management - Coming Soon</div>
-    case "roles":
-      return <SuperAdminManagement />
-    case "settings":
-      return <SystemSettings />
-    case "support":
-      // Default to Support Tickets when main support section is clicked
-      return <SupportTickets />
-    default:
-      return <DashboardOverview />
+    // Handle main sections
+    switch (section) {
+      case "dashboard":
+        return <DashboardOverview />
+      case "events":
+        return <EventManagement />
+      case "locations":
+        return <CountriesManagement /> 
+      case "organizers":
+        // Default to "All Organizers" when main organizers section is clicked
+        return <OrganizerManagement />
+      case "exhibitors":
+        return <ExhibitorManagement />
+      case "speakers":
+        return <SpeakerManagement />
+      case "venues":
+        return <VenueManagement />
+      case "visitors":
+        return <div>Visitor Management - Coming Soon</div> // <VisitorManagement/>
+      case "financial":
+        return <div>Financial Management - Coming Soon</div>
+      case "content":
+        return <ContentManagement />
+      case "marketing":
+        return <div>Marketing Management - Coming Soon</div>
+      case "reports":
+        return <div>Reports & Analytics - Coming Soon</div>
+      case "integrations":
+        return <div>Integrations Management - Coming Soon</div>
+      case "roles":
+        return <SuperAdminManagement />
+      case "settings":
+        return <SystemSettings />
+      case "support":
+        return <div>Help & Support - Coming Soon</div>
+      default:
+        return <DashboardOverview />
+    }
   }
-}
 
   const handleSectionClick = (id: string) => {
     setActiveSection(id)
