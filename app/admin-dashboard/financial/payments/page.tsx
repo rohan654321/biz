@@ -39,8 +39,7 @@ interface Stats {
   refundedAmount: number
 }
 // const payments: Payment[] = []
-// const stats: Stats = {}
-// const filteredPayments: Payment[] = []
+
 
 export default function FinancialPaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([])
