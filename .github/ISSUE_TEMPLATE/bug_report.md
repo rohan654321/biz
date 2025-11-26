@@ -18,7 +18,7 @@ A clear and concise description of what you expected to happen.
 
 **Screenshots/Logs**
 
-**Environment:**
+**Environment (please complete the following information):**
  - OS:
- - Browser:
  - Node version:
+ - Browser:
