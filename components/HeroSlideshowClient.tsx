@@ -104,7 +104,7 @@ export default function HeroSlideshowClient({ initialEvents }: { initialEvents: 
   if (!events.length) {
     return (
       <div className="flex justify-center items-center h-64 text-gray-500">
-        No VIP Events Found
+        No VIP Events Found at the moment
       </div>
     );
   }
