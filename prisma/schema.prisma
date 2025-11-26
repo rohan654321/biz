@@ -1516,64 +1516,65 @@ model BadgeSent {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-    @@index([eventId])
-    @@index([attendeeId])
-    @@index([email])
-    @@map("badges_sent")
-  }
-  // Dashboard Content Management System
-  model DashboardContent {
-    id          String   @id @default(auto()) @map("_id") @db.ObjectId
-    
-    // Target dashboard
-    dashboardType DashboardType // Which dashboard this content belongs to
-    userRole     UserRole      // Which user role sees this content
-    
-    // Header/Banner Content
-    bannerTitle       String?
-    bannerSubtitle    String?
-    bannerDescription String?
-    bannerImage       String?  // URL to banner image
-    
-    // Main Content Sections
-    welcomeTitle      String?
-    welcomeMessage    String?
-    quickStatsTitle   String?
-    
-    // Features/Modules Section
-    featuresTitle     String?
-    features          Json?    // Array of { title: string, description: string, icon: string }
-    
-    // Support/Help Section
-    supportTitle      String?
-    supportDescription String?
-    supportEmail      String?
-    supportPhone      String?
-    
-    // Quick Actions
-    quickActionsTitle String?
-    quickActions      Json?    // Array of { title: string, description: string, icon: string, link: string }
-    
-    // Custom Messages
-    announcementTitle String?
-    announcementMessage String?
-    announcementType  String?  // info, warning, success, error
-    
-    // SEO/Meta
-    metaTitle       String?
-    metaDescription String?
-    keywords        String[]
-    
-    isActive    Boolean  @default(true)
-    version     Int      @default(1)
-    
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-    updatedBy String   @db.ObjectId // Super admin who last updated
-    
-    @@unique([dashboardType, userRole])
-    @@map("dashboard_content")
-  }
+  @@index([eventId])
+  @@index([attendeeId])
+  @@index([email])
+  @@map("badges_sent")
+}
+
+// Dashboard Content Management System
+model DashboardContent {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Target dashboard
+  dashboardType DashboardType // Which dashboard this content belongs to
+  userRole     UserRole      // Which user role sees this content
+  
+  // Header/Banner Content
+  bannerTitle       String?
+  bannerSubtitle    String?
+  bannerDescription String?
+  bannerImage       String?  // URL to banner image
+  
+  // Main Content Sections
+  welcomeTitle      String?
+  welcomeMessage    String?
+  quickStatsTitle   String?
+  
+  // Features/Modules Section
+  featuresTitle     String?
+  features          Json?    // Array of { title: string, description: string, icon: string }
+  
+  // Support/Help Section
+  supportTitle      String?
+  supportDescription String?
+  supportEmail      String?
+  supportPhone      String?
+  
+  // Quick Actions
+  quickActionsTitle String?
+  quickActions      Json?    // Array of { title: string, description: string, icon: string, link: string }
+  
+  // Custom Messages
+  announcementTitle String?
+  announcementMessage String?
+  announcementType  String?  // info, warning, success, error
+  
+  // SEO/Meta
+  metaTitle       String?
+  metaDescription String?
+  keywords        String[]
+  
+  isActive    Boolean  @default(true)
+  version     Int      @default(1)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String?   @db.ObjectId // Super admin who last updated
+  
+  @@unique([dashboardType, userRole])
+  @@map("dashboard_content")
+}
 
 // FAQ Management (Shared across dashboards)
 model FAQ {
@@ -1597,34 +1598,34 @@ model FAQ {
   @@map("faqs")
 }
 
-  // Announcements/Banners
-  model DashboardAnnouncement {
-    id          String   @id @default(auto()) @map("_id") @db.ObjectId
-    title       String
-    message     String
-    type        AnnouncementType @default(INFO)
-    
-    // Target settings
-    userRoles   UserRole[]
-    dashboardTypes DashboardType[]
-    
-    // Display settings
-    startDate   DateTime?
-    endDate     DateTime?
-    isActive    Boolean  @default(true)
-    isDismissible Boolean @default(true)
-    
-    // Appearance
-    backgroundColor String?
-    textColor       String?
-    icon            String?
-    
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-    updatedBy String   @db.ObjectId
-    
-    @@map("dashboard_announcements")
-  }
+// Announcements/Banners
+model DashboardAnnouncement {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  message     String
+  type        AnnouncementType @default(INFO)
+  
+  // Target settings
+  userRoles   UserRole[]
+  dashboardTypes DashboardType[]
+  
+  // Display settings
+  startDate   DateTime?
+  endDate     DateTime?
+  isActive    Boolean  @default(true)
+  isDismissible Boolean @default(true)
+  
+  // Appearance
+  backgroundColor String?
+  textColor       String?
+  icon            String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String?   @db.ObjectId
+  
+  @@map("dashboard_announcements")
+}
 
 // Help & Support Content (Specific to help pages)
 model HelpSupportContent {
@@ -1692,4 +1693,405 @@ enum BadgeSentStatus {
   SENT
   FAILED
   BOUNCED
+}
+
+model EventCategory {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique
+  icon      String?
+  color     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  events EventsOnCategories[]
+
+  @@map("event_categories")
+}
+
+model EventsOnCategories {
+  id         String         @id @default(auto()) @map("_id") @db.ObjectId
+  eventId    String         @db.ObjectId
+  categoryId String         @db.ObjectId
+  event      Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  category   EventCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  assignedAt DateTime       @default(now())
+
+  @@unique([eventId, categoryId])
+  @@map("events_on_categories")
+} 
+
+// Support Ticket Management
+model SupportTicket {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  category    SupportTicketCategory
+  priority    SupportTicketPriority @default(MEDIUM)
+  status      SupportTicketStatus   @default(OPEN)
+  
+  // User who created the ticket
+  userId      String   @db.ObjectId
+  user        User     @relation("TicketCreator", fields: [userId], references: [id])
+  userRole    UserRole
+  
+  // Assigned support agent (optional)
+  assignedToId String?  @db.ObjectId
+  assignedTo   User?    @relation("TicketAssignee", fields: [assignedToId], references: [id])
+  
+  // Ticket metadata
+  attachments String[]
+  metadata    Json?
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  closedAt    DateTime?
+  
+  // Relationships
+  replies     SupportTicketReply[]
+  
+  @@index([userId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
+  @@map("support_tickets")
+}
+
+model SupportTicketReply {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  ticketId    String   @db.ObjectId
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  // User who created the reply (could be user or support agent)
+  userId      String   @db.ObjectId
+  user        User     @relation("TicketReplyAuthor", fields: [userId], references: [id])
+  
+  // Reply content
+  message     String
+  attachments String[]
+  isInternal  Boolean  @default(false) // Internal notes not visible to user
+  
+  // Status update (if this reply changes ticket status)
+  newStatus   SupportTicketStatus?
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([ticketId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("support_ticket_replies")
+}
+
+// Enums for Support Tickets
+enum SupportTicketCategory {
+  TECHNICAL_ISSUE
+  BILLING
+  ACCOUNT
+  EVENT_REGISTRATION
+  PAYMENT
+  REFUND
+  GENERAL_INQUIRY
+  FEATURE_REQUEST
+  BUG_REPORT
+  OTHER
+}
+
+enum SupportTicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  AWAITING_RESPONSE
+  RESOLVED
+  CLOSED
+  REOPENED
+}
+
+// Country and City Management Models
+model Country {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  code        String   @unique
+  flag        String?
+  flagPublicId String?
+  currency    String   @default("USD")
+  timezone    String   @default("UTC")
+  isActive    Boolean  @default(true)
+  isPermitted Boolean  @default(false)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relationships
+  cities      City[]
+  events      EventsOnCountries[]
+  
+  // Remove the duplicate indexes since @unique already creates them
+  @@index([isActive])
+  @@index([isPermitted])
+  @@map("countries")
+}
+
+model City {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  countryId   String   @db.ObjectId
+  latitude    Float?
+  longitude   Float?
+  timezone    String   @default("UTC")
+  image       String?
+  imagePublicId String?
+  isActive    Boolean  @default(true)
+  isPermitted Boolean  @default(false)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relationships
+  country     Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  events      EventsOnCities[]
+  
+  @@unique([name, countryId])
+  @@index([isActive])
+  @@index([isPermitted])
+  @@map("cities")
+}
+
+// Many-to-many relationship between Events and Countries
+model EventsOnCountries {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId   String   @db.ObjectId
+  countryId String   @db.ObjectId
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  country   Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@unique([eventId, countryId])
+  @@map("events_on_countries")
+}
+
+// Many-to-many relationship between Events and Cities
+model EventsOnCities {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId   String   @db.ObjectId
+  cityId    String   @db.ObjectId
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  city      City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@unique([eventId, cityId])
+  @@map("events_on_cities")
+}
+
+model AdminNote {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  content     String
+  category    String   @default("General")
+  tags        String[]
+  visibility  NoteVisibility @default(PRIVATE)
+  userRoles   UserRole[]
+  dashboardTypes DashboardType[]
+  isPinned    Boolean  @default(false)
+  isArchived  Boolean  @default(false)
+  archivedAt  DateTime?
+  
+  // Relationships - make both fields optional
+  createdById String?   @db.ObjectId
+  createdBy   User?     @relation("AdminNoteCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  
+  collaborators NoteCollaborator[]
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("admin_notes")
+}
+
+model NoteCollaborator {
+  id         String           @id @default(auto()) @map("_id") @db.ObjectId
+  noteId     String           @db.ObjectId
+  userId     String           @db.ObjectId
+  permission CollaboratorPermission @default(VIEW)
+  
+  // Relationships
+  note       AdminNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user       User      @relation("NoteCollaborations", fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([noteId, userId])
+  @@map("note_collaborators")
+}
+
+// Add these enums to your schema
+enum NoteVisibility {
+  PRIVATE
+  TEAM
+  PUBLIC
+}
+
+enum CollaboratorPermission {
+  VIEW
+  EDIT
+  MANAGE
+}
+
+// Email Campaigns
+model EmailCampaign {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  title             String
+  subject           String
+  content           String
+  htmlContent       String?
+  status            String   @default("draft") // draft, scheduled, sending, sent, paused, cancelled
+  priority          String   @default("medium") // low, medium, high, urgent
+  targetAudiences   String[]
+  scheduledAt       DateTime?
+  sentAt            DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Stats
+  totalRecipients   Int      @default(0)
+  sent              Int      @default(0)
+  delivered         Int      @default(0)
+  opened            Int      @default(0)
+  clicked           Int      @default(0)
+  bounced           Int      @default(0)
+  unsubscribed      Int      @default(0)
+  
+  // Engagement rates (calculated fields)
+  openRate          Float    @default(0)
+  clickRate         Float    @default(0)
+  deliveryRate      Float    @default(0)
+  bounceRate        Float    @default(0)
+  unsubscribeRate   Float    @default(0)
+  
+  // Relations
+  recipients        EmailRecipient[]
+  
+  @@map("email_campaigns")
+}
+
+model EmailRecipient {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId        String   @db.ObjectId
+  recipientEmail    String
+  recipientName     String?
+  status            String   @default("pending") // pending, sent, delivered, opened, clicked, bounced, unsubscribed
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  openedAt          DateTime?
+  clickedAt         DateTime?
+  bouncedAt         DateTime?
+  unsubscribedAt    DateTime?
+  errorMessage      String?
+  
+  campaign          EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  @@map("email_recipients")
+  @@index([campaignId])
+  @@index([recipientEmail])
+}
+
+// Email Templates
+model EmailTemplate {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  subject     String
+  content     String
+  htmlContent String?
+  category    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("email_templates")
+}
+
+// Push Notifications
+model PushNotification {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  title             String
+  message           String
+  imageUrl          String?
+  actionUrl         String?
+  status            String   @default("draft") // draft, scheduled, sending, sent, paused, cancelled
+  priority          String   @default("medium") // low, medium, high, urgent
+  targetAudiences   String[]
+  targetPlatforms   String[] // ios, android, web
+  scheduledAt       DateTime?
+  sentAt            DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Stats
+  totalRecipients   Int      @default(0)
+  sent              Int      @default(0)
+  delivered         Int      @default(0)
+  opened            Int      @default(0)
+  clicked           Int      @default(0)
+  failed            Int      @default(0)
+  
+  // Engagement rates
+  deliveryRate      Float    @default(0)
+  openRate          Float    @default(0)
+  clickRate         Float    @default(0)
+  failureRate       Float    @default(0)
+  
+  // Relations
+  recipients        PushRecipient[]
+  
+  @@map("push_notifications")
+}
+
+model PushRecipient {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  notificationId    String   @db.ObjectId
+  deviceToken       String
+  platform          String   // ios, android, web
+  userId            String?
+  status            String   @default("pending") // pending, sent, delivered, opened, clicked, failed
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  openedAt          DateTime?
+  clickedAt         DateTime?
+  failedAt          DateTime?
+  errorMessage      String?
+  
+  notification      PushNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  
+  @@map("push_recipients")
+  @@index([notificationId])
+  @@index([deviceToken])
+}
+
+// Push Notification Templates
+model PushTemplate {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  title       String
+  message     String
+  imageUrl    String?
+  category    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("push_templates")
 }
