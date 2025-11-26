@@ -38,6 +38,37 @@ import { CreateEventForm } from "./eventManagement/createEvent/create-event"
 import { signOut } from "next-auth/react"
 import CountriesManagement from "./countries-management"
 import VisitorManagement from "./visitor-management"
+import EventCategories from "./event-categories"
+import ImportPage from "./import"
+import MainHelpSupport from "./help-support/main-help-support"
+import SupportTickets from "./help-support/support-tickets"
+import SupportContacts from "./help-support/support-contacts"
+import FAQManagement from "./help-support/faq-management"
+import AdminNotes from "./help-support/support-notes"
+import AddOrganizerForm from "./add-organizer-form"
+import OrganizerConnectionsPage from "./organizer/connections"
+import OrganizerPromotionsPage from "./organizer/promotions"
+import OrganizerVenueBookingsPage from "./organizer/venue-bookings"
+import OrganizerFeedbackPage from "./organizer/feedback"
+import AddExhibitorForm from "./add-exhibitor-form"
+import ExhibitorPromotionsPage from "./exhibitors/promotions"
+import ExhibitorFollowersPage from "./exhibitors/followers"
+import ExhibitorAppointmentsPage from "./exhibitors/appointments"
+import ExhibitorFeedbackPage from "./exhibitors/feedback"
+import AddSpeaker from "./AddSpeaker"
+import SpeakerFollowersPage from "./speaker/followers"
+import SpeakerFeedbackPage from "./speaker/feedback"
+import AddVenue from "./add-venue"
+import AddVenueComponent from "./AddVenue"
+import VenuesEventsPage from "./venue/events"
+import VenueBookingsPage from "./venue/bookings"
+import VisitorEventsPage from "./visitors/events"
+import VisitorConnectionsPage from "./visitors/connections"
+import VisitorAppointmentsPage from "./visitors/appointments"
+import FinancialPaymentsPage from "./financial/payments/page"
+import FinancialSubscriptionsPage from "./financial/subscriptions/page"
+import FinancialInvoicesPage from "./financial/invoices/page"
+import FinancialTransactionsPage from "./financial/transactions/page"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -362,12 +393,12 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
     })
     .filter(Boolean) as typeof sidebarItems
 
-const renderContent = () => {
-  const section = activeSection
-  const subSection = activeSubSection
+  const renderContent = () => {
+    const section = activeSection
+    const subSection = activeSubSection
 
-  console.log("Active Section:", section)
-  console.log("Active Sub Section:", subSection)
+    console.log("Active Section:", section)
+    console.log("Active Sub Section:", subSection)
 
     // Handle sub-sections first
     if (subSection) {
@@ -381,21 +412,92 @@ const renderContent = () => {
 
         // Events
         case "events-create":
-          // return <CreateEventForm />
+          return <CreateEventForm />
         case "events-all":
-          // return <EventManagement />
+          return <EventManagement />
         case "events-categories":
-          return <div>Event Categories - Coming Soon</div> //<EventCategories />
-        case "events-approvals":
-          return <div>Event Approvals - Coming Soon</div>
+          return  <EventCategories />//<div>Event Categories - Coming Soon</div>
+        // case "events-approvals":
+        //   return //<div>Event Approvals - Coming Soon</div>
         case "bulk-data":
-          return <div>Event Bulk uploade - Coming Soon</div>
+          return <ImportPage/>//<div>Event Bulk uploade - Coming Soon</div>
 
-      default:
-        console.log("Unknown sub-section:", subSection)
-        break
+        case "organizers-add":
+          return <AddOrganizerForm />
+
+        case "organizers-connections":
+          return <OrganizerConnectionsPage />
+
+        case "promotions":
+          return <OrganizerPromotionsPage />
+
+        case "organizers-bookings":
+          return <OrganizerVenueBookingsPage />
+
+        case "organizers-feedback":
+          return <OrganizerFeedbackPage />
+
+        case "exhibitors-add":
+          return <AddExhibitorForm />
+
+        case "exhibitors-promotions":
+          return <ExhibitorPromotionsPage />
+        
+        case "exhibitors-followers":
+          return <ExhibitorFollowersPage />
+
+        case "exhibitors-appointments":
+          return <ExhibitorAppointmentsPage />
+        
+        case "exhibitors-feedback":
+          return <ExhibitorFeedbackPage />
+
+        case "speakers-add":
+          return <AddSpeaker />
+
+        case "speakers-followers":
+          return <SpeakerFollowersPage />
+
+        case "speakers-feedback":
+          return <SpeakerFeedbackPage />
+
+        // case "venues-add":
+        //   return <AddVenueComponent />
+
+        // case "venues-events":
+        //   return <VenuesEventsPage />
+
+        // case "venues-bookings":
+        //   return <VenueBookingsPage />
+
+        // case "visitors-events":
+        //   return <VisitorEventsPage />
+
+        // case "visitors-connections":
+        //   return <VisitorConnectionsPage />
+
+        // case "visitors-appointments":
+        //   return <VisitorAppointmentsPage />
+
+        // case "financial-payments":
+        //   return <FinancialPaymentsPage />
+
+        // case "financial-subscriptions":
+        //   return <FinancialSubscriptionsPage />
+
+        // case "financial-invoices":
+        //   return <FinancialInvoicesPage />
+
+        // case "financial-transactions":
+        //   return <FinancialTransactionsPage />
+
+
+
+        default:
+          console.log("Unknown sub-section:", subSection)
+          break
+      }
     }
-  }
 
     // Handle main sections
     switch (section) {
@@ -415,7 +517,7 @@ const renderContent = () => {
       case "venues":
         return <VenueManagement />
       case "visitors":
-        return <div>Visitor Management - Coming Soon</div> // <VisitorManagement/>
+        return <VisitorManagement/>//<div>Visitor Management - Coming Soon</div>  
       case "financial":
         return <div>Financial Management - Coming Soon</div>
       case "content":
@@ -431,7 +533,15 @@ const renderContent = () => {
       case "settings":
         return <SystemSettings />
       case "support":
-        return <div>Help & Support - Coming Soon</div>
+        return <MainHelpSupport/>//<div>Help & Support - Coming Soon</div>
+      case "support-tickets":
+        return <SupportTickets/>
+      case "support-contacts":
+        return <SupportContacts/>
+      case "support-faq":
+        return <FAQManagement/>
+      case  "support-notes":
+        return <AdminNotes/>       
       default:
         return <DashboardOverview />
     }
