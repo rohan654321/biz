@@ -18,37 +18,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 
-interface Feedback {
+interface VenueFeedback {
   id: string
+  venueId: string
+  venueName: string
+  venueEmail: string
+  venueAddress: string | null
+  avatar: string | null
+  userName: string
+  userEmail: string
+  eventName: string | null
   rating: number
   title: string | null
   comment: string | null
   isApproved: boolean
-  isPublic: boolean
   createdAt: string
-  updatedAt: string
-  speaker: {
-    id: string
-    firstName: string
-    lastName: string
-    email: string
-    avatar: string | null
-    name?: string
-  }
-  user: {
-    id: string
-    firstName: string
-    lastName: string
-    email: string
-    avatar: string | null
-    name?: string
-  }
-  event: {
-    id: string
-    title: string
-    thumbnailImage: string | null
-  }
-  sessionTitle: string
 }
 
 interface Stats {
@@ -58,8 +42,8 @@ interface Stats {
   averageRating: number
 }
 
-export default function SpeakerFeedbackPage() {
-  const [feedback, setFeedback] = useState<Feedback[]>([])
+export default function VenueFeedbackPage() {
+  const [feedback, setFeedback] = useState<VenueFeedback[]>([])
   const [stats, setStats] = useState<Stats>({
     totalFeedback: 0,
     pendingReviews: 0,
@@ -71,7 +55,7 @@ export default function SpeakerFeedbackPage() {
   const [ratingFilter, setRatingFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
 
-  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null)
+  const [selectedFeedback, setSelectedFeedback] = useState<VenueFeedback | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const [isApproveOpen, setIsApproveOpen] = useState(false)
   const [isRejectOpen, setIsRejectOpen] = useState(false)
@@ -85,19 +69,14 @@ export default function SpeakerFeedbackPage() {
   const fetchFeedback = async () => {
     try {
       setLoading(true)
-      const response = await fetch("/api/admin/speaker/speaker-feedback")
+      const response = await fetch("/api/admin/venue/venue-feedback")
       if (response.ok) {
         const data = await response.json()
-        setFeedback(data.feedback || [])
-        setStats(data.stats || {
-          totalFeedback: 0,
-          pendingReviews: 0,
-          approvedFeedback: 0,
-          averageRating: 0,
-        })
+        setFeedback(data.feedback)
+        setStats(data.stats)
       }
     } catch (error) {
-      console.error("Error fetching feedback:", error)
+      console.error("Error fetching venue feedback:", error)
     } finally {
       setLoading(false)
     }
@@ -108,10 +87,10 @@ export default function SpeakerFeedbackPage() {
 
     try {
       setActionLoading(true)
-      const response = await fetch(`/api/admin/speaker/speaker-feedback/${selectedFeedback.id}`, {
+      const response = await fetch(`/api/admin/venue/venue-feedback/${selectedFeedback.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isApproved: true }),
+        body: JSON.stringify({ action: "approve" }),
       })
 
       if (response.ok) {
@@ -120,7 +99,7 @@ export default function SpeakerFeedbackPage() {
         setSelectedFeedback(null)
       }
     } catch (error) {
-      console.error("Error approving feedback:", error)
+      console.error("Error approving venue feedback:", error)
     } finally {
       setActionLoading(false)
     }
@@ -131,10 +110,13 @@ export default function SpeakerFeedbackPage() {
 
     try {
       setActionLoading(true)
-      const response = await fetch(`/api/admin/speaker/speaker-feedback/${selectedFeedback.id}`, {
+      const response = await fetch(`/api/admin/venue/venue-feedback/${selectedFeedback.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isApproved: false, isPublic: false }),
+        body: JSON.stringify({
+          action: "reject",
+          reason: rejectionReason,
+        }),
       })
 
       if (response.ok) {
@@ -144,22 +126,18 @@ export default function SpeakerFeedbackPage() {
         setRejectionReason("")
       }
     } catch (error) {
-      console.error("Error rejecting feedback:", error)
+      console.error("Error rejecting venue feedback:", error)
     } finally {
       setActionLoading(false)
     }
   }
 
   const filteredFeedback = feedback.filter((item) => {
-    const speakerName = `${item.speaker.firstName} ${item.speaker.lastName}`.toLowerCase()
-    const userName = `${item.user.firstName} ${item.user.lastName}`.toLowerCase()
-    const speakerEmail = item.speaker.email?.toLowerCase() || ""
-    const searchLower = searchQuery.toLowerCase()
-
     const matchesSearch =
-      speakerName.includes(searchLower) ||
-      userName.includes(searchLower) ||
-      speakerEmail.includes(searchLower)
+      item.venueName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.venueEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.venueAddress && item.venueAddress.toLowerCase().includes(searchQuery.toLowerCase()))
 
     const matchesRating = ratingFilter === "all" || item.rating === Number.parseInt(ratingFilter)
 
@@ -186,7 +164,7 @@ export default function SpeakerFeedbackPage() {
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading feedback...</p>
+          <p className="text-gray-600">Loading venue feedback...</p>
         </div>
       </div>
     )
@@ -195,8 +173,8 @@ export default function SpeakerFeedbackPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Speaker Feedback</h1>
-        <p className="text-gray-600 mt-1">Manage and review feedback for speakers</p>
+        <h1 className="text-3xl font-bold text-gray-900">Venue Feedback</h1>
+        <p className="text-gray-600 mt-1">Manage and review feedback for venues</p>
       </div>
 
       {/* Statistics Cards */}
@@ -208,7 +186,7 @@ export default function SpeakerFeedbackPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalFeedback}</div>
-            <p className="text-xs text-gray-600 mt-1">All speaker reviews</p>
+            <p className="text-xs text-gray-600 mt-1">All venue reviews</p>
           </CardContent>
         </Card>
 
@@ -254,7 +232,7 @@ export default function SpeakerFeedbackPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
-                  placeholder="Search by speaker name, email, or reviewer..."
+                  placeholder="Search by venue name, email, address, or reviewer..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -294,9 +272,9 @@ export default function SpeakerFeedbackPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Speaker</TableHead>
+                <TableHead>Venue</TableHead>
                 <TableHead>Reviewer</TableHead>
-                <TableHead>Event/Session</TableHead>
+                <TableHead>Event</TableHead>
                 <TableHead>Rating</TableHead>
                 <TableHead>Feedback</TableHead>
                 <TableHead>Status</TableHead>
@@ -308,106 +286,93 @@ export default function SpeakerFeedbackPage() {
               {filteredFeedback.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                    No feedback found
+                    No venue feedback found
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredFeedback.map((item) => {
-                  const speakerName = `${item.speaker.firstName} ${item.speaker.lastName}`
-                  const userName = `${item.user.firstName} ${item.user.lastName}`
-                  
-                  return (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          {item.speaker.avatar ? (
-                            <img
-                              src={item.speaker.avatar}
-                              alt={speakerName}
-                              className="w-10 h-10 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold">
-                              {item.speaker.firstName.charAt(0)}
-                            </div>
+                filteredFeedback.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold">
+                          {item.venueName.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="font-medium">{item.venueName}</div>
+                          <div className="text-sm text-gray-500">{item.venueEmail}</div>
+                          {item.venueAddress && (
+                            <div className="text-xs text-gray-400 truncate max-w-xs">{item.venueAddress}</div>
                           )}
-                          <div>
-                            <div className="font-medium">{speakerName}</div>
-                            <div className="text-sm text-gray-500">{item.speaker.email}</div>
-                          </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{userName}</div>
-                          <div className="text-sm text-gray-500">{item.user.email}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium text-sm">{item.event.title}</div>
-                          <div className="text-xs text-gray-500">{item.sessionTitle}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{renderStars(item.rating)}</TableCell>
-                      <TableCell>
-                        <div className="max-w-xs">
-                          {item.title && <div className="font-medium text-sm">{item.title}</div>}
-                          {item.comment && <div className="text-sm text-gray-600 line-clamp-2">{item.comment}</div>}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={item.isApproved ? "default" : "secondary"}
-                          className={item.isApproved ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{item.userName}</div>
+                        <div className="text-sm text-gray-500">{item.userEmail}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {item.eventName && <div className="font-medium text-sm">{item.eventName}</div>}
+                    </TableCell>
+                    <TableCell>{renderStars(item.rating)}</TableCell>
+                    <TableCell>
+                      <div className="max-w-xs">
+                        {item.title && <div className="font-medium text-sm">{item.title}</div>}
+                        {item.comment && <div className="text-sm text-gray-600 line-clamp-2">{item.comment}</div>}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={item.isApproved ? "default" : "secondary"}
+                        className={item.isApproved ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"}
+                      >
+                        {item.isApproved ? "Approved" : "Pending"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{new Date(item.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedFeedback(item)
+                            setIsDetailsOpen(true)
+                          }}
                         >
-                          {item.isApproved ? "Approved" : "Pending"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{new Date(item.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedFeedback(item)
-                              setIsDetailsOpen(true)
-                            }}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          {!item.isApproved && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-green-600 hover:text-green-700"
-                                onClick={() => {
-                                  setSelectedFeedback(item)
-                                  setIsApproveOpen(true)
-                                }}
-                              >
-                                <Check className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-red-600 hover:text-red-700"
-                                onClick={() => {
-                                  setSelectedFeedback(item)
-                                  setIsRejectOpen(true)
-                                }}
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        {!item.isApproved && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-green-600 hover:text-green-700 bg-transparent"
+                              onClick={() => {
+                                setSelectedFeedback(item)
+                                setIsApproveOpen(true)
+                              }}
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-600 hover:text-red-700 bg-transparent"
+                              onClick={() => {
+                                setSelectedFeedback(item)
+                                setIsRejectOpen(true)
+                              }}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
@@ -418,41 +383,43 @@ export default function SpeakerFeedbackPage() {
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Feedback Details</DialogTitle>
-            <DialogDescription>Complete feedback information</DialogDescription>
+            <DialogTitle>Venue Feedback Details</DialogTitle>
+            <DialogDescription>Complete venue feedback information</DialogDescription>
           </DialogHeader>
           {selectedFeedback && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h3 className="font-semibold mb-2">Speaker Information</h3>
+                  <h3 className="font-semibold mb-2">Venue Information</h3>
                   <p className="text-sm">
-                    <span className="text-gray-600">Name:</span> {selectedFeedback.speaker.firstName} {selectedFeedback.speaker.lastName}
+                    <span className="text-gray-600">Name:</span> {selectedFeedback.venueName}
                   </p>
                   <p className="text-sm">
-                    <span className="text-gray-600">Email:</span> {selectedFeedback.speaker.email}
+                    <span className="text-gray-600">Email:</span> {selectedFeedback.venueEmail}
                   </p>
+                  {selectedFeedback.venueAddress && (
+                    <p className="text-sm">
+                      <span className="text-gray-600">Address:</span> {selectedFeedback.venueAddress}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">Reviewer Information</h3>
                   <p className="text-sm">
-                    <span className="text-gray-600">Name:</span> {selectedFeedback.user.firstName} {selectedFeedback.user.lastName}
+                    <span className="text-gray-600">Name:</span> {selectedFeedback.userName}
                   </p>
                   <p className="text-sm">
-                    <span className="text-gray-600">Email:</span> {selectedFeedback.user.email}
+                    <span className="text-gray-600">Email:</span> {selectedFeedback.userEmail}
                   </p>
                 </div>
               </div>
 
-              <div>
-                <h3 className="font-semibold mb-2">Event</h3>
-                <p className="text-sm">{selectedFeedback.event.title}</p>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Session</h3>
-                <p className="text-sm">{selectedFeedback.sessionTitle}</p>
-              </div>
+              {selectedFeedback.eventName && (
+                <div>
+                  <h3 className="font-semibold mb-2">Event</h3>
+                  <p className="text-sm">{selectedFeedback.eventName}</p>
+                </div>
+              )}
 
               <div>
                 <h3 className="font-semibold mb-2">Rating</h3>
@@ -498,9 +465,9 @@ export default function SpeakerFeedbackPage() {
       <Dialog open={isApproveOpen} onOpenChange={setIsApproveOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Approve Feedback</DialogTitle>
+            <DialogTitle>Approve Venue Feedback</DialogTitle>
             <DialogDescription>
-              Are you sure you want to approve this feedback? It will become visible to users.
+              Are you sure you want to approve this venue feedback? It will become visible to users.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -518,8 +485,8 @@ export default function SpeakerFeedbackPage() {
       <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject Feedback</DialogTitle>
-            <DialogDescription>Are you sure you want to reject this feedback?</DialogDescription>
+            <DialogTitle>Reject Venue Feedback</DialogTitle>
+            <DialogDescription>Please provide a reason for rejecting this venue feedback.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Textarea
