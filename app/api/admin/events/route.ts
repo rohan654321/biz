@@ -16,32 +16,71 @@ function parseCategory(category: any): string[] {
   return []
 }
 
-// Helper function to parse space costs
+// Helper function to parse space costs with valid enum values
 function parseSpaceCosts(spaceCosts: any[], currency: string = "USD") {
-  return spaceCosts.map(space => ({
-    spaceType: space.spaceType || space.type || "CUSTOM",
-    name: space.type || space.name || "Custom Space",
-    description: space.description || "",
-    basePrice: space.pricePerSqm || space.pricePerUnit || space.basePrice || 0,
-    pricePerSqm: space.pricePerSqm || 0,
-    minArea: space.minArea || space.area || 0,
-    isFixed: space.isFixed || false,
-    additionalPowerRate: space.additionalPowerRate || 0,
-    compressedAirRate: space.compressedAirRate || 0,
-    unit: space.unit || null,
-    area: space.area || space.minArea || 0,
-    dimensions: space.dimensions || (space.minArea ? `${space.minArea} sq.m` : ""),
-    location: space.location || null,
-    isAvailable: true,
-    maxBooths: space.maxBooths || null,
-    bookedBooths: 0,
-    setupRequirements: space.setupRequirements || null,
-    currency: currency,
-    powerIncluded: space.powerIncluded || false,
-  }))
+  return spaceCosts.map((space, index) => {
+    // Map space types to valid ExhibitionSpaceType enum values
+    const spaceTypeMap: { [key: string]: string } = {
+      'standard': 'SHELL_SPACE',
+      'shell': 'SHELL_SPACE', 
+      'shell_scheme': 'SHELL_SPACE',
+      'shell_space': 'SHELL_SPACE',
+      'raw': 'RAW_SPACE',
+      'raw_space': 'RAW_SPACE',
+      'open': 'TWO_SIDE_OPEN',
+      'two_side_open': 'TWO_SIDE_OPEN',
+      'premium': 'THREE_SIDE_OPEN',
+      'three_side_open': 'THREE_SIDE_OPEN',
+      'vip': 'FOUR_SIDE_OPEN',
+      'four_side_open': 'FOUR_SIDE_OPEN',
+      'mezzanine': 'MEZZANINE',
+      'power': 'ADDITIONAL_POWER',
+      'additional_power': 'ADDITIONAL_POWER',
+      'air': 'COMPRESSED_AIR',
+      'compressed_air': 'COMPRESSED_AIR',
+      'custom': 'CUSTOM'
+    };
+    
+    const rawSpaceType = (space.spaceType || space.type || 'CUSTOM').toLowerCase();
+    let spaceType = spaceTypeMap[rawSpaceType] || 'CUSTOM';
+    
+    // Validate that the spaceType is a valid ExhibitionSpaceType
+    const validSpaceTypes = [
+      'SHELL_SPACE', 'RAW_SPACE', 'TWO_SIDE_OPEN', 'THREE_SIDE_OPEN', 
+      'FOUR_SIDE_OPEN', 'MEZZANINE', 'ADDITIONAL_POWER', 'COMPRESSED_AIR', 'CUSTOM'
+    ];
+    
+    if (!validSpaceTypes.includes(spaceType)) {
+      console.warn(`Invalid space type: ${spaceType}, defaulting to CUSTOM`);
+      spaceType = 'CUSTOM';
+    }
+    
+    return {
+      id: space.id || new ObjectId().toHexString(),
+      spaceType: spaceType,
+      name: space.name || space.type || `Space ${index + 1}`,
+      description: space.description || "",
+      basePrice: space.basePrice || space.pricePerSqm || space.pricePerUnit || 0,
+      pricePerSqm: space.pricePerSqm || 0,
+      minArea: space.minArea || space.area || 0,
+      isFixed: space.isFixed || false,
+      additionalPowerRate: space.additionalPowerRate || 0,
+      compressedAirRate: space.compressedAirRate || 0,
+      unit: space.unit || null,
+      area: space.area || space.minArea || 0,
+      dimensions: space.dimensions || (space.area ? `${space.area} sq.m` : "3x3"),
+      location: space.location || null,
+      isAvailable: true,
+      maxBooths: space.maxBooths || null,
+      bookedBooths: 0,
+      setupRequirements: space.setupRequirements || null,
+      currency: currency,
+      powerIncluded: space.powerIncluded || false,
+    }
+  })
 }
 
-// Helper function to parse speaker sessions - FIXED VERSION
+// Helper function to parse speaker sessions
 function parseSpeakerSessions(speakerSessions: any[]) {
   return speakerSessions.map(session => ({
     title: session.title || "Presentation",
@@ -54,7 +93,6 @@ function parseSpeakerSessions(speakerSessions: any[]) {
     abstract: session.abstract || null,
     learningObjectives: session.learningObjectives || [],
     targetAudience: session.targetAudience || null,
-    // REMOVED: materials: session.materials || [], - This was causing the error
     status: SessionStatus.SCHEDULED,
     speakerId: session.speakerId
   }))
@@ -245,7 +283,6 @@ export async function GET() {
   }
 }
 
-// ✅ Corrected POST Handler - Only includes fields that exist in your schema
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
@@ -254,7 +291,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Check if user is admin
+    // Only ADMIN or SUPER_ADMIN can create events
     if (session.user?.role !== "ADMIN" && session.user?.role !== "SUPER_ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
@@ -262,321 +299,261 @@ export async function POST(request: Request) {
     const body = await request.json()
     console.log("Creating event with data:", JSON.stringify(body, null, 2))
 
-    // Validate required fields
-    const requiredFields = ['title', 'description', 'startDate', 'endDate']
-    const missingFields = requiredFields.filter(field => !body[field])
-    
-    if (missingFields.length > 0) {
-      return NextResponse.json(
-        { error: `Missing required fields: ${missingFields.join(', ')}` },
-        { status: 400 }
-      )
+    // Basic validation
+    const requiredFields = ["title", "description", "startDate", "endDate"]
+    const missing = requiredFields.filter((f) => !body[f])
+    if (missing.length > 0) {
+      return NextResponse.json({ error: `Missing required fields: ${missing.join(", ")}` }, { status: 400 })
     }
 
+    // Prepare arrays / normalized inputs
     const images = Array.isArray(body.images) ? body.images : []
     const videos = Array.isArray(body.videos) ? body.videos : []
     const documents = Array.isArray(body.documents)
       ? body.documents.filter(Boolean)
       : [body.brochure, body.layoutPlan].filter(Boolean)
 
-    // 🔹 ORGANIZER SELECTION/CREATION LOGIC
-    let organizerId = session.user.id // Default to admin
-    
-    if (body.organizerId && ObjectId.isValid(body.organizerId)) {
-      // Use provided organizer ID
-      const organizer = await prisma.user.findFirst({
-        where: {
-          id: body.organizerId,
-          role: "ORGANIZER"
-        }
+    // Organizer logic (tries provided organizerId or falls back to find/create)
+    let organizerId = session.user.id
+    if (body.organizerId) {
+      // validate ObjectId-ish string
+      organizerId = body.organizerId
+    } else if (body.organizerEmail || body.organizerName) {
+      const organizer = await findOrCreateUser({
+        email: body.organizerEmail || `organizer-${Date.now()}@eventify.com`,
+        firstName: (body.organizerName || "Event Organizer").split(" ")[0],
+        lastName: (body.organizerName || "Event Organizer").split(" ").slice(1).join(" "),
+        company: body.organizationName || body.organizer?.company,
+        role: "ORGANIZER"
       })
-      
-      if (organizer) {
-        organizerId = body.organizerId
-        console.log("Using provided organizer:", organizerId)
-      }
-    }
-    
-    // If no organizer ID provided or found, try to find/create by email or name
-    if (!organizerId || organizerId === session.user.id) {
-      const organizerEmail = body.organizerEmail || body.organizer?.email
-      const organizerName = body.organizerName || body.organizer?.name
-      
-      if (organizerEmail) {
-        const organizer = await findOrCreateUser({
-          email: organizerEmail,
-          firstName: organizerName?.split(' ')[0] || "Event",
-          lastName: organizerName?.split(' ').slice(1).join(' ') || "Organizer",
-          company: body.organizer?.company || body.organizationName,
-          role: "ORGANIZER",
-          phone: body.organizer?.phone,
-          bio: body.organizer?.description
-        })
-        organizerId = organizer.id
-        console.log("Using organizer by email:", organizerId, organizer.email)
-      } else if (organizerName) {
-        // Create organizer with generated email
-        const generatedEmail = `organizer-${Date.now()}@eventify.com`
-        const organizer = await findOrCreateUser({
-          email: generatedEmail,
-          firstName: organizerName.split(' ')[0],
-          lastName: organizerName.split(' ').slice(1).join(' '),
-          company: body.organizer?.company,
-          role: "ORGANIZER"
-        })
-        organizerId = organizer.id
-        console.log("Created new organizer:", organizerId, organizer.email)
-      }
+      organizerId = organizer.id
     }
 
-    // 🔹 VENUE SELECTION/CREATION LOGIC
-    let venueId = null
-    
-    if (body.venueId && ObjectId.isValid(body.venueId)) {
-      // Use provided venue ID
-      const venue = await prisma.user.findFirst({
-        where: {
-          id: body.venueId,
-          role: "VENUE_MANAGER"
-        }
-      })
-      
-      if (venue) {
-        venueId = body.venueId
-        console.log("Using provided venue:", venueId, venue.venueName)
-      }
-    }
-    
-    // If no venue ID provided, try to find/create by name or details
-    if (!venueId && (body.venueName || body.venue || body.city || body.address)) {
-      const venueName = body.venueName || body.venue || "Event Venue"
-      const venueCity = body.city || body.location || "Unknown Location"
-      const venueAddress = body.address || ""
-      const venueEmail = body.venueEmail || `venue-${Date.now()}@eventify.com`
-      
+    // Venue logic (create or use provided venue manager record)
+    let venueId: string | null = null
+    if (body.venueId) {
+      venueId = body.venueId
+    } else if (body.venueName || body.city || body.address) {
       const venue = await findOrCreateUser({
-        email: venueEmail,
+        email: body.venueEmail || `venue-${Date.now()}@eventify.com`,
         firstName: "Venue",
         lastName: "Manager",
         role: "VENUE_MANAGER",
-        venueName: venueName,
-        venueCity: venueCity,
-        venueAddress: venueAddress,
+        venueName: body.venueName || body.venue,
+        venueCity: body.city,
+        venueAddress: body.address,
         phone: body.venuePhone
       })
-      
       venueId = venue.id
-      console.log("Using venue:", venueId, venue.venueName)
     }
 
-    // 🔹 SPEAKER SESSIONS LOGIC
-    const speakerSessionsData = body.speakerSessions || []
-    const hasSpeakers = speakerSessionsData.length > 0
-    const processedSessions = []
-
-    if (hasSpeakers) {
-      console.log("Processing speaker sessions:", speakerSessionsData.length)
-      
-      for (const sessionData of speakerSessionsData) {
-        let speakerId = sessionData.speakerId
-        
-        // If no speaker ID provided, try to find/create speaker
-        if (!speakerId && (sessionData.speakerEmail || sessionData.speakerName)) {
-          const speakerEmail = sessionData.speakerEmail || `speaker-${Date.now()}@eventify.com`
-          const speakerName = sessionData.speakerName || "Event Speaker"
-          
-          const speaker = await findOrCreateUser({
-            email: speakerEmail,
-            firstName: speakerName.split(' ')[0],
-            lastName: speakerName.split(' ').slice(1).join(' '),
-            company: sessionData.speakerCompany,
-            jobTitle: sessionData.speakerTitle || "Speaker",
-            bio: sessionData.speakerBio,
-            role: "SPEAKER",
-            phone: sessionData.speakerPhone,
-            avatar: sessionData.speakerImage
-          })
-          
-          speakerId = speaker.id
-          console.log("Using speaker:", speakerId, speaker.email)
-        }
-        
-        if (speakerId) {
-          processedSessions.push({
-            ...sessionData,
-            speakerId: speakerId
-          })
-        }
+    // Process speaker sessions -> create any missing speakers and collect speakerId
+    const speakerSessionsData = Array.isArray(body.speakerSessions) ? body.speakerSessions : []
+    const processedSessions: any[] = []
+    for (const s of speakerSessionsData) {
+      let speakerId = s.speakerId
+      if (!speakerId && (s.speakerEmail || s.speakerName)) {
+        const sp = await findOrCreateUser({
+          email: s.speakerEmail || `speaker-${Date.now()}@eventify.com`,
+          firstName: (s.speakerName || "Speaker").split(" ")[0],
+          lastName: (s.speakerName || "Speaker").split(" ").slice(1).join(" "),
+          role: "SPEAKER",
+          jobTitle: s.speakerTitle,
+          bio: s.speakerBio,
+          avatar: s.speakerImage
+        })
+        speakerId = sp.id
+      }
+      if (speakerId) {
+        processedSessions.push({
+          ...s,
+          speakerId
+        })
       }
     }
 
-    // 🔹 EXHIBITOR BOOTHS LOGIC
-    const exhibitorBoothsData = body.exhibitorBooths || []
-    const hasExhibitors = exhibitorBoothsData.length > 0
-    const processedExhibitors = []
+    // Process exhibitors -> create user accounts if needed and normalize
+    const exhibitorBoothsData = Array.isArray(body.exhibitorBooths) ? body.exhibitorBooths : []
+    const processedExhibitors: any[] = []
+    for (const ex of exhibitorBoothsData) {
+      let exhibitorId = ex.exhibitorId
+      if (!exhibitorId && (ex.exhibitorEmail || ex.exhibitorName)) {
+        const newEx = await findOrCreateUser({
+          email: ex.exhibitorEmail || `exhibitor-${Date.now()}@eventify.com`,
+          firstName: (ex.exhibitorName || ex.company || "Exhibitor").split(" ")[0],
+          lastName: (ex.exhibitorName || ex.company || "Exhibitor").split(" ").slice(1).join(" "),
+          role: "EXHIBITOR",
+          company: ex.company,
+          phone: ex.phone,
+          bio: ex.description,
+          jobTitle: ex.jobTitle
+        })
+        exhibitorId = newEx.id
+      }
 
-    if (hasExhibitors) {
-      console.log("Processing exhibitor booths:", exhibitorBoothsData.length)
-      
-      for (const exhibitorData of exhibitorBoothsData) {
-        let exhibitorId = exhibitorData.exhibitorId
-        
-        // If no exhibitor ID provided, try to find/create exhibitor
-        if (!exhibitorId && (exhibitorData.exhibitorEmail || exhibitorData.exhibitorName)) {
-          const exhibitorEmail = exhibitorData.exhibitorEmail || `exhibitor-${Date.now()}@eventify.com`
-          const exhibitorName = exhibitorData.exhibitorName || "Event Exhibitor"
-          
-          const exhibitor = await findOrCreateUser({
-            email: exhibitorEmail,
-            firstName: exhibitorName.split(' ')[0],
-            lastName: exhibitorName.split(' ').slice(1).join(' '),
-            company: exhibitorData.company,
-            jobTitle: exhibitorData.jobTitle || "Exhibitor",
-            bio: exhibitorData.description,
-            role: "EXHIBITOR",
-            phone: exhibitorData.phone
-          })
-          
-          exhibitorId = exhibitor.id
-          console.log("Using exhibitor:", exhibitorId, exhibitor.email)
-        }
-        
-        if (exhibitorId) {
-          processedExhibitors.push({
-            ...exhibitorData,
-            exhibitorId: exhibitorId,
-            companyName: exhibitorData.company || "Unknown Company",
-            totalCost: exhibitorData.totalCost || 0
-          })
-        }
+      if (exhibitorId) {
+        processedExhibitors.push({
+          ...ex,
+          exhibitorId,
+          companyName: ex.company || ex.companyName || "Unknown Company",
+          totalCost: ex.totalCost ?? 0
+        })
       }
     }
 
-    // Create the event
+    // Build base eventData (only schema fields)
     const eventId = new ObjectId().toHexString()
-    
-    // Build the event data object - ONLY INCLUDING FIELDS THAT EXIST IN YOUR SCHEMA
     const eventData: any = {
       id: eventId,
       title: body.title,
       description: body.description,
-      shortDescription: body.shortDescription || body.description?.substring(0, 200) || null,
-      slug: body.slug || body.title
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-]/g, ""),
+      shortDescription: body.shortDescription || (body.description ? body.description.substring(0, 200) : null),
+      slug: body.slug || body.title?.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
       status: (body.status?.toUpperCase() as EventStatus) || EventStatus.DRAFT,
       category: parseCategory(body.categories || body.category || body.eventCategories),
-      tags: body.tags || [],
+      tags: Array.isArray(body.tags) ? body.tags : [],
       eventType: body.eventType ? [body.eventType] : [],
       startDate: new Date(body.startDate),
       endDate: new Date(body.endDate),
       registrationStart: new Date(body.registrationStart || body.startDate),
       registrationEnd: new Date(body.registrationEnd || body.endDate),
       timezone: body.timezone || "UTC",
-      isVirtual: body.isVirtual || false,
+      isVirtual: !!body.isVirtual,
       virtualLink: body.virtualLink || null,
       venueId: venueId,
       maxAttendees: body.maxAttendees || body.maxCapacity || null,
       currentAttendees: 0,
       currency: body.currency || "USD",
-      images: images,
-      videos: videos,
-      documents: documents,
+      images,
+      videos,
+      documents,
       brochure: body.brochure || null,
       layoutPlan: body.layoutPlan || null,
       bannerImage: body.bannerImage || images[0] || null,
       thumbnailImage: body.thumbnailImage || images[0] || null,
       isPublic: body.isPublic !== false,
-      requiresApproval: body.requiresApproval || false,
-      allowWaitlist: body.allowWaitlist || false,
+      requiresApproval: !!body.requiresApproval,
+      allowWaitlist: !!body.allowWaitlist,
       refundPolicy: body.refundPolicy || null,
       metaTitle: body.metaTitle || null,
       metaDescription: body.metaDescription || null,
-      isFeatured: body.featured || body.isFeatured || false,
-      isVIP: body.vip || body.isVIP || false,
-      organizerId: organizerId,
+      isFeatured: !!(body.featured || body.isFeatured),
+      isVIP: !!(body.vip || body.isVIP),
+      organizerId: organizerId
     }
 
-    // Add edition if provided
-    if (body.edition) {
-      eventData.edition = body.edition.toString()
-    }
-
-    // Create ticket types
-    const ticketTypesData = [
-      {
-        name: "General Admission",
-        description: "General admission ticket",
-        price: body.generalPrice || body.ticketPrice || 0,
-        quantity: body.maxAttendees || body.maxCapacity || 100,
-        isActive: true,
-      },
-      ...(body.studentPrice > 0 ? [{
+    // Ticket types: default + optional student/vip/group
+    const ticketTypesData: any[] = []
+    ticketTypesData.push({
+      name: "General Admission",
+      description: "General admission ticket",
+      price: body.generalPrice ?? body.ticketPrice ?? 0,
+      quantity: body.maxAttendees ?? body.maxCapacity ?? 100,
+      isActive: true
+    })
+    if (body.studentPrice > 0) {
+      ticketTypesData.push({
         name: "Student",
         description: "Student ticket",
         price: body.studentPrice,
         quantity: Math.floor((body.maxAttendees || body.maxCapacity || 100) * 0.2),
-        isActive: true,
-      }] : []),
-      ...(body.vipPrice > 0 ? [{
+        isActive: true
+      })
+    }
+    if (body.vipPrice > 0) {
+      ticketTypesData.push({
         name: "VIP",
-        description: "VIP ticket with premium access",
+        description: "VIP ticket",
         price: body.vipPrice,
         quantity: Math.floor((body.maxAttendees || body.maxCapacity || 100) * 0.1),
-        isActive: true,
-      }] : []),
-      ...(body.groupPrice > 0 ? [{
+        isActive: true
+      })
+    }
+    if (body.groupPrice > 0) {
+      ticketTypesData.push({
         name: "Group",
         description: "Group ticket",
         price: body.groupPrice,
         quantity: Math.floor((body.maxAttendees || body.maxCapacity || 100) * 0.15),
-        isActive: true,
-      }] : [])
-    ].filter(Boolean)
-
-    if (ticketTypesData.length > 0) {
-      eventData.ticketTypes = {
-        create: ticketTypesData
-      }
+        isActive: true
+      })
     }
 
-    // Create exhibition spaces
-    if (body.spaceCosts && body.spaceCosts.length > 0) {
-      eventData.exhibitionSpaces = {
-        create: parseSpaceCosts(body.spaceCosts, body.currency || "USD")
-      }
+    // Exhibition spaces: use provided spaceCosts OR create a default if exhibitors exist but no spaces
+    const hasProvidedSpaces = Array.isArray(body.spaceCosts) && body.spaceCosts.length > 0
+    let spacesToCreate: any[] = []
+    if (hasProvidedSpaces) {
+      spacesToCreate = parseSpaceCosts(body.spaceCosts, eventData.currency)
+    } else if (processedExhibitors.length > 0) {
+      // create a default shell space (ensure id set so booths can link)
+      spacesToCreate = [
+        {
+          id: new ObjectId().toHexString(),
+          spaceType: "SHELL_SPACE",
+          name: "Default Exhibition Space",
+          description: "Automatically created exhibition space for exhibitors",
+          dimensions: "3x3",
+          area: 9,
+          basePrice: 0,
+          currency: eventData.currency,
+          isAvailable: true,
+          powerIncluded: false
+        }
+      ]
     }
 
-    // Create speaker sessions - FIXED: No materials field
-    if (processedSessions.length > 0) {
-      eventData.speakerSessions = {
-        create: parseSpeakerSessions(processedSessions)
+    // Prepare speakerSessions nested create payload
+    const speakerCreatePayload = processedSessions.map((s) => ({
+      title: s.title || "Presentation",
+      description: s.description || "",
+      sessionType: (s.sessionType?.toUpperCase() as SessionType) || SessionType.PRESENTATION,
+      duration: s.duration || 60,
+      startTime: s.startTime ? new Date(s.startTime) : new Date(),
+      endTime: s.endTime ? new Date(s.endTime) : new Date(Date.now() + 60 * 60 * 1000),
+      room: s.room || null,
+      abstract: s.abstract || null,
+      learningObjectives: s.learningObjectives || [],
+      targetAudience: s.targetAudience || null,
+      status: SessionStatus.SCHEDULED,
+      speakerId: s.speakerId
+    }))
+
+    // Prepare exhibitor booths payload - MUST include spaceId
+    const defaultSpaceId = spacesToCreate.length > 0 ? spacesToCreate[0].id : null
+    const exhibitorCreatePayload = processedExhibitors.map((b, idx) => {
+      const resolvedSpaceId = b.spaceId || b.space?.id || defaultSpaceId
+      if (!resolvedSpaceId) {
+        throw new Error(`spaceId is required for exhibitor booth index ${idx}`)
       }
-    }
 
-    // Create exhibitor booths
-    if (processedExhibitors.length > 0) {
-      eventData.exhibitorBooths = {
-        create: processedExhibitors.map(exhibitor => ({
-          boothNumber: exhibitor.boothNumber || `B-${Math.floor(Math.random() * 1000)}`,
-          boothSize: exhibitor.boothSize || "3x3",
-          status: exhibitor.status || "CONFIRMED",
-          specialRequirements: exhibitor.specialRequirements || [],
-          notes: exhibitor.notes || null,
-          companyName: exhibitor.companyName || exhibitor.company || "Unknown Company",
-          totalCost: exhibitor.totalCost || 0,
-          exhibitorId: exhibitor.exhibitorId,
-          spaceId: exhibitor.spaceId || undefined,
-          spaceReference: exhibitor.spaceReference || null
-        }))
+      return {
+        boothNumber: b.boothNumber || `B-${100 + idx}`,
+        status: b.status || "BOOKED",
+        // specialRequirements: b.specialRequirements || [],
+        // notes: b.notes || null,
+        companyName: b.companyName,
+        description: b.description || null,
+        additionalPower: b.additionalPower ?? 0,
+        compressedAir: b.compressedAir ?? 0,
+        setupRequirements: b.setupRequirements || null,
+        // specialRequests: b.specialRequests || null,
+        totalCost: b.totalCost ?? 0,
+        currency: b.currency || eventData.currency,
+        exhibitor: { connect: { id: b.exhibitorId } },
+        space: { connect: { id: resolvedSpaceId } }, // required relation
+        spaceReference: b.spaceReference || null
       }
-    }
+    })
 
-    console.log("Creating event with data:", JSON.stringify(eventData, null, 2))
-
-    const newEvent = await prisma.event.create({
-      data: eventData,
+    // Now create the event with nested creates
+    const createdEvent = await prisma.event.create({
+      data: {
+        ...eventData,
+        ticketTypes: ticketTypesData.length > 0 ? { create: ticketTypesData } : undefined,
+        exhibitionSpaces: spacesToCreate.length > 0 ? { create: spacesToCreate } : undefined,
+        speakerSessions: speakerCreatePayload.length > 0 ? { create: speakerCreatePayload } : undefined,
+        exhibitorBooths: exhibitorCreatePayload.length > 0 ? { create: exhibitorCreatePayload } : undefined
+      },
       include: {
         organizer: {
           select: {
@@ -596,7 +573,7 @@ export async function POST(request: Request) {
             venueCity: true,
             venueAddress: true,
             venueState: true,
-            venueCountry: true,
+            venueCountry: true
           }
         },
         exhibitionSpaces: true,
@@ -627,115 +604,48 @@ export async function POST(request: Request) {
                 company: true,
                 phone: true
               }
-            }
+            },
+            space: true
           }
         }
       }
     })
 
-    // Format the response
-    const formattedEvent = {
-      id: newEvent.id,
-      title: newEvent.title,
-      organizer: newEvent.organizer ? 
-        newEvent.organizer.organizationName ||
-        `${newEvent.organizer.firstName || ""} ${newEvent.organizer.lastName || ""}`.trim() ||
-        "Unknown Organizer" : "Unknown Organizer",
-      date: newEvent.startDate.toISOString().split('T')[0],
-      endDate: newEvent.endDate.toISOString().split('T')[0],
-      location: newEvent.venue?.venueCity || "Virtual",
-      venue: newEvent.venue?.venueName || "N/A",
-      status: newEvent.status === "PUBLISHED"
-        ? "Approved"
-        : newEvent.status === "DRAFT"
-        ? "Pending Review"
-        : newEvent.status === "CANCELLED"
-        ? "Flagged"
-        : "Completed",
-      attendees: newEvent.currentAttendees || 0,
-      maxCapacity: newEvent.maxAttendees || 0,
-      revenue: 0,
-      ticketPrice: newEvent.ticketTypes?.[0]?.price || 0,
-      category: newEvent.category?.[0] || "Other",
-      featured: newEvent.isFeatured || false,
-      vip: newEvent.isVIP || false,
-      priority: "Medium",
-      description: newEvent.description,
-      tags: newEvent.tags,
-      createdAt: newEvent.createdAt.toISOString(),
-      lastModified: newEvent.updatedAt.toISOString(),
-      views: 0,
-      registrations: 0,
-      rating: newEvent.averageRating,
-      reviews: newEvent.totalReviews,
-      image: newEvent.bannerImage || "/placeholder.svg",
-      promotionBudget: 0,
-      socialShares: 0,
-      organizerId: newEvent.organizerId,
-      venueId: newEvent.venueId,
-      organizerDetails: newEvent.organizer,
-      venueDetails: newEvent.venue,
-      speakers: newEvent.speakerSessions?.map(session => ({
-        id: session.speaker.id,
-        name: `${session.speaker.firstName} ${session.speaker.lastName}`,
-        email: session.speaker.email,
-        company: session.speaker.company,
-        jobTitle: session.speaker.jobTitle,
-        avatar: session.speaker.avatar,
-        sessionTitle: session.title,
-        sessionId: session.id
-      })) || [],
-      exhibitors: newEvent.exhibitorBooths?.map(booth => ({
-        id: booth.exhibitor.id,
-        name: `${booth.exhibitor.firstName} ${booth.exhibitor.lastName}`,
-        email: booth.exhibitor.email,
-        company: booth.exhibitor.company,
-        phone: booth.exhibitor.phone,
-        boothNumber: booth.boothNumber,
-        boothId: booth.id
-      })) || [],
-      exhibitionSpaces: newEvent.exhibitionSpaces,
-      ticketTypes: newEvent.ticketTypes
-    }
-
-    // Log the admin action
+    // Log admin action
     await prisma.adminLog.create({
       data: {
         adminId: session.user.id,
         adminType: session.user.role === "SUPER_ADMIN" ? "SUPER_ADMIN" : "SUB_ADMIN",
         action: "EVENT_CREATED",
         resource: "EVENT",
-        resourceId: newEvent.id,
+        resourceId: createdEvent.id,
         details: {
-          title: newEvent.title,
-          organizerId: newEvent.organizerId,
-          venueId: newEvent.venueId,
-          speakerCount: newEvent.speakerSessions?.length || 0,
-          exhibitorCount: newEvent.exhibitorBooths?.length || 0,
-          spaceCount: newEvent.exhibitionSpaces?.length || 0,
-          status: newEvent.status
+          title: createdEvent.title,
+          organizerId: createdEvent.organizerId,
+          venueId: createdEvent.venueId,
+          speakerCount: createdEvent.speakerSessions?.length || 0,
+          exhibitorCount: createdEvent.exhibitorBooths?.length || 0,
+          spaceCount: createdEvent.exhibitionSpaces?.length || 0,
+          status: createdEvent.status
         },
-        ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown'
+        ipAddress: request.headers.get("x-forwarded-for") || "unknown",
+        userAgent: request.headers.get("user-agent") || "unknown"
       }
     })
 
     return NextResponse.json(
       {
         success: true,
-        message: "Event created successfully with all entities",
-        event: formattedEvent,
+        message: "Event created successfully with nested entities",
+        event: createdEvent
       },
       { status: 201 }
     )
-  } catch (error) {
-    console.error("Error creating event:", error)
+  } catch (err) {
+    console.error("Error creating event:", err)
+    const message = err instanceof Error ? err.message : "Unknown error"
     return NextResponse.json(
-      {
-        success: false,
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
+      { success: false, error: "Internal server error", details: message },
       { status: 500 }
     )
   }

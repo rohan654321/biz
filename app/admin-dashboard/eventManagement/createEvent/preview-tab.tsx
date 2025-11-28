@@ -1,6 +1,8 @@
+"use client"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, MapPin, Eye } from "lucide-react"
+import { Calendar, MapPin, Eye, Users, Building } from "lucide-react"
 import type { EventFormData } from "./types"
 
 interface PreviewTabProps {
@@ -26,7 +28,7 @@ export function PreviewTab({ formData }: PreviewTabProps) {
                   <div className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
                     <span>
-                      {formData.startDate || "Start Date"} - {formData.endDate || "End Date"}
+                      {formData.startDate ? new Date(formData.startDate).toLocaleDateString() : "Start Date"} - {formData.endDate ? new Date(formData.endDate).toLocaleDateString() : "End Date"}
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
@@ -93,34 +95,50 @@ export function PreviewTab({ formData }: PreviewTabProps) {
               </div>
 
               {/* Space Costs Preview */}
-              <div className="mt-6">
-                <h4 className="font-semibold mb-4">Exhibition Space Pricing</h4>
-                <div className="grid gap-3">
-                  {formData.spaceCosts.map((cost, index) => (
-                    <div key={index} className="bg-white p-4 rounded-lg border flex justify-between items-center">
-                      <div>
-                        <h5 className="font-medium">{cost.type}</h5>
-                        <p className="text-sm text-gray-600">{cost.description}</p>
-                      </div>
-                      <div className="text-right">
-                        {cost.unit ? (
-                          <p className="font-semibold text-blue-600">
-                            {formData.currency}
-                            {(cost.pricePerUnit || 0).toLocaleString()} per {cost.unit}
-                          </p>
-                        ) : (
-                          <>
+              {formData.spaceCosts.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="font-semibold mb-4">Exhibition Space Pricing</h4>
+                  <div className="grid gap-3">
+                    {formData.spaceCosts.map((cost, index) => (
+                      <div key={index} className="bg-white p-4 rounded-lg border flex justify-between items-center">
+                        <div>
+                          <h5 className="font-medium">{cost.type}</h5>
+                          <p className="text-sm text-gray-600">{cost.description}</p>
+                        </div>
+                        <div className="text-right">
+                          {cost.unit ? (
                             <p className="font-semibold text-blue-600">
                               {formData.currency}
-                              {(cost.pricePerSqm || 0).toLocaleString()} per sq.m
+                              {(cost.pricePerUnit || 0).toLocaleString()} per {cost.unit}
                             </p>
-                            <p className="text-sm text-gray-500">Min: {cost.minArea || 0} sq.m</p>
-                          </>
-                        )}
+                          ) : (
+                            <>
+                              <p className="font-semibold text-blue-600">
+                                {formData.currency}
+                                {(cost.pricePerSqm || 0).toLocaleString()} per sq.m
+                              </p>
+                              <p className="text-sm text-gray-500">Min: {cost.minArea || 0} sq.m</p>
+                            </>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
+              )}
+
+              {/* Event Features */}
+              <div className="flex gap-4 mt-6">
+                {formData.featured && (
+                  <Badge variant="default" className="bg-green-100 text-green-800">
+                    Featured
+                  </Badge>
+                )}
+                {formData.vip && (
+                  <Badge variant="default" className="bg-purple-100 text-purple-800">
+                    VIP Event
+                  </Badge>
+                )}
               </div>
             </div>
           </div>

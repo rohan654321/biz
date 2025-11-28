@@ -1,4 +1,3 @@
-// components/select-organizer.tsx
 "use client"
 
 import { useState, useEffect } from "react"

@@ -31,7 +31,7 @@ import OrganizerManagement from "./organizer-management"
 import ExhibitorManagement from "./exhibitor-management"
 import SpeakerManagement from "./speaker-management"
 import VenueManagement from "./venue-management"
-import ContentManagement from "./content-management"
+// import ContentManagement from "./content-management"
 import SystemSettings from "./system-settings"
 import SubAdminManagement from "./subadmin-management"
 import { CreateEventForm } from "./eventManagement/createEvent/create-event"
@@ -58,17 +58,18 @@ import ExhibitorFeedbackPage from "./exhibitors/feedback"
 import AddSpeaker from "./AddSpeaker"
 import SpeakerFollowersPage from "./speaker/followers"
 import SpeakerFeedbackPage from "./speaker/feedback"
-import AddVenue from "./add-venue"
+// import AddVenue from "./add-venue"
 import AddVenueComponent from "./AddVenue"
 import VenuesEventsPage from "./venue/events"
 import VenueBookingsPage from "./venue/bookings"
 import VisitorEventsPage from "./visitors/events"
 import VisitorConnectionsPage from "./visitors/connections"
 import VisitorAppointmentsPage from "./visitors/appointments"
-import FinancialPaymentsPage from "./financial/payments/page"
-import FinancialSubscriptionsPage from "./financial/subscriptions/page"
-import FinancialInvoicesPage from "./financial/invoices/page"
-import FinancialTransactionsPage from "./financial/transactions/page"
+// import FinancialPaymentsPage from "./financial/payments/page"
+// import FinancialSubscriptionsPage from "./financial/subscriptions/page"
+// import FinancialInvoicesPage from "./financial/invoices/page"
+// import FinancialTransactionsPage from "./financial/transactions/page"
+import VenueFeedbackPage from "./venue/venue-feedback/page"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -110,6 +111,7 @@ const MENU_PERMISSIONS = {
   "venues-bookings": "venues-bookings",
   "venues-feedback": "venues-feedback",
   visitors: "visitors",
+  "visitors-all": "visitors-all",
   "visitors-events": "visitors-events",
   "visitors-connections": "visitors-connections",
   "visitors-appointments": "visitors-appointments",
@@ -409,89 +411,85 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         case "roles-subadmins":
           return <SubAdminManagement />
 
-
         // Events
         case "events-create":
           return <CreateEventForm />
         case "events-all":
           return <EventManagement />
         case "events-categories":
-          return  <EventCategories />//<div>Event Categories - Coming Soon</div>
-        // case "events-approvals":
-        //   return //<div>Event Approvals - Coming Soon</div>
+          return <EventCategories />
         case "bulk-data":
-          return <ImportPage/>//<div>Event Bulk uploade - Coming Soon</div>
+          return <ImportPage />
 
+        // Organizers
         case "organizers-add":
           return <AddOrganizerForm />
-
         case "organizers-connections":
           return <OrganizerConnectionsPage />
-
         case "promotions":
           return <OrganizerPromotionsPage />
-
         case "organizers-bookings":
           return <OrganizerVenueBookingsPage />
-
         case "organizers-feedback":
           return <OrganizerFeedbackPage />
 
+        // Exhibitors
         case "exhibitors-add":
           return <AddExhibitorForm />
-
         case "exhibitors-promotions":
           return <ExhibitorPromotionsPage />
-        
         case "exhibitors-followers":
           return <ExhibitorFollowersPage />
-
         case "exhibitors-appointments":
           return <ExhibitorAppointmentsPage />
-        
         case "exhibitors-feedback":
           return <ExhibitorFeedbackPage />
 
+        // Speakers
         case "speakers-add":
           return <AddSpeaker />
-
         case "speakers-followers":
           return <SpeakerFollowersPage />
-
         case "speakers-feedback":
           return <SpeakerFeedbackPage />
 
+        // Venues
         case "venues-add":
           return <AddVenueComponent />
-
         case "venues-events":
           return <VenuesEventsPage />
-
         case "venues-bookings":
           return <VenueBookingsPage />
+        case "venues-feedback":
+          return <VenueFeedbackPage />
 
-        // case "visitors-events":
-        //   return <VisitorEventsPage />
+        // Visitors
+        case "visitors-events":
+          return <VisitorEventsPage />
+        case "visitors-connections":
+          return <VisitorConnectionsPage />
+        case "visitors-appointments":
+          return <VisitorAppointmentsPage />
 
-        // case "visitors-connections":
-        //   return <VisitorConnectionsPage />
+        // Financial
+        case "financial-payments":
+          return <div>Page will updated-----soon</div>//<FinancialPaymentsPage />
+        case "financial-subscriptions":
+          return <div>Page will updated-----soon</div>//<FinancialSubscriptionsPage />
+        case "financial-invoices":
+          return <div>Page will updated-----soon</div>//<FinancialInvoicesPage />
+        case "financial-transactions":
+          return <div>Page will updated-----soon</div>//<FinancialTransactionsPage />
 
-        // case "visitors-appointments":
-        //   return <VisitorAppointmentsPage />
-
-        // case "financial-payments":
-        //   return <FinancialPaymentsPage />
-
-        // case "financial-subscriptions":
-        //   return <FinancialSubscriptionsPage />
-
-        // case "financial-invoices":
-        //   return <FinancialInvoicesPage />
-
-        // case "financial-transactions":
-        //   return <FinancialTransactionsPage />
-
-
+        // Help & Support sub-sections
+        case "support-tickets":
+          return <SupportTickets />
+        case "support-contacts":
+          return <SupportContacts />
+        case "support-faq":
+          return <FAQManagement />
+        case "support-notes":
+          return <AdminNotes />
 
         default:
           console.log("Unknown sub-section:", subSection)
@@ -508,7 +506,6 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       case "locations":
         return <CountriesManagement /> 
       case "organizers":
-        // Default to "All Organizers" when main organizers section is clicked
         return <OrganizerManagement />
       case "exhibitors":
         return <ExhibitorManagement />
@@ -517,11 +514,11 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       case "venues":
         return <VenueManagement />
       case "visitors":
-        return <VisitorManagement/>//<div>Visitor Management - Coming Soon</div>  
+        return <VisitorManagement />
       case "financial":
         return <div>Financial Management - Coming Soon</div>
       case "content":
-        return <ContentManagement />
+        return <div>Content Management - Coming Soon</div>//<ContentManagement />
       case "marketing":
         return <div>Marketing Management - Coming Soon</div>
       case "reports":
@@ -533,26 +530,20 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       case "settings":
         return <SystemSettings />
       case "support":
-        return <MainHelpSupport/>//<div>Help & Support - Coming Soon</div>
-      case "support-tickets":
-        return <SupportTickets/>
-      case "support-contacts":
-        return <SupportContacts/>
-      case "support-faq":
-        return <FAQManagement/>
-      case  "support-notes":
-        return <AdminNotes/>       
+        return <MainHelpSupport />
       default:
         return <DashboardOverview />
     }
   }
 
   const handleSectionClick = (id: string) => {
+    console.log("Main section clicked:", id)
     setActiveSection(id)
     setActiveSubSection("")
   }
 
   const handleSubSectionClick = (parentId: string, subId: string) => {
+    console.log("Sub-section clicked:", parentId, subId)
     setActiveSection(parentId)
     setActiveSubSection(subId)
   }
@@ -575,18 +566,20 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                     <div className="rounded-lg">
                       <button
                         onClick={() => toggleMenu(item.id)}
-                        className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${isActive(item.id)
-                          ? "bg-blue-50 text-blue-700 border border-blue-200"
-                          : "text-gray-700 hover:bg-gray-100"
-                          }`}
+                        className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
+                          isActive(item.id)
+                            ? "bg-blue-50 text-blue-700 border border-blue-200"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
                       >
                         <div className="flex items-center gap-3">
                           <item.icon className="w-4 h-4" />
                           <span className="font-medium">{item.title}</span>
                         </div>
                         <ChevronDown
-                          className={`w-4 h-4 transition-transform duration-200 ${isMenuOpen(item.id) ? "rotate-180" : ""
-                            }`}
+                          className={`w-4 h-4 transition-transform duration-200 ${
+                            isMenuOpen(item.id) ? "rotate-180" : ""
+                          }`}
                         />
                       </button>
 
@@ -596,10 +589,11 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                             <button
                               key={subItem.id}
                               onClick={() => handleSubSectionClick(item.id, subItem.id)}
-                              className={`w-full text-left p-2 rounded-lg transition-colors ${isSubActive(subItem.id)
-                                ? "bg-blue-50 text-blue-700 border border-blue-200"
-                                : "text-gray-600 hover:bg-gray-100"
-                                }`}
+                              className={`w-full text-left p-2 rounded-lg transition-colors ${
+                                isSubActive(subItem.id)
+                                  ? "bg-blue-50 text-blue-700 border border-blue-200"
+                                  : "text-gray-600 hover:bg-gray-100"
+                              }`}
                             >
                               <span className="text-sm">{subItem.title}</span>
                             </button>
@@ -610,10 +604,11 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
                   ) : (
                     <button
                       onClick={() => handleSectionClick(item.id)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${isActive(item.id)
-                        ? "bg-blue-50 text-blue-700 border border-blue-200"
-                        : "text-gray-700 hover:bg-gray-100"
-                        }`}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                        isActive(item.id)
+                          ? "bg-blue-50 text-blue-700 border border-blue-200"
+                          : "text-gray-700 hover:bg-gray-100"
+                      }`}
                     >
                       <item.icon className="w-4 h-4" />
                       <span className="font-medium">{item.title}</span>
