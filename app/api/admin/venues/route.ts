@@ -10,43 +10,118 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
+    // First get venue managers
     const venueManagers = await prisma.user.findMany({
       where: { role: "VENUE_MANAGER" },
-      include: { 
-        meetingSpaces: true,
-        venueReviews: true,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        avatar: true,
+        venueName: true,
+        company: true,
+        venueAddress: true,
+        venueCity: true,
+        venueState: true,
+        venueCountry: true,
+        website: true,
+        venueDescription: true,
+        bio: true,
+        maxCapacity: true,
+        totalHalls: true,
+        activeBookings: true,
+        averageRating: true,
+        totalReviews: true,
+        amenities: true,
+        venueImages: true,
+        isVerified: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
       },
     })
 
-    const venues = venueManagers.map((manager) => ({
-      id: manager.id,
-      venueName: manager.venueName || manager.company || "",
-      logo: manager.avatar || "",
-      contactPerson: `${manager.firstName} ${manager.lastName}`.trim(),
-      email: manager.email,
-      mobile: manager.phone || "",
-      address: manager.venueAddress || manager.location || "",
-      city: manager.venueCity || "",
-      state: manager.venueState || "",
-      country: manager.venueCountry || "",
-      website: manager.website || "",
-      description: manager.venueDescription || manager.bio || "",
-      maxCapacity: manager.maxCapacity || 0,
-      totalHalls: manager.totalHalls || 0,
-      totalEvents: manager.totalEvents || 0,
-      activeBookings: manager.activeBookings || 0,
-      averageRating: manager.averageRating || 0,
-      totalReviews: manager.totalReviews || 0,
-      amenities: manager.amenities || [],
-      meetingSpaces: manager.meetingSpaces || [],
-      isVerified: manager.isVerified || false,
-      venueImages: manager.venueImages || [],
-      status: manager.isActive ? "active" : "suspended",
-      createdAt: manager.createdAt.toISOString(),
-      updatedAt: manager.updatedAt.toISOString(),
-    }))
+    // Get events for each venue manager separately
+    const venuesWithEvents = await Promise.all(
+      venueManagers.map(async (manager) => {
+        // Get events organized by this venue manager
+        const events = await prisma.event.findMany({
+          where: {
+            venueId: manager.id,
+          },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            startDate: true,
+            endDate: true,
+            status: true,
+            category: true,
+            eventType: true,
+            isVirtual: true,
+            venueId: true,
+          },
+          orderBy: {
+            startDate: 'desc'
+          }
+        })
 
-    return NextResponse.json({ success: true, venues })
+        // Get meeting spaces for this venue manager
+        const meetingSpaces = await prisma.meetingSpace.findMany({
+          where: {
+            userId: manager.id,
+          },
+          select: {
+            id: true,
+            name: true,
+            capacity: true,
+            area: true,
+            hourlyRate: true,
+            isAvailable: true,
+          },
+        })
+
+        // Get event count
+        const eventCount = await prisma.event.count({
+          where: {
+            venueId: manager.id,
+          },
+        })
+
+        return {
+          id: manager.id,
+          venueName: manager.venueName || manager.company || "",
+          logo: manager.avatar || "",
+          contactPerson: `${manager.firstName} ${manager.lastName}`.trim(),
+          email: manager.email,
+          mobile: manager.phone || "",
+          address: manager.venueAddress || "",
+          city: manager.venueCity || "",
+          state: manager.venueState || "",
+          country: manager.venueCountry || "",
+          website: manager.website || "",
+          description: manager.venueDescription || manager.bio || "",
+          maxCapacity: manager.maxCapacity || 0,
+          totalHalls: manager.totalHalls || 0,
+          totalEvents: eventCount || 0,
+          activeBookings: manager.activeBookings || 0,
+          averageRating: manager.averageRating || 0,
+          totalReviews: manager.totalReviews || 0,
+          amenities: manager.amenities || [],
+          meetingSpaces: meetingSpaces || [],
+          events: events || [],
+          isVerified: manager.isVerified || false,
+          venueImages: manager.venueImages || [],
+          status: manager.isActive ? "active" : "suspended",
+          createdAt: manager.createdAt.toISOString(),
+          updatedAt: manager.updatedAt.toISOString(),
+        }
+      })
+    )
+
+    return NextResponse.json({ success: true, venues: venuesWithEvents })
   } catch (error) {
     console.error("Error fetching venue managers:", error)
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
@@ -77,15 +152,8 @@ export async function POST(req: NextRequest) {
       amenities,
       isVerified,
       status,
-    //   mapUrl,
-    //   managerName,
-    //   managerPhone,
       venueImages = [],
       logo,
-    //   minCapacity,
-    //   emergencyExits,
-    //   safetyInfo,
-    //   safetyCertifications = [],
     } = body
 
     // Validate required fields
@@ -140,15 +208,8 @@ export async function POST(req: NextRequest) {
         venueDescription: description,
         bio: description,
         maxCapacity: parseInt(maxCapacity) || 0,
-        // minCapacity: parseInt(minCapacity) || 0,
         totalHalls: parseInt(totalHalls) || 0,
         amenities: amenities || [],
-        // mapUrl: mapUrl || "",
-        // managerName: managerName || "",
-        // managerPhone: managerPhone || "",
-        // emergencyExits: parseInt(emergencyExits) || 0,
-        // safetyInfo: safetyInfo || "",
-        // safetyCertifications: safetyCertifications || [],
         isVerified: isVerified || false,
         isActive: status === "active",
         organizerIdForVenueManager: session.user.id,
@@ -172,15 +233,8 @@ export async function POST(req: NextRequest) {
         venueDescription: description,
         bio: description,
         maxCapacity: parseInt(maxCapacity) || 0,
-        // minCapacity: parseInt(minCapacity) || 0,
         totalHalls: parseInt(totalHalls) || 0,
         amenities: amenities || [],
-        // mapUrl: mapUrl || "",
-        // managerName: managerName || "",
-        // managerPhone: managerPhone || "",
-        // emergencyExits: parseInt(emergencyExits) || 0,
-        // safetyInfo: safetyInfo || "",
-        // safetyCertifications: safetyCertifications || [],
         isVerified: isVerified || false,
         isActive: status === "active",
         organizerIdForVenueManager: session.user.id,
@@ -204,16 +258,9 @@ export async function POST(req: NextRequest) {
         website: venueManager.website,
         description: venueManager.venueDescription,
         maxCapacity: venueManager.maxCapacity,
-        // minCapacity: venueManager.minCapacity,
         totalHalls: venueManager.totalHalls,
         amenities: venueManager.amenities,
         isVerified: venueManager.isVerified,
-        // mapUrl: venueManager.mapUrl,
-        // managerName: venueManager.managerName,
-        // managerPhone: venueManager.managerPhone,
-        // emergencyExits: venueManager.emergencyExits,
-        // safetyInfo: venueManager.safetyInfo,
-        // safetyCertifications: venueManager.safetyCertifications,
         logo: venueManager.avatar,
         venueImages: venueManager.venueImages,
         status: venueManager.isActive ? "active" : "suspended",

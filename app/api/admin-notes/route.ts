@@ -4,11 +4,11 @@ import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth-options'
 import { UserRole } from '@prisma/client'
 
-// ================= GET NOTES ==================
-// In your GET function, replace the return part:
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
+    console.log('GET Session:', session)
+    
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -18,11 +18,11 @@ export async function GET(request: NextRequest) {
 
     const userRole = session.user.role as UserRole
 
-    // Base permissions
+    // Base permissions - SuperAdmin can see all notes
     let whereClause: any = {
       OR: [
-        { createdById: session.user.id },
-        { visibility: { in: ['TEAM', 'PUBLIC'] } },
+        { createdById: session.user.id }, // Can see own notes
+        { visibility: { in: ['TEAM', 'PUBLIC'] } }, // Can see team/public notes
         {
           collaborators: {
             some: {
@@ -33,40 +33,33 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    // TEAM role restriction
-    if (userRole && Object.values(UserRole).includes(userRole)) {
-      whereClause.OR.push({
-        AND: [
-          { visibility: 'TEAM' },
-          {
-            OR: [
-              { userRoles: { has: userRole } },
-              { userRoles: { isEmpty: true } }
-            ]
-          }
-        ]
-      })
-    }
+    // If user is SuperAdmin, they can see all notes regardless of permissions
+    if (session.user.adminType === 'SUPER_ADMIN') {
+      console.log('SuperAdmin detected - showing all notes')
+      whereClause = { isArchived: isArchived }
+    } else {
+      // TEAM role restriction for regular users
+      if (userRole && Object.values(UserRole).includes(userRole)) {
+        whereClause.OR.push({
+          AND: [
+            { visibility: 'TEAM' },
+            {
+              OR: [
+                { userRoles: { has: userRole } },
+                { userRoles: { isEmpty: true } }
+              ]
+            }
+          ]
+        })
+      }
 
-    // Archive filter
-    whereClause.isArchived = isArchived
+      // Archive filter for regular users
+      whereClause.isArchived = isArchived
+    }
 
     const notes = await prisma.adminNote.findMany({
       where: whereClause,
-      select: {
-        id: true,
-        title: true,
-        content: true,
-        category: true,
-        tags: true,
-        visibility: true,
-        userRoles: true,
-        dashboardTypes: true,
-        isPinned: true,
-        isArchived: true,
-        createdAt: true,
-        updatedAt: true,
-        createdById: true,
+      include: {
         createdBy: {
           select: {
             firstName: true,
@@ -76,9 +69,7 @@ export async function GET(request: NextRequest) {
           }
         },
         collaborators: {
-          select: {
-            id: true,
-            permission: true,
+          include: {
             user: {
               select: {
                 firstName: true,
@@ -116,6 +107,7 @@ export async function GET(request: NextRequest) {
       }))
     }))
 
+    console.log(`Returning ${safeNotes.length} notes`)
     return NextResponse.json(safeNotes)
   } catch (error) {
     console.error('Error fetching admin notes:', error)
@@ -126,21 +118,21 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// ================= CREATE NOTE ==================
 export async function POST(request: NextRequest) {
-  console.log('POST /api/admin-notes called'); // Debug log
-  
   try {
     const session = await getServerSession(authOptions)
-    console.log('Session:', session); // Debug log
+    console.log('POST Session:', session)
     
     if (!session?.user?.id) {
-      console.log('No session user ID'); // Debug log
+      console.log('No session user ID')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    console.log('Session user ID:', session.user.id)
+    console.log('Session adminType:', session.user.adminType)
+
     const body = await request.json()
-    console.log('Request body:', body); // Debug log
+    console.log('Request body:', body)
     
     if (!body.title || !body.content) {
       return NextResponse.json(
@@ -149,42 +141,119 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create the note directly without checking user existence first
-    // Let Prisma handle the foreign key constraint
-    const newNote = await prisma.adminNote.create({
-      data: {
-        title: body.title,
-        content: body.content,
-        category: body.category || 'General',
-        tags: body.tags || [],
-        visibility: body.visibility || 'PRIVATE',
-        userRoles: body.userRoles || [],
-        dashboardTypes: body.dashboardTypes || [],
-        isPinned: body.isPinned || false,
-        isArchived: body.isArchived || false,
-        createdById: session.user.id,
-      },
-      include: {
-        createdBy: {
-          select: { firstName: true, lastName: true, email: true, role: true }
+    // Check if this is a SuperAdmin user
+    if (session.user.adminType === 'SUPER_ADMIN') {
+      console.log('User is a SuperAdmin, checking SuperAdmin table...')
+      
+      // Verify SuperAdmin exists
+      const superAdminExists = await prisma.superAdmin.findUnique({
+        where: { id: session.user.id },
+        select: { id: true, email: true, name: true }
+      })
+
+      console.log('SuperAdmin lookup result:', superAdminExists)
+
+      if (!superAdminExists) {
+        console.log('SuperAdmin not found in database. Session ID:', session.user.id)
+        return NextResponse.json(
+          { error: 'SuperAdmin not found. Please log in again.' },
+          { status: 400 }
+        )
+      }
+
+      // Create note with SuperAdmin as creator
+      const newNote = await prisma.adminNote.create({
+        data: {
+          title: body.title,
+          content: body.content,
+          category: body.category || 'General',
+          tags: body.tags || [],
+          visibility: body.visibility || 'PRIVATE',
+          userRoles: body.userRoles || [],
+          dashboardTypes: body.dashboardTypes || [],
+          isPinned: body.isPinned || false,
+          isArchived: body.isArchived || false,
+          createdById: session.user.id,
         },
-        collaborators: {
-          include: {
-            user: {
-              select: { firstName: true, lastName: true, email: true, role: true }
+        include: {
+          createdBy: {
+            select: { 
+              firstName: true, 
+              lastName: true, 
+              email: true, 
+              role: true 
+            }
+          },
+          collaborators: {
+            include: {
+              user: {
+                select: { 
+                  firstName: true, 
+                  lastName: true, 
+                  email: true, 
+                  role: true 
+                }
+              }
             }
           }
         }
-      }
-    })
+      })
 
-    console.log('Note created successfully:', newNote.id); // Debug log
-    return NextResponse.json(newNote, { status: 201 })
+      console.log('Note created successfully by SuperAdmin:', newNote.id)
+      return NextResponse.json(newNote, { status: 201 })
+    } else {
+      // Handle regular User (existing logic)
+      console.log('User is a regular user, checking User table...')
+      
+      const userExists = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { id: true, email: true, firstName: true, lastName: true }
+      })
+
+      console.log('User lookup result:', userExists)
+
+      if (!userExists) {
+        console.log('User not found in database. Session ID:', session.user.id)
+        return NextResponse.json(
+          { error: 'User not found. Please log in again.' },
+          { status: 400 }
+        )
+      }
+
+      const newNote = await prisma.adminNote.create({
+        data: {
+          title: body.title,
+          content: body.content,
+          category: body.category || 'General',
+          tags: body.tags || [],
+          visibility: body.visibility || 'PRIVATE',
+          userRoles: body.userRoles || [],
+          dashboardTypes: body.dashboardTypes || [],
+          isPinned: body.isPinned || false,
+          isArchived: body.isArchived || false,
+          createdById: session.user.id,
+        },
+        include: {
+          createdBy: {
+            select: { firstName: true, lastName: true, email: true, role: true }
+          },
+          collaborators: {
+            include: {
+              user: {
+                select: { firstName: true, lastName: true, email: true, role: true }
+              }
+            }
+          }
+        }
+      })
+
+      console.log('Note created successfully by User:', newNote.id)
+      return NextResponse.json(newNote, { status: 201 })
+    }
     
   } catch (error: any) {
     console.error('Error creating admin note:', error)
     
-    // More specific error handling
     if (error.code === 'P2003') { // Foreign key constraint failed
       return NextResponse.json(
         { error: 'User not found. Please log in again.' },

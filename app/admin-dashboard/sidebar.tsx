@@ -69,6 +69,7 @@ import FinancialPaymentsPage from "./financial/payments/page"
 import FinancialSubscriptionsPage from "./financial/subscriptions/page"
 import FinancialInvoicesPage from "./financial/invoices/page"
 import FinancialTransactionsPage from "./financial/transactions/page"
+import VenueFeedbackPage from "./venue/venue-feedback/page"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -470,14 +471,17 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         case "venues-bookings":
           return <VenueBookingsPage />
 
-        // case "visitors-events":
-        //   return <VisitorEventsPage />
+        case "venues-feedback":
+            return <VenueFeedbackPage />
 
-        // case "visitors-connections":
-        //   return <VisitorConnectionsPage />
+        case "visitors-events":
+          return <VisitorEventsPage />
 
-        // case "visitors-appointments":
-        //   return <VisitorAppointmentsPage />
+        case "visitors-connections":
+          return <VisitorConnectionsPage />
+
+        case "visitors-appointments":
+          return <VisitorAppointmentsPage />
 
         // case "financial-payments":
         //   return <FinancialPaymentsPage />
