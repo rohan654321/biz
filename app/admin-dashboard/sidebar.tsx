@@ -70,6 +70,10 @@ import VisitorAppointmentsPage from "./visitors/appointments"
 // import FinancialInvoicesPage from "./financial/invoices/page"
 // import FinancialTransactionsPage from "./financial/transactions/page"
 import VenueFeedbackPage from "./venue/venue-feedback/page"
+import EmailTemplates from "./email-templates"
+import EmailCampaigns from "./email-notifications"
+import PushNotifications from "./push-notifications"
+import PushTemplates from "./push-templates"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -490,6 +494,19 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <FAQManagement />
         case "support-notes":
           return <AdminNotes />
+
+
+          case "marketing-email":
+            return <EmailCampaigns />
+
+          case "template-email":
+            return < EmailTemplates />
+
+          case "marketing-notifications":
+            return <PushNotifications />
+
+          case "template-notifications" :
+            return <PushTemplates />
 
         default:
           console.log("Unknown sub-section:", subSection)
