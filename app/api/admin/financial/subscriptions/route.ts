@@ -1,105 +1,101 @@
-// import { NextResponse } from "next/server"
-// import {prisma} from "@/lib/prisma"
+import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+import { PlanType, SubscriptionStatus } from "@prisma/client"
 
-// export async function GET(request: Request) {
-//   try {
-//     const { searchParams } = new URL(request.url)
-//     const status = searchParams.get("status")
-//     const planType = searchParams.get("planType")
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const statusParam = searchParams.get("status")
+    const planTypeParam = searchParams.get("planType")
 
-//     // Build where clause
-//     const where: any = {}
+    // Build where clause
+    const where: any = {}
 
-//     if (status && status !== "all") {
-//       where.status = status
-//     }
+    // Handle status filter
+    if (statusParam && statusParam !== "all") {
+      // Check if the value is a valid SubscriptionStatus
+      const validStatuses = Object.values(SubscriptionStatus)
+      if (validStatuses.includes(statusParam as SubscriptionStatus)) {
+        where.status = statusParam as SubscriptionStatus
+      }
+    }
 
-//     if (planType && planType !== "all") {
-//       where.planType = planType
-//     }
+    // Handle planType filter
+    if (planTypeParam && planTypeParam !== "all") {
+      // Check if the value is a valid PlanType
+      const validPlanTypes = Object.values(PlanType)
+      if (validPlanTypes.includes(planTypeParam as PlanType)) {
+        where.planType = planTypeParam as PlanType
+      }
+    }
 
-//     // Fetch payments with subscription data
-//     // Since there's no separate Subscription model, we'll use Payment model
-//     // and filter for recurring/subscription payments
-//     const payments = await prisma.payment.findMany({
-//       where: {
-//         ...where,
-//         // Filter for subscription-type payments
-//         OR: [{ gateway: { contains: "subscription" } }, { method: { contains: "subscription" } }],
-//       },
-//       include: {
-//         user: {
-//           select: {
-//             id: true,
-//             firstName: true,
-//             lastName: true,
-//             email: true,
-//             role: true,
-//           },
-//         },
-//         eventRegistration: {
-//           include: {
-//             event: {
-//               select: {
-//                 title: true,
-//               },
-//             },
-//           },
-//         },
-//       },
-//       orderBy: {
-//         createdAt: "desc",
-//       },
-//     })
+    // Fetch subscriptions with user data
+    const subscriptions = await prisma.subscription.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            role: true,
+          },
+        },
+        payment: {
+          select: {
+            id: true,
+            gateway: true,
+            gatewayTransactionId: true,
+            status: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    })
 
-//     // Transform payments into subscription format
-//     const subscriptions = payments.map((payment) => {
-//       const planType = payment.metadata?.planType || "MONTHLY"
-//       const startDate = payment.createdAt
-//       const endDate = new Date(startDate)
+    // Transform subscriptions into response format
+    const formattedSubscriptions = subscriptions.map((subscription) => ({
+      id: subscription.id,
+      userId: subscription.userId,
+      userName: `${subscription.user.firstName} ${subscription.user.lastName}`,
+      userEmail: subscription.user.email || "N/A",
+      userRole: subscription.user.role,
+      planName: subscription.planName,
+      planType: subscription.planType,
+      amount: subscription.amount,
+      currency: subscription.currency,
+      status: subscription.status,
+      startDate: subscription.startDate.toISOString(),
+      endDate: subscription.endDate.toISOString(),
+      nextBillingDate: subscription.nextBillingDate?.toISOString() || null,
+      autoRenew: subscription.autoRenew,
+      paymentMethod: subscription.paymentMethod || "Credit Card",
+      transactionId: subscription.transactionId || 
+                    subscription.payment?.gatewayTransactionId || 
+                    subscription.id,
+      features: subscription.features,
+      cancelledAt: subscription.cancelledAt?.toISOString() || null,
+      cancellationReason: subscription.cancellationReason,
+      createdAt: subscription.createdAt.toISOString(),
+      paymentStatus: subscription.payment?.status || null,
+    }))
 
-//       // Calculate end date based on plan type
-//       if (planType === "MONTHLY") {
-//         endDate.setMonth(endDate.getMonth() + 1)
-//       } else if (planType === "QUARTERLY") {
-//         endDate.setMonth(endDate.getMonth() + 3)
-//       } else if (planType === "YEARLY") {
-//         endDate.setFullYear(endDate.getFullYear() + 1)
-//       }
-
-//       const nextBillingDate = payment.status === "COMPLETED" ? endDate : null
-
-//       return {
-//         id: payment.id,
-//         userId: payment.userId,
-//         userName: `${payment.user.firstName} ${payment.user.lastName}`,
-//         userEmail: payment.user.email || "N/A",
-//         userRole: payment.user.role,
-//         planName: payment.eventRegistration?.event.title || payment.metadata?.planName || "Standard Plan",
-//         planType: planType,
-//         amount: payment.amount,
-//         currency: payment.currency,
-//         status: payment.status === "COMPLETED" ? "ACTIVE" : payment.status === "FAILED" ? "CANCELLED" : "PENDING",
-//         startDate: startDate.toISOString(),
-//         endDate: endDate.toISOString(),
-//         nextBillingDate: nextBillingDate ? nextBillingDate.toISOString() : null,
-//         autoRenew: payment.metadata?.autoRenew !== false,
-//         paymentMethod: payment.method,
-//         transactionId: payment.transactionId || payment.id,
-//         features: payment.metadata?.features || ["Basic Support", "Event Access", "Networking"],
-//         cancelledAt: payment.refundedAt || null,
-//         cancellationReason: payment.refundReason || null,
-//         createdAt: payment.createdAt.toISOString(),
-//       }
-//     })
-
-//     return NextResponse.json({
-//       success: true,
-//       subscriptions,
-//       total: subscriptions.length,
-//     })
-//   } catch (error) {
-//     console.error("Error fetching subscriptions:", error)
-//     return NextResponse.json({ success: false, error: "Failed to fetch subscriptions" }, { status: 500 })
-//   }
-// }
+    return NextResponse.json({
+      success: true,
+      subscriptions: formattedSubscriptions,
+      total: formattedSubscriptions.length,
+    })
+  } catch (error) {
+    console.error("Error fetching subscriptions:", error)
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: error instanceof Error ? error.message : "Failed to fetch subscriptions" 
+      }, 
+      { status: 500 }
+    )
+  }
+}

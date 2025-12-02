@@ -65,10 +65,10 @@ import VenueBookingsPage from "./venue/bookings"
 import VisitorEventsPage from "./visitors/events"
 import VisitorConnectionsPage from "./visitors/connections"
 import VisitorAppointmentsPage from "./visitors/appointments"
-// import FinancialPaymentsPage from "./financial/payments/page"
-// import FinancialSubscriptionsPage from "./financial/subscriptions/page"
-// import FinancialInvoicesPage from "./financial/invoices/page"
-// import FinancialTransactionsPage from "./financial/transactions/page"
+import FinancialPaymentsPage from "./financial/payments/page"
+import FinancialSubscriptionsPage from "./financial/subscriptions/page"
+import FinancialInvoicesPage from "./financial/invoices/page"
+import FinancialTransactionsPage from "./financial/transactions/page"
 import VenueFeedbackPage from "./venue/venue-feedback/page"
 import EmailTemplates from "./email-templates"
 import EmailCampaigns from "./email-notifications"
@@ -477,13 +477,13 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
 
         // Financial
         case "financial-payments":
-          return <div>Page will updated-----soon</div>//<FinancialPaymentsPage />
+          return <FinancialPaymentsPage />//<div>Page will updated-----soon</div>//
         case "financial-subscriptions":
-          return <div>Page will updated-----soon</div>//<FinancialSubscriptionsPage />
+          return <FinancialSubscriptionsPage />//<div>Page will updated-----soon</div>//
         case "financial-invoices":
-          return <div>Page will updated-----soon</div>//<FinancialInvoicesPage />
+          return <FinancialInvoicesPage />//<div>Page will updated-----soon</div>//
         case "financial-transactions":
-          return <div>Page will updated-----soon</div>//<FinancialTransactionsPage />
+          return <FinancialTransactionsPage />
 
         // Help & Support sub-sections
         case "support-tickets":
