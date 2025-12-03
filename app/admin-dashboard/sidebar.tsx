@@ -516,14 +516,14 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
             return <PushTemplates />
 
 
-            // case "integrations-payment":
-            //   return <PaymentIntegrationsPage />
+            case "integrations-payment":
+              return <PaymentIntegrationsPage />
 
-            // case "integrations-communication":
-            //   return <CommunicationIntegrationsPage />
+            case "integrations-communication":
+              return <CommunicationIntegrationsPage />
 
-            // case "integrations-travel":
-            //   return <TravelIntegrationsPage />
+            case "integrations-travel":
+              return <TravelIntegrationsPage />
 
         default:
           console.log("Unknown sub-section:", subSection)
