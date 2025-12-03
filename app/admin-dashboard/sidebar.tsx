@@ -81,6 +81,11 @@ import FinancialTransactionsPage from "./financial/transactions/page"
 import PaymentIntegrationsPage from "./integrations/page"
 import CommunicationIntegrationsPage from "./integrations/communication"
 import TravelIntegrationsPage from "./integrations/travel"
+import SettingsModulesPage from "./settings/modules"
+import SettingsNotificationsPage from "./settings/notifications"
+import SettingsSecurityPage from "./settings/security"
+import SettingsLanguagePage from "./settings/languages"
+import SettingsBackupPage from "./settings/backup"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -524,6 +529,23 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
 
             case "integrations-travel":
               return <TravelIntegrationsPage />
+
+
+        //settings
+        case "settings-modules":
+          return <SettingsModulesPage />
+
+        case "settings-notifications":
+          return <SettingsNotificationsPage />
+
+        case "settings-security":
+          return <SettingsSecurityPage />
+
+        case "settings-language":
+          return <SettingsLanguagePage />
+
+        case "settings-backup":
+          return <SettingsBackupPage />
 
         default:
           console.log("Unknown sub-section:", subSection)
