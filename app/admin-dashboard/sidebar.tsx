@@ -86,6 +86,7 @@ import SettingsNotificationsPage from "./settings/notifications"
 import SettingsSecurityPage from "./settings/security"
 import SettingsLanguagePage from "./settings/languages"
 import SettingsBackupPage from "./settings/backup"
+import BannersPage from "./content/banners"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -546,6 +547,11 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
 
         case "settings-backup":
           return <SettingsBackupPage />
+
+
+      //content
+      case "content-banners":
+        return <BannersPage />
 
         default:
           console.log("Unknown sub-section:", subSection)
