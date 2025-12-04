@@ -130,7 +130,7 @@ export default function PushNotifications() {
 
   const handleCreateNotification = async () => {
     try {
-      const response = await fetch("/api/marketing/push-notifications", {
+      const response = await fetch("/api/admin/marketing/push-notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newNotification),
