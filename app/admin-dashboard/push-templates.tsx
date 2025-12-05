@@ -51,7 +51,7 @@ export default function PushTemplates() {
   const fetchTemplates = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(`/api/marketing/push-templates?category=${filterCategory}`)
+      const response = await fetch(`/api/admin/marketing/push-templates?category=${filterCategory}`)
       const result = await response.json()
       if (result.success) {
         setTemplates(result.data)
@@ -65,7 +65,7 @@ export default function PushTemplates() {
 
   const handleCreateTemplate = async () => {
     try {
-      const response = await fetch("/api/marketing/push-templates", {
+      const response = await fetch("/api/admin/marketing/push-templates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newTemplate),
@@ -89,7 +89,7 @@ export default function PushTemplates() {
 
   const handleDeleteTemplate = async (id: string) => {
     try {
-      const response = await fetch(`/api/marketing/push-templates/${id}`, {
+      const response = await fetch(`/api/admin/marketing/push-templates/${id}`, {
         method: "DELETE",
       })
       if (response.ok) {
