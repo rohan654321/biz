@@ -175,7 +175,6 @@ model User {
   specialties      String[]
   achievements     String[]
   certifications   String[]
-  subscriptions      Subscription[]
 
   // Business Information
   businessEmail   String?
@@ -821,7 +820,6 @@ model Payment {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  subscription Subscription?
 
   eventRegistrations EventRegistration[]
   venueBookings      VenueBooking[]
@@ -2113,6 +2111,228 @@ model Banner {
   impressions Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
-  @@map("push_templates")
+
+  @@map("banners")
+}
+
+model Subscription {
+  id                 String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String             @db.ObjectId
+  user               User               @relation(fields: [userId], references: [id])
+  planType           SubscriptionPlan
+  status             SubscriptionStatus @default(ACTIVE)
+  startDate          DateTime
+  endDate            DateTime?
+  billingCycle       BillingCycle       @default(MONTHLY)
+  amount             Float
+  currency           String             @default("USD")
+  autoRenew          Boolean            @default(true)
+  cancelledAt        DateTime?
+  cancellationReason String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@map("subscriptions")
+}
+
+enum SubscriptionPlan {
+  BASIC
+  PREMIUM
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAUSED
+}
+
+enum BillingCycle {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+model PaymentGateway {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String // "Stripe", "PayPal", "Razorpay"
+  provider      String
+  isActive      Boolean   @default(false)
+  apiKey        String?
+  secretKey     String?
+  webhookSecret String?
+  testMode      Boolean   @default(true)
+  config        Json?
+  lastSyncAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("payment_gateways")
+}
+
+model CommunicationProvider {
+  id         String            @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  type       CommunicationType
+  provider   String // "SendGrid", "Twilio", etc.
+  isActive   Boolean           @default(false)
+  apiKey     String?
+  apiSecret  String?
+  config     Json?
+  lastSyncAt DateTime?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@map("communication_providers")
+}
+
+enum CommunicationType {
+  EMAIL
+  SMS
+  PUSH
+}
+
+model CalendarIntegration {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  provider     String // "Google", "Outlook", "Apple"
+  isConnected  Boolean   @default(false)
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
+  lastSyncAt   DateTime?
+  config       Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("calendar_integrations")
+}
+
+model APIKey {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  key         String    @unique
+  permissions String[]
+  rateLimit   Int       @default(1000)
+  isActive    Boolean   @default(true)
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("api_keys")
+}
+
+model Webhook {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  url             String
+  events          String[]
+  secret          String
+  isActive        Boolean       @default(true)
+  status          WebhookStatus @default(ACTIVE)
+  lastTriggeredAt DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("webhooks")
+}
+
+enum WebhookStatus {
+  ACTIVE
+  FAILED
+  DISABLED
+}
+
+model TravelPartner {
+  id             String            @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  type           TravelPartnerType
+  logo           String?
+  isActive       Boolean           @default(true)
+  commissionRate Float
+  apiKey         String?
+  config         Json?
+  totalBookings  Int               @default(0)
+  totalRevenue   Float             @default(0)
+  lastSyncAt     DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@map("travel_partners")
+}
+
+enum TravelPartnerType {
+  HOTEL
+  AIRLINE
+  CAR_RENTAL
+  TRAVEL_AGENCY
+}
+
+model PlatformModule {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String   @unique
+  displayName  String
+  description  String?
+  isEnabled    Boolean  @default(true)
+  version      String
+  config       Json?
+  permissions  String[]
+  dependencies String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("platform_modules")
+}
+
+model BackupSchedule {
+  id        String          @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  frequency BackupFrequency
+  time      String // "02:00"
+  retention Int // days
+  isActive  Boolean         @default(true)
+  storage   String // "local", "s3", "gcs"
+  config    Json?
+  lastRunAt DateTime?
+  nextRunAt DateTime?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@map("backup_schedules")
+}
+
+model BackupHistory {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  scheduleId  String?      @db.ObjectId
+  type        BackupType
+  size        Float // in MB
+  status      BackupStatus
+  storage     String
+  path        String?
+  error       String?
+  startedAt   DateTime
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+
+  @@map("backup_history")
+}
+
+enum BackupFrequency {
+  HOURLY
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum BackupType {
+  FULL
+  INCREMENTAL
+  MANUAL
+}
+
+enum BackupStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
 }
