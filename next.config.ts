@@ -16,6 +16,7 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
+        hostname: 'lh3.googleusercontent.com',
         pathname: '/**',
       },
       {
@@ -48,6 +49,19 @@ const nextConfig = {
         hostname: 'i.ytimg.com',
         pathname: '/**',
       },
+        hostname: '*.googleusercontent.com',
+        pathname: '/**',
+      },
+      // Allow all images during development (not recommended for production)
+      ...(process.env.NODE_ENV === 'development'
+        ? [
+            {
+              protocol: 'https',
+              hostname: '**',
+              pathname: '/**',
+            },
+          ]
+        : []),
     ],
   },
 }

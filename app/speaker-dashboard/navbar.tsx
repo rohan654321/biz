@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ChevronDown, User, LogOut, Settings, Bell } from "lucide-react"
+import { ChevronDown, User, LogOut, Settings } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import {
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useDashboard } from "@/contexts/dashboard-context"
+import { NotificationsDropdown } from "@/components/notifications-dropdown"
 
 interface Notification {
   id: string
@@ -197,66 +198,76 @@ export default function Navbar() {
               Add Event
             </p>
 
+            {/* Show both notification systems if you want to keep both */}
             {session && (
-              <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="relative">
-                    <Bell className="w-5 h-5" />
-                    {unreadCount > 0 && (
-                      <Badge
-                        variant="destructive"
-                        className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                      >
-                        {unreadCount > 9 ? "9+" : unreadCount}
-                      </Badge>
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-80" align="end" forceMount>
-                  <div className="flex items-center justify-between p-4 border-b">
-                    <h3 className="font-semibold">Notifications</h3>
-                    {unreadCount > 0 && (
-                      <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs h-auto p-1">
-                        Mark all read
-                      </Button>
-                    )}
-                  </div>
-                  <ScrollArea className="h-[400px]">
-                    {notifications.length === 0 ? (
-                      <div className="p-4 text-center text-muted-foreground">No notifications</div>
-                    ) : (
-                      notifications.map((notification) => (
-                        <div
-                          key={notification.id}
-                          className={`p-4 border-b hover:bg-accent cursor-pointer transition-colors ${
-                            !notification.isRead ? "bg-blue-50" : ""
-                          }`}
-                          onClick={() => {
-                            if (!notification.isRead) {
-                              markAsRead(notification.id)
-                            }
-                          }}
+              <>
+                {/* Push Notifications Dropdown (from super admin) */}
+                <NotificationsDropdown />
+
+                {/* Optional: Keep your existing system notifications if needed */}
+                {/* Uncomment if you want both */}
+                {/*
+                <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="relative">
+                      <Bell className="w-5 h-5" />
+                      {unreadCount > 0 && (
+                        <Badge
+                          variant="destructive"
+                          className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <h4 className="text-sm font-medium truncate">{notification.title}</h4>
-                                {!notification.isRead && (
-                                  <span className="h-2 w-2 rounded-full bg-blue-600 flex-shrink-0" />
-                                )}
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </Badge>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-80" align="end" forceMount>
+                    <div className="flex items-center justify-between p-4 border-b">
+                      <h3 className="font-semibold">System Notifications</h3>
+                      {unreadCount > 0 && (
+                        <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs h-auto p-1">
+                          Mark all read
+                        </Button>
+                      )}
+                    </div>
+                    <ScrollArea className="h-[400px]">
+                      {notifications.length === 0 ? (
+                        <div className="p-4 text-center text-muted-foreground">No notifications</div>
+                      ) : (
+                        notifications.map((notification) => (
+                          <div
+                            key={notification.id}
+                            className={`p-4 border-b hover:bg-accent cursor-pointer transition-colors ${
+                              !notification.isRead ? "bg-blue-50" : ""
+                            }`}
+                            onClick={() => {
+                              if (!notification.isRead) {
+                                markAsRead(notification.id)
+                              }
+                            }}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="text-sm font-medium truncate">{notification.title}</h4>
+                                  {!notification.isRead && (
+                                    <span className="h-2 w-2 rounded-full bg-blue-600 flex-shrink-0" />
+                                  )}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{notification.message}</p>
+                                <span className="text-xs text-muted-foreground mt-1 block">
+                                  {formatTimeAgo(notification.createdAt)}
+                                </span>
                               </div>
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{notification.message}</p>
-                              <span className="text-xs text-muted-foreground mt-1 block">
-                                {formatTimeAgo(notification.createdAt)}
-                              </span>
                             </div>
                           </div>
-                        </div>
-                      ))
-                    )}
-                  </ScrollArea>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                        ))
+                      )}
+                    </ScrollArea>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                */}
+              </>
             )}
 
             {/* Profile Menu */}
