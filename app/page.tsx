@@ -12,6 +12,8 @@ import HeroSlideshow from "../components/HeroSlideshow";
 // import ScrollBanner from "@/components/BannerCarousel";
 // import BannerCarousel from "@/components/BannerCarousel";
 import ImageBannerCarousel from "@/components/BannerCarousel";
+import { PageBanner } from "@/components/page-banner";
+import { InlineBanner } from "@/components/inline-banner";
 // import Navbar from "@/components/navbar";
   const bannerImages = [
     "/banners/banner1.jpg",
@@ -26,20 +28,24 @@ export default function Home() {
     <div className="bg-white min-h-screen">
        <HeroSlideshow />
        <CategoryBrowse />
-        <div className="my-10">
-        <ImageBannerCarousel images={bannerImages} />
+        <div className="px-6 py-6 border-b border-gray-200 max-w-6xl mx-auto">
+        <PageBanner page="homepage" height={150} autoplay={true} autoplayInterval={5000} showControls={true} />
       </div>
        <FeaturedEvents />                               
        <BrowseEventsByCity />
-         <div className="my-10">
-        <ImageBannerCarousel images={bannerImages} />
+         <div className="px-6 py-6 border-b border-gray-200 max-w-6xl mx-auto">
+         <PageBanner page="events" height={150} autoplay={true} autoplayInterval={5000} showControls={true} className="my-8" />
+          
       </div>
        <BrowseByCountry />
        <ExploreVenues />
        <FeaturedOrganizers />
+       
        <EventReviews />
        {/* <GetAppSection /> */}
-       <div></div>
+       <div className="px-6 py-6 border-b border-gray-200 max-w-6xl mx-auto">
+        <InlineBanner page="speakers" maxBanners={3} dismissible={true} />
+       </div>
     </div>
     </div>
   );
