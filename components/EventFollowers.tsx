@@ -251,15 +251,18 @@ export default function EventFollowers({ eventId }: EventFollowersProps) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {followers.map((follower) => {
+            {followers.map((follower, index) => {
               const targetUserId = follower.user?.id || follower.userId;
               const connection = getConnectionStatus(targetUserId);
               const isConnecting = connectingUsers.has(targetUserId);
               const isCurrentUser = session?.user?.id === targetUserId;
 
+              // Create a unique key by combining _id with index
+              const uniqueKey = `${follower._id}-${index}-${targetUserId}`;
+
               return (
                 <div
-                  key={follower._id}
+                  key={uniqueKey} // Fixed: Use unique key
                   className="p-5 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col"
                 >
                   <div className="flex flex-col items-center text-center mb-4">

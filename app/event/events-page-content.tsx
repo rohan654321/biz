@@ -18,7 +18,6 @@ import {
   UserPlus,
   X,
 } from "lucide-react"
-import Image from "next/image"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import AdCard from "@/components/add-card"
@@ -143,7 +142,16 @@ export default function EventsPageContent() {
   const DEFAULT_EVENT_IMAGE = "/city/c4.jpg"
 
   const getEventImage = (event: any) => {
-    return event.images?.[0] || event.image || DEFAULT_EVENT_IMAGE
+    const image = event.images?.[0] || event.image || DEFAULT_EVENT_IMAGE
+    
+    // Handle different image formats
+    if (typeof image === 'string') {
+      return image
+    } else if (image && typeof image === 'object' && image.url) {
+      return image.url
+    }
+    
+    return DEFAULT_EVENT_IMAGE
   }
 
   const fetchEvents = async () => {
@@ -193,7 +201,6 @@ export default function EventsPageContent() {
           featured: event.tags?.includes("featured") || false,
           categories: categories,
           tags: event.tags || [],
-          // ✅ FIX: Use images array directly, no need for .url property
           images: event.images || ["/images/gpex.jpg"],
           pricing: event.pricing || { general: 0 },
           rating: { average: avg },
@@ -1014,13 +1021,13 @@ export default function EventsPageContent() {
                           {/* Dynamic Formats from event.eventType */}
                           {formats.map((format, index) => (
                             <button
-                              key={`${format.name || "format"}-${index}`} // ✅ unique key even if name repeats
+                              key={`${format.name || "format"}-${index}`}
                               onClick={() => setSelectedFormat(format.name)}
                               className={`w-full text-left p-2 rounded text-sm flex justify-between items-center ${
                                 selectedFormat === format.name ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
                               }`}
                             >
-                              <span>{format.name || "Unnamed Format"}</span> {/* fallback text */}
+                              <span>{format.name || "Unnamed Format"}</span>
                               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
                                 {format.count ?? 0}
                               </span>
@@ -1127,39 +1134,6 @@ export default function EventsPageContent() {
                     )}
                   </div>
 
-                  {/* Related Topic Section */}
-                  {/* <div className="border-b border-gray-100">
-                    <button
-                      onClick={() => setRelatedTopicOpen(!relatedTopicOpen)}
-                      className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-                    >
-                      <span className="text-gray-900 font-medium">Related Topic</span>
-                      <ChevronDown
-                        className={`w-4 h-4 text-gray-400 transition-transform ${relatedTopicOpen ? "rotate-180" : ""}`}
-                      />
-                    </button>
-                    {relatedTopicOpen && (
-                      <div className="px-4 pb-4">
-                        <div className="space-y-3">
-                          {relatedTopics.slice(0, 5).map((topic) => (
-                            <div key={topic.name} className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedRelatedTopics.includes(topic.name)}
-                                  onChange={() => handleRelatedTopicToggle(topic.name)}
-                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                />
-                                <span className="text-sm text-gray-700">{topic.name}</span>
-                              </div>
-                              <span className="text-xs text-gray-500">{topic.count}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div> */}
-
                   {/* Navigation Links */}
                   <div className="p-4 border-b border-gray-100">
                     <h3 className="text-red-500 font-medium mb-1">Top 100 Events</h3>
@@ -1188,24 +1162,6 @@ export default function EventsPageContent() {
                   <span className="text-sm text-gray-600">
                     Showing {paginatedEvents.length} of {filteredEvents.length} events
                   </span>
-                  {/* <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => setViewMode("Trending")}
-                      className={`px-3 py-1 text-sm rounded-full ${
-                        viewMode === "Trending" ? "bg-orange-100 text-orange-600" : "text-gray-600 hover:text-gray-800"
-                      }`}
-                    >
-                      Trending 🔥
-                    </button>
-                    <button
-                      onClick={() => setViewMode("Date")}
-                      className={`px-3 py-1 text-sm rounded-full ${
-                        viewMode === "Date" ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:text-gray-800"
-                      }`}
-                    >
-                      Date
-                    </button>
-                  </div> */}
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
@@ -1261,11 +1217,10 @@ export default function EventsPageContent() {
                         <CardContent className="p-0 flex">
                           {/* Left Image Section */}
                           <div className="relative w-[80px] h-[100px] sm:w-[100px] sm:h-[120px] md:w-[120px] md:h-[140px] lg:w-[140px] lg:h-[160px] flex-shrink-0">
-                            <Image
-                              src={getEventImage(event) || "/placeholder.svg"} // ✅ This will now work correctly
+                            <img
+                              src={getEventImage(event) || "/placeholder.svg"}
                               alt={event.title}
-                              fill
-                              className="object-cover m-2 rounded-sm"
+                              className="object-cover m-2 rounded-sm w-full h-full"
                             />
                           </div>
 
@@ -1368,20 +1323,18 @@ export default function EventsPageContent() {
                               {/* Share + Save + Visit Buttons */}
                               <div className="flex items-center gap-2 flex-shrink-0">
                                 <ShareButton id={event.id} title={event.title} type="event" />
-                                <Button
-                                  className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 mt-1 rounded-md text-sm shadow-sm"
-                                  onClick={(e) => {
+                                
+                                <BookmarkButton
+                                  eventId={event.id}
+                                  className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 py-2 mt-1 rounded-md text-sm shadow-sm"
+                                  onClick={(e: React.MouseEvent) => {
                                     e.preventDefault()
                                     e.stopPropagation()
                                     handleVisitClick(event.id, event.title)
                                   }}
                                 >
-                                  <BookmarkButton
-                                    eventId={event.id}
-                                    className="p-1 rounded-full text-white transition"
-                                  />
                                   Save
-                                </Button>
+                                </BookmarkButton>
                               </div>
                             </div>
                           </div>
@@ -1392,7 +1345,7 @@ export default function EventsPageContent() {
                 )}
               </div>
 
-              {/* Featured Events and other sections remain the same */}
+              {/* Featured Events */}
               {featuredEvents.length > 0 && (
                 <section className="py-8">
                   <div className="flex items-center justify-between mb-6">
@@ -1423,11 +1376,9 @@ export default function EventsPageContent() {
                     {featuredEvents.slice(currentSlide * 3, currentSlide * 3 + 3).map((event) => (
                       <Card key={event.id} className="hover:shadow-lg transition-shadow bg-white">
                         <div className="relative">
-                          <Image
+                          <img
                             src={getEventImage(event) || "/placeholder.svg"}
                             alt={event.title}
-                            width={400}
-                            height={200}
                             className="w-full h-48 object-cover rounded-t-lg"
                           />
                           <div className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-md">
@@ -1488,11 +1439,9 @@ export default function EventsPageContent() {
               {featuredEvents[0] && (
                 <Card className="bg-white shadow-lg">
                   <div className="relative">
-                    <Image
+                    <img
                       src={getEventImage(featuredEvents[0]) || "/placeholder.svg"}
                       alt={featuredEvents[0].title}
-                      width={320}
-                      height={200}
                       className="w-full h-48 object-cover rounded-t-lg"
                     />
                     <div className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-md">
@@ -1530,11 +1479,9 @@ export default function EventsPageContent() {
                     <div className="bg-gradient-to-r from-yellow-100 to-yellow-300 rounded-2xl p-4 flex flex-col gap-4 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                       <div className="flex items-start gap-3">
                         <div className="w-[90px] h-[80px] flex-shrink-0 rounded-xl overflow-hidden">
-                          <Image
+                          <img
                             src={getEventImage(event) || "/placeholder.svg"}
                             alt={event.title}
-                            width={90}
-                            height={80}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -1552,14 +1499,6 @@ export default function EventsPageContent() {
                         </div>
                       </div>
                       <div className="border-t border-gray-300"></div>
-                      {/* <div className="flex gap-2 flex-wrap">
-                        <span className="px-2 py-1 text-xs rounded-full border border-gray-400 bg-white/70 text-gray-800">
-                          {event.categories[0] || "General"}
-                        </span>
-                        <span className="px-2 py-1 text-xs rounded-full border border-gray-400 bg-white/70 text-gray-800">
-                          Power & Energy
-                        </span>
-                      </div> */}
                     </div>
                   </Link>
                 ))}
