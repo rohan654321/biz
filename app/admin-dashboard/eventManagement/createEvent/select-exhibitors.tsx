@@ -80,44 +80,76 @@ export function SelectExhibitors({ exhibitorBooths, onExhibitorBoothsChange }: S
     exhibitor.industry.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const handleCreateExhibitor = async () => {
-    if (!newExhibitor.companyName || !newExhibitor.contactPerson || !newExhibitor.email) {
-      alert("Please fill in all required fields")
-      return
-    }
-
-    try {
-      const response = await fetch('/api/admin/exhibitors', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newExhibitor),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setNewBooth(prev => ({ ...prev, exhibitorId: data.exhibitor.id }))
-        setShowCreateForm(false)
-        setNewExhibitor({
-          companyName: "",
-          contactPerson: "",
-          email: "",
-          phone: "",
-          website: "",
-          industry: "",
-          location: "",
-          description: ""
-        })
-        fetchExhibitors() // Refresh the list
-      } else {
-        alert("Error creating exhibitor")
-      }
-    } catch (error) {
-      console.error("Error creating exhibitor:", error)
-      alert("Error creating exhibitor")
-    }
+ const handleCreateExhibitor = async () => {
+  if (!newExhibitor.companyName || !newExhibitor.contactPerson || !newExhibitor.email) {
+    alert("Please fill in all required fields")
+    return
   }
+
+  try {
+    // Extract first and last name from contactPerson
+    const [firstName, ...lastNameParts] = newExhibitor.contactPerson.split(' ')
+    const lastName = lastNameParts.join(' ') || "Exhibitor"
+    
+    // Prepare data according to API requirements
+    const exhibitorData = {
+      firstName: firstName || "Exhibitor",
+      lastName: lastName,
+      email: newExhibitor.email,
+      phone: newExhibitor.phone || "",
+      company: newExhibitor.companyName,
+      jobTitle: "Contact Person", // Default value
+      bio: newExhibitor.description || "",
+      location: newExhibitor.location || "",
+      website: newExhibitor.website || "",
+      companyIndustry: newExhibitor.industry || "Other",
+      // Optional fields with default values
+      linkedin: "",
+      twitter: "",
+      businessEmail: newExhibitor.email,
+      businessPhone: newExhibitor.phone || "",
+      businessAddress: newExhibitor.location || "",
+      taxId: "",
+      isVerified: false,
+      isActive: true,
+    }
+
+    console.log("Sending exhibitor data:", exhibitorData)
+
+    const response = await fetch('/api/admin/exhibitors', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(exhibitorData),
+    })
+
+    const data = await response.json()
+    
+    if (response.ok) {
+      setNewBooth(prev => ({ ...prev, exhibitorId: data.exhibitor.id }))
+      setShowCreateForm(false)
+      setNewExhibitor({
+        companyName: "",
+        contactPerson: "",
+        email: "",
+        phone: "",
+        website: "",
+        industry: "",
+        location: "",
+        description: ""
+      })
+      fetchExhibitors() // Refresh the list
+      alert(data.message || "Exhibitor created successfully!")
+    } else {
+      console.error("Error response:", data)
+      alert(`Error creating exhibitor: ${data.error || data.message || 'Unknown error'}`)
+    }
+  } catch (error) {
+    console.error("Error creating exhibitor:", error)
+    alert("Error creating exhibitor. Please try again.")
+  }
+}
 
   const handleAddRequirement = () => {
     if (newRequirement.trim()) {

@@ -137,12 +137,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    
+    console.log("[API] Creating exhibitor with data:", body)
+    
     const {
       firstName,
       lastName,
       email,
       phone,
-      password = "TEMP_PASSWORD", // Generate temp password
+      password = "TEMP_PASSWORD_123", // Generate temp password
       bio,
       company,
       jobTitle,
@@ -160,10 +163,30 @@ export async function POST(request: NextRequest) {
     } = body
 
     // Validate required fields
-    if (!firstName || !lastName || !email || !company) {
+    const missingFields = []
+    if (!firstName) missingFields.push("firstName")
+    if (!lastName) missingFields.push("lastName")
+    if (!email) missingFields.push("email")
+    if (!company) missingFields.push("company")
+
+    if (missingFields.length > 0) {
+      console.log("[API] Missing required fields:", missingFields)
       return NextResponse.json(
         {
-          error: "Missing required fields: firstName, lastName, email, company",
+          error: "Missing required fields",
+          missingFields,
+          message: `Missing required fields: ${missingFields.join(", ")}`
+        },
+        { status: 400 },
+      )
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        {
+          error: "Invalid email format",
         },
         { status: 400 },
       )
@@ -175,40 +198,48 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingUser) {
+      console.log("[API] User with email already exists:", email)
       return NextResponse.json(
         {
           error: "User with this email already exists",
+          message: "An exhibitor with this email already exists. Please use a different email."
         },
         { status: 409 },
       )
     }
 
+    // Hash password
+    const bcrypt = require('bcryptjs')
+    const hashedPassword = await bcrypt.hash(password, 10)
+
     // Create new exhibitor
     const exhibitor = await prisma.user.create({
       data: {
-        firstName,
-        lastName,
-        email,
-        phone,
-        password, // In production, hash this password
-        bio,
-        company,
-        jobTitle,
-        location,
-        website,
-        linkedin,
-        twitter,
-        businessEmail,
-        businessPhone,
-        businessAddress,
-        taxId,
-        companyIndustry,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone?.trim() || "",
+        password: hashedPassword,
+        bio: bio?.trim() || "",
+        company: company.trim(),
+        jobTitle: jobTitle?.trim() || "",
+        location: location?.trim() || "",
+        website: website?.trim() || "",
+        linkedin: linkedin?.trim() || "",
+        twitter: twitter?.trim() || "",
+        businessEmail: businessEmail?.trim() || "",
+        businessPhone: businessPhone?.trim() || "",
+        businessAddress: businessAddress?.trim() || "",
+        taxId: taxId?.trim() || "",
+        companyIndustry: companyIndustry?.trim() || "Other",
         role: "EXHIBITOR",
         isActive,
         isVerified,
         emailVerified: false,
       },
     })
+
+    console.log("[API] Exhibitor created successfully:", exhibitor.id)
 
     // Remove password from response
     const { password: _, ...exhibitorWithoutPassword } = exhibitor
@@ -220,8 +251,23 @@ export async function POST(request: NextRequest) {
       }, 
       { status: 201 }
     )
-  } catch (error) {
-    console.error("Error creating exhibitor:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  } catch (error: any) {
+    console.error("[API] Error creating exhibitor:", error)
+    
+    // Check for Prisma unique constraint error
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { 
+          error: "Duplicate entry",
+          message: "An exhibitor with this email already exists"
+        },
+        { status: 409 }
+      )
+    }
+    
+    return NextResponse.json({ 
+      error: "Internal server error",
+      message: error.message || "Failed to create exhibitor"
+    }, { status: 500 })
   }
 }
