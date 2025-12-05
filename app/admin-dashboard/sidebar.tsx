@@ -8,7 +8,7 @@ import {
   Calendar,
   Users,
   Building2,
-  Mic,
+  Mic,   
   MapPin,
   UserCircle,
   DollarSign,
@@ -65,11 +65,24 @@ import VenueBookingsPage from "./venue/bookings"
 import VisitorEventsPage from "./visitors/events"
 import VisitorConnectionsPage from "./visitors/connections"
 import VisitorAppointmentsPage from "./visitors/appointments"
-// import FinancialPaymentsPage from "./financial/payments/page"
-// import FinancialSubscriptionsPage from "./financial/subscriptions/page"
-// import FinancialInvoicesPage from "./financial/invoices/page"
-// import FinancialTransactionsPage from "./financial/transactions/page"
 import VenueFeedbackPage from "./venue/venue-feedback/page"
+import EmailTemplates from "./email-templates"
+import EmailCampaigns from "./email-notifications"
+import PushNotifications from "./push-notifications"
+import PushTemplates from "./push-templates"
+import FinancialPaymentsPage from "./financial/payments/page"
+import FinancialSubscriptionsPage from "./financial/subscriptions/page"
+import FinancialInvoicesPage from "./financial/invoices/page"
+import FinancialTransactionsPage from "./financial/transactions/page"
+import PaymentIntegrationsPage from "./integrations/page"
+import CommunicationIntegrationsPage from "./integrations/communication"
+import TravelIntegrationsPage from "./integrations/travel"
+import SettingsModulesPage from "./settings/modules"
+import SettingsNotificationsPage from "./settings/notifications"
+import SettingsSecurityPage from "./settings/security"
+import SettingsLanguagePage from "./settings/languages"
+import SettingsBackupPage from "./settings/backup"
+import BannersPage from "./content/banners"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -338,7 +351,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       subItems: [
         { title: "Payment Gateways", id: "integrations-payment" },
         { title: "Email/SMS Providers", id: "integrations-communication" },
-        { title: "Calendar & API", id: "integrations-calendar" },
+        // { title: "Calendar & API", id: "integrations-calendar" },
         { title: "Hotel & Travel Partners", id: "integrations-travel" },
       ],
     },
@@ -490,6 +503,51 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <FAQManagement />
         case "support-notes":
           return <AdminNotes />
+
+
+          case "marketing-email":
+            return <EmailCampaigns />
+
+          case "template-email":
+            return < EmailTemplates />
+
+          case "marketing-notifications":
+            return <PushNotifications />
+
+          case "template-notifications" :
+            return <PushTemplates />
+
+
+            case "integrations-payment":
+              return <PaymentIntegrationsPage />
+
+            case "integrations-communication":
+              return <CommunicationIntegrationsPage />
+
+            case "integrations-travel":
+              return <TravelIntegrationsPage />
+
+
+        //settings
+        case "settings-modules":
+          return <SettingsModulesPage />
+
+        case "settings-notifications":
+          return <SettingsNotificationsPage />
+
+        case "settings-security":
+          return <SettingsSecurityPage />
+
+        case "settings-language":
+          return <SettingsLanguagePage />
+
+        case "settings-backup":
+          return <SettingsBackupPage />
+
+
+      //content
+      case "content-banners":
+        return <BannersPage />
 
         default:
           console.log("Unknown sub-section:", subSection)

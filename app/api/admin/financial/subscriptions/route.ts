@@ -7,8 +7,8 @@
 //     const status = searchParams.get("status")
 //     const planType = searchParams.get("planType")
 
-//     // Build where clause
-//     const where: any = {}
+    // Build where clause
+    const where: any = {}
 
 //     if (status && status !== "all") {
 //       where.status = status
