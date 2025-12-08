@@ -4,8 +4,6 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
@@ -30,9 +28,6 @@ import {
   Stethoscope,
   Star,
   Loader2,
-  Eye,
-  MousePointer,
-  TrendingUp,
 } from "lucide-react"
 
 interface Event {
@@ -88,7 +83,7 @@ interface CategoryFilter {
   color: string
 }
 
-export default function EventPromotion( { eventId }: { eventId: string } ) {
+export default function EventPromotion({ eventId }: { eventId: string }) {
   const { toast } = useToast()
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedPackage, setSelectedPackage] = useState("")
@@ -96,67 +91,12 @@ export default function EventPromotion( { eventId }: { eventId: string } ) {
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
 
+  const [promotionPackages, setPromotionPackages] = useState<PromotionPackage[]>([])
+  const [packagesLoading, setPackagesLoading] = useState(true)
+
   // State for API data
   const [event, setEvent] = useState<Event | null>(null)
   const [promotions, setPromotions] = useState<Promotion[]>([])
-
-  // Platform promotion packages
-  const promotionPackages: PromotionPackage[] = [
-    {
-      id: "basic",
-      name: "Basic Promotion",
-      description: "Reach targeted users in your event category",
-      price: 2999,
-      features: [
-        "Email notification to 5,000+ users",
-        "In-app notification banner",
-        "Category-based targeting",
-        "Basic analytics report",
-        "7-day promotion duration",
-      ],
-      userCount: 5000,
-      categories: ["selected"],
-      duration: "7 days",
-    },
-    {
-      id: "premium",
-      name: "Premium Promotion",
-      description: "Enhanced visibility with multi-category reach",
-      price: 7999,
-      features: [
-        "Email notification to 15,000+ users",
-        "Featured event placement",
-        "Multi-category targeting",
-        "Push notifications",
-        "Detailed analytics dashboard",
-        "14-day promotion duration",
-        "Social media cross-promotion",
-      ],
-      userCount: 15000,
-      categories: ["multiple"],
-      duration: "14 days",
-      recommended: true,
-    },
-    {
-      id: "enterprise",
-      name: "Enterprise Promotion",
-      description: "Maximum reach across all relevant categories",
-      price: 15999,
-      features: [
-        "Email notification to 50,000+ users",
-        "Homepage banner placement",
-        "All relevant category targeting",
-        "SMS notifications (premium users)",
-        "Advanced analytics & insights",
-        "30-day promotion duration",
-        "Dedicated account manager",
-        "Custom promotional content",
-      ],
-      userCount: 50000,
-      categories: ["all"],
-      duration: "30 days",
-    },
-  ]
 
   // User categories with engagement data
   const userCategories: CategoryFilter[] = [
@@ -260,7 +200,42 @@ export default function EventPromotion( { eventId }: { eventId: string } ) {
 
   useEffect(() => {
     fetchPromotionData()
+    fetchPromotionPackages()
   }, [eventId])
+
+  const fetchPromotionPackages = async () => {
+    try {
+      setPackagesLoading(true)
+      const response = await fetch("/api/promotion-packages?userType=ORGANIZER")
+      if (!response.ok) throw new Error("Failed to fetch packages")
+
+      const data = await response.json()
+
+      // Transform API response to match component structure
+      const transformedPackages = data.packages.map((pkg: any) => ({
+        id: pkg.id,
+        name: pkg.name,
+        description: pkg.description,
+        price: pkg.price,
+        features: pkg.features,
+        userCount: pkg.userCount,
+        categories: ["selected"], // You can customize this based on your needs
+        duration: `${pkg.duration} days`,
+        recommended: pkg.isRecommended,
+      }))
+
+      setPromotionPackages(transformedPackages)
+    } catch (error) {
+      console.error("Error fetching promotion packages:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load promotion packages",
+        variant: "destructive",
+      })
+    } finally {
+      setPackagesLoading(false)
+    }
+  }
 
   const fetchPromotionData = async () => {
     try {
@@ -312,7 +287,7 @@ export default function EventPromotion( { eventId }: { eventId: string } ) {
       setIsPaymentDialogOpen(false)
       setSelectedCategories([])
       setSelectedPackage("")
-      fetchPromotionData() // Refresh data
+      fetchPromotionData()
     } catch (error) {
       console.error("Error creating promotion:", error)
       toast({
@@ -355,7 +330,7 @@ export default function EventPromotion( { eventId }: { eventId: string } ) {
 
   const selectedPackageData = promotionPackages.find((p) => p.id === selectedPackage)
 
-  if (loading) {
+  if (loading || packagesLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-8 h-8 animate-spin" />
@@ -392,50 +367,6 @@ export default function EventPromotion( { eventId }: { eventId: string } ) {
           </Badge>
         </div>
       </div>
-
-      {/* Active Promotions */}
-      {/* {promotions.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
-              Active Promotions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {promotions.map((promotion) => (
-                <div key={promotion.id} className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant={promotion.status === "ACTIVE" ? "default" : "secondary"}>{promotion.status}</Badge>
-                    <span className="text-sm text-gray-500">{promotion.packageType}</span>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Impressions:</span>
-                      <div className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
-                        <span>{promotion.impressions.toLocaleString()}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Clicks:</span>
-                      <div className="flex items-center gap-1">
-                        <MousePointer className="w-3 h-3" />
-                        <span>{promotion.clicks.toLocaleString()}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Conversions:</span>
-                      <span className="font-medium text-green-600">{promotion.conversions}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )} */}
 
       {/* Category Selection */}
       <Card>
@@ -521,63 +452,70 @@ export default function EventPromotion( { eventId }: { eventId: string } ) {
             <p className="text-sm text-gray-600">Select a package that fits your budget and reach requirements</p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {promotionPackages.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  className={`relative p-6 border-2 rounded-lg ${
-                    pkg.recommended ? "border-blue-500 bg-blue-50" : "border-gray-200"
-                  }`}
-                >
-                  {pkg.recommended && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <Badge className="bg-blue-500 text-white">
-                        <Star className="w-3 h-3 mr-1" />
-                        Recommended
-                      </Badge>
-                    </div>
-                  )}
-
-                  <div className="text-center mb-4">
-                    <h3 className="text-xl font-bold">{pkg.name}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{pkg.description}</p>
-                    <div className="mt-3">
-                      <span className="text-3xl font-bold text-blue-600">₹{pkg.price.toLocaleString()}</span>
-                      <span className="text-sm text-gray-500">/{pkg.duration}</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Reach:</span>
-                      <span className="font-medium">{pkg.userCount.toLocaleString()}+ users</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Duration:</span>
-                      <span className="font-medium">{pkg.duration}</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 mb-6">
-                    {pkg.features.map((feature, index) => (
-                      <div key={index} className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Button
-                    className="w-full"
-                    variant={pkg.recommended ? "default" : "outline"}
-                    onClick={() => handlePackageSelect(pkg.id)}
+            {promotionPackages.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>No promotion packages available at the moment.</p>
+                <p className="text-sm mt-2">Please check back later or contact support.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {promotionPackages.map((pkg) => (
+                  <div
+                    key={pkg.id}
+                    className={`relative p-6 border-2 rounded-lg ${
+                      pkg.recommended ? "border-blue-500 bg-blue-50" : "border-gray-200"
+                    }`}
                   >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Select Package
-                  </Button>
-                </div>
-              ))}
-            </div>
+                    {pkg.recommended && (
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <Badge className="bg-blue-500 text-white">
+                          <Star className="w-3 h-3 mr-1" />
+                          Recommended
+                        </Badge>
+                      </div>
+                    )}
+
+                    <div className="text-center mb-4">
+                      <h3 className="text-xl font-bold">{pkg.name}</h3>
+                      <p className="text-sm text-gray-600 mt-1">{pkg.description}</p>
+                      <div className="mt-3">
+                        <span className="text-3xl font-bold text-blue-600">₹{pkg.price.toLocaleString()}</span>
+                        <span className="text-sm text-gray-500">/{pkg.duration}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Reach:</span>
+                        <span className="font-medium">{pkg.userCount.toLocaleString()}+ users</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Duration:</span>
+                        <span className="font-medium">{pkg.duration}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 mb-6">
+                      {pkg.features.map((feature, index) => (
+                        <div key={index} className="flex items-center gap-2 text-sm">
+                          <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          <span>{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <Button
+                      className="w-full"
+                      variant={pkg.recommended ? "default" : "outline"}
+                      onClick={() => handlePackageSelect(pkg.id)}
+                    >
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      Select Package
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -594,7 +532,6 @@ export default function EventPromotion( { eventId }: { eventId: string } ) {
 
           {selectedPackageData && (
             <div className="space-y-6">
-              {/* Order Summary */}
               <div className="p-4 bg-gray-50 rounded-lg">
                 <h3 className="font-semibold mb-3">Order Summary</h3>
                 <div className="space-y-2 text-sm">
@@ -607,78 +544,33 @@ export default function EventPromotion( { eventId }: { eventId: string } ) {
                     <span className="font-medium">{event.title}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Target Categories:</span>
-                    <span className="font-medium">{selectedCategories.length} selected</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Estimated Reach:</span>
-                    <span className="font-medium">{calculateEstimatedReach().toLocaleString()} users</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span>Duration:</span>
                     <span className="font-medium">{selectedPackageData.duration}</span>
                   </div>
-                  <div className="border-t pt-2 mt-2">
-                    <div className="flex justify-between font-semibold">
-                      <span>Total Amount:</span>
-                      <span className="text-blue-600">₹{selectedPackageData.price.toLocaleString()}</span>
-                    </div>
+                  <div className="flex justify-between">
+                    <span>Target Categories:</span>
+                    <span className="font-medium">{selectedCategories.length} selected</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold pt-2 border-t">
+                    <span>Total:</span>
+                    <span>₹{selectedPackageData.price.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Payment Form */}
-              <div className="space-y-4">
-                <h3 className="font-semibold">Payment Details</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="card-number">Card Number</Label>
-                    <Input id="card-number" placeholder="1234 5678 9012 3456" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="card-name">Cardholder Name</Label>
-                    <Input id="card-name" placeholder="John Doe" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="expiry">Expiry Date</Label>
-                    <Input id="expiry" placeholder="MM/YY" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cvv">CVV</Label>
-                    <Input id="cvv" placeholder="123" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Terms and Conditions */}
-              <div className="flex items-center space-x-2">
-                <Checkbox id="terms" />
-                <Label htmlFor="terms" className="text-sm">
-                  I agree to the{" "}
-                  <a href="#" className="text-blue-600 hover:underline">
-                    Terms and Conditions
-                  </a>{" "}
-                  and{" "}
-                  <a href="#" className="text-blue-600 hover:underline">
-                    Promotion Policy
-                  </a>
-                </Label>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={createPromotion} disabled={creating}>
-                  {creating ? (
+              <Button className="w-full" onClick={createPromotion} disabled={creating}>
+                {creating ? (
+                  <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
+                    Processing...
+                  </>
+                ) : (
+                  <>
                     <CreditCard className="w-4 h-4 mr-2" />
-                  )}
-                  Pay ₹{selectedPackageData.price.toLocaleString()}
-                </Button>
-              </div>
+                    Complete Purchase
+                  </>
+                )}
+              </Button>
             </div>
           )}
         </DialogContent>
