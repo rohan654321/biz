@@ -6,6 +6,7 @@ import { useKeenSlider } from "keen-slider/react"
 import "keen-slider/keen-slider.min.css"
 import Image from "next/image"
 import { useEffect, useState } from "react"
+import Link from "next/link"
 
 interface Event {
   id: string
@@ -39,6 +40,21 @@ interface Event {
   maxAttendees?: number
 }
 
+interface Banner {
+  id: string
+  title: string
+  imageUrl: string
+  publicId: string
+  page: string
+  position: string
+  isActive: boolean
+  link?: string
+  width: number
+  height: number
+  createdAt: string
+  updatedAt: string
+}
+
 interface EventHeroProps {
   event: Event
 }
@@ -46,6 +62,9 @@ interface EventHeroProps {
 export default function EventHero({ event }: EventHeroProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [images, setImages] = useState<string[]>(event.images || [])
+  const [heroBanners, setHeroBanners] = useState<Banner[]>([])
+  const [heroBannersLoading, setHeroBannersLoading] = useState(false)
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
 
   const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
     loop: true,
@@ -54,6 +73,47 @@ export default function EventHero({ event }: EventHeroProps) {
       setCurrentSlide(slider.track.details.rel)
     },
   })
+
+  const [bannerSliderRef, bannerInstanceRef] = useKeenSlider<HTMLDivElement>({
+    loop: true,
+    slides: { perView: 1 },
+    slideChanged(slider) {
+      setCurrentBannerIndex(slider.track.details.rel)
+    },
+  })
+
+  // Fetch hero banners for event-detail page
+  useEffect(() => {
+    async function fetchHeroBanners() {
+      try {
+        setHeroBannersLoading(true)
+        // Fetch banners specifically for event-detail page with hero position
+        const res = await fetch(`/api/content/banners?page=event-detail&position=hero`)
+        
+        if (res.ok) {
+          const data = await res.json()
+          // Filter only active banners
+          const activeHeroBanners = data.filter((banner: Banner) => banner.isActive)
+          setHeroBanners(activeHeroBanners)
+          
+          // Start auto-rotation if we have multiple banners
+          if (activeHeroBanners.length > 1) {
+            const interval = setInterval(() => {
+              bannerInstanceRef.current?.next()
+            }, 8000) // Change banner every 8 seconds
+            
+            return () => clearInterval(interval)
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching hero banners:", error)
+      } finally {
+        setHeroBannersLoading(false)
+      }
+    }
+    
+    fetchHeroBanners()
+  }, [bannerInstanceRef])
 
   useEffect(() => {
     const slider = instanceRef.current
@@ -125,36 +185,122 @@ export default function EventHero({ event }: EventHeroProps) {
   }
 
   // Format time range
- const formatTimeRange = () => {
-  if (!event.startDate || !event.endDate) {
-    return "Time to be announced"
+  const formatTimeRange = () => {
+    if (!event.startDate || !event.endDate) {
+      return "Time to be announced"
+    }
+
+    const startTime = new Date(event.startDate).toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "Asia/Kolkata", // Force Indian time zone
+    })
+
+    const endTime = new Date(event.endDate).toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "Asia/Kolkata", // Force Indian time zone
+    })
+
+    return `${startTime} – ${endTime}`
   }
-
-  const startTime = new Date(event.startDate).toLocaleTimeString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "Asia/Kolkata", // Force Indian time zone
-  })
-
-  const endTime = new Date(event.endDate).toLocaleTimeString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "Asia/Kolkata", // Force Indian time zone
-  })
-
-  return `${startTime} – ${endTime}`
-}
-
 
   const followersCount = getFollowersCount()
 
+  // Handle banner click tracking
+  const handleBannerClick = async (bannerId: string) => {
+    try {
+      // Track banner click
+      await fetch(`/api/analytics/banner-click`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bannerId,
+          eventId: event.id,
+          timestamp: new Date().toISOString(),
+          path: window.location.pathname,
+        })
+      })
+    } catch (error) {
+      console.error('Error tracking banner click:', error)
+    }
+  }
+
   return (
     <div>
-      {/* Background Banner */}
-      <div className="relative h-[200px] md:h-[300px] lg:h-[200px]">
-        <img src={"/banners/banner1.jpg"} alt={event.title} className="w-full h-full object-cover" />
+      {/* Dynamic Hero Banner Section */}
+      <div className="relative h-[200px] md:h-[300px] lg:h-[200px] overflow-hidden">
+        {heroBannersLoading ? (
+          // Loading skeleton
+          <div className="w-full h-full bg-gray-200 animate-pulse"></div>
+        ) : heroBanners.length > 0 ? (
+          <>
+            {/* Banner Slider */}
+            <div ref={bannerSliderRef} className="keen-slider h-full w-full">
+              {heroBanners.map((banner, index) => (
+                <div key={banner.id} className="keen-slider__slide relative h-full w-full">
+                  <Link 
+                    href={banner.link || "#"}
+                    onClick={() => handleBannerClick(banner.id)}
+                    target={banner.link?.startsWith('http') ? '_blank' : '_self'}
+                    className="block w-full h-full"
+                  >
+                    <Image
+                      src={banner.imageUrl || "/placeholder.svg"}
+                      alt={banner.title}
+                      fill
+                      className="object-cover"
+                      priority={index === 0}
+                      sizes="100vw"
+                    />
+                    {/* Optional banner title overlay */}
+                    {banner.title && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                        <h3 className="text-white text-sm md:text-lg font-semibold">
+                          {banner.title}
+                        </h3>
+                      </div>
+                    )}
+                  </Link>
+                </div>
+              ))}
+            </div>
+
+            {/* Banner indicators if multiple banners */}
+            {heroBanners.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                {heroBanners.map((_, idx) => (
+                  <button
+                    key={idx}
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      idx === currentBannerIndex ? "bg-white" : "bg-white/50"
+                    }`}
+                    onClick={() => bannerInstanceRef.current?.moveToIdx(idx)}
+                  />
+                ))}
+              </div>
+            )}
+            
+            {/* Sponsored badge */}
+            <div className="absolute top-4 right-4">
+              <span className="bg-blue-600 text-white text-xs font-medium px-2 py-1 rounded">
+                Sponsored
+              </span>
+            </div>
+          </>
+        ) : (
+          // Fallback to default banner if no banners found
+          <Image
+            src="/banners/banner1.jpg"
+            alt={event.title}
+            fill
+            className="object-cover"
+            sizes="100vw"
+            priority
+          />
+        )}
       </div>
 
       {/* Main Card */}

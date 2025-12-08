@@ -2335,6 +2335,7 @@ enum BackupStatus {
   IN_PROGRESS
   COMPLETED
   FAILED
+
 }
 
 
@@ -2357,3 +2358,4 @@ model PromotionPackage {
 
   @@map("promotion_packages")
 }
+
