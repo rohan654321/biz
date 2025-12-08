@@ -65,7 +65,7 @@
     "mongodb": "^6.19.0",
     "mongoose": "^8.19.0",
     "nanoid": "^5.1.5",
-    "next": "15.3.3",
+    "next": "16.0.7",
     "next-auth": "^4.24.11",
     "nodemailer": "^6.10.1",
     "qrcode": "^1.5.4",
