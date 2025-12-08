@@ -83,7 +83,46 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
   const [exhibitorEvents, setExhibitorEvents] = useState<Event[]>([])
   const [loadingEvents, setLoadingEvents] = useState(true)
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
+  const [promotionPackages, setPromotionPackages] = useState<PromotionPackage[]>([])
+  const [loadingPackages, setLoadingPackages] = useState(true)
   const { toast } = useToast()
+
+  useEffect(() => {
+    const fetchPackages = async () => {
+      try {
+        setLoadingPackages(true)
+        const res = await fetch("/api/promotion-packages?userType=EXHIBITOR")
+        if (!res.ok) throw new Error("Failed to fetch packages")
+        const data = await res.json()
+
+        const transformedPackages = data.packages.map((pkg: any) => ({
+          id: pkg.id,
+          name: pkg.name,
+          description: pkg.description,
+          price: pkg.price,
+          features: pkg.features,
+          userCount: pkg.userCount,
+          categories: pkg.targetUserTypes || ["selected"],
+          duration: `${pkg.durationDays} days`,
+          durationDays: pkg.durationDays,
+          recommended: pkg.recommended || false,
+        }))
+
+        setPromotionPackages(transformedPackages)
+      } catch (error) {
+        console.error("Error fetching promotion packages:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load promotion packages",
+          variant: "destructive",
+        })
+      } finally {
+        setLoadingPackages(false)
+      }
+    }
+
+    fetchPackages()
+  }, [toast])
 
   useEffect(() => {
     if (!exhibitorId) return
@@ -110,66 +149,6 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
 
     fetchEvents()
   }, [exhibitorId, toast])
-
-  const promotionPackages: PromotionPackage[] = [
-    {
-      id: "basic",
-      name: "Basic Promotion",
-      description: "Reach targeted users in your event category",
-      price: 2999,
-      features: [
-        "Email notification to 5,000+ users",
-        "In-app notification banner",
-        "Category-based targeting",
-        "Basic analytics report",
-        "7-day promotion duration",
-      ],
-      userCount: 5000,
-      categories: ["selected"],
-      duration: "7 days",
-      durationDays: 7,
-    },
-    {
-      id: "premium",
-      name: "Premium Promotion",
-      description: "Enhanced visibility with multi-category reach",
-      price: 7999,
-      features: [
-        "Email notification to 15,000+ users",
-        "Featured exhibitor placement",
-        "Multi-category targeting",
-        "Push notifications",
-        "Detailed analytics dashboard",
-        "14-day promotion duration",
-        "Social media cross-promotion",
-      ],
-      userCount: 15000,
-      categories: ["multiple"],
-      duration: "14 days",
-      durationDays: 14,
-      recommended: true,
-    },
-    {
-      id: "enterprise",
-      name: "Enterprise Promotion",
-      description: "Maximum reach across all relevant categories",
-      price: 15999,
-      features: [
-        "Email notification to 50,000+ users",
-        "Homepage banner placement",
-        "All relevant category targeting",
-        "SMS notifications (premium users)",
-        "Advanced analytics & insights",
-        "30-day promotion duration",
-        "Dedicated account manager",
-        "Custom promotional content",
-      ],
-      userCount: 50000,
-      categories: ["all"],
-      duration: "30 days",
-      durationDays: 30,
-    },
-  ]
 
   const userCategories: CategoryFilter[] = [
     {
@@ -331,7 +310,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
       })
       return
     }
-
+   
     if (selectedCategories.length === 0) {
       console.log("[v0] Validation failed - no categories selected")
       toast({
@@ -378,8 +357,7 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
       setSelectedEvent("")
       setSelectedCategories([])
       setSelectedPackage("")
-      
-      // Trigger refresh in parent component
+
       if (onPromotionCreated) {
         onPromotionCreated()
       }
@@ -535,7 +513,9 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                         <div>
                           <span className="text-gray-600">Expected Leads:</span>
                           <div className="text-2xl font-bold text-purple-600">
-                            {Math.round(calculateEstimatedReach() * (calculateEstimatedEngagement() / 100) * 0.12).toLocaleString()}
+                            {Math.round(
+                              calculateEstimatedReach() * (calculateEstimatedEngagement() / 100) * 0.12,
+                            ).toLocaleString()}
                           </div>
                         </div>
                       </div>
@@ -557,65 +537,77 @@ export default function PromotionsMarketing({ exhibitorId, onPromotionCreated }:
                     </p>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {promotionPackages.map((pkg) => (
-                        <div
-                          key={pkg.id}
-                          className={`relative p-6 border-2 rounded-lg transition-all ${
-                            pkg.recommended 
-                              ? "border-blue-500 bg-blue-50 shadow-md" 
-                              : "border-gray-200 hover:border-gray-300"
-                          }`}
-                        >
-                          {pkg.recommended && (
-                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                              <Badge className="bg-blue-500 text-white">
-                                <Star className="w-3 h-3 mr-1" />
-                                Recommended
-                              </Badge>
-                            </div>
-                          )}
-
-                          <div className="text-center mb-4">
-                            <h3 className="text-xl font-bold">{pkg.name}</h3>
-                            <p className="text-sm text-gray-600 mt-1">{pkg.description}</p>
-                            <div className="mt-3">
-                              <span className="text-3xl font-bold text-blue-600">${pkg.price.toLocaleString()}</span>
-                              <span className="text-sm text-gray-500">/{pkg.duration}</span>
-                            </div>
-                          </div>
-
-                          <div className="space-y-3 mb-6">
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-600">Reach:</span>
-                              <span className="font-medium">{pkg.userCount.toLocaleString()}+ users</span>
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-600">Duration:</span>
-                              <span className="font-medium">{pkg.duration}</span>
-                            </div>
-                          </div>
-
-                          <div className="space-y-2 mb-6">
-                            {pkg.features.map((feature, index) => (
-                              <div key={index} className="flex items-center gap-2 text-sm">
-                                <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                                <span>{feature}</span>
-                              </div>
-                            ))}
-                          </div>
-
-                          <Button
-                            className="w-full"
-                            variant={pkg.recommended ? "default" : "outline"}
-                            onClick={() => handlePackageSelect(pkg.id)}
+                    {loadingPackages ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-gray-500 mr-2" />
+                        <span className="text-gray-500">Loading packages...</span>
+                      </div>
+                    ) : promotionPackages.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>No promotion packages available at the moment.</p>
+                        <p className="text-sm mt-2">Please check back later or contact support.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {promotionPackages.map((pkg) => (
+                          <div
+                            key={pkg.id}
+                            className={`relative p-6 border-2 rounded-lg transition-all ${
+                              pkg.recommended
+                                ? "border-blue-500 bg-blue-50 shadow-md"
+                                : "border-gray-200 hover:border-gray-300"
+                            }`}
                           >
-                            <CreditCard className="w-4 h-4 mr-2" />
-                            Select Package
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
+                            {pkg.recommended && (
+                              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                                <Badge className="bg-blue-500 text-white">
+                                  <Star className="w-3 h-3 mr-1" />
+                                  Recommended
+                                </Badge>
+                              </div>
+                            )}
+
+                            <div className="text-center mb-4">
+                              <h3 className="text-xl font-bold">{pkg.name}</h3>
+                              <p className="text-sm text-gray-600 mt-1">{pkg.description}</p>
+                              <div className="mt-3">
+                                <span className="text-3xl font-bold text-blue-600">${pkg.price.toLocaleString()}</span>
+                                <span className="text-sm text-gray-500">/{pkg.duration}</span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-3 mb-6">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-600">Reach:</span>
+                                <span className="font-medium">{pkg.userCount.toLocaleString()}+ users</span>
+                              </div>
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-600">Duration:</span>
+                                <span className="font-medium">{pkg.duration}</span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2 mb-6">
+                              {pkg.features.map((feature, index) => (
+                                <div key={index} className="flex items-center gap-2 text-sm">
+                                  <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                  <span>{feature}</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            <Button
+                              className="w-full"
+                              variant={pkg.recommended ? "default" : "outline"}
+                              onClick={() => handlePackageSelect(pkg.id)}
+                            >
+                              <CreditCard className="w-4 h-4 mr-2" />
+                              Select Package
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
