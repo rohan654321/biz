@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, FaYoutube, FaPlay } from "react-icons/fa"
 import { ShareButton } from "@/components/share-button"
+import Link from "next/link"
 
 interface Speaker {
   id: string
@@ -50,6 +51,17 @@ interface Session {
   }
 }
 
+interface Banner {
+  id: string
+  title: string
+  imageUrl: string
+  page: string
+  position: string
+  link?: string
+  isActive: boolean
+  order: number
+}
+
 interface SpeakerPageProps {
   params: Promise<{ id: string }>
 }
@@ -61,6 +73,9 @@ export default function SpeakerPage({ params }: SpeakerPageProps) {
   const [pastEvents, setPastEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [heroBanners, setHeroBanners] = useState<Banner[]>([])
+  const [heroBannersLoading, setHeroBannersLoading] = useState(false)
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
 
   useEffect(() => {
     async function fetchData() {
@@ -68,7 +83,7 @@ export default function SpeakerPage({ params }: SpeakerPageProps) {
         setLoading(true)
         const { id } = await params
 
-        // Speaker Info
+        // Fetch speaker data
         const speakerRes = await fetch(`/api/speakers/${id}`)
         if (!speakerRes.ok) throw new Error("Failed to fetch speaker data")
         const speakerData = await speakerRes.json()
@@ -90,13 +105,14 @@ export default function SpeakerPage({ params }: SpeakerPageProps) {
             linkedin: s.linkedin || "#",
           },
         })
-        // Events
+
+        // Fetch events
         const eventsRes = await fetch(`/api/speakers/${id}/events`)
         const eventsData = await eventsRes.json()
         setUpcomingEvents(eventsData.upcoming || [])
         setPastEvents(eventsData.past || [])
 
-        // Sessions with YouTube videos
+        // Fetch sessions with YouTube videos
         const sessionsRes = await fetch(`/api/speakers/${id}/sessions`)
         if (sessionsRes.ok) {
           const sessionsData = await sessionsRes.json()
@@ -114,6 +130,59 @@ export default function SpeakerPage({ params }: SpeakerPageProps) {
     fetchData()
   }, [params])
 
+  // Fetch hero banners for speaker-detail page
+  useEffect(() => {
+    async function fetchHeroBanners() {
+      try {
+        setHeroBannersLoading(true)
+        // Fetch banners specifically for speaker-detail page with hero position
+        const res = await fetch(`/api/content/banners?page=speaker-detail&position=hero`)
+        
+        if (res.ok) {
+          const data = await res.json()
+          // Filter only active banners
+          const activeHeroBanners = data.filter((banner: Banner) => banner.isActive)
+          setHeroBanners(activeHeroBanners)
+          
+          // Start auto-rotation if we have multiple banners
+          if (activeHeroBanners.length > 1) {
+            const interval = setInterval(() => {
+              setCurrentBannerIndex((prev) => (prev + 1) % activeHeroBanners.length)
+            }, 8000) // Change banner every 8 seconds
+            
+            return () => clearInterval(interval)
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching hero banners:", error)
+      } finally {
+        setHeroBannersLoading(false)
+      }
+    }
+    
+    fetchHeroBanners()
+  }, [])
+
+  // Handle banner click tracking
+  const handleBannerClick = async (bannerId: string) => {
+    try {
+      const speakerId = speaker?.id || (await params).id
+      // Track banner click
+      await fetch(`/api/analytics/banner-click`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bannerId,
+          speakerId,
+          timestamp: new Date().toISOString(),
+          path: window.location.pathname,
+        })
+      })
+    } catch (error) {
+      console.error('Error tracking banner click:', error)
+    }
+  }
+
   const formatDate = (dateString: string) => {
     try {
       return new Date(dateString).toLocaleDateString('en-US', {
@@ -125,6 +194,7 @@ export default function SpeakerPage({ params }: SpeakerPageProps) {
       return 'Invalid date'
     }
   }
+
   const formatEventDate = (isoString: string) => {
     if (!isoString) return "Invalid date";
     const date = new Date(isoString);
@@ -138,8 +208,6 @@ export default function SpeakerPage({ params }: SpeakerPageProps) {
       hour12: true,
     });
   };
-
-
 
   const extractYouTubeVideoId = (url: string) => {
     const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
@@ -175,20 +243,86 @@ export default function SpeakerPage({ params }: SpeakerPageProps) {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* SIMPLIFIED HERO SECTION - Just background */}
-      <div className="relative">
-        <div className="absolute inset-0 h-80">
-          <Image
-            src="/logo/logo-5.png?height=320&width=1200&text=Outdoor+Background+with+Palm+Trees"
-            alt="Background"
-            fill
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-black/25" />
-        </div>
-
-        {/* Empty space for background */}
-        <div className="relative z-10 h-80"></div>
+      {/* DYNAMIC HERO BANNER SECTION */}
+      <div className="relative h-[300px] md:h-[350px] overflow-hidden">
+        {heroBannersLoading ? (
+          // Loading skeleton
+          <div className="w-full h-full bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse"></div>
+        ) : heroBanners.length > 0 ? (
+          <>
+            {/* Banner Display */}
+            {heroBanners.map((banner, index) => (
+              <div
+                key={banner.id}
+                className={`absolute inset-0 transition-opacity duration-500 ${
+                  index === currentBannerIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
+              >
+                <Link 
+                  href={banner.link || "#"}
+                  onClick={() => handleBannerClick(banner.id)}
+                  target={banner.link?.startsWith('http') ? '_blank' : '_self'}
+                  className="block w-full h-full"
+                >
+                  <Image
+                    src={banner.imageUrl || "/placeholder.svg"}
+                    alt={banner.title}
+                    fill
+                    className="object-cover"
+                    priority={index === 0}
+                    sizes="100vw"
+                  />
+                  {/* Optional banner title overlay */}
+                  {banner.title && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                      <h3 className="text-white text-lg md:text-2xl font-semibold max-w-4xl mx-auto">
+                        {banner.title}
+                      </h3>
+                    </div>
+                  )}
+                </Link>
+                
+                {/* Banner indicators if multiple banners */}
+                {heroBanners.length > 1 && (
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                    {heroBanners.map((_, idx) => (
+                      <button
+                        key={idx}
+                        className={`w-3 h-3 rounded-full transition-all ${
+                          idx === currentBannerIndex 
+                            ? "bg-white scale-110" 
+                            : "bg-white/50 hover:bg-white/75"
+                        }`}
+                        onClick={() => setCurrentBannerIndex(idx)}
+                        aria-label={`Go to banner ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
+                
+                {/* Sponsored badge */}
+                <div className="absolute top-4 right-4">
+                  <span className="bg-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-full shadow-lg">
+                    Sponsored
+                  </span>
+                </div>
+              </div>
+            ))}
+          </>
+        ) : (
+          // Fallback to default background if no banners found
+          <div className="relative w-full h-full">
+            <Image
+              src="/logo/logo-5.png?height=350&width=1200&text=Speaker+Background"
+              alt="Speaker Background"
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+            />
+            <div className="absolute inset-0 bg-black/25" />
+          </div>
+        )}
       </div>
 
       {/* MAIN CONTENT SECTION */}
@@ -258,8 +392,6 @@ export default function SpeakerPage({ params }: SpeakerPageProps) {
         </div>
       </div>
       <hr className="border-gray-200 w-3/4 mx-auto my-4 border-t-[1px]" />
-
-
 
       {/* SESSION VIDEOS SECTION */}
       <div className="max-w-6xl mx-auto px-4 py-12 mt-12">
@@ -392,27 +524,18 @@ export default function SpeakerPage({ params }: SpeakerPageProps) {
                         <p className="text-xs text-gray-500">{e.location}</p>
 
                         <div className="flex justify-between items-center mt-3">
-                          {/* Left side */}
-                          {/* <span className="bg-gray-100 text-gray-700 text-[10px] px-2 py-1 rounded">
-                            Interested {e.currentAttendees || 0}
-                          </span> */}
                           <span className="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded">
                             {e.averageRating?.toFixed(1) || 0} ⭐
                           </span>
 
-
-                          {/* Right side */}
                           <div className="flex items-center gap-2">
                             <ShareButton 
-  id={e.id} 
-  title={e.title} 
-  type="event" 
-/>
+                              id={e.id} 
+                              title={e.title} 
+                              type="event" 
+                            />
                           </div>
                         </div>
-
-
-
                       </div>
                     </CardContent>
                   </div>
@@ -445,24 +568,17 @@ export default function SpeakerPage({ params }: SpeakerPageProps) {
                         <p className="text-xs text-gray-500">{e.location}</p>
 
                         <div className="flex justify-between items-center mt-3">
-                          {/* Left side */}
-                          {/* <span className="bg-gray-100 text-gray-700 text-[10px] px-2 py-1 rounded">
-                            Interested {e.currentAttendees || 0}
-                          </span> */}
-
-                          {/* Right side */}
                           <div className="flex items-center gap-2">
                             <span className="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded">
                               {e.averageRating?.toFixed(1) || 0} ⭐
                             </span>
                             <ShareButton 
-  id={e.id} 
-  title={e.title} 
-  type="event" 
-/>
+                              id={e.id} 
+                              title={e.title} 
+                              type="event" 
+                            />
                           </div>
                         </div>
-
                       </div>
                     </CardContent>
                   </div>
@@ -474,7 +590,6 @@ export default function SpeakerPage({ params }: SpeakerPageProps) {
           </TabsContent>
         </Tabs>
       </div>
-
     </div>
   )
 }

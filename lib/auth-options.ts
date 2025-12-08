@@ -1,44 +1,86 @@
+// lib/auth-options.ts
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import LinkedInProvider from "next-auth/providers/linkedin"
 import type { NextAuthOptions } from "next-auth"
-import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string
-      name?: string | null
-      email?: string | null
-      image?: string | null
-      role?: string
-      adminType?: "SUPER_ADMIN" | "SUB_ADMIN" | null
-      permissions?: string[]
-      firstName?: string
-      lastName?: string
-      avatar?: string | null
-    }
-  }
-  interface User {
-    id: string
-    role: string
-    adminType?: "SUPER_ADMIN" | "SUB_ADMIN" | null
-    permissions?: string[]
-    firstName?: string
-    lastName?: string
-  }
-}
+// Import Prisma
+import { prisma } from "@/lib/prisma"
 
-declare module "next-auth/jwt" {
-  interface JWT {
-    id: string
-    role: string
-    adminType?: "SUPER_ADMIN" | "SUB_ADMIN" | null
-    permissions?: string[]
-    firstName?: string
-    lastName?: string
-    avatar?: string | null
+// Safe Prisma wrapper
+const safePrisma = {
+  superAdmin: {
+    findUnique: async (args: any) => {
+      try {
+        if (!prisma?.superAdmin) {
+          console.error("Prisma superAdmin model is not available")
+          return null
+        }
+        return await prisma.superAdmin.findUnique(args)
+      } catch (error) {
+        console.error("Error in superAdmin.findUnique:", error)
+        return null
+      }
+    },
+    update: async (args: any) => {
+      try {
+        if (!prisma?.superAdmin) return null
+        return await prisma.superAdmin.update(args)
+      } catch (error) {
+        console.error("Error in superAdmin.update:", error)
+        return null
+      }
+    }
+  },
+  subAdmin: {
+    findUnique: async (args: any) => {
+      try {
+        if (!prisma?.subAdmin) return null
+        return await prisma.subAdmin.findUnique(args)
+      } catch (error) {
+        console.error("Error in subAdmin.findUnique:", error)
+        return null
+      }
+    },
+    update: async (args: any) => {
+      try {
+        if (!prisma?.subAdmin) return null
+        return await prisma.subAdmin.update(args)
+      } catch (error) {
+        console.error("Error in subAdmin.update:", error)
+        return null
+      }
+    }
+  },
+  user: {
+    findUnique: async (args: any) => {
+      try {
+        if (!prisma?.user) return null
+        return await prisma.user.findUnique(args)
+      } catch (error) {
+        console.error("Error in user.findUnique:", error)
+        return null
+      }
+    },
+    create: async (args: any) => {
+      try {
+        if (!prisma?.user) return null
+        return await prisma.user.create(args)
+      } catch (error) {
+        console.error("Error in user.create:", error)
+        return null
+      }
+    },
+    update: async (args: any) => {
+      try {
+        if (!prisma?.user) return null
+        return await prisma.user.update(args)
+      } catch (error) {
+        console.error("Error in user.update:", error)
+        return null
+      }
+    }
   }
 }
 
@@ -67,8 +109,8 @@ export const authOptions: NextAuthOptions = {
         try {
           console.log("[v0] Attempting login for:", credentials.email)
 
-          // Check SuperAdmin table first
-          const superAdmin = await prisma.superAdmin.findUnique({
+          // Check SuperAdmin table first using safe wrapper
+          const superAdmin = await safePrisma.superAdmin.findUnique({
             where: { email: credentials.email },
           })
 
@@ -92,7 +134,7 @@ export const authOptions: NextAuthOptions = {
             console.log("[v0] SuperAdmin password valid:", isPasswordValid)
 
             if (!isPasswordValid) {
-              await prisma.superAdmin.update({
+              await safePrisma.superAdmin.update({
                 where: { id: superAdmin.id },
                 data: {
                   loginAttempts: superAdmin.loginAttempts + 1,
@@ -104,7 +146,7 @@ export const authOptions: NextAuthOptions = {
             }
 
             // Reset login attempts on successful login
-            await prisma.superAdmin.update({
+            await safePrisma.superAdmin.update({
               where: { id: superAdmin.id },
               data: {
                 loginAttempts: 0,
@@ -125,7 +167,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           // Check SubAdmin table
-          const subAdmin = await prisma.subAdmin.findUnique({
+          const subAdmin = await safePrisma.subAdmin.findUnique({
             where: { email: credentials.email },
           })
 
@@ -149,7 +191,7 @@ export const authOptions: NextAuthOptions = {
             console.log("[v0] SubAdmin password valid:", isPasswordValid)
 
             if (!isPasswordValid) {
-              await prisma.subAdmin.update({
+              await safePrisma.subAdmin.update({
                 where: { id: subAdmin.id },
                 data: {
                   loginAttempts: subAdmin.loginAttempts + 1,
@@ -161,7 +203,7 @@ export const authOptions: NextAuthOptions = {
             }
 
             // Reset login attempts
-            await prisma.subAdmin.update({
+            await safePrisma.subAdmin.update({
               where: { id: subAdmin.id },
               data: {
                 loginAttempts: 0,
@@ -182,7 +224,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           // Check regular User table
-          const user = await prisma.user.findUnique({
+          const user = await safePrisma.user.findUnique({
             where: { email: credentials.email },
           })
 
@@ -193,7 +235,7 @@ export const authOptions: NextAuthOptions = {
             return null
           }
 
-          // For regular users, check password (no lockout mechanism for regular users in this example)
+          // For regular users, check password
           const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
 
           if (!isPasswordValid) {
@@ -220,8 +262,6 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: "/login",
-    // You might want different sign-in pages for admin vs regular users
-    // or handle this logic in your sign-in page component
   },
   session: {
     strategy: "jwt",
@@ -230,28 +270,27 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       if (account?.provider === "google" || account?.provider === "linkedin") {
         try {
-          const existingUser = await prisma.user.findUnique({
+          const existingUser = await safePrisma.user.findUnique({
             where: { email: user.email! },
           });
 
           // If user doesn't exist → create new user in DB
           if (!existingUser) {
-            await prisma.user.create({
+            await safePrisma.user.create({
               data: {
                 email: user.email!,
                 firstName: user.name?.split(" ")[0] || "User",
                 lastName: user.name?.split(" ")[1] || "",
                 avatar: user.image,
-                role: "ATTENDEE", // default role for social logins
+                role: "ATTENDEE",
                 isVerified: true,
                 emailVerified: true,
-                // Set a random password for OAuth users (they won't use it)
                 password: await bcrypt.hash(Math.random().toString(36) + Date.now().toString(), 12),
               },
             });
           } else {
-            // Optional: update avatar or name if changed
-            await prisma.user.update({
+            // Update existing user
+            await safePrisma.user.update({
               where: { email: user.email! },
               data: {
                 avatar: user.image,
@@ -275,13 +314,11 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id
         token.role = user.role
         
-        // Add admin-specific fields if they exist
         if ('adminType' in user) {
           token.adminType = user.adminType
           token.permissions = user.permissions
         }
         
-        // Add regular user fields if they exist
         if ('firstName' in user) {
           token.firstName = user.firstName
           token.lastName = user.lastName
@@ -291,7 +328,7 @@ export const authOptions: NextAuthOptions = {
       // For existing sessions, refresh from database
       if (token.email) {
         // Check all user types
-        const superAdmin = await prisma.superAdmin.findUnique({
+        const superAdmin = await safePrisma.superAdmin.findUnique({
           where: { email: token.email },
         })
 
@@ -303,7 +340,7 @@ export const authOptions: NextAuthOptions = {
           return token
         }
 
-        const subAdmin = await prisma.subAdmin.findUnique({
+        const subAdmin = await safePrisma.subAdmin.findUnique({
           where: { email: token.email },
         })
 
@@ -315,7 +352,7 @@ export const authOptions: NextAuthOptions = {
           return token
         }
 
-        const regularUser = await prisma.user.findUnique({
+        const regularUser = await safePrisma.user.findUnique({
           where: { email: token.email },
         })
 
@@ -336,13 +373,11 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string
         session.user.role = token.role as string
         
-        // Add admin fields if they exist
         if (token.adminType) {
           session.user.adminType = token.adminType as "SUPER_ADMIN" | "SUB_ADMIN"
           session.user.permissions = token.permissions as string[]
         }
         
-        // Add regular user fields if they exist
         if (token.firstName) {
           session.user.firstName = token.firstName as string
           session.user.lastName = token.lastName as string

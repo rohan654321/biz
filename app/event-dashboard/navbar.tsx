@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronDown, User, LogOut, Settings, Bell } from "lucide-react";
+import { ChevronDown, User, LogOut, Settings } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-
+import { NotificationsDropdown } from "@/components/notifications-dropdown";
 
 export default function Navbar() {
   const [exploreOpen, setExploreOpen] = useState(false);
@@ -53,7 +53,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-white shadow-sm">
+    <nav className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-1xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
         <div className="flex justify-between h-20 items-center">
           {/* Left: Logo + Explore */}
@@ -69,14 +69,6 @@ export default function Navbar() {
             </Link>
 
             <div className="relative">
-              {/* <button
-                onClick={toggleExplore}
-                className="flex items-center text-gray-700 hover:text-gray-900 focus:outline-none"
-              >
-                <span>Explore</span>
-                <ChevronDown className="w-4 h-4 ml-1" />
-              </button> */}
-
               {exploreOpen && (
                 <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
                   <ul className="py-1">
@@ -108,7 +100,7 @@ export default function Navbar() {
           </div>
 
           {/* Right: Links + Profile */}
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-4">
             <Link href="/event">
               <p className="text-gray-700 hover:text-gray-900">
                 Top 10 Must Visit
@@ -124,11 +116,11 @@ export default function Navbar() {
               Add Event
             </p>
 
+            {/* Notifications */}
+            <NotificationsDropdown />
+
             {/* Profile Menu */}
             <DropdownMenu>
-                <Button variant="ghost" size="sm">
-              <Bell className="w-4 " />
-            </Button>
               <DropdownMenuTrigger asChild>
                 <button className="p-2 rounded-full bg-[#002C71] text-white hover:bg-gray-100 focus:outline-none">
                   <User className="w-4 h-4" />

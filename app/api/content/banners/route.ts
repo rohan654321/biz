@@ -27,17 +27,21 @@ import {prisma} from "@/lib/prisma"
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const page = searchParams.get("page")
+    const page = searchParams.get("page") || "event-detail"
+    const position = searchParams.get("position")
 
     // Build query filter
-    const where: any = {}
-    if (page && page !== "all") {
-      where.page = page
+    const where: any = {
+      page,
+      isActive: true
     }
-
+    
     const banners = await prisma.banner.findMany({
       where,
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+      orderBy: [
+        { order: 'asc' },
+        { createdAt: 'desc' }
+      ],
     })
 
     return NextResponse.json(banners)
