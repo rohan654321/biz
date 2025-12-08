@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, ReactNode } from "react"
 import { Bookmark } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -8,9 +8,16 @@ import { useRouter } from "next/navigation"
 interface BookmarkButtonProps {
   eventId: string
   className?: string
+  children?: ReactNode
+  onClick?: (e: React.MouseEvent) => void
 }
 
-export function BookmarkButton({ eventId, className = "" }: BookmarkButtonProps) {
+export function BookmarkButton({ 
+  eventId, 
+  className = "", 
+  children,
+  onClick 
+}: BookmarkButtonProps) {
   const [isSaved, setIsSaved] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { data: session } = useSession()
@@ -37,6 +44,11 @@ export function BookmarkButton({ eventId, className = "" }: BookmarkButtonProps)
   const handleBookmark = async (e: React.MouseEvent) => {
     e.preventDefault() // Prevent default behavior
     e.stopPropagation() // Stop event from bubbling up to parent
+
+    // Call custom onClick handler if provided
+    if (onClick) {
+      onClick(e)
+    }
 
     if (!session?.user?.id) {
       alert("Please log in to save events")
@@ -76,7 +88,7 @@ export function BookmarkButton({ eventId, className = "" }: BookmarkButtonProps)
       } ${className}`}
       title={isSaved ? "Remove from saved" : "Save event"}
     >
-      <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
+      {children || <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />}
     </button>
   )
 }

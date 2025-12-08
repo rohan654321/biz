@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronDown, User, LogOut, Settings, Bell } from "lucide-react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { ChevronDown, User, LogOut, Settings } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useDashboard } from "@/contexts/dashboard-context";
+import { NotificationsDropdown } from "@/components/notifications-dropdown";
 
 export default function Navbar() {
   const [exploreOpen, setExploreOpen] = useState(false);
@@ -134,10 +135,8 @@ export default function Navbar() {
               Add Event
             </p>
 
-            {/* Notifications */}
-            <Button variant="ghost" size="sm">
-              <Bell className="w-4" />
-            </Button>
+            {/* Notifications Dropdown */}
+            <NotificationsDropdown />
 
             {/* Profile Menu */}
             <DropdownMenu>

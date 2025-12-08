@@ -20,6 +20,11 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "sfcc.com",
         pathname: "/**",
       },
@@ -53,6 +58,16 @@ const nextConfig = {
         hostname: "*.googleusercontent.com",
         pathname: "/**",
       },
+      // Allow ALL images in development only
+      ...(process.env.NODE_ENV === "development"
+        ? [
+            {
+              protocol: "https",
+              hostname: "**",
+              pathname: "/**",
+            },
+          ]
+        : []),
     ],
   },
 };
