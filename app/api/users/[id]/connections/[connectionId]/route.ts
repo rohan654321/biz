@@ -36,6 +36,11 @@ export async function POST(
       return NextResponse.json({ error: "Connection not found" }, { status: 404 })
     }
 
+    // Check if sender and receiver exist
+    if (!connection.sender || !connection.receiver) {
+      return NextResponse.json({ error: "Invalid connection data" }, { status: 400 })
+    }
+
     // Check if user has permission to modify this connection
     if (connection.senderId !== userId && connection.receiverId !== userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })

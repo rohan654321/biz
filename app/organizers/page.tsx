@@ -20,7 +20,7 @@ interface Organizer {
   country: string
   category: string
   eventsOrganized: number
-  headquarters:string
+  headquarters: string
   yearsOfExperience: number
   specialties: string[]
   description: string
@@ -32,8 +32,8 @@ interface Organizer {
   totalAttendees: string
   successRate: number
   nextAvailable: string
-  avgRating: number 
-  totalReviews: number  
+  avgRating: number
+  totalReviews: number
 }
 
 const cities = [
@@ -128,13 +128,13 @@ export default function OrganizersPage() {
       // City filter - search in headquarters field
       const matchesCity =
         selectedCities.length === 0 ||
-        selectedCities.some((city) => 
+        selectedCities.some((city) =>
           organizer.headquarters?.toLowerCase().includes(city.toLowerCase())
         )
 
       // Country filter
-      const matchesCountry = 
-        selectedCountries.length === 0 || 
+      const matchesCountry =
+        selectedCountries.length === 0 ||
         selectedCountries.includes(organizer.country)
 
       const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(organizer.category)
@@ -204,8 +204,8 @@ export default function OrganizersPage() {
                     key={city}
                     onClick={() => toggleFilter(city, selectedCities, setSelectedCities)}
                     className={`text-left px-3 py-2 text-sm rounded-md transition-colors ${selectedCities.includes(city)
-                        ? "bg-blue-50 text-blue-700 border border-blue-200"
-                        : "text-gray-600 hover:bg-gray-50"
+                      ? "bg-blue-50 text-blue-700 border border-blue-200"
+                      : "text-gray-600 hover:bg-gray-50"
                       }`}
                   >
                     {city}
@@ -223,8 +223,8 @@ export default function OrganizersPage() {
                     key={country.name}
                     onClick={() => toggleFilter(country.name, selectedCountries, setSelectedCountries)}
                     className={`text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center gap-2 ${selectedCountries.includes(country.name)
-                        ? "bg-blue-50 text-blue-700 border border-blue-200"
-                        : "text-gray-600 hover:bg-gray-50"
+                      ? "bg-blue-50 text-blue-700 border border-blue-200"
+                      : "text-gray-600 hover:bg-gray-50"
                       }`}
                   >
                     <span>{country.flag}</span>
@@ -302,84 +302,84 @@ export default function OrganizersPage() {
             )}
           </div>
 
-   {/* Results */}
-<div className="p-8">
-  <div className="flex justify-between items-center mb-6">
-    <p className="text-gray-600">
-      Showing {filteredOrganizers.length} organizer{filteredOrganizers.length !== 1 ? "s" : ""}
-    </p>
-  </div>
+          {/* Results */}
+          <div className="p-8">
+            <div className="flex justify-between items-center mb-6">
+              <p className="text-gray-600">
+                Showing {filteredOrganizers.length} organizer{filteredOrganizers.length !== 1 ? "s" : ""}
+              </p>
+            </div>
 
-  {filteredOrganizers.length === 0 ? (
-    <div className="text-center py-12">
-      <div className="text-gray-400 mb-4">
-        <Users className="h-16 w-16 mx-auto" />
-      </div>
-      <h3 className="text-lg font-medium text-gray-900 mb-2">No organizers found</h3>
-      <p className="text-gray-600 mb-4">Try adjusting your search criteria or filters</p>
-      <Button onClick={clearAllFilters} variant="outline">
-        Clear all filters
-      </Button>
-    </div>
-  ) : (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-      {filteredOrganizers.map((organizer) => (
-        <Card
-          key={organizer.id}
-          className="group hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer p-0"
-          onClick={() => handleCardClick(organizer.id)}
-        >
-          {/* Image container - no padding, starts from top */}
-          <div className="relative w-full">
-            <img
-              src={organizer.image || "/placeholder.svg"}
-              alt={organizer.name}
-              className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-            {organizer.featured && (
-              <Badge className="absolute top-3 left-3 bg-orange-500 hover:bg-orange-600">Featured</Badge>
-            )}
-            {organizer.verified && (
-              <Badge className="absolute top-3 right-3 bg-green-500 hover:bg-green-600">
-                <Award className="h-3 w-3 mr-1" />
-                Verified
-              </Badge>
+            {filteredOrganizers.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-gray-400 mb-4">
+                  <Users className="h-16 w-16 mx-auto" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No organizers found</h3>
+                <p className="text-gray-600 mb-4">Try adjusting your search criteria or filters</p>
+                <Button onClick={clearAllFilters} variant="outline">
+                  Clear all filters
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredOrganizers.map((organizer) => (
+                  <Card
+                    key={organizer.id}
+                    className="group hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer p-0"
+                    onClick={() => handleCardClick(organizer.id)}
+                  >
+                    {/* Image container - no padding, starts from top */}
+                    <div className="relative w-full">
+                      <img
+                        src={organizer.image || "/placeholder.svg"}
+                        alt={organizer.name}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      {organizer.featured && (
+                        <Badge className="absolute top-3 left-3 bg-orange-500 hover:bg-orange-600">Featured</Badge>
+                      )}
+                      {organizer.verified && (
+                        <Badge className="absolute top-3 right-3 bg-green-500 hover:bg-green-600">
+                          <Award className="h-3 w-3 mr-1" />
+                          Verified
+                        </Badge>
+                      )}
+                    </div>
+
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-semibold text-lg text-gray-900 mb-1">{organizer.company}</h3>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span className="font-medium text-sm">{organizer.avgRating}</span>
+                          <span className="text-xs text-gray-500">({organizer.totalReviews})</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 text-gray-600 mb-2">
+                        <MapPin className="h-4 w-4" />
+                        <span className="text-sm">{organizer.headquarters || "not specified"}</span>
+                      </div>
+
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          <span>{organizer.yearsOfExperience} years</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <TrendingUp className="h-4 w-4" />
+                          <span>{organizer.eventsOrganized} events</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             )}
           </div>
-
-          <CardContent className="p-6"> 
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <h3 className="font-semibold text-lg text-gray-900 mb-1">{organizer.company}</h3>
-              </div>
-              <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span className="font-medium text-sm">{organizer.avgRating}</span>
-                <span className="text-xs text-gray-500">({organizer.totalReviews})</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1 text-gray-600 mb-2">
-              <MapPin className="h-4 w-4" />
-              <span className="text-sm">{organizer.headquarters || "not specified"}</span>
-            </div>
-
-            <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-              <div className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                <span>{organizer.yearsOfExperience} years</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <TrendingUp className="h-4 w-4" />
-                <span>{organizer.eventsOrganized} events</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  )}
-</div>
         </div>
       </div>
     </div>

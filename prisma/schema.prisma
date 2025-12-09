@@ -1129,10 +1129,10 @@ model BroadcastRecipient {
 
 model EventLead {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
-  eventId String @db.ObjectId
-  event   Event  @relation(fields: [eventId], references: [id])
-  userId  String @db.ObjectId
-  user    User   @relation(fields: [userId], references: [id])
+  eventId String? @db.ObjectId
+  event   Event?  @relation(fields: [eventId], references: [id])
+  userId  String? @db.ObjectId
+  user    User?   @relation(fields: [userId], references: [id])
 
   ticketTypeId String?     @db.ObjectId
   ticketType   TicketType? @relation(fields: [ticketTypeId], references: [id])
@@ -1178,8 +1178,8 @@ model Connection {
   updatedAt  DateTime         @updatedAt
   acceptedAt DateTime?
 
-  sender   User @relation("ConnectionSender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver User @relation("ConnectionReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender   User? @relation("ConnectionSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User? @relation("ConnectionReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
 
   @@unique([senderId, receiverId])
   @@index([senderId])
@@ -2335,4 +2335,27 @@ enum BackupStatus {
   IN_PROGRESS
   COMPLETED
   FAILED
+
 }
+
+
+model PromotionPackage {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String
+  price       Float
+  features    String[]
+  userCount   Int
+  duration    String   // "7 days", "14 days", "30 days"
+  durationDays Int
+  categories  String[] // ["selected"], ["multiple"], ["all"]
+  recommended Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  userType    String   // "BOTH", "EXHIBITOR", "ORGANIZER"
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("promotion_packages")
+}
+

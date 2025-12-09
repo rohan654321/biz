@@ -83,6 +83,8 @@ import SettingsSecurityPage from "./settings/security"
 import SettingsLanguagePage from "./settings/languages"
 import SettingsBackupPage from "./settings/backup"
 import BannersPage from "./content/banners"
+import PromotionPackagesPage from "./financial/packeges/page"
+import PromotionPackagesPagee from "./financial/packeges/page"
 
 interface AdminDashboardProps {
   userRole: "SUPER_ADMIN" | "SUB_ADMIN"
@@ -304,6 +306,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "Payments Dashboard", id: "financial-payments" },
         { title: "Subscriptions & Plans", id: "financial-subscriptions" },
         { title: "Invoices & Receipts", id: "financial-invoices" },
+        { title: "promotions", id: "admin-promotions" },
         { title: "Transaction History", id: "financial-transactions" },
       ],
     },
@@ -494,6 +497,11 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         case "financial-transactions":
           return <div>Page will updated-----soon</div>//<FinancialTransactionsPage />
 
+        case "admin-promotions":
+          return <PromotionPackagesPage />
+
+      
+
         // Help & Support sub-sections
         case "support-tickets":
           return <SupportTickets />
@@ -503,7 +511,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
           return <FAQManagement />
         case "support-notes":
           return <AdminNotes />
-
+        
 
           case "marketing-email":
             return <EmailCampaigns />

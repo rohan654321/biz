@@ -246,9 +246,6 @@ const updateAppointment = async (appointmentId: string, updates: Partial<Appoint
           <div className="flex items-center gap-2">
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedAppointment(appointment)}>
-                  <Eye className="w-4 h-4" />
-                </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
@@ -387,16 +384,6 @@ const updateAppointment = async (appointmentId: string, updates: Partial<Appoint
                 </Button>
               </>
             )}
-            {appointment.status === "CONFIRMED" && (
-              <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
-                <Clock className="w-4 h-4" />
-                Reschedule
-              </Button>
-            )}
-            <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
-              <MessageSquare className="w-4 h-4" />
-              Message
-            </Button>
           </div>
         </div>
       </CardContent>
@@ -448,10 +435,10 @@ const updateAppointment = async (appointmentId: string, updates: Partial<Appoint
               <SelectItem value="CANCELLED">Cancelled</SelectItem>
             </SelectContent>
           </Select>
-          <Button className="flex items-center gap-2">
+          {/* <Button className="flex items-center gap-2">
             <CalendarIcon className="w-4 h-4" />
             Calendar View
-          </Button>
+          </Button> */}
         </div>
       </div>
 
