@@ -7,8 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
-import { Plus, Trash2 } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { Plus, Trash2, CheckCircle, XCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 type SessionType = "SESSION" | "BREAK" | "KEYNOTE" | "PANEL" | "NETWORKING"
@@ -55,7 +54,7 @@ export function CreateConferenceAgenda({ eventId, conferenceId, initialData, onS
     },
   )
   const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const router = useRouter()
 
   const addSession = () => {
@@ -87,13 +86,33 @@ export function CreateConferenceAgenda({ eventId, conferenceId, initialData, onS
     }))
   }
 
+  const resetForm = () => {
+    setAgenda({
+      date: "",
+      day: "",
+      theme: "",
+      sessions: [
+        {
+          id: Date.now().toString(),
+          time: "",
+          type: "SESSION",
+          title: "",
+          description: "",
+          speaker: "",
+        },
+      ],
+    })
+  }
+
   const handleSave = async () => {
+    // Clear any previous messages
+    setMessage(null)
+
     // Validate required fields
     if (!agenda.date || !agenda.day || !agenda.theme) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all day information fields",
-        variant: "destructive",
+      setMessage({
+        type: "error",
+        text: "Please fill in all day information fields",
       })
       return
     }
@@ -101,10 +120,9 @@ export function CreateConferenceAgenda({ eventId, conferenceId, initialData, onS
     // Validate at least one session with required fields
     const hasValidSession = agenda.sessions.some((session) => session.time && session.title)
     if (!hasValidSession) {
-      toast({
-        title: "Validation Error",
-        description: "Please add at least one session with time and title",
-        variant: "destructive",
+      setMessage({
+        type: "error",
+        text: "Please add at least one session with time and title",
       })
       return
     }
@@ -137,22 +155,33 @@ export function CreateConferenceAgenda({ eventId, conferenceId, initialData, onS
 
       const savedConference = await response.json()
 
-      toast({
-        title: "Success",
-        description: conferenceId ? "Conference agenda updated successfully" : "Conference agenda created successfully",
+      // Show success message
+      setMessage({
+        type: "success",
+        text: conferenceId ? "Agenda updated successfully!" : "Agenda created successfully!",
       })
 
+      // Reset form only if creating new (not editing)
+      if (!conferenceId) {
+        resetForm()
+      }
+
+      // Call onSuccess callback if provided
       if (onSuccess) {
         onSuccess()
-      } else {
-        router.push(`/event-dashboard?eventId=${eventId}`)
+      }
+
+      // Auto-clear success message after 3 seconds
+      if (!conferenceId) {
+        setTimeout(() => {
+          setMessage(null)
+        }, 3000)
       }
     } catch (error) {
       console.error("[v0] Error saving conference:", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to save conference agenda",
-        variant: "destructive",
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Failed to save conference agenda",
       })
     } finally {
       setIsLoading(false)
@@ -165,6 +194,24 @@ export function CreateConferenceAgenda({ eventId, conferenceId, initialData, onS
 
   return (
     <div className="space-y-6">
+      {/* Message Display */}
+      {message && (
+        <div
+          className={`flex items-center gap-2 rounded-lg border p-4 ${
+            message.type === "success"
+              ? "border-green-200 bg-green-50 text-green-800"
+              : "border-red-200 bg-red-50 text-red-800"
+          }`}
+        >
+          {message.type === "success" ? (
+            <CheckCircle className="h-5 w-5" />
+          ) : (
+            <XCircle className="h-5 w-5" />
+          )}
+          <span className="text-sm font-medium">{message.text}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-foreground">{conferenceId ? "Edit" : "Create"} Conference Agenda</h1>

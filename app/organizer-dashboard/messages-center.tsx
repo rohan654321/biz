@@ -106,98 +106,64 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
   }, [messages, scrollToBottom])
 
   // WebSocket connection for real-time updates
-  useEffect(() => {
-    const connectWebSocket = () => {
-      try {
-        ws.current = new WebSocket(
-          `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001'}?userId=${organizerId}`
-        )
-
-
-        ws.current.onopen = () => {
-          console.log("WebSocket connected")
-          setIsOnline(true)
-        }
-
-        ws.current.onmessage = (event) => {
-          const data = JSON.parse(event.data);
-
-          switch (data.type) {
-            case "NEW_MESSAGE":
-              setMessages(prev => [...prev, data.message]);
-
-              // Update conversations list
-              setConversations(prev => {
-                const idx = prev.findIndex(conv => conv.contactId === data.message.senderId);
-                if (idx !== -1) {
-                  const updated = [...prev];
-                  updated[idx] = {
-                    ...updated[idx],
-                    lastMessage: data.message.content,
-                    lastMessageTime: data.message.createdAt,
-                    unreadCount:
-                      selectedContact === data.message.senderId
-                        ? 0
-                        : updated[idx].unreadCount + 1,
-                  };
-                  return updated;
-                }
-                return prev;
-              });
-              break;
-
-            case "MESSAGE_SENT":
-              console.log("Delivered:", data.message);
-              break;
-
-            case "MESSAGES_READ":
-              setMessages(prev =>
-                prev.map(msg =>
-                  msg.senderId === organizerId
-                    ? { ...msg, isRead: true }
-                    : msg
-                )
-              );
-              break;
-
-            case "USER_STATUS":
-              setConnections(prev =>
-                prev.map(conn =>
-                  conn.id === data.userId ? { ...conn, isOnline: data.isOnline } : conn
-                )
-              );
-              break;
-
-            default:
-              console.log("UNKNOWN WS EVENT:", data);
-          }
-        };
-
-
-        ws.current.onclose = () => {
-          console.log("WebSocket disconnected")
-          setIsOnline(false)
-          // Attempt to reconnect after 3 seconds
-          setTimeout(connectWebSocket, 3000)
-        }
-
-        ws.current.onerror = (error) => {
-          console.error("WebSocket error:", error)
-          setIsOnline(false)
-        }
-      } catch (error) {
-        console.error("Failed to connect WebSocket:", error)
+// In messages-center.tsx
+useEffect(() => {
+  const connectWebSocket = () => {
+    try {
+      // Check if WebSocket is supported
+      if (!window.WebSocket) {
+        console.warn("WebSocket not supported, using fallback polling");
+        setupPolling();
+        return;
       }
-    }
 
-    connectWebSocket()
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
+      ws.current = new WebSocket(`${wsUrl}?userId=${organizerId}`);
 
-    return () => {
-      if (ws.current) {
-        ws.current.close()
-      }
+      // Add connection timeout
+      const timeout = setTimeout(() => {
+        if (ws.current && ws.current.readyState !== WebSocket.OPEN) {
+          console.warn("WebSocket connection timeout, using fallback");
+          setIsOnline(false);
+          setupPolling();
+        }
+      }, 5000);
+
+      ws.current.onopen = () => {
+        clearTimeout(timeout);
+        console.log("WebSocket connected");
+        setIsOnline(true);
+      };
+
+      ws.current.onerror = (error) => {
+        clearTimeout(timeout);
+        console.error("WebSocket error:", error);
+        setIsOnline(false);
+        // Fallback to polling
+        setupPolling();
+      };
+
+      ws.current.onclose = () => {
+        clearTimeout(timeout);
+        console.log("WebSocket disconnected");
+        setIsOnline(false);
+      };
+
+    } catch (error) {
+      console.error("Failed to connect WebSocket:", error);
+      setIsOnline(false);
+      setupPolling();
     }
-  }, [organizerId, selectedContact])
+  };
+
+  connectWebSocket();
+
+  return () => {
+    if (ws.current) {
+      ws.current.close();
+    }
+  };
+}, [organizerId]);
 
   useEffect(() => {
     fetchConversations()
@@ -932,4 +898,8 @@ export default function MessagesCenter({ organizerId }: MessagesCenterProps) {
       </AlertDialog>
     </div>
   )
+}
+
+function setupPolling() {
+  throw new Error("Function not implemented.")
 }

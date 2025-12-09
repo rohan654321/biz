@@ -1129,10 +1129,10 @@ model BroadcastRecipient {
 
 model EventLead {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
-  eventId String @db.ObjectId
-  event   Event  @relation(fields: [eventId], references: [id])
-  userId  String @db.ObjectId
-  user    User   @relation(fields: [userId], references: [id])
+  eventId String? @db.ObjectId
+  event   Event?  @relation(fields: [eventId], references: [id])
+  userId  String? @db.ObjectId
+  user    User?   @relation(fields: [userId], references: [id])
 
   ticketTypeId String?     @db.ObjectId
   ticketType   TicketType? @relation(fields: [ticketTypeId], references: [id])
@@ -1178,8 +1178,8 @@ model Connection {
   updatedAt  DateTime         @updatedAt
   acceptedAt DateTime?
 
-  sender   User @relation("ConnectionSender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver User @relation("ConnectionReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender   User? @relation("ConnectionSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User? @relation("ConnectionReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
 
   @@unique([senderId, receiverId])
   @@index([senderId])
