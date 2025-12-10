@@ -197,7 +197,7 @@ export default function VisitorConnectionsPage() {
                 <TableRow>
                   <TableHead>Visitor</TableHead>
                   <TableHead>Company</TableHead>
-                  <TableHead>Location</TableHead>
+                  {/* <TableHead>Location</TableHead> */}
                   <TableHead className="text-center">Total Connections</TableHead>
                   <TableHead className="text-center">Accepted</TableHead>
                   <TableHead className="text-center">Pending</TableHead>
@@ -231,9 +231,9 @@ export default function VisitorConnectionsPage() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       <span className="text-sm">{visitor.location || "N/A"}</span>
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell className="text-center">
                       <Badge variant="outline">{visitor.totalConnections}</Badge>
                     </TableCell>

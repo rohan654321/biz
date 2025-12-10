@@ -395,7 +395,7 @@ export async function POST(req: Request) {
               });
               
               if (!country) {
-                // Generate a code for the country
+                // Generate a code for the country...
                 const generateCountryCode = (name: string): string => {
                   const countryMap: Record<string, string> = {
                     'United States': 'USA',
