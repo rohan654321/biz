@@ -234,7 +234,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       id: "locations",
       subItems: [
         { title: "Countries", id: "countries" },
-        { title: "Cities", id: "cities" },
+        // { title: "Cities", id: "cities" },
       ],
     },
     {
@@ -258,7 +258,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
         { title: "All Exhibitors", id: "exhibitors-all" },
         { title: "Add Exhibitor", id: "exhibitors-add" },
         { title: "Promotions", id: "exhibitors-promotions" },
-        { title: "Followers", id: "exhibitors-followers" },
+        // { title: "Followers", id: "exhibitors-followers" },
         { title: "Appointments", id: "exhibitors-appointments" },
         { title: "Feedback", id: "exhibitors-feedback" },
       ],

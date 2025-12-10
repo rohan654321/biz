@@ -206,7 +206,6 @@ export default function FAQManagement() {
                 <TableHead>Category</TableHead>
                 <TableHead>User Roles</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Views</TableHead>
                 <TableHead>Last Updated</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -248,7 +247,7 @@ export default function FAQManagement() {
                       {faq.isActive ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
-                  <TableCell>{faq.views}</TableCell>
+                  
                   <TableCell>{new Date(faq.updatedAt).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">

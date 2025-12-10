@@ -94,7 +94,7 @@ export default function SpeakerPage({ params }: SpeakerPageProps) {
           name: s.fullName,
           title: s.designation,
           bio: s.bio,
-          image: s.avatar || "/image/Ellipse 72.png?height=200&width=200&text=Speaker",
+          image: s.avatar || "/image/speaker.png",
           location: s.location,
           mobileNumber: s.phone,
           website: s.website,

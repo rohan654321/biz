@@ -288,10 +288,6 @@ const transformOrganizerData = (organizer: Organizer) => {
             <Download className="w-4 h-4 mr-2" />
             Export Data
           </Button>
-          <Button>
-            <CheckCheck className="w-4 h-4 mr-2" />
-            Bulk Actions
-          </Button>
         </div>
       </div>
 

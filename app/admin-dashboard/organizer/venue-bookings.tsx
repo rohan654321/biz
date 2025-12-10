@@ -284,7 +284,7 @@ export default function OrganizerVenueBookingsPage() {
                   <TableHead>Venue</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Booking Period</TableHead>
-                  <TableHead>Amount</TableHead>
+                  {/* <TableHead>Amount</TableHead> */}
                   <TableHead>Status</TableHead>
                   <TableHead>Meeting Spaces</TableHead>
                   <TableHead>Booked On</TableHead>
@@ -326,12 +326,12 @@ export default function OrganizerVenueBookingsPage() {
                           <p className="text-xs text-gray-500">to {formatDate(booking.endDate)}</p>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      {/* <TableCell>
                         <div className="flex items-center gap-1">
                           <DollarSign className="w-3 h-3 text-gray-400" />
                           <span className="font-medium">{formatCurrency(booking.totalAmount, booking.currency)}</span>
                         </div>
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell>{getStatusBadge(booking.status)}</TableCell>
                       <TableCell>
                         <Badge variant="outline">
