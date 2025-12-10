@@ -187,10 +187,10 @@ export default function SpeakerFollowersPage() {
               <TableRow>
                 <TableHead>Speaker</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Total Followers</TableHead>
+                {/* <TableHead>Total Followers</TableHead> */}
                 <TableHead>Sessions</TableHead>
                 <TableHead>Active Sessions</TableHead>
-                <TableHead>Actions</TableHead>
+                {/* <TableHead>Actions</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -218,11 +218,11 @@ export default function SpeakerFollowersPage() {
                     <TableCell>
                       <span className="text-gray-600">{speaker.email}</span>
                     </TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       <Badge variant="secondary" className="font-semibold">
                         {speaker.totalFollowers} Followers
                       </Badge>
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell>
                       <span className="text-gray-600">{speaker.totalSessions}</span>
                     </TableCell>
@@ -231,7 +231,7 @@ export default function SpeakerFollowersPage() {
                         {speaker.activeSessions} Active
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       <Button
                         variant="outline"
                         size="sm"
@@ -241,7 +241,7 @@ export default function SpeakerFollowersPage() {
                         <Eye className="h-4 w-4 mr-2" />
                         View Followers
                       </Button>
-                    </TableCell>
+                    </TableCell> */}
                   </TableRow>
                 ))
               )}
