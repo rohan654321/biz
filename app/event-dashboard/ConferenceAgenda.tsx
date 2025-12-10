@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Trash2, ChevronLeft, ChevronRight, Edit } from "lucide-react"
+import { Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import {
   AlertDialog,
@@ -51,7 +51,6 @@ export function ConferenceList({ eventId, refreshKey, onCreateNew }: ConferenceL
   const [currentDayIndex, setCurrentDayIndex] = useState(0)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const { toast } = useToast()
-  
 
   const fetchConferences = async () => {
     setIsLoading(true)
@@ -126,6 +125,25 @@ export function ConferenceList({ eventId, refreshKey, onCreateNew }: ConferenceL
     return typeConfig[type as keyof typeof typeConfig] || { label: type, variant: "default" as const }
   }
 
+  // Extract day number from day string (e.g., "Monday, 1 Jan 2024" -> "Day 1")
+  const getDayLabel = (conference: Conference, index: number) => {
+    // Try to extract day number from the date string
+    const dayMatch = conference.date.match(/\d+/)
+    if (dayMatch) {
+      return `Day ${dayMatch[0]}`
+    }
+    
+    // Fallback to index-based numbering
+    return `Day ${index + 1}`
+  }
+
+  // Get day display name (e.g., "Monday" from "Monday, 1 Jan 2024")
+  const getDayName = (conference: Conference) => {
+    // Extract day name (Monday, Tuesday, etc.) from the day string
+    const dayName = conference.day.split(",")[0]
+    return dayName || `Day`
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -142,10 +160,7 @@ export function ConferenceList({ eventId, refreshKey, onCreateNew }: ConferenceL
       <div className="text-center py-12">
         <h3 className="text-lg font-medium mb-2">No conference agenda found</h3>
         <p className="text-muted-foreground mb-4">Create your first conference agenda to get started</p>
-        <Button onClick={onCreateNew}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Agenda
-        </Button>
+
       </div>
     )
   }
@@ -156,10 +171,7 @@ export function ConferenceList({ eventId, refreshKey, onCreateNew }: ConferenceL
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Conference Agenda</h2>
-        <Button onClick={onCreateNew}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create New Agenda
-        </Button>
+
       </div>
 
       <div className="flex items-center justify-between bg-muted p-4 rounded-lg">
@@ -185,8 +197,9 @@ export function ConferenceList({ eventId, refreshKey, onCreateNew }: ConferenceL
             variant={index === currentDayIndex ? "default" : "outline"}
             size="sm"
             onClick={() => setCurrentDayIndex(index)}
+            title={`${getDayName(conference)} - ${conference.date}`}
           >
-            Day {index + 1}
+            {getDayLabel(conference, index)}
           </Button>
         ))}
       </div>
@@ -203,14 +216,10 @@ export function ConferenceList({ eventId, refreshKey, onCreateNew }: ConferenceL
                     {session.title}
                     <Badge variant={typeBadge.variant}>{typeBadge.label}</Badge>
                   </CardTitle>
-                  <div className="flex space-x-2">
-                    <Button variant="ghost" size="icon">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteId(currentConference.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  {/* Edit button removed from here */}
+                  <Button variant="ghost" size="icon" onClick={() => setDeleteId(currentConference.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
                 <div className="text-sm text-muted-foreground">{session.time}</div>
               </CardHeader>

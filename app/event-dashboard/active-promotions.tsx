@@ -8,8 +8,8 @@ import { useToast } from "@/hooks/use-toast"
 
 interface Promotion {
   id: string
-  eventId: string
   packageType: string
+  packageName: string
   status: string
   impressions: number
   clicks: number
@@ -32,6 +32,7 @@ export default function ActivePromotions({ eventId }: { eventId: string }) {
       const response = await fetch(`/api/events/${eventId}/promotions`)
       if (!response.ok) throw new Error("Failed to fetch promotions")
       const data = await response.json()
+
       setPromotions(data.promotions || [])
     } catch (error) {
       console.error("Error fetching promotions:", error)
@@ -77,7 +78,9 @@ export default function ActivePromotions({ eventId }: { eventId: string }) {
                 <Badge variant={promotion.status === "ACTIVE" ? "default" : "secondary"}>
                   {promotion.status}
                 </Badge>
-                <span className="text-sm text-gray-500">{promotion.packageType}</span>
+                <span className="text-sm text-gray-500 capitalize">
+                  {promotion.packageName}
+                </span>
               </div>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">

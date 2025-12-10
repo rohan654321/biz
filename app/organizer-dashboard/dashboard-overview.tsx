@@ -176,7 +176,7 @@ export default function DashboardOverview({
         ))}
       </div>
       {/* Recent Events & Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div>
         <Card>
           <CardHeader>
             <CardTitle>Recent Events</CardTitle>
@@ -206,50 +206,7 @@ export default function DashboardOverview({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <Button
-                onClick={onCreateEventClick}
-                variant="outline"
-                className="h-20 flex flex-col gap-2 bg-transparent"
-              >
-                <Plus className="w-6 h-6" />
-                Create Event
-              </Button>
-              
-              <button
-                onClick={onManageAttendeesClick}
-                // variant="outline"
-                className="h-20 flex flex-col gap-2 bg-transparent"
-              >
-                {/* <Users className="w-6 h-6" />
-                Manage Attendees */}
-              </button>
-              
-              <button
-                onClick={onViewAnalyticsClick}
-                // variant="outline"
-                className="h-20 flex flex-col gap-2 bg-transparent"
-              >
-                {/* <BarChart3 className="w-6 h-6" />
-                View Analytics */}
-              </button>
-              
-              <Button
-                onClick={onSendMessageClick}
-                variant="outline"
-                className="h-20 flex flex-col gap-2 bg-transparent"
-              >
-                <MessageSquare className="w-6 h-6" />
-                Send Messages
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+       
       </div>
 
       {/* Error State */}

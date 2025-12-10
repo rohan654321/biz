@@ -588,47 +588,6 @@ export default function VenueProfile({ venueData }: VenueProfileProps) {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Capacity Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    Capacity Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                        {profileData?.maxCapacity?.toLocaleString?.() ?? "N/A"}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Max Capacity</div>
-                    </div>
-
-                    <div className="text-center p-4 bg-green-50 dark:bg-green-950 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                        {profileData?.totalHalls?.toLocaleString?.() ?? "N/A"}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Total Halls</div>
-                    </div>
-
-                    <div className="text-center p-4 bg-purple-50 dark:bg-purple-950 rounded-lg">
-                      <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                        {profileData?.totalEvents?.toLocaleString?.() ?? "N/A"}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Total Events</div>
-                    </div>
-
-                    <div className="text-center p-4 bg-orange-50 dark:bg-orange-950 rounded-lg">
-                      <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                        {profileData?.averageRating?.toFixed(1) ?? "N/A"}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Average Rating</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
 
             {/* Sidebar Stats */}

@@ -1,82 +1,100 @@
-import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth-options"
-import { prisma } from "@/lib/prisma"
+// /api/users/[userId]/saved-events/route.ts
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth-options";
+import { prisma } from "@/lib/prisma";
 
+// /api/users/[userId]/saved-events/route.ts
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    
+    const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const resolvedParams = await params
-    const userId = resolvedParams.userId
+    // Get the userId from params
+    const { userId } = await params;
 
-    // Check permissions
-    if (session.user.id !== userId && session.user.role !== "ATTENDEE") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    // User can see only his own saved events
+    if (session.user.id !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Fetch saved events
+    // Check if user exists
+    const userExists = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true }
+    });
+
+    if (!userExists) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const savedEvents = await prisma.savedEvent.findMany({
-      where: { userId },
+      where: {
+        userId,
+      },
       include: {
         event: {
           include: {
-            organizer: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                company: true,
-              },
-            },
-            venue: {
-              select: {
-                id: true,
-                venueName: true,
-                venueAddress: true,
-                venueCity: true,
-                venueState: true,
-              },
-            },
+            organizer: true,
+            venue: true,
+            ticketTypes: true,
           },
         },
       },
-      orderBy: { savedAt: "desc" }
-    })
+      orderBy: { savedAt: "desc" },
+    });
 
-    const events = savedEvents.map((saved) => ({
-      id: saved.event.id,
-      title: saved.event.title,
-      description: saved.event.description,
-      shortDescription: saved.event.shortDescription,
-      startDate: saved.event.startDate.toISOString(),
-      endDate: saved.event.endDate.toISOString(),
-      // location: saved.event.location || saved.event.venue?.venueName || "TBA",
-      // city: saved.event.city || saved.event.venue?.venueCity,
-      // state: saved.event.state || saved.event.venue?.venueState,
-      status: saved.event.status,
-      type: saved.event.eventType?.[0] || "General",
-      bannerImage: saved.event.bannerImage,
-      thumbnailImage: saved.event.thumbnailImage,
-      organizer: saved.event.organizer,
-      savedAt: saved.savedAt.toISOString(),
-    }))
+    // Map the events to match your frontend expectations
+    const events = savedEvents.map((saved) => {
+      const event = saved.event;
+      
+      return {
+        id: event.id,
+        title: event.title,
+        description: event.description,
+        shortDescription: event.shortDescription || "",
+        startDate: event.startDate.toISOString(),
+        endDate: event.endDate?.toISOString() || event.startDate.toISOString(),
+        
+        // Use venue information or fallback to event location fields
+        location: event.venue?.venueName ,
+        city: event.venue?.venueCity ,
+        state: event.venue?.venueState,
+        address: event.venue?.venueAddress,
+        
+        category: event.category?.[0] || "Event",
+        categories: event.category || [],
+        
+        status: event.status,
+        type: event.eventType?.[0] || "General",
+        eventTypes: event.eventType || [],
+        
+        bannerImage: event.bannerImage || "",
+        thumbnailImage: event.thumbnailImage || "",
+        
+        // expectedExhibitors: event.expectedExhibitors || 0,
+        maxAttendees: event.maxAttendees || 0,
+        
+        organizer: event.organizer,
+        venue: event.venue,
+        ticketTypes: event.ticketTypes || [],
+        
+        savedAt: saved.savedAt.toISOString(),
+      };
+    });
 
-    return NextResponse.json({ events })
+    return NextResponse.json({ events });
 
   } catch (error) {
-    console.error("Error fetching saved events:", error)
+    console.error("Error fetching saved events:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
-    )
+    );
   }
 }

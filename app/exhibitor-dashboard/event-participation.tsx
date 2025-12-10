@@ -308,26 +308,6 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
-            <FileText className="w-4 h-4" />
-            Exhibitor Manual
-          </Button>
-          <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
-            <Download className="w-4 h-4" />
-            Invoice
-          </Button>
-          <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
-            <Users className="w-4 h-4" />
-            Passes
-          </Button>
-          {!isPast && event.paymentStatus === "PENDING" && (
-            <Button size="sm" className="flex items-center gap-2 bg-green-600 hover:bg-green-700">
-              <CreditCard className="w-4 h-4" />
-              Pay Now
-            </Button>
-          )}
-        </div>
       </CardContent>
     </Card>
   )
@@ -359,10 +339,7 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Event Participation</h1>
-        <Button className="flex items-center gap-2">
-          <Calendar className="w-4 h-4" />
-          Register for New Event
-        </Button>
+        
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -399,33 +376,6 @@ export default function EventParticipation({ exhibitorId }: EventParticipationPr
           )}
         </TabsContent>
       </Tabs>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
-              <FileText className="w-6 h-6" />
-              <span>Download Manual</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
-              <MapPin className="w-6 h-6" />
-              <span>Booth Location</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
-              <Users className="w-6 h-6" />
-              <span>Request Passes</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex flex-col gap-2 bg-transparent">
-              <Download className="w-6 h-6" />
-              <span>Download Invoice</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
