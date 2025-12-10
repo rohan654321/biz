@@ -57,6 +57,8 @@ export async function GET() {
           email: visitor.email || "",
           phone: visitor.phone,
           avatar: visitor.avatar,
+
+         
         },
         registrations,
         stats,

@@ -205,7 +205,7 @@ export default function ImportPage() {
     setMessage('📥 Template downloaded as TSV file! Open in Excel for best results.');
   };
 
-  // OR Option 2: Generate proper CSV with proper escaping
+  // OR Option 2: Generate proper CSV with proper escaping...
   const handleDownloadCSVTemplate = () => {
     const headers = [
       'eventTitle',
