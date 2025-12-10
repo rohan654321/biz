@@ -532,37 +532,27 @@ export default function OrganizerPage() {
                     <h3 className="text-xl font-semibold mb-4">Recent Events</h3>
                     <div className="space-y-4">
                       {events.slice(0, 3).map((event) => (
-                        <Link href={`/event/${event.id}`}>
-                        <div
-                          key={event.id}
-                          className="flex gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                          <Image
-                            src={event.bannerImage || "/placeholder.svg?height=60&width=80"}
-                            alt={event.title}
-                            width={80}
-                            height={60}
-                            className="w-20 h-15 rounded"
-                          />
-                          <div className="flex-1">
-                            <h4 className="font-medium text-gray-900 mb-1">{event.title}</h4>
-                            <div className="flex items-center text-sm text-gray-600 mb-1">
-                              <Calendar className="w-4 h-4 mr-1" />
-                              {formatDate(event.startDate)}
-                            </div>
-                            <div className="flex items-center text-sm text-gray-600">
-                              <MapPin className="w-4 h-4 mr-1" />
-                              {event.location}
+                        <Link href={`/event/${event.id}`} key={event.id}>
+                          <div className="flex gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                            <Image
+                              src={event.bannerImage || "/placeholder.svg?height=60&width=80"}
+                              alt={event.title}
+                              width={80}
+                              height={60}
+                              className="w-20 h-15 rounded"
+                            />
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900 mb-1">{event.title}</h4>
+                              <div className="flex items-center text-sm text-gray-600 mb-1">
+                                <Calendar className="w-4 h-4 mr-1" />
+                                {formatDate(event.startDate)}
+                              </div>
+                              <div className="flex items-center text-sm text-gray-600">
+                                <MapPin className="w-4 h-4 mr-1" />
+                                {event.location}
+                              </div>
                             </div>
                           </div>
-                          {/* <div className="text-right">
-                            <div className="flex items-center gap-1 mb-1">
-                              <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                              <span className="text-sm font-medium">4.5</span>
-                            </div>
-                            <Badge variant={event.status === "Active" ? "default" : "secondary"}>{event.status}</Badge>
-                          </div> */}
-                        </div>
                         </Link>
                       ))}
                     </div>
@@ -643,46 +633,30 @@ export default function OrganizerPage() {
               {paginatedEvents.map((event) => (
                 <div key={event.id} className="hover:shadow-lg transition-shadow cursor-pointer border-2 rounded-xl">
                   <Link href={`/event/${event.id}`}>
-                  <div className="p-0">
-                    <div className="relative">
-                      <Image
-                        src={event.bannerImage || "/placeholder.svg?height=200&width=400"}
-                        alt={event.title}
-                        width={400}
-                        height={200}
-                        className="w-full h-48 object-cover rounded-t-lg"
-                      />
-                      {/* <Badge className="absolute top-3 right-3 bg-blue-500 text-white">{event.type}</Badge> */}
-                    </div>
-                    <div className="p-4">
-                      <h4 className="font-semibold text-lg mb-2 line-clamp-1">{event.title}</h4>
-                      <div className="space-y-2 mb-3">
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Calendar className="w-4 h-4 mr-2" />
-                          {formatDate(event.startDate)}
-                        </div>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <MapPin className="w-4 h-4 mr-2" />
-                          {event.location}
+                    <div className="p-0">
+                      <div className="relative">
+                        <Image
+                          src={event.bannerImage || "/placeholder.svg?height=200&width=400"}
+                          alt={event.title}
+                          width={400}
+                          height={200}
+                          className="w-full h-48 object-cover rounded-t-lg"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h4 className="font-semibold text-lg mb-2 line-clamp-1">{event.title}</h4>
+                        <div className="space-y-2 mb-3">
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Calendar className="w-4 h-4 mr-2" />
+                            {formatDate(event.startDate)}
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600">
+                            <MapPin className="w-4 h-4 mr-2" />
+                            {event.location}
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between">
-                        {/* <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="text-sm font-medium">{}</span>
-                          <span className="text-sm text-gray-500">(12)</span>
-                        </div> */}
-                        {/* <div className="text-right">
-                          <div className="text-sm text-gray-600">{event.attendees} attendees</div>
-                        </div> */}
-                      </div>
-                      {/* <div className="mt-3">
-                        <Badge variant="outline" className="text-xs">
-                          {event.status}
-                        </Badge>
-                      </div> */}
                     </div>
-                  </div>
                   </Link>
                 </div>
               ))}
@@ -817,7 +791,6 @@ export default function OrganizerPage() {
                     </CardContent>
                   </Card>
                 ) : (
-                  // In the Reviews Tab section of OrganizerPage, update the ReviewCard usage:
                   <div className="space-y-4">
                     {reviews.map((review) => (
                       <ReviewCard
@@ -825,7 +798,7 @@ export default function OrganizerPage() {
                         review={review}
                         organizerId={organizerId}
                         onReplyAdded={handleReplyAdded}
-                        hideReplyButton={true} // Add this prop
+                        hideReplyButton={true}
                       />
                     ))}
                   </div>
@@ -1091,7 +1064,7 @@ export default function OrganizerPage() {
               <div className="flex gap-2">
                 <input
                   type="text"
-                  value={window.location.href}
+                  value={typeof window !== 'undefined' ? window.location.href : ''}
                   readOnly
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
                 />

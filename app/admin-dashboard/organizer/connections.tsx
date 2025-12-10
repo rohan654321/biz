@@ -206,11 +206,11 @@ export default function OrganizerConnectionsPage() {
                 <TableHead>Organizer</TableHead>
                 <TableHead>Organization</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Total Followers</TableHead>
+                {/* <TableHead>Total Followers</TableHead> */}
                 <TableHead>Events</TableHead>
-                <TableHead>Active Events</TableHead>
+                {/* <TableHead>Active Events</TableHead> */}
                 <TableHead>Joined</TableHead>
-                <TableHead>Actions</TableHead>
+                {/* <TableHead>Actions</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -246,22 +246,22 @@ export default function OrganizerConnectionsPage() {
                       </div>
                     </TableCell>
                     <TableCell>{organizer.email}</TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       <Badge variant="secondary" className="font-semibold">
                         {organizer.totalFollowers} followers
                       </Badge>
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell>{organizer.totalEvents}</TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       <Badge variant="outline">{organizer.activeEvents}</Badge>
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell>{new Date(organizer.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       <Button size="sm" variant="outline" onClick={() => handleViewDetails(organizer.id)}>
                         <Eye className="h-4 w-4 mr-2" />
                         View Details
                       </Button>
-                    </TableCell>
+                    </TableCell> */}
                   </TableRow>
                 ))
               )}

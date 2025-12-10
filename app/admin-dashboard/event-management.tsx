@@ -1012,16 +1012,7 @@ function EventList({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Event Management</h1>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" className="flex items-center gap-2 bg-transparent">
-            <Download className="w-4 h-4" />
-            Export
-          </Button>
-          <Button className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Add Event
-          </Button>
-        </div>
+
       </div>
 
       {/* Search and Filters */}
