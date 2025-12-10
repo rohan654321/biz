@@ -509,7 +509,6 @@ export default function VenueDetailPage() {
   }
 
   // Calculate total capacity from meeting spaces
-  // Calculate total capacity from meeting spaces - FIXED VERSION
   const getTotalCapacity = () => {
     // First check if venue has direct capacity info
     if (venue?.capacity?.total) return venue.capacity.total
@@ -523,7 +522,7 @@ export default function VenueDetailPage() {
     return 0
   }
 
-  // Get number of halls - FIXED VERSION
+  // Get number of halls
   const getHallsCount = () => {
     // First check if venue has direct halls info
     if (venue?.capacity?.halls) return venue.capacity.halls
@@ -571,10 +570,10 @@ export default function VenueDetailPage() {
   const getCurrentImage = () => {
     const images = venue?.images || venue?.venueImages || []
     if (images.length === 0) {
-      return "/logo/Logo-1.png?height=400&width=800&text=No+Image+Available"
+      return "/logo/Logo-1.png"
     }
     const currentImage = images[currentImageIndex]
-    return currentImage || "/logo/Logo-1.png?height=400&width=800&text=No+Image+Available"
+    return currentImage || "/logo/Logo-1.png"
   }
 
   const getEventImage = (event: Event) => {
@@ -644,7 +643,17 @@ export default function VenueDetailPage() {
 
       {/* Hero Section */}
       <div className="relative h-96 overflow-hidden">
-        <Image src={getCurrentImage() || "/logo/Logo-1.png"} alt={venue.name} fill className="object-cover" />
+        {venueImages.length > 0 ? (
+          <Image src={getCurrentImage()} alt={venue.name} fill className="object-cover" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-300 flex items-center justify-center">
+            <div className="text-center">
+              <Building className="w-24 h-24 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-700 mb-2">{venue.name}</h2>
+              <p className="text-gray-600">No images available</p>
+            </div>
+          </div>
+        )}
         <div className="absolute inset-0 bg-black/40" />
 
         {/* Image Navigation */}
@@ -973,34 +982,7 @@ export default function VenueDetailPage() {
                           <span className="text-sm text-gray-600">Area</span>
                           <span className="font-medium">{space.area} sq ft</span>
                         </div>
-                        {/* <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Hourly Rate</span>
-                          <span className="font-medium text-blue-600">
-                            {venue.pricing?.currency || "₹"}
-                            {space.hourlyRate.toLocaleString()}
-                          </span>
-                        </div> */}
                       </div>
-
-                      {/* {showScheduleMeeting && (
-                        <div className="flex gap-2">
-                          <Button
-                            className="flex-1"
-                            disabled={!space.isAvailable}
-                            onClick={() => {
-                              toast({
-                                title: "Booking Request",
-                                description: `Booking request sent for ${space.name}`,
-                              })
-                            }}
-                          >
-                            {space.isAvailable ? "Book Now" : "Not Available"}
-                          </Button>
-                          <Button variant="outline" size="icon">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )} */}
                     </CardContent>
                   </Card>
                 ))
@@ -1094,8 +1076,8 @@ export default function VenueDetailPage() {
                     className="hover:shadow-lg transition-shadow duration-300 cursor-pointer overflow-hidden border-2"
                     onClick={() => router.push(`/event/${event.id}`)}
                   >
-                    {/* Image Section - No top padding/margin */}
-                    <div className="relative h-48 w-full mb-7">
+                    {/* Image Section */}
+                    <div className="relative h-48 w-full">
                       <Image
                         src={getEventImage(event)}
                         alt={event.title}
@@ -1153,8 +1135,6 @@ export default function VenueDetailPage() {
                       </div>
 
                       <div className="flex items-center justify-end pt-2 mb-3">
-
-
                         <Button
                           size="sm"
                           onClick={(e) => {

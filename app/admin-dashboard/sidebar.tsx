@@ -234,7 +234,7 @@ export default function AdminDashboard({ userRole, userPermissions }: AdminDashb
       id: "locations",
       subItems: [
         { title: "Countries", id: "countries" },
-        { title: "Cities", id: "cities" },
+        // { title: "Cities", id: "cities" },
       ],
     },
     {

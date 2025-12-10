@@ -34,7 +34,7 @@ interface Review {
     firstName: string
     lastName: string
     avatar?: string
-  }
+  } | null  // Make user nullable
   event?: {
     id: string
     title: string
@@ -46,7 +46,7 @@ interface ReviewCardProps {
   review: Review
   organizerId: string
   onReplyAdded?: (reviewId: string, newReply: ReviewReply) => void
-  hideReplyButton?: boolean // Add this prop
+  hideReplyButton?: boolean
 }
 
 export function ReviewCard({ review, organizerId, onReplyAdded, hideReplyButton = false }: ReviewCardProps) {
@@ -118,12 +118,10 @@ export function ReviewCard({ review, organizerId, onReplyAdded, hideReplyButton 
 
       const replyData = await response.json()
 
-      // Call the callback to update the parent component
       if (onReplyAdded) {
         onReplyAdded(review.id, replyData)
       }
 
-      // Reset form
       setReplyContent("")
       setShowReplyForm(false)
 
@@ -145,16 +143,32 @@ export function ReviewCard({ review, organizerId, onReplyAdded, hideReplyButton 
 
   const isOrganizer = session?.user?.id === organizerId
 
+  // Handle null user
+  if (!review.user) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-gray-500">
+            <p>This review is no longer available</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       <CardContent className="p-6">
         <div className="flex gap-4">
-          {/* User Avatar */}
+          {/* User Avatar with null check */}
           <Avatar className="w-12 h-12">
-            <AvatarImage src={review.user.avatar} alt={`${review.user.firstName} ${review.user.lastName}`} />
+            <AvatarImage 
+              src={review.user?.avatar || "/placeholder.svg"} 
+              alt={`${review.user?.firstName || "User"} ${review.user?.lastName || ""}`} 
+            />
             <AvatarFallback>
-              {review.user.firstName[0]}
-              {review.user.lastName[0]}
+              {review.user?.firstName?.[0] || "U"}
+              {review.user?.lastName?.[0] || ""}
             </AvatarFallback>
           </Avatar>
 
@@ -164,7 +178,7 @@ export function ReviewCard({ review, organizerId, onReplyAdded, hideReplyButton 
             <div className="flex items-start justify-between">
               <div>
                 <h4 className="font-semibold text-gray-900">
-                  {review.user.firstName} {review.user.lastName}
+                  {review.user?.firstName || "Anonymous"} {review.user?.lastName || ""}
                 </h4>
                 {review.event && (
                   <Badge variant="outline" className="mt-1 text-xs">
@@ -189,7 +203,7 @@ export function ReviewCard({ review, organizerId, onReplyAdded, hideReplyButton 
             {/* Review Comment */}
             <p className="text-gray-600 leading-relaxed">{review.comment}</p>
 
-            {/* Reply Button - Conditionally rendered */}
+            {/* Reply Button */}
             {!hideReplyButton && (isOrganizer || session?.user) && (
               <div className="flex items-center justify-between pt-2">
                 <Button
@@ -254,16 +268,19 @@ export function ReviewCard({ review, organizerId, onReplyAdded, hideReplyButton 
                   {review.replies.map((reply) => (
                     <div key={reply.id} className="flex gap-3">
                       <Avatar className="w-8 h-8">
-                        <AvatarImage src={reply.user.avatar} alt={`${reply.user.firstName} ${reply.user.lastName}`} />
+                        <AvatarImage 
+                          src={reply.user?.avatar || "/placeholder.svg"} 
+                          alt={`${reply.user?.firstName || "User"} ${reply.user?.lastName || ""}`} 
+                        />
                         <AvatarFallback>
-                          {reply.user.firstName[0]}
-                          {reply.user.lastName[0]}
+                          {reply.user?.firstName?.[0] || "U"}
+                          {reply.user?.lastName?.[0] || ""}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium text-sm">
-                            {reply.user.firstName} {reply.user.lastName}
+                            {reply.user?.firstName || "Anonymous"} {reply.user?.lastName || ""}
                           </span>
                           {reply.isOrganizerReply && (
                             <Badge variant="secondary" className="text-xs">
