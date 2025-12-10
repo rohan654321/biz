@@ -1,11 +1,7 @@
-// types/next-auth.d.ts
 import "next-auth"
-import { DefaultSession, DefaultUser } from "next-auth"
+import type { DefaultSession, DefaultUser } from "next-auth"
 
 declare module "next-auth" {
-  /**
-   * Extends the built-in session.user and user types
-   */
   interface User extends DefaultUser {
     id: string
     role: string
