@@ -54,12 +54,12 @@ interface AddVenueProps {
     state?: string
     country?: string
   }) => void
+  selectedVenueId?: string  // Add this prop
 }
 
-export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) {
+export default function AddVenue({ organizerId, onVenueChange, selectedVenueId }: AddVenueProps) {
   const [venues, setVenues] = useState<Venue[]>([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedVenueId, setSelectedVenueId] = useState<string>("")
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("existing")
   const { toast } = useToast()
@@ -74,7 +74,6 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
 
     // Venue Information
     venueName: "",
-
     venueDescription: "",
     website: "",
     maxCapacity: "",
@@ -140,8 +139,6 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
   })
 
   const handleVenueSelect = (venueId: string) => {
-    setSelectedVenueId(venueId)
-
     if (onVenueChange) {
       const selectedVenue = venues.find((v) => v.id === venueId)
       if (selectedVenue) {
@@ -149,9 +146,9 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
           venueId: selectedVenue.id,
           venueName: selectedVenue.venueName || `${selectedVenue.firstName} ${selectedVenue.lastName}'s Venue`,
           venueAddress: selectedVenue.venueAddress || "Address not provided",
-          city: selectedVenue.city || "City not provided",
-          state: selectedVenue.state,
-          country: selectedVenue.country,
+          city: selectedVenue.venueCity || selectedVenue.city || "City not provided",
+          state: selectedVenue.venueState || selectedVenue.state,
+          country: selectedVenue.venueCountry || selectedVenue.country,
         })
 
         toast({
@@ -184,11 +181,11 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
       prev.map((space, i) =>
         i === spaceIndex
           ? {
-            ...space,
-            features: space.features.includes(feature)
-              ? space.features.filter((f) => f !== feature)
-              : [...space.features, feature],
-          }
+              ...space,
+              features: space.features.includes(feature)
+                ? space.features.filter((f) => f !== feature)
+                : [...space.features, feature],
+            }
           : space,
       ),
     )
@@ -343,10 +340,11 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                 {filteredVenues.map((venue) => (
                   <Card
                     key={venue.id}
-                    className={`cursor-pointer transition-all ${selectedVenueId === venue.id
+                    className={`cursor-pointer transition-all ${
+                      selectedVenueId === venue.id
                         ? "ring-2 ring-green-500 bg-green-50 shadow-md"
                         : "hover:bg-gray-50 hover:shadow-sm"
-                      }`}
+                    }`}
                     onClick={() => handleVenueSelect(venue.id!)}
                   >
                     <CardContent className="p-4">
@@ -385,9 +383,7 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                             )}
                             <div className="flex items-center gap-1">
                               <MapPin className="w-3 h-3" />
-                              {/* <MapPin className="w-3 h-3" /> */}
                               {venue.venueAddress}, {venue.venueCity}, {venue.venueState}, {venue.venueCountry}
-
                             </div>
                           </div>
 
@@ -443,53 +439,6 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
             <TabsContent value="new" className="space-y-6">
               {/* Create New Venue Form */}
               <div className="space-y-8">
-                {/* Manager Information */}
-                {/* <div>
-                  <h3 className="text-lg font-semibold mb-4">Venue Manager Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="firstName">First Name *</Label>
-                      <Input
-                        id="firstName"
-                        value={newVenue.firstName}
-                        onChange={(e) => setNewVenue({ ...newVenue, firstName: e.target.value })}
-                        placeholder="John"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="lastName">Last Name *</Label>
-                      <Input
-                        id="lastName"
-                        value={newVenue.lastName}
-                        onChange={(e) => setNewVenue({ ...newVenue, lastName: e.target.value })}
-                        placeholder="Doe"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="email">Email *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={newVenue.email}
-                        onChange={(e) => setNewVenue({ ...newVenue, email: e.target.value })}
-                        placeholder="john.doe@venue.com"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input
-                        id="phone"
-                        value={newVenue.phone}
-                        onChange={(e) => setNewVenue({ ...newVenue, phone: e.target.value })}
-                        placeholder="+1 (555) 123-4567"
-                      />
-                    </div>
-                  </div>
-                </div> */}
-
                 {/* Venue Information */}
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Venue Information</h3>
@@ -581,7 +530,6 @@ export default function AddVenue({ organizerId, onVenueChange }: AddVenueProps) 
                   {loading ? "Creating..." : "Create Venue"}
                 </Button>
               </div>
-              {/* </div> */}
             </TabsContent>
           </Tabs>
         </CardContent>
