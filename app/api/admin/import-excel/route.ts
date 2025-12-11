@@ -8,13 +8,75 @@ const prisma = new PrismaClient();
 
 export const runtime = 'nodejs';
 
-// Helper function to parse dates from various formats
+// Helper function to parse dates from various formats with Vercel fix
 function parseDateString(dateStr: any): Date {
   if (!dateStr || dateStr.toString().trim() === '') {
     return new Date();
   }
   
   const str = dateStr.toString().trim();
+  
+  // VERCEL FIX: Handle the JSON-like date format from Excel.js
+  if (str.includes('$type') && str.includes('DateTime')) {
+    try {
+      // Try to parse as JSON object
+      let jsonStr = str;
+      // Ensure it's valid JSON
+      if (!jsonStr.startsWith('{')) {
+        jsonStr = `{${jsonStr}`;
+      }
+      if (!jsonStr.endsWith('}')) {
+        jsonStr = `${jsonStr}}`;
+      }
+      
+      // Clean up any escaped quotes
+      jsonStr = jsonStr.replace(/\\"/g, '"');
+      
+      const parsed = JSON.parse(jsonStr);
+      if (parsed.value) {
+        const date = new Date(parsed.value);
+        if (!isNaN(date.getTime())) {
+          console.log(`✅ Parsed JSON date: ${parsed.value}`);
+          return date;
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to parse JSON date format, trying alternative:', str);
+    }
+  }
+  
+  // Handle extremely large invalid years (like +045662)
+  if (str.includes('+0') || str.includes('-0')) {
+    console.warn(`⚠️ Invalid year format detected: ${str}`);
+    
+    // Try to extract a reasonable date
+    // Look for ISO-like pattern: YYYY-MM-DD
+    const isoMatch = str.match(/(\d{4}-\d{2}-\d{2})/);
+    if (isoMatch) {
+      const date = new Date(isoMatch[0]);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+    
+    // Try to extract just the numeric parts
+    const parts = str.split('-');
+    if (parts.length >= 3) {
+      // Find the part that looks like a reasonable year (1900-2100)
+      for (let i = 0; i < parts.length; i++) {
+        const year = parseInt(parts[i], 10);
+        if (year >= 1900 && year <= 2100) {
+          // Try to reconstruct date
+          const month = parts[(i + 1) % parts.length] || '01';
+          const day = parts[(i + 2) % parts.length]?.split('T')[0] || '01';
+          return new Date(year, parseInt(month, 10) - 1, parseInt(day, 10));
+        }
+      }
+    }
+    
+    console.warn(`❌ Could not parse date: ${str}, using current date`);
+    return new Date();
+  }
   
   // Try parsing DD-MM-YYYY format (European/Indian)
   if (str.includes('-')) {
@@ -23,6 +85,12 @@ function parseDateString(dateStr: any): Date {
       const day = parseInt(parts[0], 10);
       const month = parseInt(parts[1], 10);
       const year = parseInt(parts[2], 10);
+      
+      // Validate year is reasonable
+      if (year < 1900 || year > 2100) {
+        console.warn(`Unreasonable year ${year}, using current date`);
+        return new Date();
+      }
       
       // Check if it's DD-MM-YYYY (day is likely > 12)
       if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
@@ -34,13 +102,29 @@ function parseDateString(dateStr: any): Date {
         else if (month > 12 && month <= 31 && day >= 1 && day <= 12) {
           return new Date(year, day - 1, month);
         }
+        // Try YYYY-MM-DD
+        else if (year > 31 && month <= 12 && day <= 31) {
+          return new Date(year, month - 1, day);
+        }
       }
     }
   }
   
   // Try standard parsing
   const date = new Date(str);
-  return isNaN(date.getTime()) ? new Date() : date;
+  if (isNaN(date.getTime())) {
+    console.warn(`Invalid date format: ${str}, using current date`);
+    return new Date();
+  }
+  
+  // Final validation
+  const year = date.getFullYear();
+  if (year < 1900 || year > 2100) {
+    console.warn(`Unreasonable year ${year}, using current date`);
+    return new Date();
+  }
+  
+  return date;
 }
 
 // Helper function to clean phone numbers
@@ -115,6 +199,29 @@ const parseArray = (value: any, delimiter: string = ','): string[] => {
   return String(value).split(delimiter).map((item: string) => item.trim()).filter(item => item !== '');
 };
 
+// Helper to clean Excel data for Vercel compatibility
+function cleanExcelData(data: any[]): any[] {
+  return data.map((row, index) => {
+    const cleanedRow = { ...row };
+    
+    // Clean date fields
+    const dateFields = ['startDate', 'endDate', 'registrationStart', 'registrationEnd'];
+    dateFields.forEach(field => {
+      if (cleanedRow[field]) {
+        const value = cleanedRow[field];
+        const strValue = String(value).trim();
+        
+        // Log suspicious date formats
+        if (strValue.includes('$type') || strValue.includes('+0')) {
+          console.log(`Row ${index + 1}: Suspicious ${field} format:`, strValue);
+        }
+      }
+    });
+    
+    return cleanedRow;
+  });
+}
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -124,18 +231,44 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'No file uploaded' }, { status: 400 });
     }
 
-    // Read Excel file
+    // Read Excel file with Vercel-compatible settings
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const workbook = XLSX.read(buffer, { type: 'buffer' });
+    
+    // VERCEL FIX: Use different parsing options
+    const workbook = XLSX.read(buffer, { 
+      type: 'buffer',
+      cellDates: false, // IMPORTANT: Don't let XLSX parse dates
+      cellNF: false,
+      cellText: false,
+      raw: true // Get raw values, not formatted strings
+    });
+    
     const sheetName = workbook.SheetNames[0];
-    const rows = XLSX.utils.sheet_to_json<any>(workbook.Sheets[sheetName]);
+    
+    // Convert to JSON with careful date handling
+    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+      raw: false, // Get formatted strings for dates
+      defval: '',
+      dateNF: 'yyyy-mm-dd' // Force date format
+    });
+
+    // Clean the data for Vercel compatibility
+    const cleanedRows = cleanExcelData(rows);
+    
+    // Debug: Show first row data
+    if (cleanedRows.length > 0) {
+      console.log('First row sample (cleaned):', JSON.stringify(cleanedRows[0], null, 2));
+    }
 
     const imported: string[] = [];
     const errors: string[] = [];
 
-    for (const [index, row] of rows.entries()) {
+    for (const [index, row] of cleanedRows.entries()) {
       try {
+        // Log the row being processed
+        console.log(`Processing row ${index + 1}: ${row.eventTitle || 'Untitled'}`);
+        
         // -------------------------------
         // 1️⃣ Create/Update Organizer
         // -------------------------------
@@ -239,27 +372,29 @@ export async function POST(req: Request) {
         }
 
         // -------------------------------
-        // 3️⃣ Parse Event Data with FIXED DATE PARSING
+        // 3️⃣ Parse Event Data with VERCEL-FIXED DATE PARSING
         // -------------------------------
-        // Use the parseDateString helper for all dates
+        // Log raw date values for debugging
+        console.log(`Row ${index + 1} raw dates:`, {
+          startDate: row.startDate,
+          endDate: row.endDate,
+          registrationStart: row.registrationStart,
+          registrationEnd: row.registrationEnd
+        });
+        
+        // Use the fixed parseDateString helper
         const startDate = parseDateString(row.startDate);
         const endDate = parseDateString(row.endDate);
         const registrationStart = row.registrationStart ? parseDateString(row.registrationStart) : startDate;
         const registrationEnd = row.registrationEnd ? parseDateString(row.registrationEnd) : endDate;
 
-        // Validate dates aren't invalid
-        const validateDate = (date: Date, fieldName: string): Date => {
-          if (isNaN(date.getTime())) {
-            console.warn(`Invalid ${fieldName}, using current date`);
-            return new Date();
-          }
-          return date;
-        };
-
-        const safeStartDate = validateDate(startDate, 'startDate');
-        const safeEndDate = validateDate(endDate, 'endDate');
-        const safeRegistrationStart = validateDate(registrationStart, 'registrationStart');
-        const safeRegistrationEnd = validateDate(registrationEnd, 'registrationEnd');
+        // Log parsed dates
+        console.log(`Row ${index + 1} parsed dates:`, {
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          registrationStart: registrationStart.toISOString(),
+          registrationEnd: registrationEnd.toISOString()
+        });
 
         // Parse arrays using helper function
         const categories = parseArray(row.category);
@@ -306,7 +441,7 @@ export async function POST(req: Request) {
             title: row.eventTitle,
             description: row.eventDescription || '',
             shortDescription: row.shortDescription,
-            slug: uniqueSlug,  // Use the unique slug
+            slug: uniqueSlug,
             edition: row.edition,
             status,
             category: categories,
@@ -314,10 +449,10 @@ export async function POST(req: Request) {
             tags,
             isFeatured,
             isVIP,
-            startDate: safeStartDate,
-            endDate: safeEndDate,
-            registrationStart: safeRegistrationStart,
-            registrationEnd: safeRegistrationEnd,
+            startDate: startDate,
+            endDate: endDate,
+            registrationStart: registrationStart,
+            registrationEnd: registrationEnd,
             timezone: row.timezone || 'UTC',
             venueId: venueId,
             isVirtual,
@@ -376,26 +511,23 @@ export async function POST(req: Request) {
               });
             } catch (error: any) {
               console.warn(`Error creating category ${categoryName}:`, error.message);
-              // Skip category errors but continue
             }
           }
         }
 
         // -------------------------------
-        // 7️⃣ Create Countries and Cities (Many-to-Many) - FIXED
+        // 7️⃣ Create Countries and Cities
         // -------------------------------
         if (row.countryNames) {
           const countryNames = parseArray(row.countryNames);
           
           for (const countryName of countryNames) {
             try {
-              // First, try to find the country by name
               let country = await prisma.country.findFirst({
                 where: { name: countryName }
               });
               
               if (!country) {
-                // Generate a code for the country...
                 const generateCountryCode = (name: string): string => {
                   const countryMap: Record<string, string> = {
                     'United States': 'USA',
@@ -425,13 +557,11 @@ export async function POST(req: Request) {
 
                 const countryCode = generateCountryCode(countryName);
                 
-                // Check if code already exists
                 const existingWithCode = await prisma.country.findFirst({
                   where: { code: countryCode }
                 });
                 
                 if (existingWithCode) {
-                  // If code exists, append something unique
                   const uniqueCode = `${countryCode}${Date.now().toString().slice(-3)}`;
                   country = await prisma.country.create({
                     data: {
@@ -447,7 +577,6 @@ export async function POST(req: Request) {
                     },
                   });
                 } else {
-                  // Create with generated code
                   country = await prisma.country.create({
                     data: {
                       id: new ObjectId().toString(),
@@ -464,7 +593,6 @@ export async function POST(req: Request) {
                 }
               }
               
-              // Check if relationship already exists
               const existingRelation = await prisma.eventsOnCountries.findFirst({
                 where: {
                   eventId: event.id,
@@ -484,7 +612,6 @@ export async function POST(req: Request) {
               }
             } catch (error: any) {
               console.warn(`Error processing country ${countryName}:`, error.message);
-              // Skip country errors but continue with event
             }
           }
         }
@@ -524,7 +651,6 @@ export async function POST(req: Request) {
               });
             } catch (error: any) {
               console.warn(`Error creating city ${cityName}:`, error.message);
-              // Skip city errors but continue
             }
           }
         }
@@ -559,7 +685,6 @@ export async function POST(req: Request) {
                   },
                 });
 
-                // Create a default speaker session
                 await prisma.speakerSession.create({
                   data: {
                     id: new ObjectId().toString(),
@@ -569,8 +694,8 @@ export async function POST(req: Request) {
                     description: 'Speaker presentation',
                     sessionType: 'PRESENTATION',
                     duration: 45,
-                    startTime: safeStartDate,
-                    endTime: new Date(safeStartDate.getTime() + 45 * 60000),
+                    startTime: startDate,
+                    endTime: new Date(startDate.getTime() + 45 * 60000),
                     status: 'SCHEDULED',
                     averageRating: 0,
                     totalRatings: 0,
@@ -580,7 +705,6 @@ export async function POST(req: Request) {
                 });
               } catch (error: any) {
                 console.warn(`Error creating speaker ${speakerEmails[i]}:`, error.message);
-                // Skip speaker errors but continue
               }
             }
           }
@@ -618,7 +742,6 @@ export async function POST(req: Request) {
                   },
                 });
 
-                // Create exhibition space if not exists
                 let space = await prisma.exhibitionSpace.findFirst({
                   where: { eventId: event.id, name: 'Main Hall' }
                 });
@@ -641,7 +764,6 @@ export async function POST(req: Request) {
                   });
                 }
 
-                // Create exhibitor booth
                 await prisma.exhibitorBooth.create({
                   data: {
                     id: new ObjectId().toString(),
@@ -660,17 +782,19 @@ export async function POST(req: Request) {
                 });
               } catch (error: any) {
                 console.warn(`Error creating exhibitor ${exhibitorEmails[i]}:`, error.message);
-                // Skip exhibitor errors but continue
               }
             }
           }
         }
 
         imported.push(event.title);
+        console.log(`✅ Successfully imported: ${event.title}`);
         
       } catch (error: any) {
-        errors.push(`Row ${index + 1}: ${error.message}`);
-        console.error(`Error processing row ${index + 1}:`, error);
+        const errorMsg = `Row ${index + 1}: ${error.message}`;
+        errors.push(errorMsg);
+        console.error(`❌ Error processing row ${index + 1}:`, error);
+        console.error('Row data:', JSON.stringify(row, null, 2));
       }
     }
 
