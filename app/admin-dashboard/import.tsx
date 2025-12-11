@@ -126,7 +126,7 @@ export default function ImportPage() {
       'Premier tech event of the year',
       'tech-expo-2025',
       '2025 Edition',
-      '2025-05-01',
+      '2025-05-01', // IMPORTANT: Use YYYY-MM-DD format
       '2025-05-03',
       '2025-01-01',
       '2025-04-15',
@@ -186,11 +186,9 @@ export default function ImportPage() {
     ];
 
     // Create TSV (Tab-Separated Values) content
-    // Excel handles TSV better than CSV for complex data
     const tsvRows = [headers.join('\t'), sampleRow.join('\t')];
     const tsvContent = tsvRows.join('\n');
     
-    // Use .tsv extension for clarity
     const blob = new Blob([tsvContent], { type: 'text/tab-separated-values;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
 
@@ -202,10 +200,9 @@ export default function ImportPage() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    setMessage('📥 Template downloaded as TSV file! Open in Excel for best results.');
+    setMessage('📥 Template downloaded as TSV file! Open in Excel and FORMAT DATE COLUMNS AS TEXT before editing.');
   };
 
-  // OR Option 2: Generate proper CSV with proper escaping
   const handleDownloadCSVTemplate = () => {
     const headers = [
       'eventTitle',
@@ -341,7 +338,6 @@ export default function ImportPage() {
     const escapeCSV = (field: any) => {
       if (field === null || field === undefined) return '';
       const stringField = String(field);
-      // Escape quotes and wrap in quotes if contains comma, quote, or newline
       if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
         return `"${stringField.replace(/"/g, '""')}"`;
       }
@@ -349,7 +345,7 @@ export default function ImportPage() {
     };
 
     const csvRows = [headers.map(escapeCSV).join(','), sampleRow.map(escapeCSV).join(',')];
-    const csvContent = csvRows.join('\r\n'); // Windows line endings for Excel
+    const csvContent = csvRows.join('\r\n');
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -362,7 +358,7 @@ export default function ImportPage() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    setMessage('📥 CSV template downloaded! Open in Excel and save as .xlsx if needed.');
+    setMessage('📥 CSV template downloaded! IMPORTANT: Format date columns as Text in Excel.');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -394,7 +390,7 @@ export default function ImportPage() {
         <div className="mb-10 p-6 bg-blue-50 rounded-lg border border-blue-200">
           <h2 className="text-xl font-semibold text-blue-800 mb-3">📥 Step 1: Download Template</h2>
           <p className="text-blue-700 mb-4">
-            Choose your preferred format. TSV works better with Excel for complex data.
+            Choose your preferred format. <strong>TSV works better with Excel</strong> for complex data.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4">
@@ -405,7 +401,7 @@ export default function ImportPage() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              Download TSV Template (Recommended for Excel)
+              Download TSV Template (Recommended)
             </button>
             
             <button
@@ -420,6 +416,7 @@ export default function ImportPage() {
           </div>
           
           <div className="mt-4 text-sm text-blue-600">
+            <p className="font-semibold">⚠️ IMPORTANT: Format all date columns as "Text" in Excel before entering dates</p>
             <p><strong>TSV:</strong> Better for Excel, preserves commas in data fields</p>
             <p><strong>CSV:</strong> Standard format for most applications</p>
           </div>
@@ -586,7 +583,11 @@ export default function ImportPage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
-              <span><strong>Dates format:</strong> YYYY-MM-DD (e.g., 2025-05-01)</span>
+              <span className="font-semibold text-red-600"><strong>CRITICAL - Date Format:</strong> Format all date columns as "Text" in Excel before entering dates</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 mt-1">•</span>
+              <span><strong>Dates value:</strong> Use YYYY-MM-DD format (e.g., 2025-05-01)</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
@@ -598,20 +599,17 @@ export default function ImportPage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 mt-1">•</span>
-              <span><strong>Phone numbers:</strong> Use format like +1-415-974-4000 (not -5244)</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 mt-1">•</span>
-              <span><strong>Save as Excel:</strong> If using TSV/CSV, open in Excel and save as .xlsx for best results</span>
+              <span><strong>Phone numbers:</strong> Format as Text and use format like +1-415-974-4000</span>
             </li>
           </ul>
           
-          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
-            <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Important Note:</h4>
+                   <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
+            <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Vercel-Specific Fix:</h4>
             <p className="text-yellow-700 text-sm">
-              Your data shows phone number as "-5244". This appears to be Excel converting "+1-415-974-4000" 
-              to a negative number. To fix: Format the cell as Text before entering phone numbers, 
-              or use quotes: "+1-415-974-4000"
+              The error &quot;Could not convert argument value Object {`{"$type":"DateTime","value":"+045662-01-01T00:00:00.000Z"}`}&quot; 
+              occurs because Excel.js parses dates differently on Vercel. <strong>Solution:</strong> Format date columns as 
+              &quot;Text&quot; in Excel before entering dates. The updated code now handles this format, but formatting as Text 
+              prevents the issue entirely.
             </p>
           </div>
         </div>
