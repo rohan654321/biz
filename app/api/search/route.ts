@@ -6,7 +6,7 @@ interface EventResult {
   id: string
   title: string
   slug: string
-  category: string | null // ✅ changed from string → string | null
+  category: string | null
   startDate: Date
   endDate: Date
   isFeatured: boolean | null
@@ -64,7 +64,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(empty, { status: 200 })
     }
 
-    // ✅ Explicitly typed initial object
     const searchResults: SearchResults = {
       events: [],
       venues: [],
@@ -81,7 +80,7 @@ export async function GET(request: NextRequest) {
             { title: { contains: query, mode: "insensitive" } },
             { description: { contains: query, mode: "insensitive" } },
             { shortDescription: { contains: query, mode: "insensitive" } },
-            { category: { contains: query, mode: "insensitive" } },
+            // For array fields like category and tags, we need to check if array contains the value
             { tags: { has: query } },
             { 
               venue: { 
@@ -152,16 +151,15 @@ export async function GET(request: NextRequest) {
         },
       })
 
-     searchResults.events = events.map((event) => ({
-  ...event,
-  category: event.category ?? "Uncategorized", // default fallback
-  type: "event",
-  spotsRemaining: event.maxAttendees
-    ? event.maxAttendees - event._count.registrations
-    : null,
-  isRegistrationOpen: true,
-}))
-
+      searchResults.events = events.map((event) => ({
+        ...event,
+        category: event.category.length > 0 ? event.category.join(", ") : "Uncategorized",
+        type: "event",
+        spotsRemaining: event.maxAttendees
+          ? event.maxAttendees - event._count.registrations
+          : null,
+        isRegistrationOpen: true,
+      })) as EventResult[]
     }
 
     // Search Venues
@@ -211,9 +209,9 @@ export async function GET(request: NextRequest) {
       searchResults.venues = venues.map((venue) => ({
         ...venue,
         type: 'venue',
-        displayName: venue.venueName,
+        displayName: venue.venueName || `${venue.firstName} ${venue.lastName}`,
         location: [venue.venueCity, venue.venueState, venue.venueCountry].filter(Boolean).join(', '),
-      }))
+      })) as VenueResult[]
     }
 
     // Search Speakers
@@ -268,7 +266,7 @@ export async function GET(request: NextRequest) {
         type: 'speaker',
         displayName: `${speaker.firstName} ${speaker.lastName}`,
         expertise: speaker.specialties?.slice(0, 3) || [],
-      }))
+      })) as SpeakerResult[]
     }
 
     // Combine all results for unified search
@@ -276,7 +274,7 @@ export async function GET(request: NextRequest) {
       ...searchResults.events.map(event => ({ ...event, resultType: 'event' })),
       ...searchResults.venues.map(venue => ({ ...venue, resultType: 'venue' })),
       ...searchResults.speakers.map(speaker => ({ ...speaker, resultType: 'speaker' }))
-    ].slice(0, limit * 3) // Limit combined results
+    ].slice(0, limit * 3)
 
     return NextResponse.json(searchResults, { status: 200 })
   } catch (error) {

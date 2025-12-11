@@ -225,6 +225,7 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
   const [isUploadingImages, setIsUploadingImages] = useState(false)
   const [isUploadingBrochure, setIsUploadingBrochure] = useState(false)
   const [isUploadingLayoutPlan, setIsUploadingLayoutPlan] = useState(false)
+  const [selectedVenueId, setSelectedVenueId] = useState<string>("")
 
   const [formData, setFormData] = useState<EventFormData>({
     title: "",
@@ -369,23 +370,26 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
     { id: "media", label: "Media & Content" },
     { id: "preview", label: "Preview" },
   ]
-
-  const handleVenueChange = (venueData: {
-    venueId?: string
-    venueName: string
-    venueAddress: string
-    city: string
-    state?: string
-    country?: string
-  }) => {
-    setFormData((prev) => ({
-      ...prev,
-      venueId: venueData.venueId || "",
-      venue: venueData.venueName,
-      address: venueData.venueAddress,
-      city: venueData.city,
-    }))
+  const handleVenueSelect = (venueId: string) => {
+  setSelectedVenueId(venueId)
   }
+const handleVenueChange = (venueData: {
+  venueId?: string
+  venueName: string
+  venueAddress: string
+  city: string
+  state?: string
+  country?: string
+}) => {
+  setSelectedVenueId(venueData.venueId || "")
+  setFormData((prev) => ({
+    ...prev,
+    venueId: venueData.venueId || "",
+    venue: venueData.venueName,
+    address: venueData.venueAddress,
+    city: venueData.city,
+  }))
+}
 
   const eventTypes = [
     "Conference",
@@ -1428,7 +1432,11 @@ export default function CreateEvent({ organizerId }: { organizerId: string }) {
 </Card>
 
           <div>
-            <AddVenue organizerId={organizerId} onVenueChange={handleVenueChange} />
+            <AddVenue 
+  organizerId={organizerId} 
+  onVenueChange={handleVenueChange}
+  selectedVenueId={selectedVenueId}
+/>
           </div>
         </TabsContent>
 
