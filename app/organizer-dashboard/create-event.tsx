@@ -1365,7 +1365,7 @@ const handleVenueChange = (venueData: {
         <Input
           id="endDate"
           type="date"
-          value={formData.endDate ? getDatePart(formData.endDate) : ""}
+          value={formData.endDate ? getDatePart(formData.endDate) : ""}  
           onChange={(e) => {
             const dateValue = e.target.value
             const timeValue = getTimePart(formData.endDate)
