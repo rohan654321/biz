@@ -115,17 +115,17 @@ export function PageBanner({
         />
 
         {/* Optional overlay with title */}
-        {currentBanner.title && (
+        {/* {currentBanner.title && (
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
             <h2 className="text-2xl font-bold text-white">{currentBanner.title}</h2>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Navigation Controls */}
       {showControls && banners.length > 1 && (
         <>
-          <Button
+          {/* <Button
             variant="outline"
             size="icon"
             className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white"
@@ -140,10 +140,10 @@ export function PageBanner({
             onClick={nextBanner}
           >
             <ChevronRight className="h-4 w-4" />
-          </Button>
+          </Button> */}
 
           {/* Dots Indicator */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+          {/* <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
             {banners.map((_, index) => (
               <button
                 key={index}
@@ -153,7 +153,7 @@ export function PageBanner({
                 }`}
               />
             ))}
-          </div>
+          </div> */}
         </>
       )}
     </div>
