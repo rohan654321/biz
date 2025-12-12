@@ -244,86 +244,71 @@ export default function SpeakerPage({ params }: SpeakerPageProps) {
   return (
     <div className="bg-white min-h-screen">
       {/* DYNAMIC HERO BANNER SECTION */}
-      <div className="relative h-[300px] md:h-[350px] overflow-hidden">
-        {heroBannersLoading ? (
-          // Loading skeleton
-          <div className="w-full h-full bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse"></div>
-        ) : heroBanners.length > 0 ? (
-          <>
-            {/* Banner Display */}
-            {heroBanners.map((banner, index) => (
-              <div
-                key={banner.id}
-                className={`absolute inset-0 transition-opacity duration-500 ${
-                  index === currentBannerIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                }`}
-              >
-                <Link 
-                  href={banner.link || "#"}
-                  onClick={() => handleBannerClick(banner.id)}
-                  target={banner.link?.startsWith('http') ? '_blank' : '_self'}
-                  className="block w-full h-full"
-                >
-                  <Image
-                    src={banner.imageUrl || "/placeholder.svg"}
-                    alt={banner.title}
-                    fill
-                    className="object-cover"
-                    priority={index === 0}
-                    sizes="100vw"
-                  />
-                  {/* Optional banner title overlay */}
-                  {banner.title && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
-                      <h3 className="text-white text-lg md:text-2xl font-semibold max-w-4xl mx-auto">
-                        {banner.title}
-                      </h3>
-                    </div>
-                  )}
-                </Link>
-                
-                {/* Banner indicators if multiple banners */}
-                {heroBanners.length > 1 && (
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                    {heroBanners.map((_, idx) => (
-                      <button
-                        key={idx}
-                        className={`w-3 h-3 rounded-full transition-all ${
-                          idx === currentBannerIndex 
-                            ? "bg-white scale-110" 
-                            : "bg-white/50 hover:bg-white/75"
-                        }`}
-                        onClick={() => setCurrentBannerIndex(idx)}
-                        aria-label={`Go to banner ${idx + 1}`}
-                      />
-                    ))}
-                  </div>
-                )}
-                
-                {/* Sponsored badge */}
-                <div className="absolute top-4 right-4">
-                  <span className="bg-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-full shadow-lg">
-                    Sponsored
-                  </span>
-                </div>
-              </div>
-            ))}
-          </>
-        ) : (
-          // Fallback to default background if no banners found
-          <div className="relative w-full h-full">
+    <div className="relative h-[300px] md:h-[350px] overflow-hidden">
+  {heroBannersLoading ? (
+    // Loading skeleton
+    <div className="w-full h-full bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse"></div>
+  ) : heroBanners.length > 0 ? (
+    <>
+      {/* Banner Display - Only images */}
+      {heroBanners.map((banner, index) => (
+        <div
+          key={banner.id}
+          className={`absolute inset-0 transition-opacity duration-500 ${
+            index === currentBannerIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <Link 
+            href={banner.link || "#"}
+            onClick={() => handleBannerClick(banner.id)}
+            target={banner.link?.startsWith('http') ? '_blank' : '_self'}
+            className="block w-full h-full"
+          >
             <Image
-              src="/logo/logo-5.png?height=350&width=1200&text=Speaker+Background"
-              alt="Speaker Background"
+              src={banner.imageUrl || "/placeholder.svg"}
+              alt={banner.title}
               fill
               className="object-cover"
+              priority={index === 0}
               sizes="100vw"
-              priority
             />
-            <div className="absolute inset-0 bg-black/25" />
-          </div>
-        )}
-      </div>
+          </Link>
+          
+          {/* Banner indicators if multiple banners */}
+          {heroBanners.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+              {heroBanners.map((_, idx) => (
+                <button
+                  key={idx}
+                  className={`w-3 h-3 rounded-full transition-all ${
+                    idx === currentBannerIndex 
+                      ? "bg-white scale-110" 
+                      : "bg-white/50 hover:bg-white/75"
+                  }`}
+                  onClick={() => setCurrentBannerIndex(idx)}
+                  aria-label={`Go to banner ${idx + 1}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </>
+  ) : (
+    // Fallback to default background if no banners found
+    <div className="relative w-full h-full">
+      <Image
+        src="/logo/logo-5.png?height=350&width=1200&text=Speaker+Background"
+        alt="Speaker Background"
+        fill
+        className="object-cover"
+        sizes="100vw"
+        priority
+      />
+      <div className="absolute inset-0 bg-black/25" />
+    </div>
+  )}
+</div>
 
       {/* MAIN CONTENT SECTION */}
       <div className="max-w-6xl mx-auto px-4 mt-7 ml-20 relative z-20">

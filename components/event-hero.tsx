@@ -230,14 +230,14 @@ export default function EventHero({ event }: EventHeroProps) {
 
   return (
     <div>
-      {/* Dynamic Hero Banner Section */}
+      {/* SIMPLIFIED Dynamic Hero Banner Section - Only image */}
       <div className="relative h-[200px] md:h-[300px] lg:h-[200px] overflow-hidden">
         {heroBannersLoading ? (
           // Loading skeleton
           <div className="w-full h-full bg-gray-200 animate-pulse"></div>
         ) : heroBanners.length > 0 ? (
           <>
-            {/* Banner Slider */}
+            {/* Banner Slider - Only images without title */}
             <div ref={bannerSliderRef} className="keen-slider h-full w-full">
               {heroBanners.map((banner, index) => (
                 <div key={banner.id} className="keen-slider__slide relative h-full w-full">
@@ -255,14 +255,7 @@ export default function EventHero({ event }: EventHeroProps) {
                       priority={index === 0}
                       sizes="100vw"
                     />
-                    {/* Optional banner title overlay */}
-                    {banner.title && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                        <h3 className="text-white text-sm md:text-lg font-semibold">
-                          {banner.title}
-                        </h3>
-                      </div>
-                    )}
+                    {/* REMOVED title overlay */}
                   </Link>
                 </div>
               ))}
@@ -283,12 +276,7 @@ export default function EventHero({ event }: EventHeroProps) {
               </div>
             )}
             
-            {/* Sponsored badge */}
-            <div className="absolute top-4 right-4">
-              <span className="bg-blue-600 text-white text-xs font-medium px-2 py-1 rounded">
-                Sponsored
-              </span>
-            </div>
+            {/* REMOVED Sponsored badge */}
           </>
         ) : (
           // Fallback to default banner if no banners found
