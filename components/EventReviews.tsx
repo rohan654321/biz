@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Calendar, UserPlus, Users, ChevronLeft, ChevronRight } from "lucide-react"
+import { Calendar, Users } from "lucide-react"
 
 export interface Venue {
   id: string
@@ -181,9 +181,8 @@ export default function EventReviews() {
   }
 
   const formatFollowers = (num: number) => {
-    if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M"
-    if (num >= 1_000) return (num / 1_000).toFixed(1) + "K"
-    return num.toString()
+    // Format with commas for thousands (like 110,773)
+    return num.toLocaleString('en-US')
   }
 
   // Get events for the current slide
@@ -196,13 +195,15 @@ export default function EventReviews() {
   }
 
   return (
-    <section className="py-12 px-6 bg-white max-w-6xl mx-auto">
+    <section className="py-12 px-4 max-w-6xl mx-auto">
       {/* Heading */}
       <div className="text-center mb-10">
-        <h2 className="text-2xl md:text-3xl font-bold text-[#0A2B61]">
-          We are the world's largest eventgoer community
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+          Trending Upcoming Events
         </h2>
-        <p className="text-gray-600 mt-2">Every minute 570 people are finding new opportunities at events</p>
+        <p className="text-gray-600 max-w-3xl mx-auto">
+          Connecting the global B2B trade fair community—where new business opportunities begin every minute.
+        </p>
       </div>
 
       {/* Carousel container */}
@@ -212,102 +213,121 @@ export default function EventReviews() {
           onMouseEnter={() => setIsAutoScrolling(false)}
           onMouseLeave={() => setIsAutoScrolling(true)}
         >
-        
-
           {/* Cards grid - always shows 4 cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[15px] max-w-7xl mx-auto">
-            {getEventsForCurrentSlide().map((event, index) => (
-              <div
-                key={`${currentSlide}-${event.id || index}`}
-                className="bg-white shadow-md overflow-hidden hover:shadow-xl border border-gray-100 text-center cursor-pointer transition-all duration-300 hover:scale-105"
-                onClick={() => handleCardClick(event)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e: React.KeyboardEvent) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    handleCardClick(event)
-                  }
-                }}
-              >
-                {/* Gradient Top Banner */}
-                <div className="relative h-40 w-full overflow-hidden">
-                  <img
-                    src={event.logo || event.bannerImage || "/herosection-images/food.jpg"}
-                    alt={`${event.title} logo`}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {getEventsForCurrentSlide().map((event, index) => {
+              // Use event.followers if available, otherwise use visitorCounts with a base
+              const baseFollowers = event.followers || 110773
+              const extraFollowers = visitorCounts[event.id] || 0
+              const totalFollowers = baseFollowers + extraFollowers
+              const formattedFollowers = formatFollowers(totalFollowers)
+              
+              return (
+                <div
+                  key={`${currentSlide}-${event.id || index}`}
+                  className="bg-white border border-gray-200 rounded-lg overflow-hidden cursor-pointer hover:border-gray-300 transition-colors duration-200"
+                  onClick={() => handleCardClick(event)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      handleCardClick(event)
+                    }
+                  }}
+                >
+                  {/* Image Container */}
+                  <div className="relative h-48 w-full bg-gray-100 overflow-hidden">
+                    <img
+                      src={event.logo || event.bannerImage || "/herosection-images/food.jpg"}
+                      alt={`${event.title} logo`}
+                      className="w-full h-full object-cover"
+                    />
+                    
+                    {/* Date Badge */}
+                    <div className="absolute top-3 left-3">
+                      <div className="flex items-center bg-white px-3 py-1.5 rounded shadow-sm">
+                        <Calendar className="w-4 h-4 text-gray-600 mr-2" />
+                        <span className="text-sm font-medium text-gray-800">
+                          {new Date(event.startDate).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                          })}
+                          {event.endDate
+                            ? ` - ${new Date(event.endDate).toLocaleDateString("en-GB", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })}`
+                            : ""}
+                        </span>
+                      </div>
+                    </div>
 
-                  {/* Edition Tag */}
-                  <div className="absolute top-2 left-2 flex items-center z-10">
-                    <span className="bg-red-600 text-white text-sm font-bold px-1.5 py-0.5 rounded-sm mr-1">
-                      {event.edition || "2 Edition"}
-                    </span>
+                    {/* Categories - Optional */}
+                    {/* <div className="absolute top-3 right-3 flex gap-2">
+                      {event.categories?.slice(0, 2).map((cat, idx) => (
+                        <span
+                          key={idx}
+                          className="bg-white text-gray-700 text-xs px-2 py-1 rounded"
+                        >
+                          {cat}
+                        </span>
+                      ))}
+                    </div> */}
                   </div>
 
-                  {/* Categories */}
-                  <div className="absolute top-2 right-2 flex gap-2 z-10">
-                    {event.categories?.slice(0, 2).map((cat, idx) => (
-                      <span
-                        key={idx}
-                        className="bg-white text-gray-700 text-xs px-2 py-0.5 rounded-full shadow-sm"
-                      >
-                        {cat}
-                      </span>
-                    ))}
+                  {/* Content */}
+                  <div className="p-5">
+                    {/* Event Title */}
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+                      {event.title || "Event Title"}
+                    </h3>
+
+                    {/* Location */}
+                    <div className="flex items-center mb-4">
+                      <svg className="w-4 h-4 text-gray-400 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                      </svg>
+                      <p className="text-gray-600 text-sm">
+                        {event.location?.venue ? `${event.location.venue}, ` : ""}
+                        {event.location?.city}
+                      </p>
+                    </div>
+
+                    {/* Display address if available */}
+                    {/* {event.location?.address && (
+                      <div className="mb-4">
+                        <p className="text-gray-600 text-xs line-clamp-2 pl-6">{event.location.address}</p>
+                      </div>
+                    )} */}
+
+                    {/* Followers Section */}
+                    <div className="pt-4 border-t border-gray-100">
+                      <div className="flex items-center">
+                        <Users className="w-4 h-4 text-gray-500 mr-2" />
+                        <div>
+                          <span className="text-gray-900 font-semibold">
+                            {formattedFollowers}
+                          </span>
+                          <span className="text-gray-500 text-sm ml-1">Followers</span>
+                        </div>
+                      </div>
+                      
+                      {/* Save button - Optional */}
+                      {/* <div className="mt-4">
+                        <button
+                          className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium"
+                          aria-label="Save event"
+                          onClick={(e) => handleVisitClick(e, event, index)}
+                        >
+                          <UserPlus className="w-4 h-4 mr-2" />
+                          Save Event
+                        </button>
+                      </div> */}
+                    </div>
                   </div>
                 </div>
-
-                {/* Content */}
-                <div className="p-4">
-                  <div className="flex justify-center items-center gap-4 mb-3">
-                    <span className="text-gray-700 text-sm flex items-center gap-1">
-                      <Users size={18} className="text-gray-500" />
-                      {formatFollowers(visitorCounts[event.id] || 0)} Followers
-                    </span>
-
-                    <button
-                      className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm shadow-sm"
-                      aria-label="Save event"
-                      onClick={(e) => handleVisitClick(e, event, index)}
-                    >
-                      <UserPlus className="w-4 h-4 mr-1" />
-                      Save
-                    </button>
-                  </div>
-
-                  <h3 className="font-extrabold text-base text-black line-clamp-2 min-h-[2.5rem]">
-                    {event.title || "DIEMEX 2025"}
-                  </h3>
-
-                  {/* Updated location display with address */}
-                  <p className="flex justify-center items-center font-bold text-gray-700 text-xs mt-1 text-center line-clamp-2 min-h-[2rem]">
-                    {event.location?.venue ? `${event.location.venue}, ` : ""}
-                    {event.location?.city}, {event.location?.country}
-                  </p>
-
-                  {/* Display address if available */}
-                  {event.location?.address && (
-                    <p className="text-gray-600 text-xs mt-1 line-clamp-2">{event.location.address}</p>
-                  )}
-
-                  <p className="flex justify-center items-center text-gray-900 font-bold mt-2 text-sm">
-                    <Calendar className="w-4 h-4 mr-1 text-gray-600" />
-                    {new Date(event.startDate).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                    {event.endDate
-                      ? ` - ${new Date(event.endDate).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })}`
-                      : ""}
-                  </p>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           {/* Carousel indicators (hidden - removed from UI) */}
@@ -318,7 +338,7 @@ export default function EventReviews() {
       {/* Fallback message if no current month events */}
       {currentMonthEvents.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600">
             No events scheduled for this month. Check back soon for upcoming events!
           </p>
         </div>

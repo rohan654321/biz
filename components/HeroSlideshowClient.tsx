@@ -35,7 +35,7 @@ const EventCard = ({ event }: { event: Event }) => {
   // FIXED: Include venueAddress like in the original server component
   const location = event.venue
     ? [
-        event.venue.venueAddress, // Added this back
+        // event.venue.venueAddress, // Added this back
         event.venue.venueCity, 
         event.venue.venueCountry,
       ]
