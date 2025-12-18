@@ -469,7 +469,12 @@ export default function EventPage({ params }: EventPageProps) {
                   className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
                   onClick={() => {
                     const query = encodeURIComponent(event.venueAddress || "Location")
-                    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank")
+                     const address = getMapAddress()
+                    // window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank")
+                    window.open(
+                  `https://www.google.com/maps/dir/?api=1&destination=${address}`,
+                  "_blank",
+                )
                   }}
                 >
                   <Plus className="w-4 h-4" />
