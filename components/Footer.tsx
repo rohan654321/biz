@@ -1,7 +1,7 @@
 import type React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { FaInstagramSquare , FaTwitterSquare , FaYoutubeSquare , FaFacebookSquare } from "react-icons/fa"
+import { FaInstagramSquare , FaTwitterSquare , FaYoutubeSquare , FaFacebookSquare, FaLinkedin  } from "react-icons/fa"
 import { Facebook, Twitter, Youtube } from "lucide-react"
 import { MessageCircle } from "lucide-react"
 
@@ -27,7 +27,7 @@ const Footer: React.FC = () => {
 
             <div className="flex space-x-3">
               <a
-                href="https://www.facebook.com/"
+                href="https://www.facebook.com/biztradefair/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
@@ -36,7 +36,7 @@ const Footer: React.FC = () => {
                 <FaFacebookSquare className="w-8 h-8" />
               </a>
               <a
-                href="https://www.instagram.com/"
+                href="https://www.instagram.com/biztradefairs/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
@@ -45,7 +45,7 @@ const Footer: React.FC = () => {
                 <FaInstagramSquare className="w-8 h-8" />
               </a>
               <a
-                href="https://twitter.com/"
+                href="https://x.com/biztradefair"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Twitter"
@@ -53,7 +53,7 @@ const Footer: React.FC = () => {
               >
                 <FaTwitterSquare className="w-8 h-8" />
               </a>
-              <a
+              {/* <a
                 href="https://www.youtube.com/"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -61,7 +61,20 @@ const Footer: React.FC = () => {
                 className="rounded flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors duration-200"
               >
                 <FaYoutubeSquare className="w-8 h-8" />
+              </a> */}
+
+                            {/* LinkedIn Icon */}
+              <a
+                href="https://www.linkedin.com/company/biztradefairs/" // Replace with actual LinkedIn URL
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LinkedIn"
+                className="rounded flex items-center justify-center hover:bg-blue-700 hover:text-white transition-colors duration-200"
+              >
+                <FaLinkedin className="w-8 h-8" />
               </a>
+
+
             </div>
           </div>
 
@@ -71,7 +84,7 @@ const Footer: React.FC = () => {
             <ul className="space-y-3">
               <li>
                 <Link
-                  href="/events"
+                  href="/event"
                   className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Find Events
@@ -109,38 +122,38 @@ const Footer: React.FC = () => {
                   Exhibitor Services
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link
                   href="/marketing"
                   className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Event Marketing
                 </Link>
-              </li>
-              <li>
+              </li> */}
+              {/* <li>
                 <Link
                   href="/registration"
                   className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Event Registration
                 </Link>
-              </li>
-              <li>
+              </li> */}
+              {/* <li>
                 <Link
                   href="/analytics"
                   className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Event Analytics
                 </Link>
-              </li>
-              <li>
+              </li> */}
+              {/* <li>
                 <Link
                   href="/partnerships"
                   className="text-black  hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Partner With Us
                 </Link>
-              </li>
+              </li> */}
             </ul>
           </div>
 
@@ -169,22 +182,22 @@ const Footer: React.FC = () => {
                   Articles
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link
                   href="/press"
                   className="text-black  hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Press Releases
                 </Link>
-              </li>
-              <li>
+              </li> */}
+              {/* <li>
                 <Link
                   href="/partner-program"
                   className="text-black  hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Become Partner
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link
                   href="/organizer-program"
@@ -193,14 +206,14 @@ const Footer: React.FC = () => {
                   Become Organizer
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link
                   href="/corporate"
                   className="text-black  hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Corporate Information
                 </Link>
-              </li>
+              </li> */}
             </ul>
           </div>
 
@@ -331,27 +344,27 @@ const Footer: React.FC = () => {
                   Cookie Policy
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link href="/gdpr" className="text-black hover:text-blue-800 transition-colors duration-200 text-sm">
                   GDPR Compliance
                 </Link>
-              </li>
-              <li>
+              </li> */}
+              {/* <li>
                 <Link
                   href="/accessibility"
                   className="text-black hover:text-blue-800 transition-colors duration-200 text-sm"
                 >
                   Accessibility
                 </Link>
-              </li>
-              <li>
+              </li> */}
+              {/* <li>
                 <Link
                   href="/safety"
                   className="text-black hover:text-blue-800 transition-colors duration-200 text-sm mb-10"
                 >
                   Event Safety
                 </Link>
-              </li>
+              </li> */}
             </ul>
             <div className=" bottom-6 mt-10 z-50">
           <button className="bg-[#002c71] hover:bg-teal-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 transition-colors duration-200">
@@ -369,29 +382,35 @@ const Footer: React.FC = () => {
         {/* Chat with Us Button */}
         
 
-        {/* Registered Office Section */}
-        <div className=" border-t-1 border-gray-500 pt-8">
-          <div className="mb-6">
-            <h5 className="text-gray-900 font-semibold mb-2">Registered Office:</h5>
-            <p className="text-gray-600 text-sm leading-relaxed">
-              BZ Trade Fairs Pvt Ltd | 123, Business Center, 2nd Floor, Lane-1, Commercial District, Sector 15, Near
-              Metro Station, New Delhi-110001, India, Support-+91-9876543210 | CIN: U12345DL2020PTC123456
-              <br />
-              Manak Event Management Pvt Ltd. is ISO 27001 & 27701 Compliance Certified. Person who may be contacted in
-              case of any compliance related queries or grievances: Manoj Kumar (grievanceofficer@bztradefairs.in)
-            </p>
-          </div>
+   {/* Registered Office Section */}
+<div className="border-t-1 border-gray-500 pt-8">
+  <div className="mb-6">
+    <h5 className="text-gray-900 font-semibold mb-2">
+      Registered Office:
+    </h5>
+    <p className="text-gray-600 text-sm leading-relaxed">
+      Maxx Business Media Pvt Ltd | # T9, 3rd Floor, Swastik Manandi Arcade,
+      SC Road, Seshadripuram, Bengaluru – 560020, India,
+      Support-+91-9148319993 | CIN: U74999KA2019PTC123194
+    </p>
+  </div>
 
-          <div className="mb-6">
-            <p className="text-gray-600 text-xs leading-relaxed">
-              ** All event names, logos, and brands are property of their respective owners. All company, event and
-              service names used in this website are for identification purposes only. Use of these names, logos, and
-              brands does not imply endorsement.
-            </p>
-          </div>
-         <div className="border-t-1 border-gray-500 pt-10"></div>
-          <div className="text-gray-600 text-sm">Copyright © 2025 BZ Trade Fairs All rights reserved</div>
-        </div>
+  <div className="mb-6">
+    <p className="text-gray-600 text-xs leading-relaxed">
+      ** All event names, logos, and brands are property of their respective
+      owners. All company, event and service names used in this website are
+      for identification purposes only. Use of these names, logos, and brands
+      does not imply endorsement.
+    </p>
+  </div>
+
+  <div className="border-t-1 border-gray-500 pt-10"></div>
+
+  <div className="text-gray-600 text-sm">
+    Copyright © 2025 Maxx Business Media Pvt Ltd All rights reserved
+  </div>
+</div>
+
       </div>
     </footer>
   )

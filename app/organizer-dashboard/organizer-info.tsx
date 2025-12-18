@@ -46,6 +46,8 @@ interface OrganizerData {
   specialties: string[]
   achievements: string[]
   certifications: string[]
+  firstName: string
+  lastName: string
 }
 
 interface OrganizerInfoProps {
@@ -268,111 +270,122 @@ export default function OrganizerInfo({ organizerData: initialData }: OrganizerI
       </div>
 
       {/* Profile Header */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-start gap-6">
-            <div className="relative">
-              <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-100">
-                <Image
-                  src={organizerData.avatar || "/placeholder.svg"}
-                  alt="Organization Logo"
-                  width={128}
-                  height={128}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <Dialog open={showImageUpload} onOpenChange={setShowImageUpload}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0">
-                    <Camera className="w-4 h-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Upload Organization Logo</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                      {uploading ? (
-                        <div className="flex flex-col items-center">
-                          <Loader2 className="w-12 h-12 mx-auto text-blue-600 mb-4 animate-spin" />
-                          <p className="text-gray-600">Uploading avatar...</p>
-                        </div>
-                      ) : (
-                        <>
-                          <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                          <p className="text-gray-600 mb-2">Drag and drop your logo here, or click to browse</p>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="hidden"
-                            id="image-upload"
-                            disabled={uploading}
-                          />
-                          <label
-                            htmlFor="image-upload"
-                            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer"
-                          >
-                            Choose Image
-                          </label>
-                        </>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-500">
-                      Recommended: Square image, at least 200x200px, PNG or JPG format
-                    </p>
-                  </div>
-                </DialogContent>
-              </Dialog>
+    <Card>
+  <CardContent className="p-6">
+    <div className="flex items-start gap-6">
+      <div className="relative">
+        {/* Avatar Container */}
+        <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+          {organizerData.avatar ? (
+            <Image
+              src={organizerData.avatar || "/placeholder.svg"}
+              alt="Organization Logo"
+              width={128}
+              height={128}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
+              <span className="text-4xl font-bold text-white">
+                {organizerData.firstName?.[0] || ''}{organizerData.lastName?.[0] || ''}
+              </span>
             </div>
+          )}
+        </div>
+        
+        {/* Camera Button */}
+        <Dialog open={showImageUpload} onOpenChange={setShowImageUpload}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-blue-600 hover:bg-blue-700">
+              <Camera className="w-4 h-4" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Upload Organization Logo</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                {uploading ? (
+                  <div className="flex flex-col items-center">
+                    <Loader2 className="w-12 h-12 mx-auto text-blue-600 mb-4 animate-spin" />
+                    <p className="text-gray-600">Uploading avatar...</p>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600 mb-2">Drag and drop your logo here, or click to browse</p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      id="image-upload"
+                      disabled={uploading}
+                    />
+                    <label
+                      htmlFor="image-upload"
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer"
+                    >
+                      Choose Image
+                    </label>
+                  </>
+                )}
+              </div>
+              <p className="text-sm text-gray-500">
+                Recommended: Square image, at least 200x200px, PNG or JPG format
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
 
-            <div className="flex-1">
-              {isEditing === "basic" ? (
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="company">Organization Name</Label>
-                    <Input
-                      id="company"
-                      value={organizerData.company}
-                      onChange={(e) => setOrganizerData((prev) => ({ ...prev, company: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={organizerData.description}
-                      onChange={(e) => setOrganizerData((prev) => ({ ...prev, description: e.target.value }))}
-                      rows={3}
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button onClick={() => handleSave("basic")} disabled={loading}>
-                      {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                      Save
-                    </Button>
-                    <Button variant="outline" onClick={handleCancel}>
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-2xl font-bold text-gray-900">{organizerData.company}</h3>
-                    <Button variant="outline" size="sm" onClick={() => setIsEditing("basic")}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit
-                    </Button>
-                  </div>
-                  <p className="text-gray-600 leading-relaxed">{organizerData.description}</p>
-                </div>
-              )}
+      <div className="flex-1">
+        {isEditing === "basic" ? (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="company">Organization Name</Label>
+              <Input
+                id="company"
+                value={organizerData.company}
+                onChange={(e) => setOrganizerData((prev) => ({ ...prev, company: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={organizerData.description}
+                onChange={(e) => setOrganizerData((prev) => ({ ...prev, description: e.target.value }))}
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={() => handleSave("basic")} disabled={loading}>
+                {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                Save
+              </Button>
+              <Button variant="outline" onClick={handleCancel}>
+                Cancel
+              </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        ) : (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-2xl font-bold text-gray-900">{organizerData.company}</h3>
+              <Button variant="outline" size="sm" onClick={() => setIsEditing("basic")}>
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
+            </div>
+            <p className="text-gray-600 leading-relaxed">{organizerData.description}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  </CardContent>
+</Card>
 
       {/* Contact Information */}
       <Card>
