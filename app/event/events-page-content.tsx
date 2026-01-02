@@ -890,54 +890,54 @@ export default function EventsPageContent() {
         <div className="w-full py-6">
           {/* Dynamic Banner Section */}
           <div
-            className="flex items-center justify-between mb-8 p-8 border border-blue-200 bg-cover bg-center bg-no-repeat relative overflow-hidden rounded-2xl shadow-md"
+            className="flex items-center justify-between mb-6 p-4 sm:p-6 lg:p-8 border border-blue-200 bg-cover bg-center bg-no-repeat relative overflow-hidden rounded-lg sm:rounded-xl lg:rounded-2xl shadow-md"
             style={{
               backgroundImage: "url('/city/c2.jpg')",
             }}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-white/50 via-blue-50/40 to-purple-50/50"></div>
             <div className="relative z-10">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 tracking-tight">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-2 tracking-tight">
                 {getBannerTitle()}
               </h1>
-              <p className="text-gray-800 text-lg sm:text-xl font-semibold">{getFollowerCount()}</p>
+              <p className="text-gray-800 text-sm sm:text-base lg:text-lg font-semibold">{getFollowerCount()}</p>
             </div>
           </div>
 
           {/* Active Filters */}
-          <div className="flex flex-wrap gap-3 mb-8">
+          <div className="flex flex-wrap gap-2 mb-6">
             {selectedDate && (
-              <Badge variant="secondary" className="flex items-center gap-2 px-4 py-2 text-sm font-semibold">
+              <Badge variant="secondary" className="flex items-center gap-1 px-3 py-1 text-xs sm:text-sm font-medium">
                 <span className="font-bold">Date:</span> {selectedDate.toLocaleDateString()}
-                <X className="w-4 h-4 cursor-pointer ml-1" onClick={clearDateFilter} />
+                <X className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer ml-1" onClick={clearDateFilter} />
               </Badge>
             )}
             {selectedLocation && (
-              <Badge variant="secondary" className="flex items-center gap-2 px-4 py-2 text-sm font-semibold">
+              <Badge variant="secondary" className="flex items-center gap-1 px-3 py-1 text-xs sm:text-sm font-medium">
                 <span className="font-bold">Location:</span> {selectedLocation}
-                <X className="w-4 h-4 cursor-pointer ml-1" onClick={clearLocationFilter} />
+                <X className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer ml-1" onClick={clearLocationFilter} />
               </Badge>
             )}
             {selectedFormat !== "All Formats" && (
-              <Badge variant="secondary" className="flex items-center gap-2 px-4 py-2 text-sm font-semibold">
+              <Badge variant="secondary" className="flex items-center gap-1 px-3 py-1 text-xs sm:text-sm font-medium">
                 <span className="font-bold">Format:</span> {selectedFormat}
-                <X className="w-4 h-4 cursor-pointer ml-1" onClick={clearFormatFilter} />
+                <X className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer ml-1" onClick={clearFormatFilter} />
               </Badge>
             )}
             {(selectedDate || selectedLocation || selectedFormat !== "All Formats") && (
-              <Button variant="outline" size="sm" onClick={clearAllFilters} className="font-semibold">
+              <Button variant="outline" size="sm" onClick={clearAllFilters} className="text-xs sm:text-sm font-medium">
                 Clear All
               </Button>
             )}
           </div>
 
           {/* Tabs Navigation */}
-          <div className="flex flex-wrap gap-2 mb-8 border-b border-gray-300">
+          <div className="flex flex-wrap gap-1 sm:gap-2 mb-6 border-b border-gray-300 overflow-x-auto">
             {tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-5 py-3 text-base font-semibold border-b-4 transition-colors whitespace-nowrap ${
+                className={`px-3 py-2 text-xs sm:text-sm md:text-base font-medium border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === tab
                     ? "border-blue-600 text-blue-700 bg-blue-50"
                     : "border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-100"
@@ -948,26 +948,26 @@ export default function EventsPageContent() {
             ))}
           </div>
 
-          <div className="flex flex-col lg:flex-row items-start gap-8">
+          <div className="flex flex-col lg:flex-row items-start gap-4 sm:gap-6 lg:gap-8">
             {/* Left Sidebar */}
-            <div className="w-full lg:w-80 lg:sticky lg:top-8 self-start flex-shrink-0">
-              <Card className="border-2 border-gray-300 shadow-lg bg-white rounded-2xl">
+            <div className="w-full lg:w-80 lg:sticky lg:top-6 self-start flex-shrink-0">
+              <Card className="border border-gray-300 shadow-lg bg-white rounded-lg sm:rounded-xl">
                 <CardContent className="p-0">
                   {/* Calendar Section */}
                   <div className="border-b border-gray-200">
                     <button
                       onClick={() => setCalendarOpen(!calendarOpen)}
-                      className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 rounded-t-2xl"
+                      className="w-full flex items-center justify-between p-3 sm:p-4 text-left hover:bg-gray-50 rounded-t-lg sm:rounded-t-xl"
                     >
-                      <span className="text-gray-900 font-bold text-lg">📅 Calendar</span>
+                      <span className="text-gray-900 font-bold text-sm sm:text-base">📅 Calendar</span>
                       <ChevronDown
-                        className={`w-5 h-5 text-gray-600 transition-transform ${calendarOpen ? "rotate-180" : ""}`}
+                        className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-600 transition-transform ${calendarOpen ? "rotate-180" : ""}`}
                       />
                     </button>
                     {calendarOpen && (
-                      <div className="px-5 pb-5">
+                      <div className="px-3 sm:px-4 pb-4">
                         {/* Quick Date Filters */}
-                        <div className="grid grid-cols-2 gap-3 mb-5">
+                        <div className="grid grid-cols-2 gap-2 mb-4">
                           {[
                             { label: "Today", value: "today" },
                             { label: "Tomorrow", value: "tomorrow" },
@@ -980,7 +980,7 @@ export default function EventsPageContent() {
                                 setSelectedDateRange(range.value)
                                 setSelectedDate(null)
                               }}
-                              className={`p-3 text-sm text-center rounded-lg border-2 font-medium ${
+                              className={`p-2 text-xs text-center rounded border font-medium ${
                                 selectedDateRange === range.value
                                   ? "bg-blue-100 border-blue-600 text-blue-800 font-bold"
                                   : "border-gray-300 hover:bg-gray-100 text-gray-700"
@@ -992,24 +992,24 @@ export default function EventsPageContent() {
                         </div>
 
                         {/* Calendar */}
-                        <div className="bg-white rounded-xl border-2 border-gray-300 p-4">
+                        <div className="bg-white rounded-lg border border-gray-300 p-3">
                           {/* Calendar Header */}
-                          <div className="flex items-center justify-between mb-4">
-                            <button onClick={handlePrevMonth} className="p-2 hover:bg-gray-100 rounded-lg">
-                              <ChevronLeft className="w-5 h-5 text-gray-700" />
+                          <div className="flex items-center justify-between mb-3">
+                            <button onClick={handlePrevMonth} className="p-1 hover:bg-gray-100 rounded">
+                              <ChevronLeft className="w-4 h-4 text-gray-700" />
                             </button>
-                            <span className="text-lg font-bold text-gray-900">
+                            <span className="text-sm font-bold text-gray-900">
                               {currentMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
                             </span>
-                            <button onClick={handleNextMonth} className="p-2 hover:bg-gray-100 rounded-lg">
-                              <ChevronRight className="w-5 h-5 text-gray-700" />
+                            <button onClick={handleNextMonth} className="p-1 hover:bg-gray-100 rounded">
+                              <ChevronRight className="w-4 h-4 text-gray-700" />
                             </button>
                           </div>
 
                           {/* Calendar Days */}
-                          <div className="grid grid-cols-7 gap-2 mb-3">
+                          <div className="grid grid-cols-7 gap-1 mb-2">
                             {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-                              <div key={day} className="text-sm font-bold text-gray-600 text-center">
+                              <div key={day} className="text-xs font-bold text-gray-600 text-center">
                                 {day}
                               </div>
                             ))}
@@ -1018,13 +1018,13 @@ export default function EventsPageContent() {
                         </div>
 
                         {selectedDate && (
-                          <div className="mt-4 p-3 bg-blue-50 rounded-xl border-2 border-blue-200">
-                            <p className="text-sm font-semibold text-blue-800">
+                          <div className="mt-3 p-2 bg-blue-50 rounded border border-blue-200">
+                            <p className="text-xs font-medium text-blue-800">
                               Showing events for {selectedDate.toLocaleDateString()}
                             </p>
                             <button
                               onClick={clearDateFilter}
-                              className="text-sm font-medium text-blue-600 hover:text-blue-800 mt-2"
+                              className="text-xs font-medium text-blue-600 hover:text-blue-800 mt-1"
                             >
                               Clear date filter
                             </button>
@@ -1038,23 +1038,23 @@ export default function EventsPageContent() {
                   <div className="border-b border-gray-200">
                     <button
                       onClick={() => setFormatOpen(!formatOpen)}
-                      className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50"
+                      className="w-full flex items-center justify-between p-3 sm:p-4 text-left hover:bg-gray-50"
                     >
-                      <span className="text-gray-900 font-bold text-lg">🎯 Format</span>
+                      <span className="text-gray-900 font-bold text-sm sm:text-base">🎯 Format</span>
                       <ChevronDown
-                        className={`w-5 h-5 text-gray-600 transition-transform ${formatOpen ? "rotate-180" : ""}`}
+                        className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-600 transition-transform ${formatOpen ? "rotate-180" : ""}`}
                       />
                     </button>
 
                     {formatOpen && (
-                      <div className="px-5 pb-5">
-                        <div className="space-y-3">
+                      <div className="px-3 sm:px-4 pb-4">
+                        <div className="space-y-2">
                           {/* All Formats option */}
                           <button
                             onClick={() => setSelectedFormat("All Formats")}
-                            className={`w-full text-left p-3 rounded-xl text-base flex justify-between items-center font-medium ${
+                            className={`w-full text-left p-2 rounded-lg text-xs sm:text-sm flex justify-between items-center font-medium ${
                               selectedFormat === "All Formats" 
-                                ? "bg-blue-100 text-blue-800 border-2 border-blue-300 font-bold" 
+                                ? "bg-blue-100 text-blue-800 border border-blue-300 font-bold" 
                                 : "hover:bg-gray-100 text-gray-700 border border-gray-200"
                             }`}
                           >
@@ -1066,14 +1066,14 @@ export default function EventsPageContent() {
                             <button
                               key={`${format.name}-${index}`}
                               onClick={() => setSelectedFormat(format.name)}
-                              className={`w-full text-left p-3 rounded-xl text-base flex justify-between items-center font-medium ${
+                              className={`w-full text-left p-2 rounded-lg text-xs sm:text-sm flex justify-between items-center font-medium ${
                                 selectedFormat === format.name 
-                                  ? "bg-blue-100 text-blue-800 border-2 border-blue-300 font-bold" 
+                                  ? "bg-blue-100 text-blue-800 border border-blue-300 font-bold" 
                                   : "hover:bg-gray-100 text-gray-700 border border-gray-200"
                               }`}
                             >
-                              <span>{format.name}</span>
-                              <span className="text-sm font-bold text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
+                              <span className="truncate">{format.name}</span>
+                              <span className="text-xs font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
                                 {format.count}
                               </span>
                             </button>
@@ -1087,38 +1087,38 @@ export default function EventsPageContent() {
                   <div className="border-b border-gray-200">
                     <button
                       onClick={() => setLocationOpen(!locationOpen)}
-                      className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50"
+                      className="w-full flex items-center justify-between p-3 sm:p-4 text-left hover:bg-gray-50"
                     >
-                      <span className="text-gray-900 font-bold text-lg">📍 Location</span>
+                      <span className="text-gray-900 font-bold text-sm sm:text-base">📍 Location</span>
                       <ChevronDown
-                        className={`w-5 h-5 text-gray-600 transition-transform ${locationOpen ? "rotate-180" : ""}`}
+                        className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-600 transition-transform ${locationOpen ? "rotate-180" : ""}`}
                       />
                     </button>
                     {locationOpen && (
-                      <div className="px-5 pb-5">
-                        <div className="relative mb-4">
+                      <div className="px-3 sm:px-4 pb-4">
+                        <div className="relative mb-3">
                           <Input
                             type="text"
                             placeholder="Search locations..."
                             value={selectedLocation}
                             onChange={(e) => setSelectedLocation(e.target.value)}
-                            className="text-base pr-10 border-2 border-gray-300 rounded-xl py-3 font-medium"
+                            className="text-xs sm:text-sm pr-8 border border-gray-300 rounded-lg py-2 font-medium"
                           />
-                          <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+                          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
                         </div>
-                        <div className="space-y-3 max-h-72 overflow-y-auto">
+                        <div className="space-y-2 max-h-48 sm:max-h-60 overflow-y-auto">
                           {locations.map((location) => (
                             <button
                               key={location.name}
                               onClick={() => setSelectedLocation(location.name)}
-                              className={`w-full text-left p-3 rounded-xl text-base flex justify-between items-center font-medium ${
+                              className={`w-full text-left p-2 rounded-lg text-xs sm:text-sm flex justify-between items-center font-medium ${
                                 selectedLocation === location.name 
-                                  ? "bg-blue-100 text-blue-800 border-2 border-blue-300 font-bold" 
+                                  ? "bg-blue-100 text-blue-800 border border-blue-300 font-bold" 
                                   : "hover:bg-gray-100 text-gray-700 border border-gray-200"
                               }`}
                             >
-                              <span>{location.name}</span>
-                              <span className="text-sm font-bold text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
+                              <span className="truncate">{location.name}</span>
+                              <span className="text-xs font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
                                 {location.count}
                               </span>
                             </button>
@@ -1132,49 +1132,49 @@ export default function EventsPageContent() {
                   <div className="border-b border-gray-200">
                     <button
                       onClick={() => setCategoryOpen(!categoryOpen)}
-                      className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50"
+                      className="w-full flex items-center justify-between p-3 sm:p-4 text-left hover:bg-gray-50"
                     >
-                      <span className="text-gray-900 font-bold text-lg">🏷️ Category</span>
+                      <span className="text-gray-900 font-bold text-sm sm:text-base">🏷️ Category</span>
                       <ChevronDown
-                        className={`w-5 h-5 text-gray-600 transition-transform ${categoryOpen ? "rotate-180" : ""}`}
+                        className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-600 transition-transform ${categoryOpen ? "rotate-180" : ""}`}
                       />
                     </button>
                     {categoryOpen && (
-                      <div className="px-5 pb-5">
-                        <div className="relative mb-4">
+                      <div className="px-3 sm:px-4 pb-4">
+                        <div className="relative mb-3">
                           <Input
                             type="text"
                             placeholder="Search for Topics..."
                             value={categorySearch}
                             onChange={(e) => setCategorySearch(e.target.value)}
-                            className="text-base pr-10 border-2 border-gray-300 rounded-xl py-3 font-medium"
+                            className="text-xs sm:text-sm pr-8 border border-gray-300 rounded-lg py-2 font-medium"
                           />
-                          <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+                          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
                         </div>
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                           {filteredCategories
-                            .slice(0, showAllCategories ? filteredCategories.length : 10)
+                            .slice(0, showAllCategories ? filteredCategories.length : 8)
                             .map((category) => (
                               <div key={category.name} className="flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
+                                <div className="flex items-center space-x-2 sm:space-x-3">
                                   <input
                                     type="checkbox"
                                     checked={selectedCategories.includes(category.name)}
                                     onChange={() => handleCategoryToggle(category.name)}
-                                    className="w-5 h-5 text-blue-600 border-2 border-gray-300 rounded-lg focus:ring-blue-500"
+                                    className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 border border-gray-300 rounded focus:ring-blue-500"
                                   />
-                                  <span className="text-base font-medium text-gray-800">{category.name}</span>
+                                  <span className="text-xs sm:text-sm font-medium text-gray-800 truncate">{category.name}</span>
                                 </div>
-                                <span className="text-sm font-bold text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
+                                <span className="text-xs font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
                                   {category.count}
                                 </span>
                               </div>
                             ))}
                         </div>
-                        {filteredCategories.length > 10 && (
+                        {filteredCategories.length > 8 && (
                           <button
                             onClick={() => setShowAllCategories(!showAllCategories)}
-                            className="w-full mt-4 text-base font-bold text-blue-600 hover:text-blue-800"
+                            className="w-full mt-3 text-xs sm:text-sm font-bold text-blue-600 hover:text-blue-800"
                           >
                             {showAllCategories ? "View Less" : "View All Categories"}
                           </button>
@@ -1184,20 +1184,20 @@ export default function EventsPageContent() {
                   </div>
 
                   {/* Navigation Links */}
-                  <div className="p-5 border-b border-gray-200 hover:bg-gray-50 cursor-pointer">
-                    <h3 className="text-red-600 font-bold text-lg mb-2">🔥 Top 100 Events</h3>
-                    <p className="text-gray-600 font-medium">Discover and track top events</p>
+                  <div className="p-3 sm:p-4 border-b border-gray-200 hover:bg-gray-50 cursor-pointer">
+                    <h3 className="text-red-600 font-bold text-sm sm:text-base mb-1">🔥 Top 100 Events</h3>
+                    <p className="text-gray-600 text-xs sm:text-sm font-medium">Discover and track top events</p>
                   </div>
 
-                  <div className="p-5 border-b border-gray-200 hover:bg-gray-50 cursor-pointer">
-                    <h3 className="text-red-600 font-bold text-lg mb-2">🎤 Explore Speaker</h3>
-                    <p className="text-gray-600 font-medium">Discover and track top events</p>
+                  <div className="p-3 sm:p-4 border-b border-gray-200 hover:bg-gray-50 cursor-pointer">
+                    <h3 className="text-red-600 font-bold text-sm sm:text-base mb-1">🎤 Explore Speaker</h3>
+                    <p className="text-gray-600 text-xs sm:text-sm font-medium">Discover and track top events</p>
                   </div>
                   <button
                     onClick={clearAllFilters}
-                    className="w-full p-5 text-left hover:bg-gray-50 transition-colors cursor-pointer rounded-b-2xl"
+                    className="w-full p-3 sm:p-4 text-left hover:bg-gray-50 transition-colors cursor-pointer rounded-b-lg sm:rounded-b-xl"
                   >
-                    <h3 className="text-blue-600 font-bold text-lg">All Events</h3>
+                    <h3 className="text-blue-600 font-bold text-sm sm:text-base">All Events</h3>
                   </button>
                 </CardContent>
               </Card>
@@ -1206,18 +1206,18 @@ export default function EventsPageContent() {
             {/* Main Content */}
             <div className="flex-1 w-full min-w-0">
               {/* View Toggle and Results Count */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-                <span className="text-base font-semibold text-gray-700">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+                <span className="text-xs sm:text-sm font-medium text-gray-700">
                   Showing <span className="text-blue-600 font-bold">{paginatedEvents.length}</span> of{" "}
                   <span className="text-blue-600 font-bold">{filteredEvents.length}</span> events
                 </span>
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
                   <Button
                     variant="outline"
-                    size="lg"
+                    size="sm"
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
-                    className="font-semibold text-gray-700 border-2"
+                    className="font-medium text-gray-700 border text-xs sm:text-sm"
                   >
                     Previous
                   </Button>
@@ -1227,10 +1227,10 @@ export default function EventsPageContent() {
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`w-10 h-10 rounded-lg text-base font-bold ${
+                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded text-xs sm:text-sm font-bold ${
                           currentPage === page
-                            ? "bg-blue-600 text-white shadow-lg"
-                            : "bg-white text-gray-700 hover:bg-gray-100 border-2 border-gray-300"
+                            ? "bg-blue-600 text-white shadow"
+                            : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
                         }`}
                       >
                         {page}
@@ -1239,10 +1239,10 @@ export default function EventsPageContent() {
                   })}
                   <Button
                     variant="outline"
-                    size="lg"
+                    size="sm"
                     onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
-                    className="font-semibold text-gray-700 border-2"
+                    className="font-medium text-gray-700 border text-xs sm:text-sm"
                   >
                     Next
                   </Button>
@@ -1250,70 +1250,72 @@ export default function EventsPageContent() {
               </div>
 
               {/* Events List */}
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {paginatedEvents.length === 0 ? (
-                  <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
-                    <p className="text-gray-500 text-2xl font-bold mb-4">No events found matching your criteria</p>
-                    <Button variant="outline" className="mt-4 font-semibold text-lg px-8 py-3" onClick={clearAllFilters}>
+                  <div className="text-center py-12 bg-white rounded-lg sm:rounded-xl shadow">
+                    <p className="text-gray-500 text-lg sm:text-xl font-bold mb-4">No events found matching your criteria</p>
+                    <Button variant="outline" className="mt-4 font-medium text-sm sm:text-base px-4 sm:px-6 py-2" onClick={clearAllFilters}>
                       Clear All Filters
                     </Button>
                   </div>
                 ) : (
                   paginatedEvents.map((event) => (
                     <Link href={`/event/${event.id}`} key={event.id} className="block">
-                      <div className="bg-white border-2 border-gray-300 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full transform hover:-translate-y-1">
+                      <div className="bg-white border border-gray-300 rounded-lg sm:rounded-xl overflow-hidden shadow hover:shadow-lg transition-all duration-300 w-full">
                         <CardContent className="p-0">
                           <div className="flex flex-col sm:flex-row">
-                            {/* Image Section */}
-                            <div className="relative w-full sm:w-40 md:w-48 lg:w-56 h-64 sm:h-auto p-8">
-                              <img
-                                src={getEventImage(event) || "/placeholder.svg"}
-                                alt={event.title}
-                                className="object-cover w-full h-full rounded-lg"
-                              />
+                            {/* Image Section - Now responsive with aspect ratio */}
+                            <div className="relative w-full sm:w-1/3 md:w-2/5 lg:w-1/3 aspect-video sm:aspect-auto sm:h-auto">
+                              <div className="absolute inset-0 p-2 sm:p-3">
+                                <img
+                                  src={getEventImage(event) || "/placeholder.svg"}
+                                  alt={event.title}
+                                  className="w-full h-full object-cover rounded"
+                                />
+                              </div>
                             </div>
 
                             {/* Content Section */}
-                            <div className="flex-1 flex flex-col p-6 sm:p-8">
+                            <div className="flex-1 flex flex-col p-3 sm:p-4 md:p-6">
                               {/* Top Section */}
-                              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+                              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
                                 <div className="flex-1 min-w-0">
-                                  <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 line-clamp-2 leading-tight">
+                                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2 line-clamp-2 leading-tight">
                                     {event.title}
                                   </h3>
-                                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-5">
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
                                     <div className="flex items-center text-gray-700">
-                                      <MapPin className="w-5 h-5 mr-3 flex-shrink-0 text-blue-600" />
-                                      <span className="text-base font-semibold truncate">
+                                      <MapPin className="w-4 h-4 mr-2 flex-shrink-0 text-blue-600" />
+                                      <span className="text-xs sm:text-sm font-medium truncate">
                                         {event.location?.address || "Address not available"}
                                       </span>
                                     </div>
                                     <div className="flex items-center text-gray-700">
-                                      <Calendar className="w-5 h-5 mr-3 flex-shrink-0 text-blue-600" />
-                                      <span className="text-base font-semibold">{formatDate(event.timings.startDate)}</span>
+                                      <Calendar className="w-4 h-4 mr-2 flex-shrink-0 text-blue-600" />
+                                      <span className="text-xs sm:text-sm font-medium">{formatDate(event.timings.startDate)}</span>
                                     </div>
                                   </div>
-                                  <div className="flex flex-wrap items-center gap-3 mb-5">
-                                    <Badge className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-bold border-2 border-blue-200">
-                                      💰 Paid entry
+                                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                                    <Badge className="bg-blue-100 text-blue-800 px-2 sm:px-3 py-1 rounded-full text-xs font-bold border border-blue-200">
+                                      Paid entry
                                     </Badge>
-                                    <div className="flex items-center gap-2 bg-green-100 text-green-800 px-4 py-2 rounded-full font-bold">
-                                      <Star className="w-5 h-5 fill-current" />
-                                      <span className="text-lg">
+                                    <div className="flex items-center gap-1 bg-green-100 text-green-800 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-bold">
+                                      <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-current" />
+                                      <span>
                                         {Number.isFinite(event.rating?.average)
                                           ? event.rating.average.toFixed(1)
                                           : "4.5"}
                                       </span>
                                       {event.totalReviews && event.totalReviews > 0 && (
-                                        <span className="text-sm text-gray-600 ml-2 font-medium">
-                                          ({event.totalReviews} reviews)
+                                        <span className="text-xs text-gray-600 ml-1 font-medium">
+                                          ({event.totalReviews})
                                         </span>
                                       )}
                                     </div>
-                                    <div className="flex items-center text-gray-700 text-base gap-2 font-semibold">
+                                    <div className="flex items-center text-gray-700 text-xs sm:text-sm gap-1 font-medium">
                                       <svg
                                         xmlns="http://www.w3.org/2000/svg"
-                                        className="w-5 h-5 text-gray-500"
+                                        className="w-4 h-4 text-gray-500"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
@@ -1330,41 +1332,41 @@ export default function EventsPageContent() {
                                   </div>
                                 </div>
 
-                                <div className="flex flex-col items-start sm:items-end gap-3">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8">
+                                <div className="flex flex-col items-start sm:items-end gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 sm:w-6 sm:h-6">
                                       <img
                                         src="/images/VerifiedBadge.png"
                                         alt="Verified"
                                         className="w-full h-full object-contain"
                                       />
                                     </div>
-                                    <span className="text-gray-700 font-bold text-base">2nd Edition</span>
+                                    <span className="text-gray-700 font-bold text-xs sm:text-sm">2nd Edition</span>
                                   </div>
-                                  <div className="flex flex-wrap gap-2">
+                                  <div className="flex flex-wrap gap-1">
                                     {event.categories?.slice(0, 2).map((category: string, idx: number) => (
                                       <Badge
                                         key={idx}
-                                        className="bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full text-sm font-bold border border-gray-300"
+                                        className="bg-gray-100 text-gray-800 px-2 py-0.5 rounded-full text-xs font-bold border border-gray-300"
                                       >
-                                        {category}
+                                        <span className="truncate max-w-[80px] sm:max-w-[100px]">{category}</span>
                                       </Badge>
                                     ))}
                                   </div>
                                 </div>
                               </div>
 
-                              <div className="border-t-2 border-gray-200 my-5" />
+                              <div className="border-t border-gray-200 my-3" />
 
                               {/* Bottom Section */}
-                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-                                <div className="flex items-center gap-4">
-                                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-700 text-xl flex-shrink-0">
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-700 text-base flex-shrink-0">
                                     {typeof event.organizer === "string"
                                       ? event.organizer.charAt(0)
                                       : event.organizer?.name?.charAt(0) || "M"}
                                   </div>
-                                  <span className="text-lg font-semibold text-gray-800 truncate">
+                                  <span className="text-sm font-medium text-gray-800 truncate">
                                     {typeof event.organizer === "string"
                                       ? event.organizer
                                       : event.organizer?.name || "Maxx Business Media Pvt Ltd"}
@@ -1372,12 +1374,12 @@ export default function EventsPageContent() {
                                 </div>
 
                                 {/* Action Buttons */}
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
                                   <ShareButton id={event.id} title={event.title} type="event" />
                                   
                                   <BookmarkButton
                                     eventId={event.id}
-                                    className="flex items-center bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300"
+                                    className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded text-xs sm:text-sm font-bold shadow hover:shadow-md transition-all duration-300"
                                     onClick={(e: React.MouseEvent) => {
                                       e.preventDefault()
                                       e.stopPropagation()
@@ -1399,69 +1401,69 @@ export default function EventsPageContent() {
 
               {/* Featured Events */}
               {featuredEvents.length > 0 && (
-                <section className="py-10">
-                  <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-3xl font-bold text-gray-900 underline decoration-blue-600 decoration-4">
+                <section className="py-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 underline decoration-blue-600 decoration-2 sm:decoration-4">
                       ✨ Featured Events
                     </h2>
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-2">
                       <Button
                         variant="outline"
-                        size="lg"
+                        size="sm"
                         onClick={() => setCurrentSlide((prev) => Math.max(0, prev - 1))}
-                        className="p-3 border-2"
+                        className="p-2 border"
                       >
-                        <ChevronLeft className="w-6 h-6" />
+                        <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                       </Button>
                       <Button
                         variant="outline"
-                        size="lg"
+                        size="sm"
                         onClick={() =>
                           setCurrentSlide((prev) => Math.min(Math.ceil(featuredEvents.length / 3) - 1, prev + 1))
                         }
-                        className="p-3 border-2"
+                        className="p-2 border"
                       >
-                        <ChevronRight className="w-6 h-6" />
+                        <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                       </Button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {featuredEvents.slice(currentSlide * 3, currentSlide * 3 + 3).map((event) => (
-                      <Card key={event.id} className="hover:shadow-2xl transition-shadow duration-300 border-2 border-gray-300 rounded-2xl overflow-hidden">
-                        <div className="relative">
+                      <Card key={event.id} className="hover:shadow-lg transition-shadow duration-300 border border-gray-300 rounded-lg sm:rounded-xl overflow-hidden">
+                        <div className="relative aspect-video">
                           <img
                             src={getEventImage(event) || "/placeholder.svg"}
                             alt={event.title}
-                            className="w-full h-56 object-cover"
+                            className="w-full h-full object-cover"
                           />
-                          <div className="absolute top-4 right-4 bg-white rounded-full p-3 shadow-xl">
-                            <Heart className="w-5 h-5 text-gray-700" />
+                          <div className="absolute top-2 right-2 bg-white rounded-full p-1.5 shadow">
+                            <Heart className="w-4 h-4 text-gray-700" />
                           </div>
-                          <div className="absolute bottom-4 left-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+                          <div className="absolute bottom-2 left-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-bold shadow">
                             Featured ✨
                           </div>
                         </div>
-                        <CardContent className="p-6">
-                          <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">{event.title}</h3>
-                          <div className="flex items-center text-base text-gray-700 mb-2 font-medium">
-                            <MapPin className="w-5 h-5 mr-3 text-blue-600" />
+                        <CardContent className="p-3 sm:p-4">
+                          <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 line-clamp-2">{event.title}</h3>
+                          <div className="flex items-center text-sm text-gray-700 mb-1 font-medium">
+                            <MapPin className="w-4 h-4 mr-2 text-blue-600" />
                             <span>{event.location?.city || "Location TBD"}</span>
                           </div>
-                          <div className="flex items-center text-base text-gray-700 mb-4 font-medium">
-                            <Calendar className="w-5 h-5 mr-3 text-blue-600" />
+                          <div className="flex items-center text-sm text-gray-700 mb-3 font-medium">
+                            <Calendar className="w-4 h-4 mr-2 text-blue-600" />
                             <span>{formatDate(event.timings.startDate)}</span>
                           </div>
-                          <div className="flex items-center justify-between mb-5">
-                            <Badge className="bg-blue-100 text-blue-800 text-sm font-bold px-3 py-1.5 border-2 border-blue-200">
+                          <div className="flex items-center justify-between mb-3">
+                            <Badge className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 border border-blue-200">
                               {event.categories[0]}
                             </Badge>
-                            <span className="text-lg font-bold text-green-700">
+                            <span className="text-sm font-bold text-green-700">
                               ⭐ {Number.isFinite(event.rating?.average) ? event.rating.average.toFixed(1) : "4.5"}
                             </span>
                           </div>
                           <button
-                            className="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white py-3 px-4 rounded-xl text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300"
+                            className="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white py-2 px-3 rounded text-sm font-bold shadow hover:shadow-md transition-all duration-300"
                             onClick={(e) => {
                               e.preventDefault()
                               e.stopPropagation()
@@ -1475,13 +1477,13 @@ export default function EventsPageContent() {
                     ))}
                   </div>
 
-                  <div className="flex justify-center mt-6 space-x-3">
+                  <div className="flex justify-center mt-4 space-x-2">
                     {Array.from({ length: Math.ceil(featuredEvents.length / 3) }, (_, i) => (
                       <button
                         key={i}
                         onClick={() => setCurrentSlide(i)}
-                        className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                          i === currentSlide ? "bg-blue-600 w-10" : "bg-gray-300 hover:bg-gray-400"
+                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                          i === currentSlide ? "bg-blue-600 w-6" : "bg-gray-300 hover:bg-gray-400"
                         }`}
                       />
                     ))}
@@ -1491,67 +1493,67 @@ export default function EventsPageContent() {
             </div>
 
             {/* Right Column */}
-            <div className="w-full lg:w-80 space-y-8 self-start">
+            <div className="w-full lg:w-80 space-y-4 sm:space-y-6 self-start">
               <AdCard />
 
               {featuredEvents[0] && (
-                <Card className="bg-white shadow-2xl border-2 border-gray-300 rounded-2xl overflow-hidden">
-                  <div className="relative">
+                <Card className="bg-white shadow-lg border border-gray-300 rounded-lg sm:rounded-xl overflow-hidden">
+                  <div className="relative aspect-video">
                     <img
                       src={getEventImage(featuredEvents[0]) || "/placeholder.svg"}
                       alt={featuredEvents[0].title}
-                      className="w-full h-56 object-cover"
+                      className="w-full h-full object-cover"
                     />
-                    <div className="absolute top-4 right-4 bg-white rounded-full p-3 shadow-xl">
-                      <Heart className="w-5 h-5 text-gray-700" />
+                    <div className="absolute top-2 right-2 bg-white rounded-full p-1.5 shadow">
+                      <Heart className="w-4 h-4 text-gray-700" />
                     </div>
-                    <div className="absolute top-4 left-4 flex space-x-2">
-                      <Badge className="bg-blue-600 text-white text-sm font-bold px-3 py-1">Expo</Badge>
-                      <Badge className="bg-blue-600 text-white text-sm font-bold px-3 py-1">Business Event</Badge>
+                    <div className="absolute top-2 left-2 flex space-x-1">
+                      <Badge className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5">Expo</Badge>
+                      <Badge className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5">Business</Badge>
                     </div>
-                    <div className="absolute bottom-4 right-4 bg-green-100 text-green-800 px-3 py-1.5 rounded-lg text-base font-bold shadow-lg">
+                    <div className="absolute bottom-2 right-2 bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold shadow">
                       ⭐ {Number.isFinite(featuredEvents[0].rating?.average)
                         ? featuredEvents[0].rating.average.toFixed(1)
                         : "4.5"}
                     </div>
                   </div>
-                  <CardContent className="p-6">
+                  <CardContent className="p-3 sm:p-4">
                     <button
-                      className="w-full flex items-center justify-center bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-3 px-4 rounded-xl text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300"
+                      className="w-full flex items-center justify-center bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-2 px-3 rounded text-sm font-bold shadow hover:shadow-md transition-all duration-300"
                       onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
                         handleVisitClick(featuredEvents[0].id, featuredEvents[0].title)
                       }}
                     >
-                      <UserPlus className="w-5 h-5 mr-2" />
+                      <UserPlus className="w-4 h-4 mr-2" />
                       Visit Event
                     </button>
                   </CardContent>
                 </Card>
               )}
 
-              <div className="space-y-6">
-                <h3 className="text-2xl font-bold text-gray-900">🔥 Trending Events</h3>
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">🔥 Trending Events</h3>
                 {events.slice(0, 3).map((event) => (
                   <Link key={event.id} href={`/event/${event.id}`} className="group block">
-                    <div className="bg-gradient-to-r from-yellow-100 to-yellow-300 rounded-2xl p-5 flex gap-5 shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-2 border-yellow-200">
-                      <div className="w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden border-2 border-white">
+                    <div className="bg-gradient-to-r from-yellow-100 to-yellow-300 rounded-lg sm:rounded-xl p-3 flex gap-3 shadow hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-yellow-200">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-lg overflow-hidden border border-white">
                         <img
                           src={getEventImage(event) || "/placeholder.svg"}
                           alt={event.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       </div>
                       <div className="flex flex-col flex-1 min-w-0">
-                        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{event.title}</h3>
-                        <p className="text-sm text-gray-800 font-semibold mb-3">International Exhibition</p>
-                        <div className="flex items-center text-sm font-bold text-gray-800 mb-2">
-                          <CalendarDays className="w-4 h-4 mr-2 text-gray-700" />
+                        <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-1 line-clamp-2">{event.title}</h3>
+                        <p className="text-xs text-gray-800 font-medium mb-2">International Exhibition</p>
+                        <div className="flex items-center text-xs font-bold text-gray-800 mb-1">
+                          <CalendarDays className="w-3 h-3 mr-1 text-gray-700" />
                           {formatDate(event.timings.startDate)}
                         </div>
-                        <div className="flex items-center text-sm text-gray-800 font-medium">
-                          <MapPin className="w-4 h-4 mr-2 text-blue-700" />
+                        <div className="flex items-center text-xs text-gray-800 font-medium">
+                          <MapPin className="w-3 h-3 mr-1 text-blue-700" />
                           {event.location?.city || "Chennai, India"}
                         </div>
                       </div>
